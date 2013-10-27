@@ -1,0 +1,19 @@
+Official naming conventions in Scala
+------------------------------------
+
+http://docs.scala-lang.org/style/naming-conventions.html
+
+
+Tutorial video on TCP networking in Scala
+------------------------------------------
+
+https://www.youtube.com/watch?v=dR39Lissut0
+
+There are other videos from the same author, where he builds a TCP-based game in Scala. Could be interesting to watch.
+
+Twitter Scala school
+---------------------
+
+This page is about concurrency but also has code snippets for TCP socket programming
+
+http://twitter.github.io/scala_school/concurrency.html
