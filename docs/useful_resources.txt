@@ -17,3 +17,8 @@ Twitter Scala school
 This page is about concurrency but also has code snippets for TCP socket programming
 
 http://twitter.github.io/scala_school/concurrency.html
+
+Specs2 links
+-----------------------
+
+http://etorreborre.github.io/specs2/guide/org.specs2.guide.Structure.html
