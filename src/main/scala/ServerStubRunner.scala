@@ -13,8 +13,10 @@ object ResponseHeader {
   val FlagsNoCompressionByte = 0x00
   val DefaultStreamId = 0x00
   val ZeroLength = Array(0x00, 0x00, 0x00, 0x00).map(_.toByte)
+}
 
-
+object Header {
+  val Length = 4
 }
 
 object ServerStubRunner extends Logging {
@@ -40,12 +42,12 @@ object ServerStubRunner extends Logging {
       val out = new DataOutputStream(clientSocket.getOutputStream)
       val in = new DataInputStream(clientSocket.getInputStream)
 
-      // Read header + length
-      val header : Seq[Int] = for {
-        i <- 0 until 4
-      } yield in.read()
+      val header = readRawBytes(in, Header.Length)
 
-      header.foreach(print)
+      val messageLength = readInteger(in)
+
+      // we ignore the rest of the message for now
+      readRawBytes(in, messageLength)
 
       if (header(3) == OpCodes.Ready) {
         logger.info("Sending startup message")
@@ -60,5 +62,17 @@ object ServerStubRunner extends Logging {
       // TODO: call close on the socket, or the output stream, or both?
       clientSocket.close()
     }
+  }
+
+  def readRawBytes(in : DataInputStream, numberOfBytes : Int) : Seq[Byte] = {
+    for {
+      i <- 0 until numberOfBytes
+    } yield in.read().toByte
+  }
+
+  //TODO: Only works for values up to ~32k as furst three bytes are ignored
+  def readInteger(in : DataInputStream) : Int = {
+    for (i <- 0 until 3) { in.read() }
+    in.read()
   }
 }
