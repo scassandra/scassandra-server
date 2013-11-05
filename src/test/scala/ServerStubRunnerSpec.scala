@@ -3,6 +3,7 @@ import java.net.Socket
 import java.net.ConnectException
 import org.specs2.mutable._
 import org.specs2.specification.{AfterExample, BeforeExample}
+import scala.collection.immutable.IndexedSeq
 
 // TODO: name this LocalClientSocketBuilder instead?
 object LocalSocket {
@@ -72,10 +73,26 @@ class ServerStubRunnerSpec extends Specification {
     serverThread.interrupt()
   }
 
-  def sendStartupHeader() = {
-    socket.getOutputStream.write(Array[Byte](0x02,0x00,0x00,OpCodes.Ready))
+  def sendStartupMessage() = {
+    val stream: OutputStream = socket.getOutputStream
+    stream.write(Array[Byte](0x02,0x00,0x00,OpCodes.Ready))
+    stream.write(Array[Byte](0x00, 0x00, 0x00, 0x16))
+    val fakeBody: IndexedSeq[Byte] = for (i <- 0 until 22) yield 0x00.toByte 
+    stream.write(fakeBody.toArray)
   }
-  
+
+  def sendOptionsMessage {
+    val stream: OutputStream = socket.getOutputStream
+    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Options))
+    sendFakeLengthAndBody(stream)
+  }
+
+  def sendFakeLengthAndBody(stream: OutputStream) {
+    stream.write(Array[Byte](0x00, 0x00, 0x00, 0x16))
+    val fakeBody: IndexedSeq[Byte] = for (i <- 0 until 22) yield 0x00.toByte
+    stream.write(fakeBody.toArray)
+  }
+
   "run()" should {
     // before all
     step {
@@ -104,7 +121,7 @@ class ServerStubRunnerSpec extends Specification {
 
       bytes must equalTo(0)
 
-      sendStartupHeader()
+      sendStartupMessage()
 
       //TODO: Verify contents?
       val bytesAfterStartupMessage = availableBytes(200)
@@ -115,7 +132,7 @@ class ServerStubRunnerSpec extends Specification {
       val bytes = availableBytes(200)
       bytes must equalTo(0)
 
-      socket.getOutputStream.write(Array[Byte](0x02,0x00,0x00,OpCodes.Options))
+      sendOptionsMessage
 
       val bytesAfterOptionsMessage = availableBytes(200)
       bytesAfterOptionsMessage must equalTo(0)
@@ -123,7 +140,7 @@ class ServerStubRunnerSpec extends Specification {
 
     "return a version byte in the response header" in {
 
-      sendStartupHeader()
+      sendStartupMessage()
 
       val in = new DataInputStream(socket.getInputStream)
 
@@ -135,7 +152,7 @@ class ServerStubRunnerSpec extends Specification {
     }
 
     "return a flags byte in the response header with all bits set to 0 on STARTUP request" in {
-      sendStartupHeader()
+      sendStartupMessage()
 
       val in = new DataInputStream(socket.getInputStream)
 
@@ -151,7 +168,7 @@ class ServerStubRunnerSpec extends Specification {
 
     "return a stream byte in the response header" in {
 
-      sendStartupHeader()
+      sendStartupMessage()
 
       val in = new DataInputStream(socket.getInputStream)
 
@@ -168,7 +185,7 @@ class ServerStubRunnerSpec extends Specification {
 
     "return a READY opcode byte in the response header on STARTUP request" in {
 
-      sendStartupHeader()
+      sendStartupMessage()
 
       val in = new DataInputStream(socket.getInputStream)
 
@@ -184,7 +201,7 @@ class ServerStubRunnerSpec extends Specification {
 
     "return length field with all 4 bytes set to 0 on STARTUP request" in {
 
-      sendStartupHeader()
+      sendStartupMessage()
 
       val in = new DataInputStream(socket.getInputStream)
 
