@@ -23,7 +23,7 @@ object Header {
 
 object ServerStubRunner extends Logging {
 
-  val PortNumber = 9042
+  val PortNumber = 8042
 
 
   def sendDefaultHeaderWithBlankResponse(socket: Socket, opCode: Byte) = {
@@ -64,13 +64,16 @@ object ServerStubRunner extends Logging {
       readRawBytes(in, messageLength)
 
       header(3) match {
-        case OpCodes.Ready => {
-          logger.info("Sending startup message")
+        case OpCodes.Startup => {
+          logger.info("Sending ready message")
           sendDefaultHeaderWithBlankResponse(clientSocket, OpCodes.Ready)
         }
         case OpCodes.Query => {
           logger.info("Sending result")
           sendDefaultHeaderWithBlankResponse(clientSocket, OpCodes.Result)
+        }
+        case opCode @ _ => {
+          logger.info(s"Received unknown opcode ${opCode}")
         }
       }
 

@@ -8,7 +8,7 @@ import scala.collection.immutable.IndexedSeq
 // TODO: name this LocalClientSocketBuilder instead?
 object LocalSocket {
   val ServerHost = "localhost"
-  val ServerPort = 9042
+  val ServerPort = 8042
 
   def apply() = new Socket(ServerHost, ServerPort)
 }
@@ -75,7 +75,7 @@ class ServerStubRunnerSpec extends Specification {
 
   def sendStartupMessage() = {
     val stream: OutputStream = socket.getOutputStream
-    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Ready))
+    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Startup))
     stream.write(Array[Byte](0x00, 0x00, 0x00, 0x16))
     val fakeBody: IndexedSeq[Byte] = for (i <- 0 until 22) yield 0x00.toByte
     stream.write(fakeBody.toArray)
