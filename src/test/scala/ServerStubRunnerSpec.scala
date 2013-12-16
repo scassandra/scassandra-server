@@ -8,7 +8,7 @@ import scala.collection.immutable.IndexedSeq
 // TODO: name this LocalClientSocketBuilder instead?
 object LocalSocket {
   val ServerHost = "localhost"
-  val ServerPort = 9042
+  val ServerPort = 8042
 
   def apply() = new Socket(ServerHost, ServerPort)
 }
@@ -49,7 +49,7 @@ class ServerStubRunnerSpec extends Specification {
   }
 
 
-  def availableBytes(timeToWaitMillis: Long) : Int = {
+  def availableBytes(timeToWaitMillis: Long): Int = {
     // TODO: Make this check every N millis rather than wait the full amount first?
     Thread.sleep(timeToWaitMillis)
     val stream = new DataInputStream(socket.getInputStream)
@@ -75,9 +75,9 @@ class ServerStubRunnerSpec extends Specification {
 
   def sendStartupMessage() = {
     val stream: OutputStream = socket.getOutputStream
-    stream.write(Array[Byte](0x02,0x00,0x00,OpCodes.Ready))
+    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Startup))
     stream.write(Array[Byte](0x00, 0x00, 0x00, 0x16))
-    val fakeBody: IndexedSeq[Byte] = for (i <- 0 until 22) yield 0x00.toByte 
+    val fakeBody: IndexedSeq[Byte] = for (i <- 0 until 22) yield 0x00.toByte
     stream.write(fakeBody.toArray)
   }
 
@@ -94,7 +94,7 @@ class ServerStubRunnerSpec extends Specification {
   }
 
   "run()" should {
-    // before all
+    // before all tests
     step {
       // First ensure nothing else is running on port 9042
       var somethingAlreadyRunning = true
@@ -217,7 +217,55 @@ class ServerStubRunnerSpec extends Specification {
       length must equalTo(0)
     }
 
-    //    after
+    "return RESULT OpCode on Query" in {
+
+      //
+      //
+      // A select query has: <header><body>
+      // where <header> is the usual and
+      // body = <query><query_parameters>
+      // where <query> = well, the query...
+      // and  <query_parameters> = <consistency><other_things>
+      //
+      // For simplicity, <other_things> will not be set in this test case
+      //
+
+      val stream: OutputStream = socket.getOutputStream
+
+      val queryAsBytes = "select * from people".toCharArray.map(_.toByte)
+
+      // Header - Part 1
+      // TODO - Confirm what the first three bytes should be
+      stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Query))
+
+      // Header - Part 2
+      // TODO - how to convert an Integer into an array of Bytes? Luckily this length fits into one byte
+      // body length = query length + query parameters length.
+      val bodyLengthAsByte = (queryAsBytes.length + 2).toByte
+      stream.write(Array[Byte](0x00, 0x00, 0x00, bodyLengthAsByte))
+
+
+      // Body - Part 1 : <query>
+      stream.write(queryAsBytes)
+
+      // Body - Part 2 : <query_parameters>
+      // In this case, we only set <consistency> = short to 0x0000 -> ANY
+      stream.write(Array[Byte](0x00, 0x00))
+
+      val in = new DataInputStream(socket.getInputStream)
+
+      // consume first three bytes
+      consumeBytes(in, 3)
+
+      // read fourth byte
+      val responseHeaderOpCode: Int = in.read()
+
+      val opCodeResult = 0x08
+      responseHeaderOpCode must equalTo(opCodeResult)
+
+    }
+
+    // after all tests
     step {
       stopServerStub()
     }
