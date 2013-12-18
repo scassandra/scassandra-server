@@ -27,3 +27,10 @@ object VoidResult extends Response(new Header(OpCodes.Result, 4)) {
     header.version :: header.flags :: header.streamId :: header.opCode :: rest
   }
 }
+
+object Ready extends Response(new Header(OpCodes.Ready, 0)) {
+  val length = List(0x0, 0x0, 0x0, 0x0)
+  override def serialize() : List[Int] = {
+    header.version :: header.flags :: header.streamId :: header.opCode :: length
+  }
+}

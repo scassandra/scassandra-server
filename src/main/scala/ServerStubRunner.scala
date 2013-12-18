@@ -10,15 +10,11 @@ object ServerStubRunner extends Logging {
 
   var portNumber = 8042
 
-
-  def sendDefaultHeaderWithBlankResponse(socket: Socket, opCode: Byte) = {
-
+  def sendMessage(socket: Socket, bytes: List[Int]) = {
     val out = new DataOutputStream(socket.getOutputStream)
-    out.write(ResponseHeader.VersionByte)
-    out.write(ResponseHeader.FlagsNoCompressionByte)
-    out.write(ResponseHeader.DefaultStreamId)
-    out.write(opCode)
-    out.write(ResponseHeader.ZeroLength)
+    for (byte <- bytes) {
+      out.write(byte)
+    }
     out.flush()
   }
 
@@ -56,12 +52,12 @@ object ServerStubRunner extends Logging {
       header(3) match {
         case OpCodes.Startup => {
           logger.info("Sending ready message")
-          sendDefaultHeaderWithBlankResponse(clientSocket, OpCodes.Ready)
+          sendMessage(clientSocket, Ready.serialize())
         }
         case OpCodes.Query => {
           logger.info("Sending result")
           // TODO: Parse the query and see if it is a use statement
-          sendDefaultHeaderWithBlankResponse(clientSocket, OpCodes.Result)
+          sendMessage(clientSocket, VoidResult.serialize())
         }
         case opCode @ _ => {
           logger.info(s"Received unknown opcode ${opCode}")

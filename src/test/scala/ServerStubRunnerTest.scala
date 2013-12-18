@@ -117,8 +117,6 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     stream.write(fakeBody.toArray)
   }
 
-
-
   test("return nothing until a startup message is received") {
     val bytes = availableBytes(200)
 
