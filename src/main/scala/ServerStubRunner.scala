@@ -2,28 +2,13 @@ import java.io.{DataInputStream, DataOutputStream}
 import com.typesafe.scalalogging.slf4j.Logging
 import java.net.{ServerSocket, Socket}
 
-object OpCodes {
-  val Startup: Byte = 0x01
-  val Ready: Byte = 0x02
-  val Options: Byte = 0x05
-  val Query: Byte = 0x07
-  val Result: Byte = 0x08
-}
-
-object ResponseHeader {
-  val VersionByte = 0x82
-  val FlagsNoCompressionByte = 0x00
-  val DefaultStreamId = 0x00
-  val ZeroLength = Array(0x00, 0x00, 0x00, 0x00).map(_.toByte)
-}
-
-object Header {
+object HeaderConsts {
   val Length = 4
 }
 
 object ServerStubRunner extends Logging {
 
-  val PortNumber = 8042
+  var portNumber = 8042
 
 
   def sendDefaultHeaderWithBlankResponse(socket: Socket, opCode: Byte) = {
@@ -38,15 +23,20 @@ object ServerStubRunner extends Logging {
   }
 
   def main(args: Array[String]) {
+    if (args.length > 0) {
+      val port = args(0)
+      logger.info(s"Overriding port to ${port}")
+      portNumber = port.toInt
+    }
     run()
   }
 
 
   def run() = {
 
-    val serverSocket = new ServerSocket(PortNumber)
+    val serverSocket = new ServerSocket(portNumber)
 
-    logger.info(s"Server started on port ${PortNumber}")
+    logger.info(s"Server started on port ${portNumber}")
 
     while (true) {
 
@@ -56,7 +46,7 @@ object ServerStubRunner extends Logging {
 
       val in = new DataInputStream(clientSocket.getInputStream)
 
-      val header = readRawBytes(in, Header.Length)
+      val header = readRawBytes(in, HeaderConsts.Length)
 
       val messageLength = readInteger(in)
 
@@ -70,6 +60,7 @@ object ServerStubRunner extends Logging {
         }
         case OpCodes.Query => {
           logger.info("Sending result")
+          // TODO: Parse the query and see if it is a use statement
           sendDefaultHeaderWithBlankResponse(clientSocket, OpCodes.Result)
         }
         case opCode @ _ => {
