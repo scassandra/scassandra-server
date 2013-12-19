@@ -5,10 +5,10 @@ class ResponseTest extends FunSuite with ShouldMatchers {
 
   test("Serialisation of a void result") {
     val voidResult = VoidResult
-    val bytes = voidResult.serialize()
+    val bytes = voidResult.serialize().toList
 
-    bytes should equal(List(
-      0x82, // protocol version
+    bytes should equal(List[Byte](
+      (0x82 & 0xFF).toByte, // protocol version
       0x00, // flags
       0x00, // stream
       0x08, // message type - 8 (Result)
@@ -19,10 +19,10 @@ class ResponseTest extends FunSuite with ShouldMatchers {
   
   test("Serialisation of a ready response") {
     val readyMessage = Ready
-    val bytes = readyMessage.serialize()
+    val bytes = readyMessage.serialize().toList
 
-    bytes should equal(List(
-      0x82, // protocol version
+    bytes should equal(List[Byte](
+      (0x82 & 0xFF).toByte, // protocol version
       0x00, // flags
       0x00, // stream
       0x02, // message type - 2 (Ready)

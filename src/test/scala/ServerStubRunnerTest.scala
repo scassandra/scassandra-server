@@ -5,116 +5,17 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
 import scala.collection.immutable.IndexedSeq
 
-object LocalSocket {
-  val ServerHost = "localhost"
-  val ServerPort = 8042
-
-  def apply() = new Socket(ServerHost, ServerPort)
-}
-
-// TODO: the server is not multi-threaded for now. Decide what concurrency pattern to use: Actors, Futures, Executors, etc
-object ServerStubAsThread {
-
-  def apply() = new Thread(new Runnable {
-    def run() {
-      ServerStubRunner.run()
-    }
-  })
-}
-
 class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll {
   var serverThread: Thread = null
-  var socket: Socket = null
+  var connectionToServerStub: Socket = null
 
   before {
-    socket = LocalSocket()
+    connectionToServerStub = ConnectionToServerStub()
   }
 
   after {
-    consumeAllBytes(socket)
-  }
-
-  override def beforeAll {
-
-    // First ensure nothing else is running on port 9042
-    var somethingAlreadyRunning = true
-
-    try {
-      // TODO: use "new" instead? Note: does not throw exception when called without brackets...
-      LocalSocket()
-    } catch {
-      case ce: ConnectException => {
-        somethingAlreadyRunning = false
-      }
-    }
-
-    if (somethingAlreadyRunning) {
-      fail("There must not be any server already running")
-    }
-
-    // Then start the server
-    startServerStub()
-  }
-
-  override def afterAll {
-    stopServerStub()
-  }
-
-
-  def consumeAllBytes(socket: Socket) {
-    if (!socket.isClosed) {
-      val stream = new DataInputStream(socket.getInputStream)
-
-      var byte = stream.read()
-      while (byte != -1) {
-        byte = stream.read()
-      }
-    }
-
-  }
-
-  def availableBytes(timeToWaitMillis: Long): Int = {
-    // TODO: Make this check every N millis rather than wait the full amount first?
-    Thread.sleep(timeToWaitMillis)
-    val stream = new DataInputStream(socket.getInputStream)
-    stream.available()
-  }
-
-  //TODO: Make this timeout
-  def consumeBytes(stream: DataInputStream, numberOfBytes: Int) {
-    for (i <- 1 to numberOfBytes) {
-      stream.read()
-    }
-  }
-
-  def startServerStub() = {
-    serverThread = ServerStubAsThread()
-    serverThread.start()
-    Thread.sleep(100)
-  }
-
-  def stopServerStub() = {
-    serverThread.interrupt()
-  }
-
-  def sendStartupMessage() = {
-    val stream: OutputStream = socket.getOutputStream
-    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Startup))
-    stream.write(Array[Byte](0x00, 0x00, 0x00, 0x16))
-    val fakeBody: IndexedSeq[Byte] = for (i <- 0 until 22) yield 0x00.toByte
-    stream.write(fakeBody.toArray)
-  }
-
-  def sendOptionsMessage {
-    val stream: OutputStream = socket.getOutputStream
-    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Options))
-    sendFakeLengthAndBody(stream)
-  }
-
-  def sendFakeLengthAndBody(stream: OutputStream) {
-    stream.write(Array[Byte](0x00, 0x00, 0x00, 0x16))
-    val fakeBody: IndexedSeq[Byte] = for (i <- 0 until 22) yield 0x00.toByte
-    stream.write(fakeBody.toArray)
+    println("CLosing socket")
+    connectionToServerStub.close()
   }
 
   test("return nothing until a startup message is received") {
@@ -140,10 +41,9 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
   }
 
   test("return a version byte in the response header") {
-
     sendStartupMessage()
 
-    val in = new DataInputStream(socket.getInputStream)
+    val in = new DataInputStream(connectionToServerStub.getInputStream)
 
     // read first byte
     val responseHeaderVersion: Int = in.read()
@@ -155,7 +55,7 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
   test("return a flags byte in the response header with all bits set to 0 on STARTUP request") {
     sendStartupMessage()
 
-    val in = new DataInputStream(socket.getInputStream)
+    val in = new DataInputStream(connectionToServerStub.getInputStream)
 
     // consume first byte
     consumeBytes(in, 1)
@@ -168,10 +68,9 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
   }
 
   test("return a stream byte in the response header") {
-
     sendStartupMessage()
 
-    val in = new DataInputStream(socket.getInputStream)
+    val in = new DataInputStream(connectionToServerStub.getInputStream)
 
     // consume first two bytes
     consumeBytes(in, 2)
@@ -185,10 +84,9 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
   }
 
   test("return a READY opcode byte in the response header on STARTUP request") {
-
     sendStartupMessage()
 
-    val in = new DataInputStream(socket.getInputStream)
+    val in = new DataInputStream(connectionToServerStub.getInputStream)
 
     // consume first three bytes
     consumeBytes(in, 3)
@@ -201,10 +99,9 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
   }
 
   test("return length field with all 4 bytes set to 0 on STARTUP request") {
-
     sendStartupMessage()
 
-    val in = new DataInputStream(socket.getInputStream)
+    val in = new DataInputStream(connectionToServerStub.getInputStream)
 
     // consume first four bytes
     consumeBytes(in, 4)
@@ -231,7 +128,7 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     // For simplicity, <other_things> will not be set in this test case
     //
 
-    val stream: OutputStream = socket.getOutputStream
+    val stream: OutputStream = connectionToServerStub.getOutputStream
 
     val queryAsBytes = "select * from people".toCharArray.map(_.toByte)
 
@@ -253,7 +150,7 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     // In this case, we only set <consistency> = short to 0x0000 -> ANY
     stream.write(Array[Byte](0x00, 0x00))
 
-    val in = new DataInputStream(socket.getInputStream)
+    val in = new DataInputStream(connectionToServerStub.getInputStream)
 
     // consume first three bytes
     consumeBytes(in, 3)
@@ -265,4 +162,88 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     responseHeaderOpCode should equal(opCodeResult)
 
   }
+
+  override def beforeAll {
+    // First ensure nothing else is running on port 9042
+    var somethingAlreadyRunning = true
+
+    try {
+      ConnectionToServerStub()
+    } catch {
+      case ce: ConnectException => {
+        somethingAlreadyRunning = false
+      }
+    }
+
+    if (somethingAlreadyRunning) {
+      fail("There must not be any server already running")
+    }
+
+    // Then start the server
+    startServerStub()
+  }
+
+  override def afterAll {
+    stopServerStub()
+  }
+
+  def availableBytes(timeToWaitMillis: Long): Int = {
+    // TODO: Make this check every N millis rather than wait the full amount first?
+    Thread.sleep(timeToWaitMillis)
+    val stream = new DataInputStream(connectionToServerStub.getInputStream)
+    stream.available()
+  }
+
+  //TODO: Make this timeout
+  def consumeBytes(stream: DataInputStream, numberOfBytes: Int) {
+    for (i <- 1 to numberOfBytes) {
+      stream.read()
+    }
+  }
+
+  def startServerStub() = {
+    serverThread = ServerStubAsThread()
+    serverThread.start()
+    Thread.sleep(1000)
+  }
+
+  def stopServerStub() = {
+    ServerStubRunner.shutdown()
+  }
+
+  def sendStartupMessage() = {
+    val stream: OutputStream = connectionToServerStub.getOutputStream
+    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Startup))
+    stream.write(Array[Byte](0x00, 0x00, 0x00, 0x16))
+    val fakeBody: IndexedSeq[Byte] = for (i <- 0 until 22) yield 0x00.toByte
+    stream.write(fakeBody.toArray)
+  }
+
+  def sendOptionsMessage {
+    val stream: OutputStream = connectionToServerStub.getOutputStream
+    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Options))
+    sendFakeLengthAndBody(stream)
+  }
+
+  def sendFakeLengthAndBody(stream: OutputStream) {
+    stream.write(Array[Byte](0x00, 0x00, 0x00, 0x16))
+    val fakeBody: IndexedSeq[Byte] = for (i <- 0 until 22) yield 0x00.toByte
+    stream.write(fakeBody.toArray)
+  }
+
+}
+
+object ConnectionToServerStub {
+  val ServerHost = "localhost"
+  val ServerPort = 8042
+
+  def apply() = new Socket(ServerHost, ServerPort)
+}
+
+object ServerStubAsThread {
+  def apply() = new Thread(new Runnable {
+    def run() {
+      ServerStubRunner.run()
+    }
+  })
 }
