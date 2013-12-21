@@ -1,13 +1,12 @@
 import akka.actor.Actor
 import akka.io.Tcp
-import akka.io.Tcp.{PeerClosed, Write, Received}
 import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
 
 class ConnectionHandler extends Actor with Logging {
   import Tcp._
 
-  var ready = false;
+  var ready = false
 
   def receive = {
     case Received(data : ByteString) =>  {
@@ -26,7 +25,7 @@ class ConnectionHandler extends Actor with Logging {
         case OpCodes.Query => {
           if (!ready) {
             logger.info("Received query before startup message, sending error")
-            sender ! Write(ByteString(Array[Byte](0x02, 0x00, 0x00, 0x00)))
+            sender ! Write(QueryBeforeReadyMessage.serialize())
           } else {
             logger.info("Sending result")
             // TODO: Parse the query and see if it is a use statement
@@ -40,4 +39,8 @@ class ConnectionHandler extends Actor with Logging {
     }
     case PeerClosed => context stop self
   }
+}
+
+object HeaderConsts {
+  val Length = 4
 }

@@ -24,7 +24,3 @@ class TcpServer(port: Int) extends Actor with Logging {
       connection ! Register(handler)
   }
 }
-
-object HeaderConsts {
-  val Length = 4
-}

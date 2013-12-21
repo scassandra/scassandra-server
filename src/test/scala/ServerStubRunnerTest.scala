@@ -16,7 +16,7 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
   }
 
   after {
-    println("CLosing socket")
+    println("Closing socket")
     connectionToServerStub.close()
   }
 
