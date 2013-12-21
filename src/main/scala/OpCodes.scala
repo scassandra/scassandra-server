@@ -1,4 +1,3 @@
-
 object OpCodes {
   val Startup: Byte = 0x01
   val Ready: Byte = 0x02

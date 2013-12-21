@@ -1,3 +1,5 @@
+import akka.util.ByteString
+
 object ResponseHeader {
   val VersionByte = 0x82
   val FlagsNoCompressionByte = 0x00
@@ -7,30 +9,45 @@ object ResponseHeader {
 
 object ResultTypes {
   val SetKeyspace : Int = 0x0003
-  val VoidResult : Int = 0x0001
+  val VoidResult : Int = 1
 }
 
 class Header(val opCode : Int, val length : Int) {
-  val version : Int = ResponseHeader.VersionByte
+  val version = ResponseHeader.VersionByte
   val flags : Int = ResponseHeader.FlagsNoCompressionByte
   val streamId : Int = ResponseHeader.DefaultStreamId
 }
 class Response(val header : Header) {
-  def serialize() : List[Int] = ???
+  def serialize() : ByteString = ???
 }
 
 object VoidResult extends Response(new Header(OpCodes.Result, 4)) {
-  val resultType = ResultTypes.VoidResult
-  val rest = List(0x0, 0x0, 0x0, 0x4, 0x0, 0x0, 0x0, 0x1)
+  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+  val Length = 4
 
-  override def serialize() : List[Int] = {
-    header.version :: header.flags :: header.streamId :: header.opCode :: rest
+  override def serialize() : ByteString = {
+    val bs = ByteString.newBuilder
+    bs.putByte((header.version & 0xFF).toByte)
+    bs.putByte(header.flags.toByte)
+    bs.putByte(header.streamId.toByte)
+    bs.putByte(header.opCode.toByte)
+    bs.putInt(Length)
+    bs.putInt(ResultTypes.VoidResult)
+    bs.result()
   }
 }
 
 object Ready extends Response(new Header(OpCodes.Ready, 0)) {
-  val length = List(0x0, 0x0, 0x0, 0x0)
-  override def serialize() : List[Int] = {
-    header.version :: header.flags :: header.streamId :: header.opCode :: length
+
+  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+
+  override def serialize() : ByteString = {
+    val bs = ByteString.newBuilder
+    bs.putByte((header.version & 0xFF).toByte)
+    bs.putByte(header.flags.toByte)
+    bs.putByte(header.streamId.toByte)
+    bs.putByte(header.opCode.toByte)
+    bs.putInt(0)
+    bs.result()
   }
 }
