@@ -1,3 +1,4 @@
+import akka.util.ByteString
 import java.io._
 import java.net.Socket
 import java.net.ConnectException
@@ -8,6 +9,7 @@ import scala.collection.immutable.IndexedSeq
 class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll {
   var serverThread: Thread = null
   var connectionToServerStub: Socket = null
+  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
   before {
     connectionToServerStub = ConnectionToServerStub()
@@ -115,8 +117,15 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     length should equal(0)
   }
 
+  def readReadyMessage() = {
+    val stream: DataInputStream = new DataInputStream(connectionToServerStub.getInputStream)
+    consumeBytes(stream, 8)
+  }
+
   test("return RESULT OpCode on Query") {
 
+    sendStartupMessage()
+    readReadyMessage()
     //
     //
     // A select query has: <header><body>
@@ -161,6 +170,20 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     val opCodeResult = 0x08
     responseHeaderOpCode should equal(opCodeResult)
 
+  }
+
+  test("should reject query message if startup message has not been sent") {
+    sendQueryMessage()
+
+    val in = new DataInputStream(connectionToServerStub.getInputStream)
+
+    // consume first three bytes
+    consumeBytes(in, 3)
+
+    // read fourth byte
+    val responseHeaderOpCode: Int = in.read()
+
+    responseHeaderOpCode should equal(OpCodes.Error)
   }
 
   override def beforeAll {
@@ -219,6 +242,19 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     stream.write(fakeBody.toArray)
   }
 
+  def sendQueryMessage(queryString : String = "select * from people") = {
+    val stream: OutputStream = connectionToServerStub.getOutputStream
+
+    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Query))
+
+    val body : List[Byte] = serializeLongString (queryString) :::
+      serializeShort(0x001) ::: // consistency
+      List[Byte](0x00) ::: // query flags
+      List[Byte]()
+
+    stream.write(body.toArray)
+  }
+
   def sendOptionsMessage {
     val stream: OutputStream = connectionToServerStub.getOutputStream
     stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Options))
@@ -229,6 +265,27 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     stream.write(Array[Byte](0x00, 0x00, 0x00, 0x16))
     val fakeBody: IndexedSeq[Byte] = for (i <- 0 until 22) yield 0x00.toByte
     stream.write(fakeBody.toArray)
+  }
+
+  def serializeLongString(string: String): List[Byte] = {
+    serializeInt(string.length) :::
+      serializeString(string)
+  }
+
+  def serializeInt(int: Int): List[Byte] = {
+    val frameBuilder = ByteString.newBuilder
+    frameBuilder.putInt(int)
+    frameBuilder.result().toList
+  }
+
+  def serializeString(string: String): List[Byte] = {
+    string.getBytes.toList
+  }
+
+  def serializeShort(short : Short) : List[Byte] = {
+    val frameBuilder = ByteString.newBuilder
+    frameBuilder.putShort(short)
+    frameBuilder.result().toList
   }
 
 }

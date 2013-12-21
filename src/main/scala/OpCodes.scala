@@ -1,4 +1,5 @@
 object OpCodes {
+  val Error: Byte = 0x00
   val Startup: Byte = 0x01
   val Ready: Byte = 0x02
   val Options: Byte = 0x05
