@@ -7,7 +7,9 @@ class ConnectionHandler extends Actor with Logging {
   import Tcp._
 
   var ready = false
-
+  // TODO: This will only work if the entire message comes in a single message
+  // Otherwise it will result in the first half being processed then the second
+  // half being treated as a completely new message
   def receive = {
     case Received(data : ByteString) =>  {
       logger.info(s"Received a message ${data}")

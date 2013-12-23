@@ -27,7 +27,6 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
 
     sendStartupMessage()
 
-    //TODO: Verify contents?
     val bytesAfterStartupMessage = availableBytes(200)
     bytesAfterStartupMessage should equal(8)
   }
@@ -70,9 +69,8 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
   }
 
   test("return a stream byte in the response header") {
+    implicit val in = new DataInputStream(connectionToServerStub.getInputStream)
     sendStartupMessage()
-
-    val in = new DataInputStream(connectionToServerStub.getInputStream)
 
     // consume first two bytes
     consumeBytes(in, 2)
@@ -85,19 +83,13 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     responseHeaderStream should equal(noStreamId)
   }
 
-  test("return a READY opcode byte in the response header on STARTUP request") {
+  test("return a READY opCode byte in the response header on STARTUP request") {
+    implicit val in = new DataInputStream(connectionToServerStub.getInputStream)
     sendStartupMessage()
 
-    val in = new DataInputStream(connectionToServerStub.getInputStream)
+    val responseHeaderOpCode: Int = readResponseHeaderOpCode
 
-    // consume first three bytes
-    consumeBytes(in, 3)
-
-    // read fourth byte
-    val responseHeaderOpCode: Int = in.read()
-
-    val opCodeReady = 0x02
-    responseHeaderOpCode should equal(opCodeReady)
+    responseHeaderOpCode should equal(OpCodes.Ready)
   }
 
   test("return length field with all 4 bytes set to 0 on STARTUP request") {
@@ -117,59 +109,19 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     length should equal(0)
   }
 
-  def readReadyMessage() = {
-    val stream: DataInputStream = new DataInputStream(connectionToServerStub.getInputStream)
-    consumeBytes(stream, 8)
-  }
-
   test("return RESULT OpCode on Query") {
+    implicit val stream: OutputStream = connectionToServerStub.getOutputStream
+    implicit val inputStream : DataInputStream = new DataInputStream(connectionToServerStub.getInputStream)
 
     sendStartupMessage()
     readReadyMessage()
-    //
-    //
-    // A select query has: <header><body>
-    // where <header> is the usual and
-    // body = <query><query_parameters>
-    // where <query> = well, the query...
-    // and  <query_parameters> = <consistency><other_things>
-    //
-    // For simplicity, <other_things> will not be set in this test case
-    //
-
-    val stream: OutputStream = connectionToServerStub.getOutputStream
 
     val queryAsBytes = "select * from people".toCharArray.map(_.toByte)
+    sendQuery(queryAsBytes)
 
-    // Header - Part 1
-    // TODO - Confirm what the first three bytes should be
-    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Query))
+    val responseHeaderOpCode: Int = readResponseHeaderOpCode
 
-    // Header - Part 2
-    // TODO - how to convert an Integer into an array of Bytes? Luckily this length fits into one byte
-    // body length = query length + query parameters length.
-    val bodyLengthAsByte = (queryAsBytes.length + 2).toByte
-    stream.write(Array[Byte](0x00, 0x00, 0x00, bodyLengthAsByte))
-
-
-    // Body - Part 1 : <query>
-    stream.write(queryAsBytes)
-
-    // Body - Part 2 : <query_parameters>
-    // In this case, we only set <consistency> = short to 0x0000 -> ANY
-    stream.write(Array[Byte](0x00, 0x00))
-
-    val in = new DataInputStream(connectionToServerStub.getInputStream)
-
-    // consume first three bytes
-    consumeBytes(in, 3)
-
-    // read fourth byte
-    val responseHeaderOpCode: Int = in.read()
-
-    val opCodeResult = 0x08
-    responseHeaderOpCode should equal(opCodeResult)
-
+    responseHeaderOpCode should equal(OpCodes.Result)
   }
 
   test("should reject query message if startup message has not been sent") {
@@ -208,6 +160,19 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
 
   override def afterAll {
     stopServerStub()
+  }
+
+  def readReadyMessage() = {
+    val stream: DataInputStream = new DataInputStream(connectionToServerStub.getInputStream)
+    consumeBytes(stream, 8)
+  }
+
+  def readResponseHeaderOpCode()(implicit inputStream : DataInputStream) = {
+    // consume first three bytes
+    consumeBytes(inputStream, 3)
+
+    // read fourth byte
+    inputStream.read()
   }
 
   def availableBytes(timeToWaitMillis: Long): Int = {
@@ -286,6 +251,18 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     val frameBuilder = ByteString.newBuilder
     frameBuilder.putShort(short)
     frameBuilder.result().toList
+  }
+  
+  def sendQuery(query : Array[Byte])(implicit stream : OutputStream) = {
+    val queryParamsWithConsistencyOfANY = Array[Byte](0x00, 0x00)
+
+    stream.write(Array[Byte](0x2, 0x0, 0x0, OpCodes.Query))
+    val bodyLengthAsByte = (query.length + 2).toByte
+    stream.write(serializeInt(bodyLengthAsByte).toArray)
+
+    stream.write(query)
+    stream.write(queryParamsWithConsistencyOfANY)
+
   }
 
 }
