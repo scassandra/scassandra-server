@@ -7,36 +7,66 @@ class ConnectionHandler extends Actor with Logging {
   import Tcp._
 
   var ready = false
-  // TODO: This will only work if the entire message comes in a single message
-  // Otherwise it will result in the first half being processed then the second
-  // half being treated as a completely new message
+  var partialMessage = false
+  var previousPart : ByteString = _
+
   def receive = {
     case Received(data : ByteString) =>  {
       logger.info(s"Received a message ${data}")
-      val header = data.take(HeaderConsts.Length)
-      logger.info(s"Header ${header}")
-      val length = data(7)
-      logger.info(s"Length is ${length}")
 
-      header(3) match {
-        case OpCodes.Startup => {
-          logger.info("Sending ready message")
-          sender ! Write(Ready.serialize())
-          ready = true
-        }
-        case OpCodes.Query => {
-          if (!ready) {
-            logger.info("Received query before startup message, sending error")
-            sender ! Write(QueryBeforeReadyMessage.serialize())
-          } else {
-            logger.info("Sending result")
-            // TODO: Parse the query and see if it is a use statement
-            sender ! Write(VoidResult.serialize())
+      var allData = data
+      if (partialMessage) {
+        allData = previousPart ++ data
+      }
+      val messageLength = allData.length
+
+      logger.info(s"Whole message length so far is ${messageLength}")
+
+      if (messageLength >= 8) {
+        val opCode : Byte = allData(3)
+        logger.info(s"Length is ${messageLength}")
+
+        val bodyLengthArray  = allData.take(8).drop(4)
+        logger.info(s"Body length buffer ${bodyLengthArray}")
+
+        val bodyLength = bodyLengthArray.asByteBuffer.getInt
+        logger.info(s"Body length ${bodyLength}")
+
+        if (allData.length == bodyLength + 8) {
+          partialMessage = false
+          val messageBody = allData.drop(8).take(bodyLength)
+          logger.info(s"Whole body ${messageBody}")
+
+          opCode match {
+            case OpCodes.Startup => {
+              logger.info("Sending ready message")
+              sender ! Write(Ready.serialize())
+              ready = true
+            }
+            case OpCodes.Query => {
+              if (!ready) {
+                logger.info("Received query before startup message, sending error")
+                sender ! Write(QueryBeforeReadyMessage.serialize())
+              } else {
+                logger.info("Sending result")
+                // TODO: Parse the query and see if it is a use statement
+                sender ! Write(VoidResult.serialize())
+              }
+            }
+            case opCode @ _ => {
+              logger.info(s"Received unknown opcode ${opCode}")
+            }
           }
+        } else {
+          logger.info(s"Not received whole message yet, currently ${allData.length} but need ${bodyLength + 8}")
+          partialMessage = true
+          previousPart = allData
         }
-        case opCode @ _ => {
-          logger.info(s"Received unknown opcode ${opCode}")
-        }
+
+      } else {
+        logger.info("Not received length yet..")
+        partialMessage = true
+        previousPart = allData
       }
     }
     case PeerClosed => context stop self

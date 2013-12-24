@@ -124,18 +124,80 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     responseHeaderOpCode should equal(OpCodes.Result)
   }
 
-  test("should reject query message if startup message has not been sent") {
-    sendQueryMessage()
+//  test("should reject query message if startup message has not been sent") {
+//    val in = new DataInputStream(connectionToServerStub.getInputStream)
+//
+//    // consume first three bytes
+//    consumeBytes(in, 3)
+//
+//    // read fourth byte
+//    val responseHeaderOpCode: Int = in.read()
+//
+//    responseHeaderOpCode should equal(OpCodes.Error)
+//  }
 
-    val in = new DataInputStream(connectionToServerStub.getInputStream)
+  test("test receiving size separately from opcode") {
+    val stream: OutputStream = connectionToServerStub.getOutputStream
+    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Startup))
+    stream.flush()
+    Thread.sleep(500)
+    stream.write(Array[Byte](0x00, 0x00, 0x00, 0x0)) // empty body
+    stream.flush()
 
-    // consume first three bytes
-    consumeBytes(in, 3)
+    readReadyMessage()
+  }
 
-    // read fourth byte
-    val responseHeaderOpCode: Int = in.read()
+  test("test receiving body separately from opcode and size") {
+    val stream: OutputStream = connectionToServerStub.getOutputStream
+    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Startup, 0x00, 0x00, 0x00, 0x16))
+    stream.flush()
+    Thread.sleep(500)
+    stream.write(Array[Byte](0x0,0x1,0x0,0xb,0x43,0x51,0x4c,0x5f,0x56,0x45,0x52,0x53,0x49,0x4f,0x4e,0x00,0x05,0x33,0x2e,30,0x2e,30))
+    stream.flush()
 
-    responseHeaderOpCode should equal(OpCodes.Error)
+    readReadyMessage()
+  }
+
+  test("test receiving start of header separately to opcode") {
+    val stream: OutputStream = connectionToServerStub.getOutputStream
+    stream.write(Array[Byte](0x02, 0x00))
+    stream.flush()
+    Thread.sleep(500)
+    stream.write(Array[Byte](0x00, OpCodes.Startup, 0x00, 0x00, 0x00, 0x0)) // empty body
+    stream.flush()
+
+    readReadyMessage()
+  }
+
+  test("test receiving message in three parts") {
+    val stream: OutputStream = connectionToServerStub.getOutputStream
+    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Startup, 0x00, 0x00, 0x00, 0x16))
+    stream.flush()
+    Thread.sleep(500)
+    stream.write(Array[Byte](0x0,0x1,0x0,0xb,0x43,0x51))
+    stream.flush()
+    Thread.sleep(500)
+    stream.write(Array[Byte](0x4c,0x5f,0x56,0x45,0x52,0x53,0x49,0x4f,0x4e,0x00,0x05,0x33,0x2e,30,0x2e,30))
+
+    readReadyMessage()
+  }
+
+  test("test receiving whole messages after partial messages") {
+    implicit val stream: OutputStream = connectionToServerStub.getOutputStream
+    implicit val inputStream : DataInputStream = new DataInputStream(connectionToServerStub.getInputStream)
+
+    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Startup, 0x00, 0x00, 0x00, 0x16))
+    stream.flush()
+    Thread.sleep(500)
+    stream.write(Array[Byte](0x0,0x1,0x0,0xb,0x43,0x51))
+    stream.flush()
+    Thread.sleep(500)
+    stream.write(Array[Byte](0x4c,0x5f,0x56,0x45,0x52,0x53,0x49,0x4f,0x4e,0x00,0x05,0x33,0x2e,30,0x2e,30))
+
+    readReadyMessage()
+    sendQuery("select * from people".getBytes)
+    val responseHeaderOpCode: Int = readResponseHeaderOpCode
+    responseHeaderOpCode should equal(OpCodes.Result)
   }
 
   override def beforeAll {
@@ -271,7 +333,11 @@ object ConnectionToServerStub {
   val ServerHost = "localhost"
   val ServerPort = 8042
 
-  def apply() = new Socket(ServerHost, ServerPort)
+  def apply() = {
+    val socket = new Socket(ServerHost, ServerPort)
+    socket.setSoTimeout(1000)
+    socket
+  }
 }
 
 object ServerStubAsThread {
