@@ -192,7 +192,7 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
   def startServerStub() = {
     serverThread = ServerStubAsThread()
     serverThread.start()
-    Thread.sleep(1000)
+    Thread.sleep(5000)
   }
 
   def stopServerStub() = {
