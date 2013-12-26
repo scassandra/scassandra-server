@@ -1,4 +1,4 @@
-import akka.actor.Actor
+import akka.actor.{Props, Actor}
 import akka.io.Tcp
 import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
@@ -48,9 +48,8 @@ class ConnectionHandler extends Actor with Logging {
                 logger.info("Received query before startup message, sending error")
                 sender ! Write(QueryBeforeReadyMessage.serialize())
               } else {
-                logger.info("Sending result")
-                // TODO: Parse the query and see if it is a use statement
-                sender ! Write(VoidResult.serialize())
+                val queryHandler = context.actorOf(Props(classOf[QueryHandler], sender))
+                queryHandler ! QueryHandlerMessages.Query(messageBody)
               }
             }
             case opCode @ _ => {

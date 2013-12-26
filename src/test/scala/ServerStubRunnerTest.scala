@@ -2,6 +2,7 @@ import akka.util.ByteString
 import java.io._
 import java.net.Socket
 import java.net.ConnectException
+import java.util
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
 import scala.collection.immutable.IndexedSeq
@@ -124,17 +125,18 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     responseHeaderOpCode should equal(OpCodes.Result)
   }
 
-//  test("should reject query message if startup message has not been sent") {
-//    val in = new DataInputStream(connectionToServerStub.getInputStream)
-//
-//    // consume first three bytes
-//    consumeBytes(in, 3)
-//
-//    // read fourth byte
-//    val responseHeaderOpCode: Int = in.read()
-//
-//    responseHeaderOpCode should equal(OpCodes.Error)
-//  }
+  test("should reject query message if startup message has not been sent") {
+    val in = new DataInputStream(connectionToServerStub.getInputStream)
+    sendQueryMessage()
+    
+    // consume first three bytes
+    consumeBytes(in, 3)
+
+    // read fourth byte
+    val responseHeaderOpCode: Int = in.read()
+
+    responseHeaderOpCode should equal(OpCodes.Error)
+  }
 
   test("test receiving size separately from opcode") {
     val stream: OutputStream = connectionToServerStub.getOutputStream
@@ -198,6 +200,47 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     sendQuery("select * from people".getBytes)
     val responseHeaderOpCode: Int = readResponseHeaderOpCode
     responseHeaderOpCode should equal(OpCodes.Result)
+  }
+
+  test("should return a result message with keyspace name on use statement") {
+    implicit val in = new DataInputStream(connectionToServerStub.getInputStream)
+    implicit val stream: OutputStream = connectionToServerStub.getOutputStream
+
+    sendStartupMessage()
+    readReadyMessage()
+
+    sendQuery("use people".getBytes)
+
+    val responseOpCode = readResponseHeaderOpCode()
+    responseOpCode should equal(OpCodes.Result)
+
+    val message = readMessageBody()
+    println(s"Message body received ${util.Arrays.toString(message)}")
+
+    val responseType = takeInt(message)
+    responseType shouldEqual(ResultTypes.SetKeyspace)
+
+    val cqlString = takeString(message.drop(4))
+    cqlString.trim should equal("people")
+  }
+
+  def takeInt(bytes : Array[Byte]) = {
+    ByteString(bytes.take(4)).asByteBuffer.getInt
+  }
+
+  def takeString(bytes : Array[Byte]) = {
+    val stringLength = ByteString(bytes.take(2)).asByteBuffer.getShort
+    new String(bytes.drop(2).take(stringLength))
+  }
+
+  def readMessageBody()(implicit inputStream : DataInputStream) = {
+    // read the length
+    val length = readInteger()
+    println(s"Read length ${length}")
+    // read the rest
+    val messageBody = new Array[Byte](length)
+    inputStream.read(messageBody)
+    messageBody
   }
 
   override def beforeAll {
@@ -267,12 +310,15 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     stream.write(Array[Byte](0x00, 0x00, 0x00, 0x16))
     val fakeBody: IndexedSeq[Byte] = for (i <- 0 until 22) yield 0x00.toByte
     stream.write(fakeBody.toArray)
+    stream.flush()
   }
 
   def sendQueryMessage(queryString : String = "select * from people") = {
     val stream: OutputStream = connectionToServerStub.getOutputStream
 
+    val bodyLength = serializeInt(queryString.size + 4 + 2 + 1)
     stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Query))
+    stream.write(bodyLength.toArray)
 
     val body : List[Byte] = serializeLongString (queryString) :::
       serializeShort(0x001) ::: // consistency
@@ -324,7 +370,14 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
 
     stream.write(query)
     stream.write(queryParamsWithConsistencyOfANY)
+    stream.flush()
+  }
 
+  def readInteger()(implicit inputStream : DataInputStream) = {
+    val bytes = new Array[Byte](4)
+    inputStream.read(bytes)
+    val byteString = ByteString(bytes)
+    byteString.toByteBuffer.getInt
   }
 
 }

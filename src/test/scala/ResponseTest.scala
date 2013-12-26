@@ -32,7 +32,7 @@ class ResponseTest extends FunSuite with ShouldMatchers {
 
   test("Serialisation of a error response client protocol error") {
     val errorCode : Byte = 0xA
-    val errorText = "Any odl error message"
+    val errorText = "Any old error message"
     val errorMessage = new Error(errorCode, errorText)
     val bytes : List[Byte] = errorMessage.serialize().toList
 
@@ -52,6 +52,23 @@ class ResponseTest extends FunSuite with ShouldMatchers {
     QueryBeforeReadyMessage.header.opCode should equal(OpCodes.Error)
     QueryBeforeReadyMessage.errorCode should equal(0xA)
     QueryBeforeReadyMessage.errorMessage should equal("Query sent before StartUp message")
+  }
+
+  test("Serialisation of a setkeyspace result response") {
+    val keyspaceName = "people"
+    val setKeyspaceMessage = SetKeyspace(keyspaceName)
+    val bytes = setKeyspaceMessage.serialize()
+
+
+    bytes should equal(List[Byte](
+      (0x82 & 0xFF).toByte, // protocol version
+      0x00, // flags
+      0x00, // stream
+      0x08, // message type - 8 (Result)
+      0x0, 0x0, 0x0, (keyspaceName.length + 6).toByte, // 4 byte integer - length (number of bytes)
+      0x0, 0x0, 0x0, 0x3, // type of result - set_keyspace
+      0x0, keyspaceName.size.toByte) :::
+      keyspaceName.getBytes().toList)
   }
 
 }
