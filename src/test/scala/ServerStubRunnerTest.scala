@@ -117,8 +117,8 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     sendStartupMessage()
     readReadyMessage()
 
-    val queryAsBytes = "select * from people".toCharArray.map(_.toByte)
-    sendQuery(queryAsBytes)
+    val queryAsBytes = "select * from people"
+    sendQueryMessage(queryAsBytes)
 
     val responseHeaderOpCode: Int = readResponseHeaderOpCode
 
@@ -197,7 +197,7 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     stream.write(Array[Byte](0x4c,0x5f,0x56,0x45,0x52,0x53,0x49,0x4f,0x4e,0x00,0x05,0x33,0x2e,30,0x2e,30))
 
     readReadyMessage()
-    sendQuery("select * from people".getBytes)
+    sendQueryMessage("select * from people")
     val responseHeaderOpCode: Int = readResponseHeaderOpCode
     responseHeaderOpCode should equal(OpCodes.Result)
   }
@@ -209,7 +209,7 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     sendStartupMessage()
     readReadyMessage()
 
-    sendQuery("use people".getBytes)
+    sendQueryMessage("use people")
 
     val responseOpCode = readResponseHeaderOpCode()
     responseOpCode should equal(OpCodes.Result)
@@ -320,7 +320,8 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Query))
     stream.write(bodyLength.toArray)
 
-    val body : List[Byte] = serializeLongString (queryString) :::
+    val body : List[Byte] =
+      serializeLongString(queryString) :::
       serializeShort(0x001) ::: // consistency
       List[Byte](0x00) ::: // query flags
       List[Byte]()
@@ -359,18 +360,6 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     val frameBuilder = ByteString.newBuilder
     frameBuilder.putShort(short)
     frameBuilder.result().toList
-  }
-  
-  def sendQuery(query : Array[Byte])(implicit stream : OutputStream) = {
-    val queryParamsWithConsistencyOfANY = Array[Byte](0x00, 0x00)
-
-    stream.write(Array[Byte](0x2, 0x0, 0x0, OpCodes.Query))
-    val bodyLengthAsByte = (query.length + 2).toByte
-    stream.write(serializeInt(bodyLengthAsByte).toArray)
-
-    stream.write(query)
-    stream.write(queryParamsWithConsistencyOfANY)
-    stream.flush()
   }
 
   def readInteger()(implicit inputStream : DataInputStream) = {
