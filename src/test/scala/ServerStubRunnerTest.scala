@@ -315,19 +315,10 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
 
   def sendQueryMessage(queryString : String = "select * from people") = {
     val stream: OutputStream = connectionToServerStub.getOutputStream
-
-    val bodyLength = serializeInt(queryString.size + 4 + 2 + 1)
-    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Query))
-    stream.write(bodyLength.toArray)
-
-    val body : List[Byte] =
-      serializeLongString(queryString) :::
-      serializeShort(0x001) ::: // consistency
-      List[Byte](0x00) ::: // query flags
-      List[Byte]()
-
-    stream.write(body.toArray)
+    val queryMessage = MessageHelper.createQueryMessage(queryString)
+    stream.write(queryMessage.toArray)
   }
+
 
   def sendOptionsMessage {
     val stream: OutputStream = connectionToServerStub.getOutputStream
@@ -339,27 +330,6 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     stream.write(Array[Byte](0x00, 0x00, 0x00, 0x16))
     val fakeBody: IndexedSeq[Byte] = for (i <- 0 until 22) yield 0x00.toByte
     stream.write(fakeBody.toArray)
-  }
-
-  def serializeLongString(string: String): List[Byte] = {
-    serializeInt(string.length) :::
-      serializeString(string)
-  }
-
-  def serializeInt(int: Int): List[Byte] = {
-    val frameBuilder = ByteString.newBuilder
-    frameBuilder.putInt(int)
-    frameBuilder.result().toList
-  }
-
-  def serializeString(string: String): List[Byte] = {
-    string.getBytes.toList
-  }
-
-  def serializeShort(short : Short) : List[Byte] = {
-    val frameBuilder = ByteString.newBuilder
-    frameBuilder.putShort(short)
-    frameBuilder.result().toList
   }
 
   def readInteger()(implicit inputStream : DataInputStream) = {
