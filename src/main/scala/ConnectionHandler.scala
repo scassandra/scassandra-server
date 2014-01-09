@@ -1,9 +1,9 @@
-import akka.actor.{Props, Actor}
+import akka.actor.{ActorRef, ActorRefFactory, Actor}
 import akka.io.Tcp
 import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
 
-class ConnectionHandler extends Actor with Logging {
+class ConnectionHandler(queryHandlerMaker: (ActorRefFactory, ActorRef) => ActorRef) extends Actor with Logging {
   import Tcp._
 
   var ready = false
@@ -11,6 +11,7 @@ class ConnectionHandler extends Actor with Logging {
   var previousPart : ByteString = _
 
   def receive = {
+
     case Received(data : ByteString) =>  {
       logger.info(s"Received a message ${data}")
 
@@ -48,7 +49,7 @@ class ConnectionHandler extends Actor with Logging {
                 logger.info("Received query before startup message, sending error")
                 sender ! Write(QueryBeforeReadyMessage.serialize())
               } else {
-                val queryHandler = context.actorOf(Props(classOf[QueryHandler], sender))
+                val queryHandler = queryHandlerMaker(context, sender)
                 queryHandler ! QueryHandlerMessages.Query(messageBody)
               }
             }
@@ -69,9 +70,8 @@ class ConnectionHandler extends Actor with Logging {
       }
     }
     case PeerClosed => context stop self
+    case unknown @ _ => {
+      logger.info(s"Unknown message ${unknown}")
+    }
   }
-}
-
-object HeaderConsts {
-  val Length = 4
 }

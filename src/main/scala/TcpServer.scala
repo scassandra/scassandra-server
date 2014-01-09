@@ -1,4 +1,4 @@
-import akka.actor.{Props, Actor}
+import akka.actor.{ActorRef, ActorRefFactory, Props, Actor}
 import akka.io.{IO, Tcp}
 import com.typesafe.scalalogging.slf4j.Logging
 import java.net.InetSocketAddress
@@ -19,7 +19,8 @@ class TcpServer(port: Int) extends Actor with Logging {
 
     case c @ Connected(remote, local) =>
       logger.info("Incoming connection, creating a connection handler!")
-      val handler = context.actorOf(Props[ConnectionHandler])
+      //context.actorOf(Props[QueryHandler])
+      val handler = context.actorOf(Props(classOf[ConnectionHandler], (af: ActorRefFactory, sender: ActorRef) => af.actorOf(Props(classOf[QueryHandler], sender))))
       val connection = sender
       connection ! Register(handler)
   }
