@@ -14,14 +14,15 @@ class TcpServer(port: Int) extends Actor with Logging {
     case b @ Bound(localAddress) => {
       logger.info(s"Server bound to port ${port}..")
     }
-
-    case CommandFailed(_: Bind) => context stop self
-
-    case c @ Connected(remote, local) =>
+    case CommandFailed(_: Bind) => {
+      context stop self
+    }
+    case c @ Connected(remote, local) => {
       logger.info("Incoming connection, creating a connection handler!")
-      //context.actorOf(Props[QueryHandler])
-      val handler = context.actorOf(Props(classOf[ConnectionHandler], (af: ActorRefFactory, sender: ActorRef) => af.actorOf(Props(classOf[QueryHandler], sender))))
-      val connection = sender
-      connection ! Register(handler)
+      val handler = context.actorOf(Props(classOf[ConnectionHandler],
+        (af: ActorRefFactory, sender: ActorRef) => af.actorOf(Props(classOf[QueryHandler], sender))))
+      logger.info(s"Sending register with connection handler ${handler}")
+      sender ! Register(handler)
+    }
   }
 }
