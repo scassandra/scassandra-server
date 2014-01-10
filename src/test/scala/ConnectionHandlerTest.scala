@@ -1,3 +1,4 @@
+import QueryHandlerMessages.Query
 import akka.actor.ActorSystem
 import akka.io.Tcp.{Received, Write}
 import akka.testkit._
@@ -68,4 +69,43 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with ShouldMatc
     expectNoMsg()
     queryHandlerTestProbe.expectNoMsg()
   }
+
+
+  test("Should forward query to a new QueryHandler") {
+    sendStartupMessage()
+    val query = "select * from people"
+    val queryLength = Array[Byte](0x0, 0x0, 0x0, query.length.toByte)
+    val queryOptions = Array[Byte](0,1,0)
+    val queryWithLengthAndOptions = queryLength ++ query.getBytes() ++ queryOptions
+    val queryMessage = MessageHelper.createQueryMessage(query)
+
+    testActorRef ! Received(ByteString(queryMessage.toArray))
+
+    queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions)))
+  }
+
+  test("Should handle query message coming in two parts") {
+    sendStartupMessage()
+    val query = "select * from people"
+    val queryLength = Array[Byte](0x0, 0x0, 0x0, query.length.toByte)
+    val queryOptions = Array[Byte](0,1,0)
+    val queryWithLengthAndOptions = queryLength ++ query.getBytes() ++ queryOptions
+    val queryMessage = MessageHelper.createQueryMessage(query)
+    
+    val queryMessageFirstHalf = queryMessage take 5 toArray
+    val queryMessageSecondHalf = queryMessage drop 5 toArray
+
+    testActorRef ! Received(ByteString(queryMessageFirstHalf))
+    queryHandlerTestProbe.expectNoMsg()
+    
+    testActorRef ! Received(ByteString(queryMessageSecondHalf))
+    queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions)))
+  }
+
+
+  private def sendStartupMessage() = {
+    val startupMessage = MessageHelper.createStartupMessage()
+    testActorRef ! Received(ByteString(startupMessage.toArray))
+  }
+
 }

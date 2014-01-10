@@ -18,19 +18,33 @@ object MessageHelper {
     header ::: body
   }
 
-  def serializeLongString(string: String): List[Byte] = {
+  def createStartupMessage() : List[Byte] = {
+    val messageBody = List[Byte](0x0, 0x1 , // number of start up options
+    0x0, "CQL_VERSION".length.toByte)  :::
+    "CQL_VERSION".getBytes.toList :::
+      List[Byte](0x0, "3.0.0".length.toByte) :::
+      "3.0.0".getBytes.toList
+
+    val bytes : List[Byte] = List[Byte](HeaderConsts.ProtocolVersion, 0x0, 0x0, OpCodes.Startup) :::
+      List[Byte](0x0, 0x0, 0x0, messageBody.length.toByte) :::
+      messageBody
+
+    bytes
+  }
+
+  private def serializeLongString(string: String): List[Byte] = {
     serializeInt(string.length) :::
       serializeString(string)
   }
-  def serializeInt(int: Int): List[Byte] = {
+  private def serializeInt(int: Int): List[Byte] = {
     val frameBuilder = ByteString.newBuilder
     frameBuilder.putInt(int)
     frameBuilder.result().toList
   }
-  def serializeString(string: String): List[Byte] = {
+  private def serializeString(string: String): List[Byte] = {
     string.getBytes.toList
   }
-  def serializeShort(short : Short) : List[Byte] = {
+  private def serializeShort(short : Short) : List[Byte] = {
     val frameBuilder = ByteString.newBuilder
     frameBuilder.putShort(short)
     frameBuilder.result().toList
