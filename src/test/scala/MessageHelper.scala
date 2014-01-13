@@ -1,12 +1,17 @@
 import akka.util.ByteString
 
 object MessageHelper {
+  def dropHeaderAndLength(bytes: Array[Byte]) : Array[Byte] = {
+    bytes drop 8 // drops the header and length
+  }
+  
+
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
-  def createQueryMessage(queryString : String) : List[Byte] = {
+  def createQueryMessage(queryString : String, stream : Byte = ResponseHeader.DefaultStreamId) : List[Byte] = {
     val bodyLength = serializeInt(queryString.size + 4 + 2 + 1)
-    val header = List[Byte](0x02, 0x00, 0x00, OpCodes.Query) :::
+    val header = List[Byte](0x02, 0x00, stream, OpCodes.Query) :::
       bodyLength
 
     val body : List[Byte] =
@@ -31,6 +36,28 @@ object MessageHelper {
 
     bytes
   }
+
+  def createRegisterMessage() : List[Byte] = {
+    val header = List[Byte](
+      HeaderConsts.ClientProtocolVersion,
+      0x0,
+      0x0,
+      OpCodes.Register
+    )
+    // TOPOLOGY_CHANGE, STATUS_CHANGE, SCHEMA_CHANGE
+    val registerBody = createRegisterMessageBody()
+
+    header ::: serializeInt(registerBody.length) ::: registerBody
+  }
+
+  def createRegisterMessageBody(event : String = "TOPOLOGY_CHANGE") : List[Byte] = {
+    val numberOfOptions = serializeShort(1)
+
+    val singleOption = serializeString(event)
+
+    numberOfOptions ::: singleOption
+  }
+
 
   private def serializeLongString(string: String): List[Byte] = {
     serializeInt(string.length) :::

@@ -18,19 +18,21 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
 
   test("Should return set keyspace message for use statement") {
     val useStatement: String = "use keyspace"
+    val stream: Byte = 0x02
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(useStatement).toArray.drop(8))
  
-    underTest ! QueryHandlerMessages.Query(setKeyspaceQuery)
+    underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbe.expectMsg(Write(SetKeyspace("keyspace").serialize()))
+    testProbe.expectMsg(Write(SetKeyspace("keyspace", stream).serialize()))
   }
   
   test("Should return void result for everything apart from use statement") {
     val someCqlStatement: String = "some other cql statement"
+    val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
 
-    underTest ! QueryHandlerMessages.Query(setKeyspaceQuery)
+    underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbe.expectMsg(Write(VoidResult.serialize()))
+    testProbe.expectMsg(Write(VoidResult(stream).serialize()))
   }
 }

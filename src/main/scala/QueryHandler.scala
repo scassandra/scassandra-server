@@ -5,7 +5,7 @@ import com.typesafe.scalalogging.slf4j.Logging
 
 class QueryHandler(tcpConnection : ActorRef) extends Actor with Logging {
   def receive = {
-    case QueryHandlerMessages.Query(queryString : ByteString) => {
+    case QueryHandlerMessages.Query(queryString, stream) => {
       logger.info(s"Handling query |${queryString.utf8String}|")
 
       // the first 4 bytes are an int which is the length of the query
@@ -17,10 +17,10 @@ class QueryHandler(tcpConnection : ActorRef) extends Actor with Logging {
         val query = rest.utf8String
         val keyspaceName: String = query.substring(4, queryLength)
         logger.info(s"Handling use statement ${query} for keyspacename |${keyspaceName}|")
-        tcpConnection ! Write(SetKeyspace(keyspaceName).serialize())
+        tcpConnection ! Write(SetKeyspace(keyspaceName, stream).serialize())
       } else {
         logger.info("Sending void result")
-        tcpConnection ! Write(VoidResult.serialize())
+        tcpConnection ! Write(VoidResult(stream).serialize())
       }
     }
     case message @ _ => {
@@ -30,5 +30,5 @@ class QueryHandler(tcpConnection : ActorRef) extends Actor with Logging {
 }
 
 object QueryHandlerMessages {
-  case class Query(queryString : ByteString)
+  case class Query(queryString : ByteString, stream: Byte)
 }

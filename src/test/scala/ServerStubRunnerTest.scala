@@ -128,7 +128,7 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
   test("should reject query message if startup message has not been sent") {
     val in = new DataInputStream(connectionToServerStub.getInputStream)
     sendQueryMessage()
-    
+
     // consume first three bytes
     consumeBytes(in, 3)
 
@@ -222,6 +222,22 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
 
     val cqlString = takeString(message.drop(4))
     cqlString.trim should equal("people")
+  }
+
+  test("Should return ready message for any register message") {
+    implicit val in = new DataInputStream(connectionToServerStub.getInputStream)
+    implicit val stream: OutputStream = connectionToServerStub.getOutputStream
+
+    sendStartupMessage()
+    readReadyMessage()
+
+    // send a register message
+    val registerMessage = MessageHelper.createRegisterMessage()
+    stream.write(registerMessage.toArray)
+
+    // read the op code
+    val opCode = readResponseHeaderOpCode()
+    opCode should equal(OpCodes.Ready)
   }
 
   def takeInt(bytes : Array[Byte]) = {
