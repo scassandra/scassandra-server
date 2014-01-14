@@ -39,7 +39,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
 
     }
     case PeerClosed => context stop self
-    case unknown@_ => {
+    case unknown @ _ => {
       logger.info(s"Unknown message ${unknown}")
     }
   }

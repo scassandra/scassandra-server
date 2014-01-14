@@ -1,4 +1,5 @@
 import akka.actor.{ActorRef, ActorRefFactory, Props, Actor}
+import akka.io.Tcp.PeerClosed
 import akka.io.{IO, Tcp}
 import com.typesafe.scalalogging.slf4j.Logging
 import java.net.InetSocketAddress

@@ -11,7 +11,8 @@ libraryDependencies ++= Seq(
     "ch.qos.logback" % "logback-classic" % "1.0.13",
     "com.typesafe.akka" % "akka-actor_2.10" % "2.2.+",
     "com.typesafe.akka" % "akka-remote_2.10" % "2.2.+",
-    "com.typesafe.akka" % "akka-testkit_2.10" % "2.2.+"
+    "com.typesafe.akka" % "akka-testkit_2.10" % "2.2.+",
+    "com.datastax.cassandra" % "cassandra-driver-core" % "2.0.0+"
 )
 
 scalacOptions in Test ++= Seq("-Yrangepos")
@@ -21,3 +22,5 @@ scalacOptions in Test ++= Seq("-Yrangepos")
 
 resolvers ++= Seq("snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
                   "releases"  at "http://oss.sonatype.org/content/repositories/releases")
+
+parallelExecution in Test := false

@@ -7,7 +7,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
 import scala.collection.immutable.IndexedSeq
 
-class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll {
+class ServerStubRunnerIntegrationTest extends FunSuite with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll {
   var serverThread: Thread = null
   var connectionToServerStub: Socket = null
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
@@ -218,7 +218,7 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     println(s"Message body received ${util.Arrays.toString(message)}")
 
     val responseType = takeInt(message)
-    responseType shouldEqual(ResultTypes.SetKeyspace)
+    responseType shouldEqual ResultTypes.SetKeyspace
 
     val cqlString = takeString(message.drop(4))
     cqlString.trim should equal("people")
@@ -259,14 +259,17 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     messageBody
   }
 
-  override def beforeAll {
-    // First ensure nothing else is running on port 9042
+  override def beforeAll() {
+    println("Trying to start server")
+    // First ensure nothing else is running on port 8042
     var somethingAlreadyRunning = true
 
     try {
       ConnectionToServerStub()
+      println("Was able to connect to localhost 8042, there ust be something running")
     } catch {
       case ce: ConnectException => {
+        println("Could not connect to localhost 8042, going to start the server")
         somethingAlreadyRunning = false
       }
     }
@@ -279,7 +282,7 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
     startServerStub()
   }
 
-  override def afterAll {
+  override def afterAll() {
     stopServerStub()
   }
 
@@ -313,11 +316,12 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
   def startServerStub() = {
     serverThread = ServerStubAsThread()
     serverThread.start()
-    Thread.sleep(5000)
+    Thread.sleep(3000)
   }
 
   def stopServerStub() = {
     ServerStubRunner.shutdown()
+    Thread.sleep(3000)
   }
 
   def sendStartupMessage() = {
@@ -336,7 +340,7 @@ class ServerStubRunnerTest extends FunSuite with ShouldMatchers with BeforeAndAf
   }
 
 
-  def sendOptionsMessage {
+  def sendOptionsMessage() {
     val stream: OutputStream = connectionToServerStub.getOutputStream
     stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Options))
     sendFakeLengthAndBody(stream)
@@ -366,12 +370,4 @@ object ConnectionToServerStub {
     socket.setSoTimeout(1000)
     socket
   }
-}
-
-object ServerStubAsThread {
-  def apply() = new Thread(new Runnable {
-    def run() {
-      ServerStubRunner.run()
-    }
-  })
 }

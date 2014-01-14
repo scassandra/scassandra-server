@@ -23,6 +23,8 @@ object ServerStubRunner extends Logging {
 
   def shutdown() = {
     system.shutdown()
+    system.awaitTermination()
+    logger.info("Server is shut down")
   }
 
 }
