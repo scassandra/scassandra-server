@@ -3,6 +3,17 @@ import akka.io.Tcp
 import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
 
+/*
+ * TODO: This class is on the verge of needing split up.
+ *
+ * This class's responsibility is:
+ *  * To read full CQL messages from the data, knowing that they may not come all at once or that multiple
+ *    messages may come in the same data packet
+ *  * To check the opcode and forward to the correct handler
+ *
+ *  This could be changed to only know how to read full messages and then pass to an actor
+ *  per stream that could check the opcode and forward.
+ */
 class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => ActorRef,
                         registerHandlerFactory: (ActorRefFactory, ActorRef) => ActorRef) extends Actor with Logging {
 
