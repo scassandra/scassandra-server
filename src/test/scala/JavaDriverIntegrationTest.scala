@@ -1,10 +1,6 @@
 import com.datastax.driver.core.Cluster
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfter, FunSuite}
-import org.scalatest.matchers.ShouldMatchers
 
-class JavaDriverIntegrationTest extends FunSuite with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll {
-
-  var serverThread: Thread = null
+class JavaDriverIntegrationTest extends AbstractIntegrationTest {
 
   test("Should by by default return empty result set for any query") {
     val cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
@@ -14,25 +10,6 @@ class JavaDriverIntegrationTest extends FunSuite with ShouldMatchers with Before
     result.all().size() should equal(0)
 
     cluster.shutdown()
-  }
-
-  def startServerStub() = {
-    serverThread = ServerStubAsThread()
-    serverThread.start()
-    Thread.sleep(3000)
-  }
-
-  def stopServerStub() = {
-    ServerStubRunner.shutdown()
-    Thread.sleep(3000)
-  }
-
-  override def beforeAll() {
-    startServerStub()
-  }
-
-  override def afterAll() {
-    stopServerStub()
   }
 
 }

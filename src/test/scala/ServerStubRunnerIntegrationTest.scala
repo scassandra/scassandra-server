@@ -1,14 +1,10 @@
 import akka.util.ByteString
 import java.io._
 import java.net.Socket
-import java.net.ConnectException
 import java.util
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfter, FunSuite}
-import org.scalatest.matchers.ShouldMatchers
 import scala.collection.immutable.IndexedSeq
 
-class ServerStubRunnerIntegrationTest extends FunSuite with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll {
-  var serverThread: Thread = null
+class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
   var connectionToServerStub: Socket = null
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
@@ -36,7 +32,7 @@ class ServerStubRunnerIntegrationTest extends FunSuite with ShouldMatchers with 
     val bytes = availableBytes(200)
     bytes should equal(0)
 
-    sendOptionsMessage
+    sendOptionsMessage()
 
     val bytesAfterOptionsMessage = availableBytes(200)
     bytesAfterOptionsMessage should equal(0)
@@ -71,6 +67,7 @@ class ServerStubRunnerIntegrationTest extends FunSuite with ShouldMatchers with 
 
   test("return a stream byte in the response header") {
     implicit val in = new DataInputStream(connectionToServerStub.getInputStream)
+    val streamId = 0x05
     sendStartupMessage()
 
     // consume first two bytes
@@ -80,8 +77,7 @@ class ServerStubRunnerIntegrationTest extends FunSuite with ShouldMatchers with 
     val responseHeaderStream: Int = in.read()
 
     // TODO: in future versions, the stream ID should reflect the value set in the request header
-    val noStreamId = 0x00
-    responseHeaderStream should equal(noStreamId)
+    responseHeaderStream should equal(streamId)
   }
 
   test("return a READY opCode byte in the response header on STARTUP request") {
@@ -126,14 +122,11 @@ class ServerStubRunnerIntegrationTest extends FunSuite with ShouldMatchers with 
   }
 
   test("should reject query message if startup message has not been sent") {
-    val in = new DataInputStream(connectionToServerStub.getInputStream)
+    implicit val inputStream = new DataInputStream(connectionToServerStub.getInputStream)
     sendQueryMessage()
 
-    // consume first three bytes
-    consumeBytes(in, 3)
-
     // read fourth byte
-    val responseHeaderOpCode: Int = in.read()
+    val responseHeaderOpCode: Int = readResponseHeaderOpCode()
 
     responseHeaderOpCode should equal(OpCodes.Error)
   }
@@ -184,7 +177,7 @@ class ServerStubRunnerIntegrationTest extends FunSuite with ShouldMatchers with 
     readReadyMessage()
   }
 
-  test("test receiving whole messages after partial messages") {
+  test("test receiving whole messages after in multiple parts") {
     implicit val stream: OutputStream = connectionToServerStub.getOutputStream
     implicit val inputStream : DataInputStream = new DataInputStream(connectionToServerStub.getInputStream)
 
@@ -259,33 +252,6 @@ class ServerStubRunnerIntegrationTest extends FunSuite with ShouldMatchers with 
     messageBody
   }
 
-  override def beforeAll() {
-    println("Trying to start server")
-    // First ensure nothing else is running on port 8042
-    var somethingAlreadyRunning = true
-
-    try {
-      ConnectionToServerStub()
-      println("Was able to connect to localhost 8042, there ust be something running")
-    } catch {
-      case ce: ConnectException => {
-        println("Could not connect to localhost 8042, going to start the server")
-        somethingAlreadyRunning = false
-      }
-    }
-
-    if (somethingAlreadyRunning) {
-      fail("There must not be any server already running")
-    }
-
-    // Then start the server
-    startServerStub()
-  }
-
-  override def afterAll() {
-    stopServerStub()
-  }
-
   def readReadyMessage() = {
     val stream: DataInputStream = new DataInputStream(connectionToServerStub.getInputStream)
     consumeBytes(stream, 8)
@@ -313,20 +279,9 @@ class ServerStubRunnerIntegrationTest extends FunSuite with ShouldMatchers with 
     }
   }
 
-  def startServerStub() = {
-    serverThread = ServerStubAsThread()
-    serverThread.start()
-    Thread.sleep(3000)
-  }
-
-  def stopServerStub() = {
-    ServerStubRunner.shutdown()
-    Thread.sleep(3000)
-  }
-
-  def sendStartupMessage() = {
+  def sendStartupMessage(streamId : Byte = 0x00) = {
     val stream: OutputStream = connectionToServerStub.getOutputStream
-    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Startup))
+    stream.write(Array[Byte](0x02, 0x00, streamId, OpCodes.Startup))
     stream.write(Array[Byte](0x00, 0x00, 0x00, 0x16))
     val fakeBody: IndexedSeq[Byte] = for (i <- 0 until 22) yield 0x00.toByte
     stream.write(fakeBody.toArray)
@@ -338,7 +293,6 @@ class ServerStubRunnerIntegrationTest extends FunSuite with ShouldMatchers with 
     val queryMessage = MessageHelper.createQueryMessage(queryString)
     stream.write(queryMessage.toArray)
   }
-
 
   def sendOptionsMessage() {
     val stream: OutputStream = connectionToServerStub.getOutputStream
@@ -357,17 +311,5 @@ class ServerStubRunnerIntegrationTest extends FunSuite with ShouldMatchers with 
     inputStream.read(bytes)
     val byteString = ByteString(bytes)
     byteString.toByteBuffer.getInt
-  }
-
-}
-
-object ConnectionToServerStub {
-  val ServerHost = "localhost"
-  val ServerPort = 8042
-
-  def apply() = {
-    val socket = new Socket(ServerHost, ServerPort)
-    socket.setSoTimeout(1000)
-    socket
   }
 }

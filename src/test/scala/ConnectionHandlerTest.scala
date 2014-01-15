@@ -134,9 +134,6 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with ShouldMatc
     queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
   }
 
-
-
-
   private def sendStartupMessage() = {
     val startupMessage = MessageHelper.createStartupMessage()
     testActorRef ! Received(ByteString(startupMessage.toArray))
