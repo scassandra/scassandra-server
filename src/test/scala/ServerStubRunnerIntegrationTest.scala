@@ -67,8 +67,8 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
 
   test("return a stream byte in the response header") {
     implicit val in = new DataInputStream(connectionToServerStub.getInputStream)
-    val streamId = 0x05
-    sendStartupMessage()
+    val streamId : Byte = 0x05
+    sendStartupMessage(streamId)
 
     // consume first two bytes
     consumeBytes(in, 2)

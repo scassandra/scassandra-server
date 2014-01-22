@@ -44,7 +44,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with ShouldMatc
 
     testActorRef ! Received(readyMessage)
 
-    expectMsg(Write(Ready.serialize()))
+    expectMsg(Write(Ready().serialize()))
   }
 
   test("Should send back error if query before ready message") {

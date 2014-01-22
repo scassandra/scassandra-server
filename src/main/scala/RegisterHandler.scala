@@ -7,7 +7,7 @@ class RegisterHandler(connection: ActorRef) extends Actor with Logging {
   def receive = {
     case registerMsg @ RegisterHandlerMessages.Register(_) => {
       logger.info(s"Received register message ${registerMsg}")
-      connection ! Write(Ready.serialize())
+      connection ! Write(Ready().serialize())
     }
     case msg @ _ => {
       logger.warn(s"Received unknown message ${msg}")

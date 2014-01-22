@@ -19,7 +19,7 @@ class ResponseTest extends FunSuite with ShouldMatchers {
   }
   
   test("Serialisation of a ready response") {
-    val readyMessage = Ready
+    val readyMessage = Ready()
     val bytes = readyMessage.serialize().toList
 
     bytes should equal(List[Byte](

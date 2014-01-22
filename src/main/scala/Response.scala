@@ -43,7 +43,7 @@ case class VoidResult(stream: Byte = ResponseHeader.DefaultStreamId) extends Res
   }
 }
 
-object Ready extends Response(new Header(OpCodes.Ready, ResponseHeader.DefaultStreamId)) {
+case class Ready(stream : Byte = ResponseHeader.DefaultStreamId) extends Response(new Header(OpCodes.Ready, stream)) {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 

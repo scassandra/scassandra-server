@@ -61,7 +61,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
     opCode match {
       case OpCodes.Startup => {
         logger.info("Sending ready message")
-        sender ! Write(Ready.serialize())
+        sender ! Write(Ready(stream).serialize())
         ready = true
       }
       case OpCodes.Query => {
@@ -116,6 +116,5 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
       dataFromPreviousMessage = currentData
       return false
     }
-
   }
 }
