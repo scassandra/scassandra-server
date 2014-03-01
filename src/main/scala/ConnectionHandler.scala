@@ -22,14 +22,14 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
   var ready = false
   var partialMessage = false
   var dataFromPreviousMessage: ByteString = _
-  var currentData : ByteString = _
+  var currentData: ByteString = _
 
   val HeaderLength = 8
 
   def receive = {
 
-    case Received(data: ByteString) => {
-      logger.info(s"Received a message of length ${data.length} data:: ${data}")
+    case Received(data: ByteString) =>
+      logger.info(s"Received a message of length ${data.length} data:: $data")
 
       currentData = data
       if (partialMessage) {
@@ -37,8 +37,9 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
       }
 
       val messageLength = currentData.length
-      logger.info(s"Whole message length so far is ${messageLength}")
+      logger.info(s"Whole message length so far is $messageLength")
 
+      // TODO - [DN] is this code blocking?
       while (currentData.length >= HeaderLength && takeMessage()) {}
 
       if (currentData.length > 0) {
@@ -48,23 +49,23 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
         currentData = ByteString()
       }
 
-    }
+
     case PeerClosed => context stop self
-    case unknown @ _ => {
-      logger.info(s"Unknown message ${unknown}")
-    }
+    case unknown@_ =>
+      logger.info(s"Unknown message $unknown")
+
   }
 
   private def processMessage(opCode: Byte, stream: Byte, messageBody: ByteString) = {
-    logger.info(s"Whole body ${messageBody} with length ${messageBody.length}")
+    logger.info(s"Whole body $messageBody with length ${messageBody.length}")
 
     opCode match {
-      case OpCodes.Startup => {
+      case OpCodes.Startup =>
         logger.info("Sending ready message")
         sender ! Write(Ready(stream).serialize())
         ready = true
-      }
-      case OpCodes.Query => {
+
+      case OpCodes.Query =>
         if (!ready) {
           logger.info("Received query before startup message, sending error")
           sender ! Write(QueryBeforeReadyMessage(ResponseHeader.DefaultStreamId).serialize())
@@ -72,18 +73,18 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
           val queryHandler = queryHandlerFactory(context, sender)
           queryHandler ! QueryHandlerMessages.Query(messageBody, stream)
         }
-      }
-      case OpCodes.Register => {
+
+      case OpCodes.Register =>
         logger.info("Received register message. Sending to RegisterHandler")
         val registerHandler = registerHandlerFactory(context, sender)
         registerHandler ! RegisterHandlerMessages.Register(messageBody)
-      }
-      case opCode @ _ => {
-        logger.info(s"Received unknown opcode ${opCode}")
-      }
+
+      case opCode@_ =>
+        logger.info(s"Received unknown opcode $opCode")
+
     }
   }
-  
+
   /* should not be called if there isn't at least a header */
   private def takeMessage(): Boolean = {
 
@@ -91,9 +92,9 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
     val stream: Byte = currentData(2)
 
     val bodyLengthArray = currentData.take(HeaderLength).drop(4)
-    logger.info(s"Body length array ${bodyLengthArray}")
+    logger.info(s"Body length array $bodyLengthArray")
     val bodyLength = bodyLengthArray.asByteBuffer.getInt
-    logger.info(s"Body length ${bodyLength}")
+    logger.info(s"Body length $bodyLength")
 
     if (currentData.length == bodyLength + HeaderLength) {
       logger.info("Received exactly the whole message")

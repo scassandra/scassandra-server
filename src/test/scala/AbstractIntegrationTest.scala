@@ -2,7 +2,7 @@ import java.net.{Socket, ConnectException}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
 
-abstract class AbstractIntegrationTest extends FunSuite with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll{
+abstract class AbstractIntegrationTest extends FunSuite with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll {
   var serverThread: Thread = null
 
   def startServerStub() = {
@@ -23,12 +23,12 @@ abstract class AbstractIntegrationTest extends FunSuite with ShouldMatchers with
 
     try {
       ConnectionToServerStub()
-      println("Was able to connect to localhost 8042, there ust be something running")
+      println("Was able to connect to localhost 8042, there must be something running")
     } catch {
-      case ce: ConnectException => {
+      case ce: ConnectException =>
         println("Could not connect to localhost 8042, going to start the server")
         somethingAlreadyRunning = false
-      }
+
     }
 
     if (somethingAlreadyRunning) {
