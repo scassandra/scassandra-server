@@ -1,0 +1,74 @@
+package priming
+
+import org.scalatest.FunSpec
+import org.scalatest.matchers.ShouldMatchers
+
+class PrimedResultsTest extends FunSpec with ShouldMatchers {
+
+  describe("add() and get()") {
+    it("should add so that it can be retrieved using get") {
+      // given
+      val primeResults = PrimedResults()
+
+      val query: String = "select * from users"
+      val expectedResult: List[Map[String, String]] =
+        List(
+          Map(
+            "name" -> "Mickey",
+            "age" -> "99"
+          ),
+          Map(
+            "name" -> "Mario",
+            "age" -> "12"
+          )
+        )
+
+      // when
+      primeResults add (query -> expectedResult)
+      val actualResult = primeResults get query
+
+      // then
+      actualResult should equal(expectedResult)
+    }
+  }
+
+  describe("get()") {
+    it("should return Nil if no results for given query") {
+      // given
+      val primeResults = PrimedResults()
+      // when
+      val actualResult = primeResults get "some random query"
+
+      // then
+      actualResult should equal(Nil)
+    }
+  }
+
+  describe("clear()") {
+    it("should clear all results") {
+      // given
+      val primeResults = PrimedResults()
+
+      val query: String = "select * from users"
+      val result: List[Map[String, String]] =
+        List(
+          Map(
+            "name" -> "Mickey",
+            "age" -> "99"
+          ),
+          Map(
+            "name" -> "Mario",
+            "age" -> "12"
+          )
+        )
+
+      // when
+      primeResults add (query -> result)
+      primeResults clear()
+      val actualResult = primeResults get query
+
+      // then
+      actualResult should equal(Nil)
+    }
+  }
+}

@@ -9,7 +9,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest {
 
     result.all().size() should equal(0)
 
-    cluster.shutdown()
+    cluster.close()
   }
 
 }
