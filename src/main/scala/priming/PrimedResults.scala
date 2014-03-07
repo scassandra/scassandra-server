@@ -1,11 +1,5 @@
 package priming
 
-object PrimedResults {
-  def apply() = {
-    new PrimedResults()
-  }
-}
-
 class PrimedResults {
 
   var queryToResults: Map[String, List[Map[String, String]]] = Map()
@@ -20,5 +14,11 @@ class PrimedResults {
 
   def clear() = {
     queryToResults = Map()
+  }
+}
+
+object PrimedResults {
+  def apply() = {
+    new PrimedResults()
   }
 }
