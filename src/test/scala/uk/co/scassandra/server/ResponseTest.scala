@@ -54,34 +54,4 @@ class ResponseTest extends FunSuite with ShouldMatchers {
       0x0, 0x0, 0x0, 0x0 // 4 byte integer - length (number of bytes)
     ))
   }
-
-  test("Serialisation of a error response client protocol error") {
-    val errorCode: Byte = 0xA
-    val errorText = "Any old error message"
-    val stream: Byte = 0x04
-    val errorMessage = new Error(errorCode, errorText, stream)
-    val bytes: List[Byte] = errorMessage.serialize().toList
-
-    bytes should equal(List[Byte](
-      (0x82 & 0xFF).toByte, // protocol version
-      0x00, // flags
-      stream, // stream
-      0x00, // message type - 2 (uk.co.scassandra.server.uk.co.scassandra.server.Error)
-      0x0, 0x0, 0x0, (errorText.length + 6).toByte, // 4 byte integer - length (number of bytes)
-      0x0, 0x0, 0x0, errorCode,
-      0x00, errorText.length.toByte) ::: // length of the errorText
-      errorText.getBytes.toList
-    )
-  }
-
-  test("QueryBeforeReadyMessage is Error message with code 0xA") {
-    val stream: Byte = 0x03
-    val errorQueryBeforeReadyMessage = QueryBeforeReadyMessage(stream)
-
-    errorQueryBeforeReadyMessage.header.opCode should equal(OpCodes.Error)
-    errorQueryBeforeReadyMessage.errorCode should equal(0xA)
-    errorQueryBeforeReadyMessage.errorMessage should equal("Query sent before StartUp message")
-    errorQueryBeforeReadyMessage.header.streamId should equal(stream)
-  }
-
 }

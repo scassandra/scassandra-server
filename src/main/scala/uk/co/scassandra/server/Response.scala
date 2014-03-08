@@ -45,23 +45,3 @@ case class Ready(stream : Byte = ResponseHeader.DefaultStreamId) extends Respons
     bs.result()
   }
 }
-
-class Error(val errorCode : Int, val errorMessage : String, stream: Byte) extends Response(new Header(OpCodes.Error, stream)) {
-
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
-
-  override def serialize() : ByteString = {
-    val bs = ByteString.newBuilder
-    bs.putBytes(header.serialize())
-
-    bs.putInt(4 + 2 + errorMessage.length)
-
-    bs.putInt(errorCode)
-    bs.putShort(errorMessage.length)
-    bs.putBytes(errorMessage.getBytes())
-
-    bs.result()
-  }
-}
-
-case class QueryBeforeReadyMessage(stream : Byte = ResponseHeader.DefaultStreamId) extends Error(0xA, "Query sent before StartUp message", stream)
