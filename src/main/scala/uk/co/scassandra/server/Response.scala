@@ -1,7 +1,7 @@
 package uk.co.scassandra.server
 
 import akka.util.ByteString
-import com.batey.narinc.client.cqlmessages.OpCodes
+import com.batey.narinc.client.cqlmessages.{HeaderConsts, OpCodes}
 
 class Response(val header : Header) {
   def serialize() : ByteString = ???
@@ -25,7 +25,7 @@ class Header(val opCode : Int, val streamId : Byte) {
   def serialize() : Array[Byte] = {
     val bs = ByteString.newBuilder
 
-    bs.putByte(HeaderConsts.ProtocolVersion)
+    bs.putByte(HeaderConsts.ServerProtocolVersion)
     bs.putByte(flags.toByte)
     bs.putByte(streamId)
     bs.putByte(opCode.toByte)

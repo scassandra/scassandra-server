@@ -7,7 +7,7 @@ import akka.util.ByteString
 import org.scalatest.{BeforeAndAfter, FunSuiteLike}
 import org.scalatest.matchers.ShouldMatchers
 import uk.co.scassandra.server.QueryHandlerMessages.Query
-import com.batey.narinc.client.cqlmessages.OpCodes
+import com.batey.narinc.client.cqlmessages.{HeaderConsts, OpCodes}
 
 class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with ShouldMatchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
 
@@ -26,7 +26,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with ShouldMatc
   test("Should do nothing if not a full message") {
     val partialMessage = ByteString(
       Array[Byte](
-        HeaderConsts.ProtocolVersion, 0x0, 0x0, OpCodes.Query, // header
+        HeaderConsts.ServerProtocolVersion, 0x0, 0x0, OpCodes.Query, // header
         0x0, 0x0, 0x0, 0x5,  // length
         0x0 // 4 bytes missing
       )
@@ -40,7 +40,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with ShouldMatc
   test("Should send ready message when startup message sent") {
     val readyMessage = ByteString(
       Array[Byte](
-        HeaderConsts.ProtocolVersion, 0x0, 0x0, OpCodes.Startup, // header
+        HeaderConsts.ServerProtocolVersion, 0x0, 0x0, OpCodes.Startup, // header
         0x0, 0x0, 0x0, 0x0 // length
       )
     )
@@ -53,7 +53,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with ShouldMatc
   test("Should send back error if query before ready message") {
     val queryMessage = ByteString(
       Array[Byte](
-        HeaderConsts.ProtocolVersion, 0x0, 0x0, OpCodes.Query, // header
+        HeaderConsts.ServerProtocolVersion, 0x0, 0x0, OpCodes.Query, // header
         0x0, 0x0, 0x0, 0x0 // length
       )
     )
@@ -66,7 +66,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with ShouldMatc
   test("Should do nothing if an unrecognised opcode") {
     val unrecognisedOpCode = ByteString(
       Array[Byte](
-        HeaderConsts.ProtocolVersion, 0x0, 0x0, 0x56, // header
+        HeaderConsts.ServerProtocolVersion  , 0x0, 0x0, 0x56, // header
         0x0, 0x0, 0x0, 0x0 // length
       )
     )

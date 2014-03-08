@@ -1,7 +1,7 @@
 package uk.co.scassandra.server
 
 import akka.util.ByteString
-import com.batey.narinc.client.cqlmessages.OpCodes
+import com.batey.narinc.client.cqlmessages.{HeaderConsts, OpCodes}
 
 object MessageHelper {
   def dropHeaderAndLength(bytes: Array[Byte]) : Array[Byte] = {
@@ -33,7 +33,7 @@ object MessageHelper {
       List[Byte](0x0, "3.0.0".length.toByte) :::
       "3.0.0".getBytes.toList
 
-    val bytes : List[Byte] = List[Byte](HeaderConsts.ProtocolVersion, 0x0, 0x0, OpCodes.Startup) :::
+    val bytes : List[Byte] = List[Byte](HeaderConsts.ClientProtocolVersion, 0x0, 0x0, OpCodes.Startup) :::
       List[Byte](0x0, 0x0, 0x0, messageBody.length.toByte) :::
       messageBody
 
