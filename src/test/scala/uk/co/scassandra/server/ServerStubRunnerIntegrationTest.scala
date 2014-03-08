@@ -5,7 +5,7 @@ import java.io._
 import java.net.Socket
 import java.util
 import scala.collection.immutable.IndexedSeq
-import com.batey.narinc.client.cqlmessages.OpCodes
+import com.batey.narinc.client.cqlmessages.{ResultKinds, OpCodes}
 
 class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
   var connectionToServerStub: Socket = null
@@ -214,7 +214,7 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
     println(s"Message body received ${util.Arrays.toString(message)}")
 
     val responseType = takeInt(message)
-    responseType shouldEqual ResultTypes.SetKeyspace
+    responseType shouldEqual ResultKinds.SetKeyspace
 
     val cqlString = takeString(message.drop(4))
     cqlString.trim should equal("people")

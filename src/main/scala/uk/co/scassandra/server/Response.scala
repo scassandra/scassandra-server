@@ -14,11 +14,6 @@ object ResponseHeader {
   val ZeroLength = Array(0x00, 0x00, 0x00, 0x00).map(_.toByte)
 }
 
-object ResultTypes {
-  val SetKeyspace : Int = 0x0003
-  val VoidResult : Int = 1
-}
-
 class Header(val opCode : Int, val streamId : Byte) {
   val flags : Int = ResponseHeader.FlagsNoCompressionByte
 
