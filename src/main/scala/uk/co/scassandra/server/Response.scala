@@ -34,19 +34,6 @@ class Header(val opCode : Int, val streamId : Byte) {
   }
 }
 
-case class VoidResult(stream: Byte = ResponseHeader.DefaultStreamId) extends Response(new Header(OpCodes.Result, stream)) {
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
-  val Length = 4
-
-  override def serialize() : ByteString = {
-    val bs = ByteString.newBuilder
-    bs.putBytes(header.serialize())
-    bs.putInt(Length)
-    bs.putInt(ResultTypes.VoidResult)
-    bs.result()
-  }
-}
-
 case class Ready(stream : Byte = ResponseHeader.DefaultStreamId) extends Response(new Header(OpCodes.Ready, stream)) {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN

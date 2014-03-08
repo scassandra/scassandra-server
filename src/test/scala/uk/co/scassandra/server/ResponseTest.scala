@@ -3,7 +3,7 @@ package uk.co.scassandra.server
 import akka.util.ByteString
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
-import com.batey.narinc.client.cqlmessages.OpCodes
+import com.batey.narinc.client.cqlmessages.{VoidResult, OpCodes}
 
 class ResponseTest extends FunSuite with ShouldMatchers {
 
