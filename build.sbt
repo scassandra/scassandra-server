@@ -8,6 +8,7 @@ val sprayVersion = "1.2.0"
 
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "1.9.2" % "test",
+  "org.mockito" % "mockito-core" % "1.9.5" % "test",
   "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
   "ch.qos.logback" % "logback-classic" % "1.0.13",
   "com.typesafe.akka" % "akka-actor_2.10" % "2.2.+",

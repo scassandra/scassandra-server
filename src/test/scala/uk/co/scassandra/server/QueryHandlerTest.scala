@@ -6,6 +6,7 @@ import akka.testkit._
 import akka.util.ByteString
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
+import com.batey.narinc.client.cqlmessages.SetKeyspace
 
 class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter with TestKitBase {
   implicit lazy val system = ActorSystem()

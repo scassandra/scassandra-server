@@ -74,7 +74,7 @@ class ResponseTest extends FunSuite with ShouldMatchers {
     )
   }
 
-  test("uk.co.scassandra.server.uk.co.scassandra.server.QueryBeforeReadyMessage is uk.co.scassandra.server.uk.co.scassandra.server.Error message with code 0xA") {
+  test("QueryBeforeReadyMessage is Error message with code 0xA") {
     val stream: Byte = 0x03
     val errorQueryBeforeReadyMessage = QueryBeforeReadyMessage(stream)
 
@@ -82,23 +82,6 @@ class ResponseTest extends FunSuite with ShouldMatchers {
     errorQueryBeforeReadyMessage.errorCode should equal(0xA)
     errorQueryBeforeReadyMessage.errorMessage should equal("Query sent before StartUp message")
     errorQueryBeforeReadyMessage.header.streamId should equal(stream)
-  }
-
-  test("Serialisation of a setkeyspace result response") {
-    val keyspaceName = "people"
-    val stream: Byte = 0x02
-    val setKeyspaceMessage = SetKeyspace(keyspaceName, stream)
-    val bytes = setKeyspaceMessage.serialize()
-
-    bytes should equal(List[Byte](
-      (0x82 & 0xFF).toByte, // protocol version
-      0x00, // flags
-      stream, // stream
-      0x08, // message type - 8 (Result)
-      0x0, 0x0, 0x0, (keyspaceName.length + 6).toByte, // 4 byte integer - length (number of bytes)
-      0x0, 0x0, 0x0, 0x3, // type of result - set_keyspace
-      0x0, keyspaceName.size.toByte) :::
-      keyspaceName.getBytes().toList)
   }
 
 }

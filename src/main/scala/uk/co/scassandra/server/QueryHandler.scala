@@ -4,6 +4,7 @@ import akka.util.ByteString
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.scalalogging.slf4j.Logging
 import akka.io.Tcp.Write
+import com.batey.narinc.client.cqlmessages.SetKeyspace
 
 class QueryHandler(tcpConnection: ActorRef) extends Actor with Logging {
   def receive = {

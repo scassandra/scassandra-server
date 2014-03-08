@@ -78,21 +78,3 @@ class Error(val errorCode : Int, val errorMessage : String, stream: Byte) extend
 }
 
 case class QueryBeforeReadyMessage(stream : Byte = ResponseHeader.DefaultStreamId) extends Error(0xA, "Query sent before StartUp message", stream)
-
-case class SetKeyspace(keyspaceName : String, stream : Byte = ResponseHeader.DefaultStreamId) extends Response(new Header(OpCodes.Result, stream)) {
-
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
-
-  override def serialize() : ByteString = {
-    val bs = ByteString.newBuilder
-    bs.putBytes(header.serialize())
-
-    bs.putInt(4 + 2 + keyspaceName.length)
-
-    bs.putInt(ResultTypes.SetKeyspace)
-    bs.putShort(keyspaceName.length)
-    bs.putBytes(keyspaceName.getBytes)
-
-    bs.result()
-  }
-}
