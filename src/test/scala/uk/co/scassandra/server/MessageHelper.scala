@@ -1,3 +1,5 @@
+package uk.co.scassandra.server
+
 import akka.util.ByteString
 
 object MessageHelper {

@@ -1,4 +1,10 @@
+package uk.co.scassandra.server
+
 import akka.util.ByteString
+
+class Response(val header : Header) {
+  def serialize() : ByteString = ???
+}
 
 object ResponseHeader {
   val VersionByte = 0x82
@@ -25,9 +31,6 @@ class Header(val opCode : Int, val streamId : Byte) {
 
     bs.result().toArray
   }
-}
-class Response(val header : Header) {
-  def serialize() : ByteString = ???
 }
 
 case class VoidResult(stream: Byte = ResponseHeader.DefaultStreamId) extends Response(new Header(OpCodes.Result, stream)) {

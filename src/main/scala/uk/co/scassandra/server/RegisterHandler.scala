@@ -1,7 +1,9 @@
-import akka.actor.{ActorRef, Actor}
+package uk.co.scassandra.server
+
+import akka.actor.{Actor, ActorRef}
+import com.typesafe.scalalogging.slf4j.Logging
 import akka.io.Tcp.Write
 import akka.util.ByteString
-import com.typesafe.scalalogging.slf4j.Logging
 
 class RegisterHandler(connection: ActorRef) extends Actor with Logging {
   def receive = {

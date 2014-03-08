@@ -1,3 +1,5 @@
+package uk.co.scassandra.server
+
 import akka.actor.{ActorRef, ActorRefFactory, Props, Actor}
 import akka.io.Tcp.PeerClosed
 import akka.io.{IO, Tcp}

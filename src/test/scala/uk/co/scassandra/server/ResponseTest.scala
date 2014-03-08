@@ -1,3 +1,5 @@
+package uk.co.scassandra.server
+
 import akka.util.ByteString
 import org.scalatest.FunSuite
 import org.scalatest.matchers.ShouldMatchers
@@ -39,72 +41,6 @@ class ResponseTest extends FunSuite with ShouldMatchers {
     ))
   }
 
-  // TODO [issue 14] - make test pass :)
-//  test("Serialisation of a Rows result") {
-//    val keyspaceName = "someKeyspace"
-//    val tableName = "users"
-//    val columnCount = 2
-//    val columnNames = List("name", "age")
-//    val rowsToSerialise: List[Map[String, String]] =
-//      List(
-//        Map(
-//          "name" -> "Mickey",
-//          "age" -> "23"
-//        ),
-//        Map(
-//          "name" -> "Mario",
-//          "age" -> "74"
-//        )
-//      )
-//    val stream: Byte = 0x01
-//    // TODO [issue 14] - import "Rows" from cql-messages module or create class in this module for now.
-//    // Note for TODO above: current code uses Map[String, String] instead of "Row" class in cql-messages
-//    val rows = Rows(rows.length, keyspaceName, tableName, columnCount, stream, columnNames, rowsToSerialise)
-//    val actualBytes = rows.serialize().toList
-//
-//    val expectedBody = List[Byte](
-//      0x0, 0x0, 0x0, 0x2, // 4 byte integer for the type of result, 2 is a "rows" result
-//      0x0, 0x0, 0x0, 0x1, // 4 byte integer for the global_table_spec flag
-//      0x0, 0x0, 0x0, 0x2 // 4 byte integer for the column count
-//    )
-//      // global_table_spec
-//      .:::(toNativeProtocolString(keyspaceName))
-//      .:::(toNativeProtocolString(tableName))
-//      // col_spec_1, Varchar
-//      .:::(toNativeProtocolString("name"))
-//      .:::(List[Byte](0x00, 0x0D))
-//      // col_spec_2, Varchar
-//      .:::(toNativeProtocolString("age"))
-//      .:::(List[Byte](0x00, 0x0D))
-//      // rows count
-//      .:::(List[Byte](0x0, 0x0, 0x0, 0x2)) // 4 byte integer for the rows count
-//      // first row
-//      // first column value: Mickey as [bytes]
-//      .:::(List[Byte](0x0, 0x0, 0x0, 0x6)) // 4 byte integer for the length
-//      .:::("Mickey".getBytes.toList)
-//      // second column value: 23 as [bytes]
-//      .:::(List[Byte](0x0, 0x0, 0x0, 0x2)) // 4 byte integer for the length
-//      .:::("23".getBytes.toList)
-//      // second row
-//      // first column value: Mario as [bytes]
-//      .:::(List[Byte](0x0, 0x0, 0x0, 0x5)) // 4 byte integer for the length
-//      .:::("Mario".getBytes.toList)
-//      // second column value: 74 as [bytes]
-//      .:::(List[Byte](0x0, 0x0, 0x0, 0x2)) // 4 byte integer for the length
-//      .:::("74".getBytes.toList)
-//
-//    val expectedHeader = List[Byte](
-//      (0x82 & 0xFF).toByte, // protocol version
-//      0x00, // flags
-//      stream, // stream
-//      0x08 // message type - 8 (Result)
-//    ) ::: serializeInt(expectedBody.length) // 4 byte integer - length of body (number of bytes)
-//
-//    actualBytes should equal(
-//      expectedHeader ::: expectedBody
-//    )
-//  }
-
   test("Serialisation of a ready response") {
     val readyMessage = Ready()
     val bytes = readyMessage.serialize().toList
@@ -113,7 +49,7 @@ class ResponseTest extends FunSuite with ShouldMatchers {
       (0x82 & 0xFF).toByte, // protocol version
       0x00, // flags
       0x00, // stream
-      0x02, // message type - 2 (Ready)
+      0x02, // message type - 2 (uk.co.scassandra.server.uk.co.scassandra.server.Ready)
       0x0, 0x0, 0x0, 0x0 // 4 byte integer - length (number of bytes)
     ))
   }
@@ -129,7 +65,7 @@ class ResponseTest extends FunSuite with ShouldMatchers {
       (0x82 & 0xFF).toByte, // protocol version
       0x00, // flags
       stream, // stream
-      0x00, // message type - 2 (Error)
+      0x00, // message type - 2 (uk.co.scassandra.server.uk.co.scassandra.server.Error)
       0x0, 0x0, 0x0, (errorText.length + 6).toByte, // 4 byte integer - length (number of bytes)
       0x0, 0x0, 0x0, errorCode,
       0x00, errorText.length.toByte) ::: // length of the errorText
@@ -137,7 +73,7 @@ class ResponseTest extends FunSuite with ShouldMatchers {
     )
   }
 
-  test("QueryBeforeReadyMessage is Error message with code 0xA") {
+  test("uk.co.scassandra.server.uk.co.scassandra.server.QueryBeforeReadyMessage is uk.co.scassandra.server.uk.co.scassandra.server.Error message with code 0xA") {
     val stream: Byte = 0x03
     val errorQueryBeforeReadyMessage = QueryBeforeReadyMessage(stream)
 

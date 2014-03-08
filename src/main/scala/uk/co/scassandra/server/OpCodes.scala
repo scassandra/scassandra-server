@@ -1,3 +1,5 @@
+package uk.co.scassandra.server
+
 object OpCodes {
   val Register: Byte = 0x0B
   val Error: Byte = 0x00

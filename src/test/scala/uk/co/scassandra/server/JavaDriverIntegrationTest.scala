@@ -1,3 +1,5 @@
+package uk.co.scassandra.server
+
 import com.datastax.driver.core.Cluster
 
 class JavaDriverIntegrationTest extends AbstractIntegrationTest {

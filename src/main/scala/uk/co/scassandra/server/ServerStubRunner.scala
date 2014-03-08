@@ -1,3 +1,5 @@
+package uk.co.scassandra.server
+
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.scalalogging.slf4j.Logging
 import priming.{PrimedResults, PrimingServer}

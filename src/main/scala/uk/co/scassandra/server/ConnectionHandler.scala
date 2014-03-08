@@ -1,3 +1,5 @@
+package uk.co.scassandra.server
+
 import akka.actor.{ActorRef, ActorRefFactory, Actor}
 import akka.io.Tcp
 import akka.util.ByteString
@@ -75,7 +77,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
         }
 
       case OpCodes.Register =>
-        logger.info("Received register message. Sending to RegisterHandler")
+        logger.info("Received register message. Sending to uk.co.scassandra.server.co.uk.scassandra.uk.co.scassandra.server.RegisterHandler")
         val registerHandler = registerHandlerFactory(context, sender)
         registerHandler ! RegisterHandlerMessages.Register(messageBody)
 

@@ -1,3 +1,5 @@
+package uk.co.scassandra.server
+
 import java.net.{Socket, ConnectException}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers

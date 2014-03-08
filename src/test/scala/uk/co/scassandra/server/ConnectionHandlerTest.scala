@@ -1,10 +1,12 @@
-import QueryHandlerMessages.Query
+package uk.co.scassandra.server
+
 import akka.actor.ActorSystem
 import akka.io.Tcp.{Received, Write}
 import akka.testkit._
 import akka.util.ByteString
 import org.scalatest.{BeforeAndAfter, FunSuiteLike}
 import org.scalatest.matchers.ShouldMatchers
+import uk.co.scassandra.server.QueryHandlerMessages.Query
 
 class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with ShouldMatchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
 
@@ -75,7 +77,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with ShouldMatc
   }
 
 
-  test("Should forward query to a new QueryHandler") {
+  test("Should forward query to a new uk.co.scassandra.server.co.uk.scassandra.uk.co.scassandra.server.QueryHandler") {
     sendStartupMessage()
     val stream : Byte = 0x04
     val query = "select * from people"
@@ -108,7 +110,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with ShouldMatc
     queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
   }
 
-  test("Should forward register message to RegisterHandler") {
+  test("Should forward register message to uk.co.scassandra.server.co.uk.scassandra.uk.co.scassandra.server.RegisterHandler") {
     sendStartupMessage()
 
     val registerMessage = MessageHelper.createRegisterMessage()

@@ -1,6 +1,8 @@
+package uk.co.scassandra.server
+
 import akka.actor.{ActorRef, ActorSystem}
 import akka.io.Tcp.Write
-import akka.testkit.{TestKitBase, TestKit, TestProbe, TestActorRef}
+import akka.testkit._
 import akka.util.ByteString
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers

@@ -1,3 +1,4 @@
+package uk.co.scassandra.server
 
 object ServerStubAsThread {
   def apply() = new Thread(new Runnable {
