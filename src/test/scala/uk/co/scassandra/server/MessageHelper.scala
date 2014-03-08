@@ -1,6 +1,7 @@
 package uk.co.scassandra.server
 
 import akka.util.ByteString
+import com.batey.narinc.client.cqlmessages.OpCodes
 
 object MessageHelper {
   def dropHeaderAndLength(bytes: Array[Byte]) : Array[Byte] = {

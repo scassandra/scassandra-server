@@ -7,6 +7,7 @@ import akka.util.ByteString
 import org.scalatest.{BeforeAndAfter, FunSuiteLike}
 import org.scalatest.matchers.ShouldMatchers
 import uk.co.scassandra.server.QueryHandlerMessages.Query
+import com.batey.narinc.client.cqlmessages.OpCodes
 
 class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with ShouldMatchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
 
