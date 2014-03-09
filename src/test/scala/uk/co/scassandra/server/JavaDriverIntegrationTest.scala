@@ -21,6 +21,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
     val whenQuery = "select * from people"
     val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": [{"name":"Chris"}] } """  <:< Map("Content-Type" -> "application/json")
     val response = Http(svc OK as.String)
+    response()
 
     val cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
     val session = cluster.connect("people")

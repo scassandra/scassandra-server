@@ -56,7 +56,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
 
 
       Post("/prime", PrimeQueryResult(whenQuery, thenResults.toJson.asInstanceOf[JsArray])) ~> route ~> check {
-        primedResults get whenQuery should equal(thenResults)
+        primedResults.get(whenQuery).get should equal(thenResults)
       }
     }
   }

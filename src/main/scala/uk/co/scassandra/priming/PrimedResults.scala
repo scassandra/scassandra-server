@@ -7,6 +7,7 @@ class PrimedResults extends Logging {
   var queryToResults: Map[String, List[Map[String, String]]] = Map()
 
   def add(keyValue: Pair[String, List[Map[String, String]]]) = {
+    logger.info(s"Adding prime ${keyValue}")
     queryToResults += keyValue
   }
 
