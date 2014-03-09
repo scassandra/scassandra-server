@@ -1,4 +1,4 @@
-package priming
+package uk.co.scassandra.priming
 
 import org.scalatest._
 import org.scalatest.matchers.ShouldMatchers

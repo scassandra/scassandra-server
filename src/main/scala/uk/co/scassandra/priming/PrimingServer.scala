@@ -1,4 +1,4 @@
-package priming
+package uk.co.scassandra.priming
 
 import akka.io.IO
 import spray.can.Http

@@ -1,4 +1,4 @@
-package priming
+package uk.co.scassandra.priming
 
 import spray.json.JsArray
 
