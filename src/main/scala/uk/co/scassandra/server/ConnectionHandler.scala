@@ -43,6 +43,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
       logger.info(s"Whole message length so far is $messageLength")
 
       // TODO - [DN] is this code blocking?
+      // [CB] How so? It works until there is nothing else to do. There are no sleeps.
       while (currentData.length >= HeaderLength && takeMessage()) {}
 
       if (currentData.length > 0) {
@@ -78,7 +79,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
         }
 
       case OpCodes.Register =>
-        logger.info("Received register message. Sending to uk.co.scassandra.server.co.uk.scassandra.uk.co.scassandra.server.RegisterHandler")
+        logger.info("Received register message. Sending to RegisterHandler")
         val registerHandler = registerHandlerFactory(context, sender)
         registerHandler ! RegisterHandlerMessages.Register(messageBody)
 

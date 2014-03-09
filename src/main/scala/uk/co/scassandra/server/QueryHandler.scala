@@ -5,8 +5,9 @@ import akka.actor.{Actor, ActorRef}
 import com.typesafe.scalalogging.slf4j.Logging
 import akka.io.Tcp.Write
 import com.batey.narinc.client.cqlmessages.{VoidResult, SetKeyspace}
+import uk.co.scassandra.priming.PrimedResults
 
-class QueryHandler(tcpConnection: ActorRef) extends Actor with Logging {
+class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) extends Actor with Logging {
   def receive = {
     case QueryHandlerMessages.Query(queryString, stream) =>
       logger.info(s"Handling query |${queryString.utf8String}|")
@@ -34,7 +35,5 @@ class QueryHandler(tcpConnection: ActorRef) extends Actor with Logging {
 }
 
 object QueryHandlerMessages {
-
   case class Query(queryString: ByteString, stream: Byte)
-
 }

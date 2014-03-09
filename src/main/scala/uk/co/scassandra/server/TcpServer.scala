@@ -5,8 +5,9 @@ import akka.io.Tcp.PeerClosed
 import akka.io.{IO, Tcp}
 import com.typesafe.scalalogging.slf4j.Logging
 import java.net.InetSocketAddress
+import uk.co.scassandra.priming.PrimedResults
 
-class TcpServer(port: Int) extends Actor with Logging {
+class TcpServer(port: Int, primedResults: PrimedResults) extends Actor with Logging {
 
   import Tcp._
   import context.system
@@ -25,7 +26,7 @@ class TcpServer(port: Int) extends Actor with Logging {
     case c@Connected(remote, local) =>
       logger.info("Incoming connection, creating a connection handler!")
       val handler = context.actorOf(Props(classOf[ConnectionHandler],
-        (af: ActorRefFactory, sender: ActorRef) => af.actorOf(Props(classOf[QueryHandler], sender)),
+        (af: ActorRefFactory, sender: ActorRef) => af.actorOf(Props(classOf[QueryHandler], sender, primedResults)),
         (af: ActorRefFactory, sender: ActorRef) => af.actorOf(Props(classOf[RegisterHandler], sender))
       ))
       logger.info(s"Sending register with connection handler $handler")

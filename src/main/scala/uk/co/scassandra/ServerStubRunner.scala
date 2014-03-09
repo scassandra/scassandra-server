@@ -1,8 +1,10 @@
-package uk.co.scassandra.server
+package uk.co.scassandra
 
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.scalalogging.slf4j.Logging
 import priming.{PrimedResults, PrimingServer}
+import uk.co.scassandra.priming.{PrimingServer, PrimedResults}
+import uk.co.scassandra.server.TcpServer
 
 object ServerStubRunner extends Logging {
 
@@ -23,7 +25,7 @@ object ServerStubRunner extends Logging {
 
   def run() = {
     system = ActorSystem("CassandraServerStub")
-    system.actorOf(Props(classOf[TcpServer], portNumber))
+    system.actorOf(Props(classOf[TcpServer], portNumber, primedResults))
     system.actorOf(Props(classOf[PrimingServer], primingPortNumber, primedResults))
     system.awaitTermination()
   }

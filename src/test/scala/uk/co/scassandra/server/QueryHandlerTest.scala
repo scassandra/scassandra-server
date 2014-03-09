@@ -12,11 +12,11 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   implicit lazy val system = ActorSystem()
 
   var underTest : ActorRef = null
-  var testProbe : TestProbe = null
+  var testProbeForTcpConnection : TestProbe = null
 
   before {
-    testProbe = TestProbe()
-    underTest = TestActorRef(new QueryHandler(testProbe.ref))
+    testProbeForTcpConnection = TestProbe()
+    underTest = TestActorRef(new QueryHandler(testProbeForTcpConnection.ref, null))
   }
 
   test("Should return set keyspace message for use statement") {
@@ -26,7 +26,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
  
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbe.expectMsg(Write(SetKeyspace("keyspace", stream).serialize()))
+    testProbeForTcpConnection.expectMsg(Write(SetKeyspace("keyspace", stream).serialize()))
   }
   
   test("Should return void result for everything apart from use statement") {
@@ -36,6 +36,6 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbe.expectMsg(Write(VoidResult(stream).serialize()))
+    testProbeForTcpConnection.expectMsg(Write(VoidResult(stream).serialize()))
   }
 }
