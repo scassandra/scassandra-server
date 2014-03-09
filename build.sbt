@@ -7,7 +7,7 @@ scalaVersion := "2.10.2"
 val sprayVersion = "1.2.0"
 
 libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "1.9.2" % "test",
+  "org.scalatest" %% "scalatest" % "2.0" % "test",
   "org.mockito" % "mockito-core" % "1.9.5" % "test",
   "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
   "ch.qos.logback" % "logback-classic" % "1.0.13",
@@ -18,7 +18,8 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-json" % "1.2.5",
   "io.spray" % "spray-can" % sprayVersion,
   "io.spray" % "spray-routing" % sprayVersion,
-  "io.spray" % "spray-testkit" % sprayVersion % "test"
+  "io.spray" % "spray-testkit" % sprayVersion % "test",
+  "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test"
 )
 
 scalacOptions in Test ++= Seq("-Yrangepos")

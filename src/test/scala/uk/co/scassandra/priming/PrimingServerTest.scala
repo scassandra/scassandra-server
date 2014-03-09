@@ -7,7 +7,7 @@ import spray.http.StatusCodes._
 import spray.testkit.ScalatestRouteTest
 import spray.json._
 
-class PrimingServerTest extends FunSpec with BeforeAndAfter with ShouldMatchers with ScalatestRouteTest with PrimingServerRoute {
+class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with PrimingServerRoute {
 
   import JsonImplicits._
 

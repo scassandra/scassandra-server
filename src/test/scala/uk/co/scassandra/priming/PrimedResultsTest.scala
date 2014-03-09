@@ -28,7 +28,7 @@ class PrimedResultsTest extends FunSpec with ShouldMatchers {
       val actualResult = primeResults get query
 
       // then
-      actualResult should equal(expectedResult)
+      actualResult.get should equal(expectedResult)
     }
   }
 
@@ -40,7 +40,7 @@ class PrimedResultsTest extends FunSpec with ShouldMatchers {
       val actualResult = primeResults get "some random query"
 
       // then
-      actualResult should equal(Nil)
+      actualResult.isEmpty should equal(true)
     }
   }
 
@@ -68,7 +68,7 @@ class PrimedResultsTest extends FunSpec with ShouldMatchers {
       val actualResult = primeResults get query
 
       // then
-      actualResult should equal(Nil)
+      actualResult.isEmpty should equal(true)
     }
   }
 }
