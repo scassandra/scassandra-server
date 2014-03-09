@@ -28,15 +28,3 @@ class Header(val opCode : Int, val streamId : Byte) {
     bs.result().toArray
   }
 }
-
-case class Ready(stream : Byte = ResponseHeader.DefaultStreamId) extends Response(new Header(OpCodes.Ready, stream)) {
-
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
-
-  override def serialize() : ByteString = {
-    val bs = ByteString.newBuilder
-    bs.putBytes(header.serialize())
-    bs.putInt(0)
-    bs.result()
-  }
-}

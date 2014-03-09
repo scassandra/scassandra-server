@@ -4,6 +4,7 @@ import akka.actor.{Actor, ActorRef}
 import com.typesafe.scalalogging.slf4j.Logging
 import akka.io.Tcp.Write
 import akka.util.ByteString
+import com.batey.narinc.client.cqlmessages.Ready
 
 class RegisterHandler(connection: ActorRef) extends Actor with Logging {
   def receive = {
