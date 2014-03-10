@@ -54,7 +54,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(Rows("", "", 0, stream, List()).serialize()))
+    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, List()).serialize()))
   }
 
   test("Should return rows result for when PrimedResults returns a list of rows") {
@@ -70,7 +70,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(Rows("", "", 2, stream, List("name", "age"), List(
+    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, List("name", "age"), List(
       Row(Map(
         "name" -> "Mickey",
         "age" -> "99"
@@ -96,7 +96,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(Rows("", "", 2, stream, List("name", "age"),
+    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, List("name", "age"),
       rows.map(row => Row(row))).serialize()))
   }
 }

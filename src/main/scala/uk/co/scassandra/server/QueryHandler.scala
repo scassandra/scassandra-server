@@ -28,7 +28,7 @@ class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) exten
           case Some(rows) => {
             logger.info(s"Handling query ${queryText.utf8String} with rows ${rows}")
             val columnNames = rows.flatMap(row => row.map( colAndValue => colAndValue._1 )).distinct
-            val bytesToSend: ByteString = Rows("", "", columnNames.length, stream, columnNames, rows.map(row => Row(row))).serialize()
+            val bytesToSend: ByteString = Rows("", "", stream, columnNames, rows.map(row => Row(row))).serialize()
             logger.debug(s"Sending bytes ${bytesToSend}")
             tcpConnection ! Write(bytesToSend)
           }
