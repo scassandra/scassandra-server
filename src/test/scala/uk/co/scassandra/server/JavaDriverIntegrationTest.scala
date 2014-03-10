@@ -34,4 +34,23 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
     cluster.close()
   }
 
+  test("Test prime and query with many rows") {
+    // priming
+    val whenQuery = "select * from people"
+    val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": [{"name":"Chris"}, {"name":"Alexandra"}] } """  <:< Map("Content-Type" -> "application/json")
+    val response = Http(svc OK as.String)
+    response()
+
+    val cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
+    val session = cluster.connect("people")
+    val result = session.execute("select * from people")
+
+    val results = result.all()
+    results.size() should equal(2)
+    results.get(0).getString("name") should equal("Chris")
+    results.get(1).getString("name") should equal("Alexandra")
+
+    cluster.close()
+  }
+
 }

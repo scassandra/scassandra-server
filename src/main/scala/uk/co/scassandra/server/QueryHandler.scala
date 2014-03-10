@@ -27,8 +27,10 @@ class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) exten
         primedResults.get(queryText.utf8String) match {
           case Some(rows) => {
             logger.info(s"Handling query ${queryText.utf8String} with rows ${rows}")
-            val columnNames = rows.flatMap(row => row.map( colAndValue =>  colAndValue._1 ))
-            tcpConnection ! Write(Rows(rows.size, "", "", columnNames.length, stream, columnNames, rows.map(row => Row(row))).serialize())
+            val columnNames = rows.flatMap(row => row.map( colAndValue => colAndValue._1 )).distinct
+            val bytesToSend: ByteString = Rows("", "", columnNames.length, stream, columnNames, rows.map(row => Row(row))).serialize()
+            logger.debug(s"Sending bytes ${bytesToSend}")
+            tcpConnection ! Write(bytesToSend)
           }
           case None => {
             logger.info("Sending void result")
