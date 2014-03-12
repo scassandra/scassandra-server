@@ -3,6 +3,7 @@ package uk.co.scassandra.server
 import com.datastax.driver.core.Cluster
 import org.scalatest.concurrent.ScalaFutures
 import dispatch._, Defaults._
+import com.datastax.driver.core.exceptions.ReadTimeoutException
 
 class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -70,6 +71,23 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
     results.get(0).getString("age") should equal("28")
     results.get(1).getString("name") should equal("Alexandra")
     results.get(1).getString("age") should equal("24")
+
+    cluster.close()
+  }
+
+  test("Test read timeout on query") {
+    // priming
+    val whenQuery = "select * from people"
+    val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": [], "metadata": {"result":"read_request_timeout"} } """  <:< Map("Content-Type" -> "application/json")
+    val response = Http(svc OK as.String)
+    response()
+
+    val cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
+    val session = cluster.connect("people")
+
+    intercept[ReadTimeoutException] {
+      session.execute("select * from people")
+    }
 
     cluster.close()
   }

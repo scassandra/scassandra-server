@@ -6,11 +6,17 @@ import akka.testkit._
 import akka.util.ByteString
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
-import com.batey.narinc.client.cqlmessages.{Row, Rows, VoidResult, SetKeyspace}
+import com.batey.narinc.client.cqlmessages._
 import org.scalatest.mock.MockitoSugar
-import uk.co.scassandra.priming.PrimedResults
+import uk.co.scassandra.priming.{ReadTimeout, Metadata, Prime, PrimedResults}
 import org.mockito.Mockito._
 import org.mockito.Matchers._
+import com.batey.narinc.client.cqlmessages.VoidResult
+import com.batey.narinc.client.cqlmessages.Row
+import com.batey.narinc.client.cqlmessages.SetKeyspace
+import com.batey.narinc.client.cqlmessages.Rows
+import scala.Some
+import uk.co.scassandra.priming.Prime
 
 class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter with TestKitBase with MockitoSugar {
   implicit lazy val system = ActorSystem()
@@ -50,7 +56,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     val someCqlStatement: String = "some other cql statement"
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
-    when(mockPrimedResults.get(anyString())).thenReturn(Some(List()))
+    when(mockPrimedResults.get(anyString())).thenReturn(Some(Prime(someCqlStatement, List())))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
@@ -61,12 +67,12 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     val someCqlStatement: String = "some other cql statement"
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(List[Map[String, String]](
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement, List[Map[String, String]](
       Map(
         "name" -> "Mickey",
         "age" -> "99"
       )
-    )))
+    ))))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
@@ -76,6 +82,17 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
         "age" -> "99"
       ))
     )).serialize()))
+  }
+
+  test("Should return ReadTimeout if Metadata result is read_request_timeout") {
+    val someCqlStatement: String = "some other cql statement"
+    val stream: Byte = 0x05
+    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement, List(), ReadTimeout)))
+
+    underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
+
+    testProbeForTcpConnection.expectMsg(Write(ReadRequestTimeout(stream).serialize()))
   }
 
   test("Test multiple rows") {
@@ -92,7 +109,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
         "age" -> "88"
       )
     )
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(rows))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement, rows)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 

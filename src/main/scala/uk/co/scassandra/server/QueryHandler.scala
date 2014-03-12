@@ -4,8 +4,13 @@ import akka.util.ByteString
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.scalalogging.slf4j.Logging
 import akka.io.Tcp.Write
-import com.batey.narinc.client.cqlmessages.{Row, Rows, VoidResult, SetKeyspace}
-import uk.co.scassandra.priming.PrimedResults
+import com.batey.narinc.client.cqlmessages._
+import uk.co.scassandra.priming.{ReadTimeout, Success, PrimedResults}
+import com.batey.narinc.client.cqlmessages.VoidResult
+import com.batey.narinc.client.cqlmessages.Row
+import com.batey.narinc.client.cqlmessages.SetKeyspace
+import com.batey.narinc.client.cqlmessages.Rows
+import scala.Some
 
 class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) extends Actor with Logging {
   def receive = {
@@ -25,12 +30,23 @@ class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) exten
       } else {
         // TODO - [DN] Update code so that query results are returned with the correct Result Kind instead of VoidResult
         primedResults.get(queryText.utf8String) match {
-          case Some(rows) => {
-            logger.info(s"Handling query ${queryText.utf8String} with rows ${rows}")
-            val columnNames = rows.flatMap(row => row.map( colAndValue => colAndValue._1 )).distinct
-            val bytesToSend: ByteString = Rows("", "", stream, columnNames, rows.map(row => Row(row))).serialize()
-            logger.debug(s"Sending bytes ${bytesToSend}")
-            tcpConnection ! Write(bytesToSend)
+          case Some(prime) => {
+
+            prime.result match {
+              case Success => {
+                logger.info(s"Handling query ${queryText.utf8String} with rows ${prime}")
+                val columnNames = prime.rows.flatMap(row => row.map( colAndValue => colAndValue._1 )).distinct
+                val bytesToSend: ByteString = Rows("", "", stream, columnNames, prime.rows.map(row => Row(row))).serialize()
+                logger.debug(s"Sending bytes ${bytesToSend}")
+                tcpConnection ! Write(bytesToSend)
+              }
+              case ReadTimeout => {
+                val bytesToSend: ByteString = ReadRequestTimeout(stream).serialize()
+                logger.debug(s"Sending readtimeout ${bytesToSend}")
+                tcpConnection ! Write(bytesToSend)
+              }
+            }
+
           }
           case None => {
             logger.info("Sending void result")
@@ -42,7 +58,7 @@ class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) exten
         }
       }
 
-    case message@_ =>
+    case message @ _ =>
       logger.info(s"Received message $message")
 
   }

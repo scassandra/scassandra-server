@@ -35,7 +35,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         )
 
 
-      Post("/prime", PrimeQueryResult(whenQuery, thenResults.toJson.asInstanceOf[JsArray])) ~> route ~> check {
+      Post("/prime", PrimeQueryResult(whenQuery, thenResults.toJson.asInstanceOf[JsArray], None)) ~> route ~> check {
         status should equal(OK)
       }
     }
@@ -55,8 +55,28 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         )
 
 
-      Post("/prime", PrimeQueryResult(whenQuery, thenResults.toJson.asInstanceOf[JsArray])) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(thenResults)
+      Post("/prime", PrimeQueryResult(whenQuery, thenResults.toJson.asInstanceOf[JsArray], None)) ~> route ~> check {
+        primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults))
+      }
+    }
+
+    it("should return populate PrimedResults with ReadTimeout when contained in Metadata") {
+      val whenQuery = "select * from users"
+      val thenResults = List[Map[String, String]]()
+      val metadata = Metadata(Some("read_request_timeout"))
+
+      Post("/prime", PrimeQueryResult(whenQuery, thenResults.toJson.asInstanceOf[JsArray], Some(metadata))) ~> route ~> check {
+        primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, ReadTimeout))
+      }
+    }
+
+    it("should return populate PrimedResults with Success when contained in Metadata") {
+      val whenQuery = "select * from users"
+      val thenResults = List[Map[String, String]]()
+      val metadata = Metadata(Some("success"))
+
+      Post("/prime", PrimeQueryResult(whenQuery, thenResults.toJson.asInstanceOf[JsArray], Some(metadata))) ~> route ~> check {
+        primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, Success))
       }
     }
   }

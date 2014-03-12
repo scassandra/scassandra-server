@@ -4,14 +4,14 @@ import com.typesafe.scalalogging.slf4j.Logging
 
 class PrimedResults extends Logging {
 
-  var queryToResults: Map[String, List[Map[String, String]]] = Map()
+  var queryToResults: Map[String, Prime] = Map()
 
-  def add(keyValue: Pair[String, List[Map[String, String]]]) = {
+  def add(keyValue: String, rows: List[Map[String, String]], result : Result = Success) = {
     logger.info(s"Adding prime ${keyValue}")
-    queryToResults += keyValue
+    queryToResults += (keyValue -> Prime(keyValue, rows, result))
   }
 
-  def get(query: String): Option[List[Map[String, String]]] = {
+  def get(query: String): Option[Prime] = {
     logger.debug("Current primes: " + queryToResults)
     logger.debug(s"Query for |${query}|")
     queryToResults get(query)
@@ -21,6 +21,12 @@ class PrimedResults extends Logging {
     queryToResults = Map()
   }
 }
+
+case class Prime(query: String, rows: List[Map[String, String]], result : Result = Success)
+
+abstract class Result
+case object Success extends Result
+case object ReadTimeout extends Result
 
 object PrimedResults {
   def apply() = {

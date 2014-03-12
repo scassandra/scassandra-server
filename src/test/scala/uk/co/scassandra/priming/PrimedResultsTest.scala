@@ -24,11 +24,24 @@ class PrimedResultsTest extends FunSpec with ShouldMatchers {
         )
 
       // when
-      primeResults add (query -> expectedResult)
+      primeResults add (query, expectedResult)
       val actualResult = primeResults get query
 
       // then
-      actualResult.get should equal(expectedResult)
+      actualResult.get.rows should equal(expectedResult)
+    }
+
+    it("should return passed in metadata") {
+      // given
+      val primeResults = PrimedResults()
+      val query = "some query"
+
+      // when
+      primeResults add (query, List(), ReadTimeout)
+      val actualResult = primeResults get query
+
+      // then
+      actualResult.get.result should equal(ReadTimeout)
     }
   }
 
@@ -63,7 +76,7 @@ class PrimedResultsTest extends FunSpec with ShouldMatchers {
         )
 
       // when
-      primeResults add (query -> result)
+      primeResults add (query, result)
       primeResults clear()
       val actualResult = primeResults get query
 
