@@ -19,14 +19,14 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
 
   test("Test prime and query with single row") {
     // priming
-    val whenQuery = "select * from people"
+    val whenQuery = "Test prime and query with single row"
     val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": [{"name":"Chris"}] } """  <:< Map("Content-Type" -> "application/json")
     val response = Http(svc OK as.String)
     response()
 
     val cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
     val session = cluster.connect("people")
-    val result = session.execute("select * from people")
+    val result = session.execute(whenQuery)
 
     val results = result.all()
     results.size() should equal(1)
@@ -37,14 +37,14 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
 
   test("Test prime and query with many rows") {
     // priming
-    val whenQuery = "select * from people"
+    val whenQuery = "Test prime and query with many rows"
     val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": [{"name":"Chris"}, {"name":"Alexandra"}] } """  <:< Map("Content-Type" -> "application/json")
     val response = Http(svc OK as.String)
     response()
 
     val cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
     val session = cluster.connect("people")
-    val result = session.execute("select * from people")
+    val result = session.execute(whenQuery)
 
     val results = result.all()
     results.size() should equal(2)
@@ -56,14 +56,14 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
 
   test("Test prime and query with many columns") {
     // priming
-    val whenQuery = "select * from people"
+    val whenQuery = "Test prime and query with many columns"
     val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": [{"name":"Chris", "age":"28"}, {"name":"Alexandra", "age":"24"}] } """  <:< Map("Content-Type" -> "application/json")
     val response = Http(svc OK as.String)
     response()
 
     val cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
     val session = cluster.connect("people")
-    val result = session.execute("select * from people")
+    val result = session.execute(whenQuery)
 
     val results = result.all()
     results.size() should equal(2)
@@ -77,7 +77,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
 
   test("Test read timeout on query") {
     // priming
-    val whenQuery = "select * from people"
+    val whenQuery = "read timeout query"
     val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": [], "metadata": {"result":"read_request_timeout"} } """  <:< Map("Content-Type" -> "application/json")
     val response = Http(svc OK as.String)
     response()
@@ -86,7 +86,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
     val session = cluster.connect("people")
 
     intercept[ReadTimeoutException] {
-      session.execute("select * from people")
+      session.execute(whenQuery)
     }
 
     cluster.close()

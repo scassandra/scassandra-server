@@ -116,8 +116,8 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
     sendStartupMessage()
     readReadyMessage()
 
-    val queryAsBytes = "select * from people"
-    sendQueryMessage(queryAsBytes)
+    val query = "any old select"
+    sendQueryMessage(query)
 
     val responseHeaderOpCode: Int = readResponseHeaderOpCode
 
