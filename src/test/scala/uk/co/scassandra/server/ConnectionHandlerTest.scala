@@ -4,12 +4,12 @@ import akka.actor.ActorSystem
 import akka.io.Tcp.{Received, Write}
 import akka.testkit._
 import akka.util.ByteString
-import org.scalatest.{BeforeAndAfter, FunSuiteLike}
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest._
 import uk.co.scassandra.server.QueryHandlerMessages.Query
-import com.batey.narinc.client.cqlmessages.{Ready, QueryBeforeReadyMessage, HeaderConsts, OpCodes}
+import com.batey.narinc.client.cqlmessages.{HeaderConsts, OpCodes}
+import com.batey.narinc.client.cqlmessages.response.{QueryBeforeReadyMessage, Ready}
 
-class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with ShouldMatchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
+class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
 
   var queryHandlerTestProbe : TestProbe = null
   var registerHandlerTestProbe : TestProbe = null

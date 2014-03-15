@@ -4,12 +4,8 @@ import akka.util.ByteString
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.scalalogging.slf4j.Logging
 import akka.io.Tcp.Write
-import com.batey.narinc.client.cqlmessages._
 import uk.co.scassandra.priming.{ReadTimeout, Success, PrimedResults}
-import com.batey.narinc.client.cqlmessages.VoidResult
-import com.batey.narinc.client.cqlmessages.Row
-import com.batey.narinc.client.cqlmessages.SetKeyspace
-import com.batey.narinc.client.cqlmessages.Rows
+import com.batey.narinc.client.cqlmessages.response._
 import scala.Some
 
 class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) extends Actor with Logging {

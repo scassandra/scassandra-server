@@ -5,7 +5,8 @@ import java.io._
 import java.net.Socket
 import java.util
 import scala.collection.immutable.IndexedSeq
-import com.batey.narinc.client.cqlmessages.{ResultKinds, OpCodes}
+import com.batey.narinc.client.cqlmessages.{OpCodes}
+import com.batey.narinc.client.cqlmessages.response.ResultKinds
 
 class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
   var connectionToServerStub: Socket = null

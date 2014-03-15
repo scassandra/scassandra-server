@@ -6,15 +6,11 @@ import akka.testkit._
 import akka.util.ByteString
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
-import com.batey.narinc.client.cqlmessages._
 import org.scalatest.mock.MockitoSugar
-import uk.co.scassandra.priming.{ReadTimeout, Metadata, Prime, PrimedResults}
+import uk.co.scassandra.priming.{ReadTimeout, PrimedResults}
 import org.mockito.Mockito._
 import org.mockito.Matchers._
-import com.batey.narinc.client.cqlmessages.VoidResult
-import com.batey.narinc.client.cqlmessages.Row
-import com.batey.narinc.client.cqlmessages.SetKeyspace
-import com.batey.narinc.client.cqlmessages.Rows
+import com.batey.narinc.client.cqlmessages.response._
 import scala.Some
 import uk.co.scassandra.priming.Prime
 

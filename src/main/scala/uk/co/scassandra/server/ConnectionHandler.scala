@@ -4,7 +4,8 @@ import akka.actor.{ActorRef, ActorRefFactory, Actor}
 import akka.io.Tcp
 import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
-import com.batey.narinc.client.cqlmessages.{ResponseHeader, Ready, QueryBeforeReadyMessage, OpCodes}
+import com.batey.narinc.client.cqlmessages.OpCodes
+import com.batey.narinc.client.cqlmessages.response.{ResponseHeader, QueryBeforeReadyMessage, Ready}
 
 /*
  * TODO: This class is on the verge of needing split up.
