@@ -1,12 +1,14 @@
-package uk.co.scassandra.server
+package uk.co.scassandra
 
 import akka.util.ByteString
 import java.io._
 import java.net.Socket
 import java.util
 import scala.collection.immutable.IndexedSeq
-import com.batey.narinc.client.cqlmessages.{OpCodes}
+import com.batey.narinc.client.cqlmessages.OpCodes
 import com.batey.narinc.client.cqlmessages.response.ResultKinds
+import uk.co.scassandra.{ConnectionToServerStub, AbstractIntegrationTest}
+import uk.co.scassandra.server.MessageHelper
 
 class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
   var connectionToServerStub: Socket = null

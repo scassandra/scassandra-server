@@ -1,9 +1,9 @@
-package uk.co.scassandra.server
+package uk.co.scassandra
 
 import java.net.{Socket, ConnectException}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
-import uk.co.scassandra.ServerStubRunner
+import uk.co.scassandra.server.ServerStubAsThread
 
 abstract class AbstractIntegrationTest extends FunSuite with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll {
   var serverThread: Thread = null

@@ -1,4 +1,4 @@
-package uk.co.scassandra.server
+package uk.co.scassandra
 
 import com.datastax.driver.core.Cluster
 import org.scalatest.concurrent.ScalaFutures
