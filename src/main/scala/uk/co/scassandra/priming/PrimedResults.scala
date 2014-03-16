@@ -27,6 +27,7 @@ case class Prime(query: String, rows: List[Map[String, String]], result : Result
 abstract class Result
 case object Success extends Result
 case object ReadTimeout extends Result
+case object Unavailable extends Result
 
 object PrimedResults {
   def apply() = {

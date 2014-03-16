@@ -7,7 +7,7 @@ import akka.util.ByteString
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.mock.MockitoSugar
-import uk.co.scassandra.priming.{ReadTimeout, PrimedResults}
+import uk.co.scassandra.priming.{ReadTimeout, PrimedResults, Unavailable}
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 import com.batey.narinc.client.cqlmessages.response._
@@ -80,7 +80,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     )).serialize()))
   }
 
-  test("Should return ReadTimeout if Metadata result is read_request_timeout") {
+  test("Should return ReadTimeout if Metadata result is Readtimeout") {
     val someCqlStatement: String = "some other cql statement"
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
@@ -89,6 +89,17 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
     testProbeForTcpConnection.expectMsg(Write(ReadRequestTimeout(stream).serialize()))
+  }
+
+  test("Should return Unavailable Exception if Metadata result is UnavailableException") {
+    val someCqlStatement: String = "some other cql statement"
+    val stream: Byte = 0x05
+    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement, List(), Unavailable)))
+
+    underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
+
+    testProbeForTcpConnection.expectMsg(Write(UnavailableException(stream).serialize()))
   }
 
   test("Test multiple rows") {

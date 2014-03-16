@@ -4,7 +4,7 @@ import akka.util.ByteString
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.scalalogging.slf4j.Logging
 import akka.io.Tcp.Write
-import uk.co.scassandra.priming.{ReadTimeout, Success, PrimedResults}
+import uk.co.scassandra.priming.{ReadTimeout, Success, PrimedResults, Unavailable}
 import com.batey.narinc.client.cqlmessages.response._
 import scala.Some
 
@@ -24,10 +24,8 @@ class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) exten
         logger.info(s"Handling use statement $query for keyspacename |$keyspaceName|")
         tcpConnection ! Write(SetKeyspace(keyspaceName, stream).serialize())
       } else {
-        // TODO - [DN] Update code so that query results are returned with the correct Result Kind instead of VoidResult
         primedResults.get(queryText.utf8String) match {
           case Some(prime) => {
-
             prime.result match {
               case Success => {
                 logger.info(s"Handling query ${queryText.utf8String} with rows ${prime}")
@@ -37,12 +35,12 @@ class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) exten
                 tcpConnection ! Write(bytesToSend)
               }
               case ReadTimeout => {
-                val bytesToSend: ByteString = ReadRequestTimeout(stream).serialize()
-                logger.debug(s"Sending readtimeout ${bytesToSend}")
-                tcpConnection ! Write(bytesToSend)
+                tcpConnection ! Write(ReadRequestTimeout(stream).serialize())
+              }
+              case Unavailable => {
+                tcpConnection ! Write(UnavailableException(stream).serialize())
               }
             }
-
           }
           case None => {
             logger.info("Sending void result")

@@ -79,5 +79,15 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, Success))
       }
     }
+
+    it("should return populate PrimedResults with Unavailable when contained in Metadata") {
+      val whenQuery = "select * from users"
+      val thenResults = List[Map[String, String]]()
+      val metadata = Metadata(Some("unavailable"))
+
+      Post("/prime", PrimeQueryResult(whenQuery, thenResults.toJson.asInstanceOf[JsArray], Some(metadata))) ~> route ~> check {
+        primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, Unavailable))
+      }
+    }
   }
 }

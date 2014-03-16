@@ -36,6 +36,7 @@ trait PrimingServerRoute extends HttpService with Logging {
               val result = metadata match {
                 case Some(metadata) => metadata match {
                   case Metadata(Some("read_request_timeout")) => ReadTimeout
+                  case Metadata(Some("unavailable")) => Unavailable
                   case _ => Success
                 }
                 case None => Success

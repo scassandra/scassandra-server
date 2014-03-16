@@ -3,7 +3,7 @@ package uk.co.scassandra.server
 import com.datastax.driver.core.Cluster
 import org.scalatest.concurrent.ScalaFutures
 import dispatch._, Defaults._
-import com.datastax.driver.core.exceptions.ReadTimeoutException
+import com.datastax.driver.core.exceptions.{UnavailableException, ReadTimeoutException}
 
 class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -86,6 +86,23 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
     val session = cluster.connect("people")
 
     intercept[ReadTimeoutException] {
+      session.execute(whenQuery)
+    }
+
+    cluster.close()
+  }
+
+  test("Test unavailable exception on query") {
+    // priming
+    val whenQuery = "unavailable exception query"
+    val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": [], "metadata": {"result":"unavailable"} } """  <:< Map("Content-Type" -> "application/json")
+    val response = Http(svc OK as.String)
+    response()
+
+    val cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
+    val session = cluster.connect("people")
+
+    intercept[UnavailableException] {
       session.execute(whenQuery)
     }
 
