@@ -6,7 +6,7 @@ import priming.{PrimedResults, PrimingServer}
 import uk.co.scassandra.priming.{PrimingServer, PrimedResults}
 import uk.co.scassandra.server.TcpServer
 
-object ServerStubRunner extends Logging {
+class ServerStubRunner extends Logging {
 
   var portNumber = 8042
   var primingPortNumber = 8043
@@ -20,10 +20,10 @@ object ServerStubRunner extends Logging {
       logger.info(s"Overriding port to $port")
       portNumber = port.toInt
     }
-    run()
+    start()
   }
 
-  def run() = {
+  def start() = {
     system = ActorSystem("CassandraServerStub")
     system.actorOf(Props(classOf[TcpServer], portNumber, primedResults))
     system.actorOf(Props(classOf[PrimingServer], primingPortNumber, primedResults))

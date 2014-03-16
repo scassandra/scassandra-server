@@ -6,7 +6,7 @@ import org.scalatest.matchers.ShouldMatchers
 import uk.co.scassandra.server.ServerStubAsThread
 
 abstract class AbstractIntegrationTest extends FunSuite with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll {
-  var serverThread: Thread = null
+  var serverThread : ServerStubAsThread = null
 
   def startServerStub() = {
     serverThread = ServerStubAsThread()
@@ -15,8 +15,12 @@ abstract class AbstractIntegrationTest extends FunSuite with ShouldMatchers with
   }
 
   def stopServerStub() = {
-    ServerStubRunner.shutdown()
+    serverThread.shutdown()
     Thread.sleep(3000)
+  }
+
+  def priming() = {
+    serverThread.serverStub.primedResults
   }
 
   override def beforeAll() {
