@@ -1,6 +1,8 @@
 package uk.co.scassandra
 
 import com.datastax.driver.core.Cluster
+import com.datastax.driver.core.exceptions.ReadTimeoutException
+import uk.co.scassandra.priming.ReadTimeout
 
 class ProgrammaticPrimingIntegrationTest extends AbstractIntegrationTest {
   test("Test prime and query with single row") {
@@ -16,6 +18,21 @@ class ProgrammaticPrimingIntegrationTest extends AbstractIntegrationTest {
     val results = result.all()
     results.size() should equal(1)
     results.get(0).getString("name") should equal("Chris")
+
+    cluster.close()
+  }
+
+  test("Test read timeout on query") {
+    // priming
+    val query = "Test prime and query with single row"
+    priming().add(query, List(), ReadTimeout)
+
+    val cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
+    val session = cluster.connect("people")
+
+    intercept[ReadTimeoutException] {
+      session.execute(query)
+    }
 
     cluster.close()
   }

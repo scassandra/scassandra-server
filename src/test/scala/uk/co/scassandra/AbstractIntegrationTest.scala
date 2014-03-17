@@ -4,7 +4,7 @@ import java.net.{Socket, ConnectException}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
 import uk.co.scassandra.server.ServerStubAsThread
-
+// TODO: Move connection using the Java Driver into here as all sub classes need it
 abstract class AbstractIntegrationTest extends FunSuite with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll {
   var serverThread : ServerStubAsThread = null
 
