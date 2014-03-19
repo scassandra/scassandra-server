@@ -15,6 +15,7 @@ object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val implMetaDat = jsonFormat1(Metadata)
   // let spray know how to convert an incoming JSON request into an instance of PrimeQueryResult
   implicit val impPrimeQueryResult = jsonFormat3(PrimeQueryResult)
+  implicit val impConnection = jsonFormat1(Connection)
 }
 
 trait PrimingServerRoute extends HttpService with Logging {
@@ -41,7 +42,7 @@ trait PrimingServerRoute extends HttpService with Logging {
                 }
                 case None => Success
               }
-              primedResults add (primeRequest.when, resultsAsList, result)
+              primedResults add(primeRequest.when, resultsAsList, result)
 
               // all good
               StatusCodes.OK
@@ -49,12 +50,27 @@ trait PrimingServerRoute extends HttpService with Logging {
         }
       }
     }
+  } ~
+  path("connection") {
+    get {
+      complete {
+        ActivityLog.retrieveConnections()
+      }
+    }
   }
+//  } ~
+//  path("query") {
+//    get {
+//      ???
+//    }
+//  }
 }
 
 class PrimingServer(port: Int, implicit val primedResults: PrimedResults) extends Actor with PrimingServerRoute with Logging {
 
   implicit def actorRefFactory = context.system
+
+  logger.info(s"Opening port ${port} for priming")
 
   IO(Http) ! Http.Bind(self, "localhost", port)
 

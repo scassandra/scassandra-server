@@ -1,7 +1,6 @@
 package uk.co.scassandra.priming
 
 import org.scalatest._
-import org.scalatest.matchers.ShouldMatchers
 
 import spray.http.StatusCodes._
 import spray.testkit.ScalatestRouteTest
@@ -19,7 +18,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
     primedResults clear()
   }
 
-  describe("Priming server") {
+  describe("Priming") {
     it("should return OK on valid request") {
       val whenQuery = "select * from users"
       val thenResults =
@@ -87,6 +86,29 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
 
       Post("/prime", PrimeQueryResult(whenQuery, thenResults.toJson.asInstanceOf[JsArray], Some(metadata))) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, Unavailable))
+      }
+    }
+  }
+
+  describe("Retrieving activity") {
+    it("Should return connection count from ActivityLog for single connection") {
+      ActivityLog.clearConnections()
+      ActivityLog.recordConnection()
+
+      Get("/connection") ~> route ~> check {
+        val response : String = responseAs[String]
+        val connectionList = JsonParser(response).convertTo[List[Connection]]
+        connectionList.size should equal(1)
+      }
+    }
+
+    it("Should return connection count from ActivityLog for no connections") {
+      ActivityLog.clearConnections()
+
+      Get("/connection") ~> route ~> check {
+        val response : String = responseAs[String]
+        val connectionList = JsonParser(response).convertTo[List[Connection]]
+        connectionList.size should equal(0)
       }
     }
   }

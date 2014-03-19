@@ -14,7 +14,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" % "akka-actor_2.10" % "2.2.+",
   "com.typesafe.akka" % "akka-remote_2.10" % "2.2.+",
   "com.typesafe.akka" % "akka-testkit_2.10" % "2.2.+",
-  "com.datastax.cassandra" % "cassandra-driver-core" % "2.0.0+",
+  "com.datastax.cassandra" % "cassandra-driver-core" % "2+",
   "io.spray" %% "spray-json" % "1.2.5",
   "io.spray" % "spray-can" % sprayVersion,
   "io.spray" % "spray-routing" % sprayVersion,
