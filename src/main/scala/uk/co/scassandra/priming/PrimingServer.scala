@@ -16,6 +16,7 @@ object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   // let spray know how to convert an incoming JSON request into an instance of PrimeQueryResult
   implicit val impPrimeQueryResult = jsonFormat3(PrimeQueryResult)
   implicit val impConnection = jsonFormat1(Connection)
+  implicit val impQuery = jsonFormat1(Query)
 }
 
 trait PrimingServerRoute extends HttpService with Logging {
@@ -48,22 +49,44 @@ trait PrimingServerRoute extends HttpService with Logging {
               StatusCodes.OK
             }
         }
+      } ~
+      delete {
+        complete {
+          logger.info("Deleting all recorded priming")
+          primedResults.clear()
+          StatusCodes.OK
+        }
       }
     }
   } ~
-  path("connection") {
-    get {
-      complete {
-        ActivityLog.retrieveConnections()
-      }
+    path("connection") {
+      get {
+        complete {
+          ActivityLog.retrieveConnections()
+        }
+      } ~
+        delete {
+          complete {
+            logger.info("Deleting all recorded connections")
+            ActivityLog.clearConnections()
+            StatusCodes.OK
+          }
+        }
+    } ~
+    path("query") {
+      get {
+        complete {
+          ActivityLog.retrieveQueries()
+        }
+      } ~
+        delete {
+          complete {
+            logger.info("Del=eting all recorded queries")
+            ActivityLog.clearQueries()
+            StatusCodes.OK
+          }
+        }
     }
-  }
-//  } ~
-//  path("query") {
-//    get {
-//      ???
-//    }
-//  }
 }
 
 class PrimingServer(port: Int, implicit val primedResults: PrimedResults) extends Actor with PrimingServerRoute with Logging {

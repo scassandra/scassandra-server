@@ -15,7 +15,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
   implicit val primedResults = PrimedResults()
 
   after {
-    primedResults clear()
+    primedResults.clear()
   }
 
   describe("Priming") {
@@ -88,6 +88,15 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, Unavailable))
       }
     }
+
+    it("should delete all primes for a delete") {
+      val query = "anything"
+      primedResults.add(query, List())
+
+      Delete("/prime") ~> route ~> check {
+        primedResults.get(query) should equal(None)
+      }
+    }
   }
 
   describe("Retrieving activity") {
@@ -109,6 +118,45 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         val response : String = responseAs[String]
         val connectionList = JsonParser(response).convertTo[List[Connection]]
         connectionList.size should equal(0)
+      }
+    }
+
+    it("Should clear connections for a delete") {
+      ActivityLog.recordConnection()
+
+      Delete("/connection") ~> route ~> check {
+        ActivityLog.retrieveConnections().size should equal(0)
+      }
+    }
+
+    it("Should return queries from ActivityLog - no queries") {
+      ActivityLog.clearQueries()
+
+      Get("/query") ~> route ~> check {
+        val response : String = responseAs[String]
+        val queryList = JsonParser(response).convertTo[List[Query]]
+        queryList.size should equal(0)
+      }
+    }
+
+    it("Should return queries from ActivityLog - single query") {
+      ActivityLog.clearQueries()
+      val query: String = "select * from people"
+      ActivityLog.recordQuery(query)
+
+      Get("/query") ~> route ~> check {
+        val response : String = responseAs[String]
+        val queryList = JsonParser(response).convertTo[List[Query]]
+        queryList.size should equal(1)
+        queryList(0).query should equal(query)
+      }
+    }
+
+    it("Should clear queries for a delete") {
+      ActivityLog.recordQuery("select * from people")
+
+      Delete("/query") ~> route ~> check {
+        ActivityLog.retrieveQueries().size should equal(0)
       }
     }
   }

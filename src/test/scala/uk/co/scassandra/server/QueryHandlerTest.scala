@@ -7,10 +7,17 @@ import akka.util.ByteString
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.mock.MockitoSugar
-import uk.co.scassandra.priming.{ReadTimeout, PrimedResults, Unavailable}
+import uk.co.scassandra.priming._
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 import com.batey.narinc.client.cqlmessages.response._
+import scala.Some
+import com.batey.narinc.client.cqlmessages.response.ReadRequestTimeout
+import com.batey.narinc.client.cqlmessages.response.VoidResult
+import com.batey.narinc.client.cqlmessages.response.Row
+import com.batey.narinc.client.cqlmessages.response.SetKeyspace
+import com.batey.narinc.client.cqlmessages.response.UnavailableException
+import com.batey.narinc.client.cqlmessages.response.Rows
 import scala.Some
 import uk.co.scassandra.priming.Prime
 
@@ -123,4 +130,20 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, List("name", "age"),
       rows.map(row => Row(row))).serialize()))
   }
+
+
+  test("Should store query in the ActivityLog") {
+    //given
+    ActivityLog.clearQueries()
+    val stream : Byte = 1
+    val query = "select * from people"
+    val queryBody: ByteString = ByteString(MessageHelper.createQueryMessage(query).toArray.drop(8))
+
+    //when
+    underTest ! QueryHandlerMessages.Query(queryBody, stream)
+
+    //then
+    ActivityLog.retrieveQueries().exists(p => p.query == query) should equal(true)
+  }
+
 }

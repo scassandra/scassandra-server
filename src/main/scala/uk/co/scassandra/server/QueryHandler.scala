@@ -4,8 +4,15 @@ import akka.util.ByteString
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.scalalogging.slf4j.Logging
 import akka.io.Tcp.Write
-import uk.co.scassandra.priming.{ReadTimeout, Success, PrimedResults, Unavailable}
+import uk.co.scassandra.priming._
 import com.batey.narinc.client.cqlmessages.response._
+import scala.Some
+import com.batey.narinc.client.cqlmessages.response.ReadRequestTimeout
+import com.batey.narinc.client.cqlmessages.response.VoidResult
+import com.batey.narinc.client.cqlmessages.response.Row
+import com.batey.narinc.client.cqlmessages.response.SetKeyspace
+import com.batey.narinc.client.cqlmessages.response.UnavailableException
+import com.batey.narinc.client.cqlmessages.response.Rows
 import scala.Some
 
 class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) extends Actor with Logging {
@@ -17,7 +24,7 @@ class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) exten
       logger.info(s"Query length is $queryLength")
       val queryText = queryBody.drop(4).take(queryLength)
       logger.info(s"Handling query |${queryText.utf8String}|")
-
+      ActivityLog.recordQuery(queryText.utf8String)
       if (queryText.startsWith("use ")) {
         val query = queryText.utf8String
         val keyspaceName: String = query.substring(4, queryLength)
@@ -59,5 +66,5 @@ class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) exten
 }
 
 object QueryHandlerMessages {
-  case class Query(queryString: ByteString, stream: Byte)
+  case class Query(queryBody: ByteString, stream: Byte)
 }
