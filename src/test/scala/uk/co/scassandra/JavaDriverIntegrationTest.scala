@@ -82,7 +82,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test read timeout on query") {
     // priming
     val whenQuery = "read timeout query"
-    val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": {"rows":[]}, "metadata": {"result":"read_request_timeout"} } """  <:< Map("Content-Type" -> "application/json")
+    val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": {"rows":[], "result":"read_request_timeout"} } """  <:< Map("Content-Type" -> "application/json")
     val response = Http(svc OK as.String)
     response()
 
@@ -99,7 +99,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test unavailable exception on query") {
     // priming
     val whenQuery = "unavailable exception query"
-    val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": {"rows":[]}, "metadata": {"result":"unavailable"} } """  <:< Map("Content-Type" -> "application/json")
+    val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": {"rows":[], "result":"unavailable"} } """  <:< Map("Content-Type" -> "application/json")
     val response = Http(svc OK as.String)
     response()
 
