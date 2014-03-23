@@ -34,7 +34,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         )
 
 
-      Post("/prime", PrimeQueryResult(whenQuery, Then(thenResults.toJson.asInstanceOf[JsArray]))) ~> route ~> check {
+      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults.toJson.asInstanceOf[JsArray])))) ~> route ~> check {
         status should equal(OK)
       }
     }
@@ -54,7 +54,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         )
 
 
-      Post("/prime", PrimeQueryResult(whenQuery, Then(thenResults.toJson.asInstanceOf[JsArray]))) ~> route ~> check {
+      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults.toJson.asInstanceOf[JsArray])))) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults))
       }
     }
@@ -62,8 +62,9 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
     it("should return populate PrimedResults with ReadTimeout when contained in Metadata") {
       val whenQuery = "select * from users"
       val thenResults = List[Map[String, String]]()
+      val result = Some("read_request_timeout")
 
-      Post("/prime", PrimeQueryResult(whenQuery, Then(thenResults.toJson.asInstanceOf[JsArray], Some("read_request_timeout")))) ~> route ~> check {
+      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults.toJson.asInstanceOf[JsArray]), result))) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, ReadTimeout))
       }
     }
@@ -73,7 +74,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       val thenResults = List[Map[String, String]]()
       val result = Some("success")
 
-      Post("/prime", PrimeQueryResult(whenQuery, Then(thenResults.toJson.asInstanceOf[JsArray], result))) ~> route ~> check {
+      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults.toJson.asInstanceOf[JsArray]), result))) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, Success))
       }
     }
@@ -83,7 +84,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       val thenResults = List[Map[String, String]]()
       val result = Some("unavailable")
 
-      Post("/prime", PrimeQueryResult(whenQuery, Then(thenResults.toJson.asInstanceOf[JsArray], result))) ~> route ~> check {
+      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults.toJson.asInstanceOf[JsArray]), result))) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, Unavailable))
       }
     }

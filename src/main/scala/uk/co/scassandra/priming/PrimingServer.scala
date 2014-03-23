@@ -31,7 +31,10 @@ trait PrimingServerRoute extends HttpService with Logging {
           primeRequest =>
             complete {
               // add the deserialized JSON request to the map of prime requests
-              val resultsAsList = primeRequest.then.rows.convertTo[List[Map[String, String]]]
+              val resultsAsList = primeRequest.then.rows match {
+                case Some(listOfRows) => listOfRows.convertTo[List[Map[String, String]]]
+                case _ => List()
+              }
               val then = primeRequest.then
               logger.debug(s"Metadata ${then}")
               val result = then match {
