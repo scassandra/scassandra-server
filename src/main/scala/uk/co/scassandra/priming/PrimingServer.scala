@@ -12,6 +12,7 @@ import spray.http.StatusCodes
 import akka.actor.Actor
 
 object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
+  implicit val impThen = jsonFormat1(Then)
   implicit val implMetaDat = jsonFormat1(Metadata)
   // let spray know how to convert an incoming JSON request into an instance of PrimeQueryResult
   implicit val impPrimeQueryResult = jsonFormat3(PrimeQueryResult)
@@ -32,7 +33,7 @@ trait PrimingServerRoute extends HttpService with Logging {
           primeRequest =>
             complete {
               // add the deserialized JSON request to the map of prime requests
-              val resultsAsList = primeRequest.then.convertTo[List[Map[String, String]]]
+              val resultsAsList = primeRequest.then.rows.convertTo[List[Map[String, String]]]
               val metadata = primeRequest.metadata
               logger.debug(s"Metadata ${metadata}")
               val result = metadata match {
