@@ -76,6 +76,7 @@ trait PrimingServerRoute extends HttpService with Logging {
     path("query") {
       get {
         complete {
+          logger.info("Request for recorded queries")
           ActivityLog.retrieveQueries()
         }
       } ~
