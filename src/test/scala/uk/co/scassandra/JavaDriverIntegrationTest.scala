@@ -3,7 +3,7 @@ package uk.co.scassandra
 import com.datastax.driver.core.{HostDistance, PoolingOptions, Cluster}
 import org.scalatest.concurrent.ScalaFutures
 import dispatch._, Defaults._
-import com.datastax.driver.core.exceptions.{UnavailableException, ReadTimeoutException}
+import com.datastax.driver.core.exceptions.{WriteTimeoutException, UnavailableException, ReadTimeoutException}
 import uk.co.scassandra.priming.{Query, ActivityLog, JsonImplicits, Connection}
 import spray.json._
 
@@ -113,7 +113,24 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
     cluster.close()
   }
 
-  test("Test verification of connection for no connections") {
+  test("Test write timeout on query") {
+    // priming
+    val whenQuery = "some write query"
+    val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": {"result":"write_request_timeout"} } """  <:< Map("Content-Type" -> "application/json")
+    val response = Http(svc OK as.String)
+    response()
+
+    val cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
+    val session = cluster.connect("people")
+
+    intercept[WriteTimeoutException] {
+      session.execute(whenQuery)
+    }
+
+    cluster.close()
+  }
+
+  test("Test verification of connection when there has been no connections") {
     ActivityLog.clearConnections()
     val svc: Req = url("http://localhost:8043/connection")
     val response = Http(svc OK as.String)

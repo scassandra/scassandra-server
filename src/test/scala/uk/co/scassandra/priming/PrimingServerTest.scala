@@ -59,13 +59,23 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       }
     }
 
-    it("should return populate PrimedResults with ReadTimeout when contained in Metadata") {
+    it("should return populate PrimedResults with ReadTimeout when result is read_request_timeout") {
       val whenQuery = "select * from users"
       val thenResults = List[Map[String, String]]()
       val result = Some("read_request_timeout")
 
       Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults.toJson.asInstanceOf[JsArray]), result))) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, ReadTimeout))
+      }
+    }
+
+    it("should return populate PrimedResults with WriteTimeout when result is write_request_timeout") {
+      val whenQuery = "insert into something"
+      val thenResults = List[Map[String, String]]()
+      val result = Some("write_request_timeout")
+
+      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults.toJson.asInstanceOf[JsArray]), result))) ~> route ~> check {
+        primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, WriteTimeout))
       }
     }
 

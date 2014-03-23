@@ -47,6 +47,9 @@ class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) exten
               case Unavailable => {
                 tcpConnection ! Write(UnavailableException(stream).serialize())
               }
+              case WriteTimeout => {
+                tcpConnection ! Write(WriteRequestTimeout(stream).serialize())
+              }
             }
           }
           case None => {

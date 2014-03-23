@@ -40,6 +40,7 @@ trait PrimingServerRoute extends HttpService with Logging {
               val result = then match {
                 case Then(_,Some("read_request_timeout")) => ReadTimeout
                 case Then(_,Some("unavailable")) => Unavailable
+                case Then(_,Some("write_request_timeout")) => WriteTimeout
                 case _ => Success
               }
               primedResults add(primeRequest.when, resultsAsList, result)
