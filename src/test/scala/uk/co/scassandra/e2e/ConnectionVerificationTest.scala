@@ -18,10 +18,12 @@ class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutur
     poolingOptions.setMaxConnectionsPerHost(HostDistance.REMOTE, 0)
     poolingOptions.setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
     poolingOptions.setCoreConnectionsPerHost(HostDistance.REMOTE, 0)
+
     val cluster = Cluster.builder().withPoolingOptions(poolingOptions).addContactPoint("localhost").withPort(8042).build()
-    val session = cluster.connect("people")
+    cluster.connect()
     val svc: Req = url("http://localhost:8043/connection")
     val response = Http(svc OK as.String)
+    response()
 
     whenReady(response) { result =>
       val connectionList = JsonParser(result).convertTo[List[Connection]]
@@ -29,8 +31,6 @@ class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutur
       // verified with wireshark
       connectionList.size should equal(2)
     }
-
-    cluster.close()
   }
 
   test("Test verification of connection when there has been no connections") {

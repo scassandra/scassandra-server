@@ -4,9 +4,14 @@ import java.net.{Socket, ConnectException}
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfter, FunSuite}
 import org.scalatest.matchers.ShouldMatchers
 import uk.co.scassandra.server.ServerStubAsThread
+import com.datastax.driver.core.{Session, Cluster}
+
 // TODO: Move connection using the Java Driver into here as all sub classes need it
 abstract class AbstractIntegrationTest extends FunSuite with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll {
   var serverThread : ServerStubAsThread = null
+
+  var cluster : Cluster = _
+  var session : Session = _
 
   def startServerStub() = {
     serverThread = ServerStubAsThread()
@@ -44,10 +49,16 @@ abstract class AbstractIntegrationTest extends FunSuite with ShouldMatchers with
 
     // Then start the server
     startServerStub()
+
+    cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
+    session = cluster.connect("people")
+
   }
 
   override def afterAll() {
     stopServerStub()
+
+    cluster.close()
   }
 }
 

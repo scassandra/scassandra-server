@@ -13,15 +13,11 @@ class ProgrammaticPrimingIntegrationTest extends AbstractIntegrationTest {
     val types = Map[String, ColumnType]("name"->CqlVarchar)
     priming().add(query, rows, Success, types)
 
-    val cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
-    val session = cluster.connect("people")
     val result = session.execute(query)
 
     val results = result.all()
     results.size() should equal(1)
     results.get(0).getString("name") should equal("Chris")
-
-    cluster.close()
   }
 
   test("Test read timeout on query") {
@@ -29,13 +25,8 @@ class ProgrammaticPrimingIntegrationTest extends AbstractIntegrationTest {
     val query = "Test prime and query with single row"
     priming().add(query, List(), ReadTimeout)
 
-    val cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
-    val session = cluster.connect("people")
-
     intercept[ReadTimeoutException] {
       session.execute(query)
     }
-
-    cluster.close()
   }
 }

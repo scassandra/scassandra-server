@@ -13,8 +13,6 @@ class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 
   test("Test clearing of query results") {
     ActivityLog.clearQueries()
-    val cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
-    val session = cluster.connect("people")
     val queryString: String = "select * from people"
     session.execute(queryString)
     val svc: Req = url("http://localhost:8043/query")
@@ -26,14 +24,10 @@ class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
     whenReady(listOfQueriesResponse) { result =>
       JsonParser(result).convertTo[List[Query]].size should equal(0)
     }
-
-    cluster.close()
   }
 
   test("Test verification of a single query") {
     ActivityLog.clearQueries()
-    val cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
-    val session = cluster.connect("people")
     val queryString: String = "select * from people"
     session.execute(queryString)
     val svc: Req = url("http://localhost:8043/query")
@@ -44,8 +38,6 @@ class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
       println(queryList)
       queryList.exists(query => query.query.equals(queryString))
     }
-
-    cluster.close()
   }
 
 }
