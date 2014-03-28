@@ -20,12 +20,13 @@ import com.batey.narinc.client.cqlmessages.response.UnavailableException
 import com.batey.narinc.client.cqlmessages.response.Rows
 import scala.Some
 import uk.co.scassandra.priming.Prime
+import com.batey.narinc.client.cqlmessages.{CqlInt, CqlVarchar}
 
 class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter with TestKitBase with MockitoSugar {
   implicit lazy val system = ActorSystem()
 
-  var underTest : ActorRef = null
-  var testProbeForTcpConnection : TestProbe = null
+  var underTest: ActorRef = null
+  var testProbeForTcpConnection: TestProbe = null
   val mockPrimedResults = mock[PrimedResults]
 
   before {
@@ -38,12 +39,12 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     val useStatement: String = "use keyspace"
     val stream: Byte = 0x02
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(useStatement).toArray.drop(8))
- 
+
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
     testProbeForTcpConnection.expectMsg(Write(SetKeyspace("keyspace", stream).serialize()))
   }
-  
+
   test("Should return void result for everything that PrimedResults returns None") {
     val someCqlStatement: String = "some other cql statement"
     val stream: Byte = 0x05
@@ -63,26 +64,31 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, List()).serialize()))
+    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, Map()).serialize()))
   }
 
   test("Should return rows result for when PrimedResults returns a list of rows") {
     val someCqlStatement: String = "some other cql statement"
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement, List[Map[String, String]](
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement, List[Map[String, Any]](
       Map(
         "name" -> "Mickey",
-        "age" -> "99"
+        "age" -> 99
       )
-    ))))
+    ),
+      Success,
+      Map(
+        "name" -> CqlVarchar,
+        "age" -> CqlInt
+      ))))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, List("name", "age"), List(
+    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, Map("name" -> CqlVarchar, "age" -> CqlInt), List(
       Row(Map(
         "name" -> "Mickey",
-        "age" -> "99"
+        "age" -> 99
       ))
     )).serialize()))
   }
@@ -134,11 +140,15 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
         "age" -> "88"
       )
     )
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement, rows)))
+    val colTypes = Map(
+      "name" -> CqlVarchar,
+      "age" -> CqlVarchar
+    )
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement, rows, Success, colTypes)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, List("name", "age"),
+    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, Map("name" -> CqlVarchar, "age" -> CqlVarchar),
       rows.map(row => Row(row))).serialize()))
   }
 
@@ -146,7 +156,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   test("Should store query in the ActivityLog") {
     //given
     ActivityLog.clearQueries()
-    val stream : Byte = 1
+    val stream: Byte = 1
     val query = "select * from people"
     val queryBody: ByteString = ByteString(MessageHelper.createQueryMessage(query).toArray.drop(8))
 

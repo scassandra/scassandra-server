@@ -5,6 +5,7 @@ import org.scalatest._
 import spray.http.StatusCodes._
 import spray.testkit.ScalatestRouteTest
 import spray.json._
+import com.batey.narinc.client.cqlmessages.{CqlVarchar, CqlInt, ColumnType}
 
 class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with PrimingServerRoute {
 
@@ -52,10 +53,10 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
             "age" -> "12"
           )
         )
-
+      val defaultedColumnTypes = Map[String, ColumnType]("name" -> CqlVarchar, "age" -> CqlVarchar)
 
       Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults.toJson.asInstanceOf[JsArray])))) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults))
+        primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, Success, defaultedColumnTypes))
       }
     }
 
@@ -105,6 +106,48 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
 
       Delete("/prime") ~> route ~> check {
         primedResults.get(query) should equal(None)
+      }
+    }
+  }
+  
+  describe("Priming of types") {
+    it("Should convert int to ColumnType Int") {
+      val whenQuery = "select * from users"
+      val thenRows =
+        List(
+          Map(
+            "age" -> "99"
+          ),
+          Map(
+            "age" -> "12"
+          )
+        )
+      val thenColumnTypes = Map(
+        "age" -> "int"
+      )
+      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows.toJson.asInstanceOf[JsArray]), column_types = Some(thenColumnTypes)))
+
+      Post("/prime", primePayload) ~> route ~> check {
+        primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenRows, Success, columnTypes = Map[String, ColumnType]("age" -> CqlInt)))
+      }
+    }
+
+    it("Should default column types to varchar") {
+      val whenQuery = "select * from users"
+      val thenRows =
+        List(
+          Map(
+            "age" -> "99"
+          ),
+          Map(
+            "age" -> "12"
+          )
+        )
+      val thenColumnTypes = Map[String, String]()
+      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows.toJson.asInstanceOf[JsArray]), column_types = Some(thenColumnTypes)))
+
+      Post("/prime", primePayload) ~> route ~> check {
+        primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenRows, Success, columnTypes = Map[String, ColumnType]("age" -> CqlVarchar)))
       }
     }
   }

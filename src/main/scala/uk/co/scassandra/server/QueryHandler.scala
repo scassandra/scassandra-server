@@ -14,6 +14,7 @@ import com.batey.narinc.client.cqlmessages.response.SetKeyspace
 import com.batey.narinc.client.cqlmessages.response.UnavailableException
 import com.batey.narinc.client.cqlmessages.response.Rows
 import scala.Some
+import com.batey.narinc.client.cqlmessages.CqlVarchar
 
 class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) extends Actor with Logging {
   def receive = {
@@ -36,8 +37,7 @@ class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) exten
             prime.result match {
               case Success => {
                 logger.info(s"Handling query ${queryText.utf8String} with rows ${prime}")
-                val columnNames = prime.rows.flatMap(row => row.map( colAndValue => colAndValue._1 )).distinct
-                val bytesToSend: ByteString = Rows("", "", stream, columnNames, prime.rows.map(row => Row(row))).serialize()
+                val bytesToSend: ByteString = Rows("", "", stream, prime.columnTypes, prime.rows.map(row => Row(row))).serialize()
                 logger.debug(s"Sending bytes ${bytesToSend}")
                 tcpConnection ! Write(bytesToSend)
               }

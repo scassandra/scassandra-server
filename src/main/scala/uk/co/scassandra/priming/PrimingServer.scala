@@ -10,9 +10,10 @@ import spray.json.DefaultJsonProtocol
 import spray.httpx.SprayJsonSupport
 import spray.http.StatusCodes
 import akka.actor.Actor
+import com.batey.narinc.client.cqlmessages.{CqlVarchar, CqlInt, ColumnType}
 
 object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
-  implicit val impThen = jsonFormat2(Then)
+  implicit val impThen = jsonFormat3(Then)
   implicit val impPrimeQueryResult = jsonFormat2(PrimeQueryResult)
   implicit val impConnection = jsonFormat1(Connection)
   implicit val impQuery = jsonFormat1(Query)
@@ -23,6 +24,10 @@ trait PrimingServerRoute extends HttpService with Logging {
   import JsonImplicits._
 
   implicit val primedResults: PrimedResults
+
+  val ColumnTypeMapping = Map[String, ColumnType](
+    "int" -> CqlInt
+  )
 
   val route = {
     path("prime") {
@@ -36,27 +41,42 @@ trait PrimingServerRoute extends HttpService with Logging {
                 case _ => List()
               }
               val then = primeRequest.then
-              logger.debug(s"Metadata ${then}")
               val result = then match {
-                case Then(_,Some("read_request_timeout")) => ReadTimeout
-                case Then(_,Some("unavailable")) => Unavailable
-                case Then(_,Some("write_request_timeout")) => WriteTimeout
+                case Then(_, Some("read_request_timeout"), _) => ReadTimeout
+                case Then(_, Some("unavailable"), _) => Unavailable
+                case Then(_, Some("write_request_timeout"), _) => WriteTimeout
                 case _ => Success
               }
-              primedResults add(primeRequest.when, resultsAsList, result)
+              logger.debug("Column types " + primeRequest.then.column_types)
+              val columnTypes = primeRequest.then.column_types match {
+                case Some(types) => types.map({
+                  case (key: String, value) => (key, ColumnTypeMapping.getOrElse(value, CqlVarchar))
+                })
+                case _ => Map[String, ColumnType]()
+              }
+
+              //check that all the columns in thr rows have a type
+              val columnNamesInAllRows = resultsAsList.flatMap(row => row.keys).distinct
+
+              val columnTypesWithMissingDefaultedToVarchar = columnNamesInAllRows.map( columnName => columnTypes.get(columnName) match {
+                case Some(columnType) => (columnName, columnType)
+                case None => (columnName, CqlVarchar)
+              }).toMap
+
+              primedResults.add(primeRequest.when, resultsAsList, result, columnTypesWithMissingDefaultedToVarchar)
 
               // all good
               StatusCodes.OK
             }
         }
       } ~
-      delete {
-        complete {
-          logger.info("Deleting all recorded priming")
-          primedResults.clear()
-          StatusCodes.OK
+        delete {
+          complete {
+            logger.debug("Deleting all recorded priming")
+            primedResults.clear()
+            StatusCodes.OK
+          }
         }
-      }
     }
   } ~
     path("connection") {
@@ -67,7 +87,7 @@ trait PrimingServerRoute extends HttpService with Logging {
       } ~
         delete {
           complete {
-            logger.info("Deleting all recorded connections")
+            logger.debug("Deleting all recorded connections")
             ActivityLog.clearConnections()
             StatusCodes.OK
           }
@@ -76,13 +96,13 @@ trait PrimingServerRoute extends HttpService with Logging {
     path("query") {
       get {
         complete {
-          logger.info("Request for recorded queries")
+          logger.debug("Request for recorded queries")
           ActivityLog.retrieveQueries()
         }
       } ~
         delete {
           complete {
-            logger.info("Del=eting all recorded queries")
+            logger.debug("Deleting all recorded queries")
             ActivityLog.clearQueries()
             StatusCodes.OK
           }
