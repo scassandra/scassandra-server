@@ -5,7 +5,8 @@ import org.scalatest._
 import spray.http.StatusCodes._
 import spray.testkit.ScalatestRouteTest
 import spray.json._
-import com.batey.narinc.client.cqlmessages.{CqlVarchar, CqlInt, ColumnType, CqlBoolean}
+import com.batey.narinc.client.cqlmessages._
+import scala.Some
 
 class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with PrimingServerRoute {
 
@@ -122,9 +123,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
             "age" -> "12"
           )
         )
-      val thenColumnTypes = Map(
-        "age" -> "int"
-      )
+      val thenColumnTypes = Map("age" -> "int")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
@@ -153,19 +152,23 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
 
     it("Should convert boolean to ColumnType CqlBoolean") {
       val whenQuery = "select * from users"
-      val thenRows =
-        List(
-          Map(
-            "booleanValue" -> "false"
-          )
-        )
-      val thenColumnTypes = Map(
-        "booleanValue" -> "boolean"
-      )
+      val thenRows = List(Map("booleanValue" -> "false"))
+      val thenColumnTypes = Map("booleanValue" -> "boolean")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenRows, Success, columnTypes = Map[String, ColumnType]("booleanValue" -> CqlBoolean)))
+      }
+    }
+
+    it("Should convert ascii to ColumnType CqlAscii") {
+      val whenQuery = "select * from users"
+      val thenRows = List(Map("asciiValue" -> "Hello"))
+      val thenColumnTypes = Map("asciiValue" -> "ascii")
+      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
+
+      Post("/prime", primePayload) ~> route ~> check {
+        primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenRows, Success, columnTypes = Map[String, ColumnType]("asciiValue" -> CqlAscii)))
       }
     }
   }

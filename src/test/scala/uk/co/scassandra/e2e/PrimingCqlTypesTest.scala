@@ -2,6 +2,7 @@ package uk.co.scassandra.e2e
 
 import uk.co.scassandra.AbstractIntegrationTest
 import org.scalatest.concurrent.ScalaFutures
+import com.datastax.driver.core.DataType
 
 class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -50,5 +51,20 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     results.size() should equal(1)
     results.get(0).getBool("booleanTrue") should equal(true)
     results.get(0).getBool("booleanFalse") should equal(false)
+  }
+
+  test("Priming a CQL ASCII") {
+    // priming
+    val whenQuery = "Test prime with cql ascii"
+    val rows: List[Map[String, String]] = List(Map("asciiField" -> "Hello There"))
+    val columnTypes: Map[String, String] = Map("asciiField" -> "ascii")
+    prime(whenQuery, rows, "success", columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getString("asciiField") should equal("Hello There")
+    results.get(0).getColumnDefinitions.getType("asciiField") should equal(DataType.ascii())
   }
 }
