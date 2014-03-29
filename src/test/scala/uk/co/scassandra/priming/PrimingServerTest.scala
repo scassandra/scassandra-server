@@ -5,7 +5,7 @@ import org.scalatest._
 import spray.http.StatusCodes._
 import spray.testkit.ScalatestRouteTest
 import spray.json._
-import com.batey.narinc.client.cqlmessages.{CqlVarchar, CqlInt, ColumnType}
+import com.batey.narinc.client.cqlmessages.{CqlVarchar, CqlInt, ColumnType, CqlBoolean}
 
 class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with PrimingServerRoute {
 
@@ -80,7 +80,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       }
     }
 
-    it("should return populate PrimedResults with Success when contained in Metadata") {
+    it("should return populate PrimedResults with Success for result success") {
       val whenQuery = "select * from users"
       val thenResults = List[Map[String, String]]()
       val result = Some("success")
@@ -90,7 +90,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       }
     }
 
-    it("should return populate PrimedResults with Unavailable when contained in Metadata") {
+    it("should return populate PrimedResults with Unavailable for result unavailable") {
       val whenQuery = "select * from users"
       val thenResults = List[Map[String, String]]()
       val result = Some("unavailable")
@@ -100,7 +100,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       }
     }
 
-    it("should delete all primes for a delete") {
+    it("should delete all primes for a HTTP delete") {
       val query = "anything"
       primedResults.add(query, List())
 
@@ -111,7 +111,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
   }
   
   describe("Priming of types") {
-    it("Should convert int to ColumnType Int") {
+    it("Should convert int to ColumnType CqlInt") {
       val whenQuery = "select * from users"
       val thenRows =
         List(
@@ -132,7 +132,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       }
     }
 
-    it("Should default column types to varchar") {
+    it("Should default column types to CqlVarchar") {
       val whenQuery = "select * from users"
       val thenRows =
         List(
@@ -148,6 +148,24 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
 
       Post("/prime", primePayload) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenRows, Success, columnTypes = Map[String, ColumnType]("age" -> CqlVarchar)))
+      }
+    }
+
+    it("Should convert boolean to ColumnType CqlBoolean") {
+      val whenQuery = "select * from users"
+      val thenRows =
+        List(
+          Map(
+            "booleanValue" -> "false"
+          )
+        )
+      val thenColumnTypes = Map(
+        "booleanValue" -> "boolean"
+      )
+      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows.toJson.asInstanceOf[JsArray]), column_types = Some(thenColumnTypes)))
+
+      Post("/prime", primePayload) ~> route ~> check {
+        primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenRows, Success, columnTypes = Map[String, ColumnType]("booleanValue" -> CqlBoolean)))
       }
     }
   }

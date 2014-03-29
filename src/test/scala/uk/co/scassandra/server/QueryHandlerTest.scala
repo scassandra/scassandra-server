@@ -45,7 +45,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     testProbeForTcpConnection.expectMsg(Write(SetKeyspace("keyspace", stream).serialize()))
   }
 
-  test("Should return void result for everything that PrimedResults returns None") {
+  test("Should return void result when PrimedResults returns None") {
     val someCqlStatement: String = "some other cql statement"
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
@@ -56,7 +56,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     testProbeForTcpConnection.expectMsg(Write(VoidResult(stream).serialize()))
   }
 
-  test("Should return empty rows result for when PrimedResults returns empty list") {
+  test("Should return empty rows result when PrimedResults returns empty list") {
     val someCqlStatement: String = "some other cql statement"
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
@@ -67,7 +67,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, Map()).serialize()))
   }
 
-  test("Should return rows result for when PrimedResults returns a list of rows") {
+  test("Should return rows result when PrimedResults returns a list of rows") {
     val someCqlStatement: String = "some other cql statement"
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
@@ -93,7 +93,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     )).serialize()))
   }
 
-  test("Should return ReadReqyestTimeout if Metadata result is ReadTimeout") {
+  test("Should return ReadRequestTimeout if result is ReadTimeout") {
     val someCqlStatement: String = "some other cql statement"
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
@@ -104,7 +104,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     testProbeForTcpConnection.expectMsg(Write(ReadRequestTimeout(stream).serialize()))
   }
 
-  test("Should return WriteRequestTimeout if Metadata result is WriteTimeout") {
+  test("Should return WriteRequestTimeout if result is WriteTimeout") {
     val someCqlStatement: String = "some other cql statement"
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
@@ -115,7 +115,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     testProbeForTcpConnection.expectMsg(Write(WriteRequestTimeout(stream).serialize()))
   }
 
-  test("Should return Unavailable Exception if Metadata result is UnavailableException") {
+  test("Should return Unavailable Exception if result is UnavailableException") {
     val someCqlStatement: String = "some other cql statement"
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))

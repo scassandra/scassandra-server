@@ -10,7 +10,7 @@ import spray.json.DefaultJsonProtocol
 import spray.httpx.SprayJsonSupport
 import spray.http.StatusCodes
 import akka.actor.Actor
-import com.batey.narinc.client.cqlmessages.{CqlVarchar, CqlInt, ColumnType}
+import com.batey.narinc.client.cqlmessages.{CqlBoolean, CqlVarchar, CqlInt, ColumnType}
 
 object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impThen = jsonFormat3(Then)
@@ -26,7 +26,8 @@ trait PrimingServerRoute extends HttpService with Logging {
   implicit val primedResults: PrimedResults
 
   val ColumnTypeMapping = Map[String, ColumnType](
-    "int" -> CqlInt
+    "int" -> CqlInt,
+    "boolean" -> CqlBoolean
   )
 
   val route = {
