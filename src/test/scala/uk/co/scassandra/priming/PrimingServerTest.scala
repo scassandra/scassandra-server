@@ -35,7 +35,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         )
 
 
-      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults.toJson.asInstanceOf[JsArray])))) ~> route ~> check {
+      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults)))) ~> route ~> check {
         status should equal(OK)
       }
     }
@@ -55,7 +55,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         )
       val defaultedColumnTypes = Map[String, ColumnType]("name" -> CqlVarchar, "age" -> CqlVarchar)
 
-      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults.toJson.asInstanceOf[JsArray])))) ~> route ~> check {
+      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults)))) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, Success, defaultedColumnTypes))
       }
     }
@@ -65,7 +65,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       val thenResults = List[Map[String, String]]()
       val result = Some("read_request_timeout")
 
-      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults.toJson.asInstanceOf[JsArray]), result))) ~> route ~> check {
+      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults), result))) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, ReadTimeout))
       }
     }
@@ -75,7 +75,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       val thenResults = List[Map[String, String]]()
       val result = Some("write_request_timeout")
 
-      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults.toJson.asInstanceOf[JsArray]), result))) ~> route ~> check {
+      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults), result))) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, WriteTimeout))
       }
     }
@@ -85,7 +85,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       val thenResults = List[Map[String, String]]()
       val result = Some("success")
 
-      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults.toJson.asInstanceOf[JsArray]), result))) ~> route ~> check {
+      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults), result))) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, Success))
       }
     }
@@ -95,7 +95,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       val thenResults = List[Map[String, String]]()
       val result = Some("unavailable")
 
-      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults.toJson.asInstanceOf[JsArray]), result))) ~> route ~> check {
+      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults), result))) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenResults, Unavailable))
       }
     }
@@ -109,7 +109,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       }
     }
   }
-  
+
   describe("Priming of types") {
     it("Should convert int to ColumnType CqlInt") {
       val whenQuery = "select * from users"
@@ -125,7 +125,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       val thenColumnTypes = Map(
         "age" -> "int"
       )
-      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows.toJson.asInstanceOf[JsArray]), column_types = Some(thenColumnTypes)))
+      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenRows, Success, columnTypes = Map[String, ColumnType]("age" -> CqlInt)))
@@ -144,7 +144,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
           )
         )
       val thenColumnTypes = Map[String, String]()
-      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows.toJson.asInstanceOf[JsArray]), column_types = Some(thenColumnTypes)))
+      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenRows, Success, columnTypes = Map[String, ColumnType]("age" -> CqlVarchar)))
@@ -162,7 +162,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       val thenColumnTypes = Map(
         "booleanValue" -> "boolean"
       )
-      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows.toJson.asInstanceOf[JsArray]), column_types = Some(thenColumnTypes)))
+      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenRows, Success, columnTypes = Map[String, ColumnType]("booleanValue" -> CqlBoolean)))

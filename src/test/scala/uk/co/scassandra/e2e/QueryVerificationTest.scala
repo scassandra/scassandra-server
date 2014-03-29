@@ -1,6 +1,5 @@
 package uk.co.scassandra.e2e
 
-import com.datastax.driver.core.Cluster
 import org.scalatest.concurrent.ScalaFutures
 import dispatch._, Defaults._
 import uk.co.scassandra.priming.{Query, ActivityLog, JsonImplicits}

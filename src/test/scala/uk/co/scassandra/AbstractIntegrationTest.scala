@@ -1,17 +1,31 @@
 package uk.co.scassandra
 
 import java.net.{Socket, ConnectException}
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfter, FunSuite}
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.{Matchers, BeforeAndAfterAll, BeforeAndAfter, FunSuite}
 import uk.co.scassandra.server.ServerStubAsThread
 import com.datastax.driver.core.{Session, Cluster}
+import uk.co.scassandra.priming.{Then, PrimeQueryResult}
+import dispatch._, Defaults._
+import spray.json._
 
-// TODO: Move connection using the Java Driver into here as all sub classes need it
-abstract class AbstractIntegrationTest extends FunSuite with ShouldMatchers with BeforeAndAfter with BeforeAndAfterAll {
+abstract class AbstractIntegrationTest extends FunSuite with Matchers with BeforeAndAfter with BeforeAndAfterAll {
   var serverThread : ServerStubAsThread = null
 
   var cluster : Cluster = _
   var session : Session = _
+
+  import uk.co.scassandra.priming.JsonImplicits._
+
+  def prime(query: String, rows: List[Map[String, String]], result: String, columnTypes: Map[String, String]) = {
+    val prime = PrimeQueryResult(query, Then(Some(rows), Some(result), Some(columnTypes))).toJson
+
+    val svc = url("http://localhost:8043/prime") <<
+      prime.toString()  <:<
+      Map("Content-Type" -> "application/json")
+
+    val response = Http(svc OK as.String)
+    response()
+  }
 
   def startServerStub() = {
     serverThread = ServerStubAsThread()
@@ -52,7 +66,6 @@ abstract class AbstractIntegrationTest extends FunSuite with ShouldMatchers with
 
     cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
     session = cluster.connect("people")
-
   }
 
   override def afterAll() {
