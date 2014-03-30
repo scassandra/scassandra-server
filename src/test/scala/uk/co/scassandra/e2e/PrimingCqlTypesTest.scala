@@ -29,7 +29,6 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val columnTypes: Map[String, String] = Map("age" -> "int")
     prime(whenQuery, rows, "success", columnTypes)
 
-
     val result = session.execute(whenQuery)
 
     val results = result.all()
@@ -66,5 +65,20 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     results.size() should equal(1)
     results.get(0).getString("asciiField") should equal("Hello There")
     results.get(0).getColumnDefinitions.getType("asciiField") should equal(DataType.ascii())
+  }
+
+  test("Priming a CQL Bigint") {
+    // priming
+    val whenQuery = "Test prime with cql bigint"
+    val rows: List[Map[String, String]] = List(Map("bigIntField" -> "1234"))
+    val columnTypes: Map[String, String] = Map("bigIntField" -> "bigint")
+    prime(whenQuery, rows, "success", columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getLong("bigIntField") should equal(1234)
+    results.get(0).getColumnDefinitions.getType("bigIntField") should equal(DataType.bigint())
   }
 }

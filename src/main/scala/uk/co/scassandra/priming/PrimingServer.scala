@@ -11,11 +11,7 @@ import spray.httpx.SprayJsonSupport
 import spray.http.StatusCodes
 import akka.actor.Actor
 import com.batey.narinc.client.cqlmessages._
-import uk.co.scassandra.priming.Connection
-import uk.co.scassandra.priming.PrimeQueryResult
 import scala.Some
-import uk.co.scassandra.priming.Then
-import uk.co.scassandra.priming.Query
 
 object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impThen = jsonFormat3(Then)
@@ -33,7 +29,8 @@ trait PrimingServerRoute extends HttpService with Logging {
   val ColumnTypeMapping = Map[String, ColumnType](
     "int" -> CqlInt,
     "boolean" -> CqlBoolean,
-    "ascii" -> CqlAscii
+    "ascii" -> CqlAscii,
+    "bigint" -> CqlBigint
   )
 
   val route = {
