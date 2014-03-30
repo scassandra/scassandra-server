@@ -3,6 +3,7 @@ package uk.co.scassandra.e2e
 import uk.co.scassandra.AbstractIntegrationTest
 import org.scalatest.concurrent.ScalaFutures
 import com.datastax.driver.core.DataType
+import java.nio.ByteBuffer
 
 class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -95,5 +96,23 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     results.size() should equal(1)
     results.get(0).getColumnDefinitions.getType("field") should equal(DataType.counter())
     results.get(0).getLong("field") should equal(1234)
+  }
+
+  test("Priming a CQL BLOB") {
+    // priming
+    val whenQuery = "Test prime with cql bigint"
+    val rows: List[Map[String, String]] = List(Map("field" -> "0x48656c6c6f"))
+    val columnTypes: Map[String, String] = Map("field" -> "blob")
+    prime(whenQuery, rows, "success", columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getColumnDefinitions.getType("field") should equal(DataType.blob())
+    val byteBuffer: ByteBuffer = results.get(0).getBytes("field")
+    val bytes = new Array[Byte](byteBuffer.remaining())
+    byteBuffer.get(bytes)
+    bytes should equal(Array[Byte](0x48, 0x65, 0x6c, 0x6c, 0x6f))
   }
 }
