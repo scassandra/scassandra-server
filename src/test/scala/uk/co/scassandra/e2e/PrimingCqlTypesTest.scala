@@ -147,4 +147,20 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
 
     results.get(0).getDouble("field") should equal(4.3456)
   }
+
+  test("Priming a CQL Float") {
+    // priming
+    val whenQuery = "Test prime with cql double"
+    val rows: List[Map[String, String]] = List(Map("field" -> "4.3456"))
+    val columnTypes: Map[String, String] = Map("field" -> "float")
+    prime(whenQuery, rows, "success", columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getColumnDefinitions.getType("field") should equal(DataType.cfloat())
+
+    results.get(0).getFloat("field") should equal(4.3456f)
+  }
 }
