@@ -32,7 +32,8 @@ trait PrimingServerRoute extends HttpService with Logging {
     "ascii" -> CqlAscii,
     "bigint" -> CqlBigint,
     "counter" -> CqlCounter,
-    "blob" -> CqlBlob
+    "blob" -> CqlBlob,
+    "decimal" -> CqlDecimal
   )
 
   val route = {
@@ -42,10 +43,7 @@ trait PrimingServerRoute extends HttpService with Logging {
           primeRequest =>
             complete {
               // add the deserialized JSON request to the map of prime requests
-              val resultsAsList = primeRequest.then.rows match {
-                case Some(listOfRows) => listOfRows//listOfRows.convertTo[List[Map[String, String]]]
-                case _ => List()
-              }
+              val resultsAsList = primeRequest.then.rows.getOrElse(List())
               val then = primeRequest.then
               val result = then match {
                 case Then(_, Some("read_request_timeout"), _) => ReadTimeout

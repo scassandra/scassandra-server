@@ -100,7 +100,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
 
   test("Priming a CQL BLOB") {
     // priming
-    val whenQuery = "Test prime with cql bigint"
+    val whenQuery = "Test prime with cql blob"
     val rows: List[Map[String, String]] = List(Map("field" -> "0x48656c6c6f"))
     val columnTypes: Map[String, String] = Map("field" -> "blob")
     prime(whenQuery, rows, "success", columnTypes)
@@ -114,5 +114,21 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val bytes = new Array[Byte](byteBuffer.remaining())
     byteBuffer.get(bytes)
     bytes should equal(Array[Byte](0x48, 0x65, 0x6c, 0x6c, 0x6f))
+  }
+
+  test("Priming a CQL Decimal") {
+    // priming
+    val whenQuery = "Test prime with cql decimal"
+    val rows: List[Map[String, String]] = List(Map("field" -> "4.3456"))
+    val columnTypes: Map[String, String] = Map("field" -> "decimal")
+    prime(whenQuery, rows, "success", columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getColumnDefinitions.getType("field") should equal(DataType.decimal())
+
+    results.get(0).getDecimal("field") should equal(new java.math.BigDecimal("4.3456"))
   }
 }
