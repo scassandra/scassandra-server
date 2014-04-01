@@ -35,7 +35,8 @@ trait PrimingServerRoute extends HttpService with Logging {
     "blob" -> CqlBlob,
     "decimal" -> CqlDecimal,
     "double" -> CqlDouble,
-    "float" -> CqlFloat
+    "float" -> CqlFloat,
+    "text" -> CqlText
   )
 
   val route = {

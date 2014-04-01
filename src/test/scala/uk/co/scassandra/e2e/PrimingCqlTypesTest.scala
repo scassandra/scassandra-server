@@ -20,6 +20,21 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     results.size() should equal(1)
     results.get(0).getString("name") should equal("Chris")
     results.get(0).getString("age") should equal("19")
+  }
+
+  test("Priming a CQL Text") {
+    // priming
+    val whenQuery = "select * from people"
+    val rows: List[Map[String, String]] = List(Map("name" -> "Chris"))
+    val columnTypes: Map[String, String] = Map("name" -> "text")
+    prime(whenQuery, rows, "success", columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getString("name") should equal("Chris")
+    results.get(0).getColumnDefinitions.getType("name") should equal(DataType.text())
 
   }
 
