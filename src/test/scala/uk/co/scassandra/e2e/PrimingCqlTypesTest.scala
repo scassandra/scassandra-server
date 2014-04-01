@@ -6,6 +6,7 @@ import com.datastax.driver.core.DataType
 import java.nio.ByteBuffer
 import java.util.{UUID, Date}
 import java.net.InetAddress
+import java.math.BigInteger
 
 class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -230,5 +231,22 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     results.get(0).getColumnDefinitions.getType("field") should equal(DataType.inet())
 
     results.get(0).getInet("field") should equal(inet)
+  }
+
+  test("Priming a CQL varint") {
+    // priming
+    val varint = new BigInteger("10111213141516171819")
+    val whenQuery = "Test prime with cql varint"
+    val rows: List[Map[String, String]] = List(Map("field" -> varint.toString()))
+    val columnTypes: Map[String, String] = Map("field" -> "varint")
+    prime(whenQuery, rows, "success", columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getColumnDefinitions.getType("field") should equal(DataType.varint())
+
+    results.get(0).getVarint("field") should equal(varint)
   }
 }
