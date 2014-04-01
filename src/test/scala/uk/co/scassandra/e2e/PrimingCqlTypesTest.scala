@@ -4,7 +4,7 @@ import uk.co.scassandra.AbstractIntegrationTest
 import org.scalatest.concurrent.ScalaFutures
 import com.datastax.driver.core.DataType
 import java.nio.ByteBuffer
-import java.util.Date
+import java.util.{UUID, Date}
 
 class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -195,5 +195,22 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     results.get(0).getColumnDefinitions.getType("field") should equal(DataType.timestamp())
 
     results.get(0).getDate("field") should equal(date)
+  }
+
+  test("Priming a CQL UUID") {
+    // priming
+    val uuid = UUID.randomUUID()
+    val whenQuery = "Test prime with cql uuid"
+    val rows: List[Map[String, String]] = List(Map("field" -> s"${uuid.toString}"))
+    val columnTypes: Map[String, String] = Map("field" -> "uuid")
+    prime(whenQuery, rows, "success", columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getColumnDefinitions.getType("field") should equal(DataType.uuid())
+
+    results.get(0).getUUID("field") should equal(uuid)
   }
 }
