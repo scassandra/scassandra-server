@@ -5,6 +5,7 @@ import org.scalatest.concurrent.ScalaFutures
 import com.datastax.driver.core.DataType
 import java.nio.ByteBuffer
 import java.util.{UUID, Date}
+import java.net.InetAddress
 
 class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -212,5 +213,22 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     results.get(0).getColumnDefinitions.getType("field") should equal(DataType.uuid())
 
     results.get(0).getUUID("field") should equal(uuid)
+  }
+
+  test("Priming a CQL inet") {
+    // priming
+    val inet = InetAddress.getByAddress(Array[Byte](127,0,0,1))
+    val whenQuery = "Test prime with cql uuid"
+    val rows: List[Map[String, String]] = List(Map("field" -> "127.0.0.1"))
+    val columnTypes: Map[String, String] = Map("field" -> "inet")
+    prime(whenQuery, rows, "success", columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getColumnDefinitions.getType("field") should equal(DataType.inet())
+
+    results.get(0).getInet("field") should equal(inet)
   }
 }
