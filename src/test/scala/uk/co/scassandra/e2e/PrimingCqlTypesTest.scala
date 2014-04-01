@@ -4,6 +4,7 @@ import uk.co.scassandra.AbstractIntegrationTest
 import org.scalatest.concurrent.ScalaFutures
 import com.datastax.driver.core.DataType
 import java.nio.ByteBuffer
+import java.util.Date
 
 class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -177,5 +178,22 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     results.get(0).getColumnDefinitions.getType("field") should equal(DataType.cfloat())
 
     results.get(0).getFloat("field") should equal(4.3456f)
+  }
+
+  test("Priming a CQL Timestamp") {
+    // priming
+    val date = new Date()
+    val whenQuery = "Test prime with cql timestamp"
+    val rows: List[Map[String, String]] = List(Map("field" -> s"${date.getTime}"))
+    val columnTypes: Map[String, String] = Map("field" -> "timestamp")
+    prime(whenQuery, rows, "success", columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getColumnDefinitions.getType("field") should equal(DataType.timestamp())
+
+    results.get(0).getDate("field") should equal(date)
   }
 }
