@@ -291,6 +291,16 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlVarint)))
       }
     }
+    it("Should convert timeuuid to ColumnType CqlTimeUUID") {
+      val whenQuery = "select * from users"
+      val thenRows = List(Map("field" -> "533"))
+      val thenColumnTypes = Map("field" -> "timeuuid")
+      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
+
+      Post("/prime", primePayload) ~> route ~> check {
+        primedResults.get(whenQuery).get should equal(Prime(whenQuery, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlTimeUUID)))
+      }
+    }
   }
 
   describe("Retrieving activity") {

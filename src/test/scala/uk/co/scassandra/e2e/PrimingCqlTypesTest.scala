@@ -216,6 +216,25 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     results.get(0).getUUID("field") should equal(uuid)
   }
 
+  test("Priming a CQL TimeUUID") {
+    // priming
+    val uuid = UUID.fromString("2c530380-b9f9-11e3-850e-338bb2a2e74f")
+    val whenQuery = "Test prime with cql timeuuid"
+    val rows: List[Map[String, String]] = List(Map("field" -> s"${uuid.toString}"))
+    val columnTypes: Map[String, String] = Map("field" -> "timeuuid")
+    prime(whenQuery, rows, "success", columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getColumnDefinitions.getType("field") should equal(DataType.timeuuid())
+
+    val uuidFromServerStub: UUID = results.get(0).getUUID("field")
+    uuidFromServerStub should equal(uuid)
+    uuidFromServerStub.version() should equal(1)
+  }
+
   test("Priming a CQL inet") {
     // priming
     val inet = InetAddress.getByAddress(Array[Byte](127,0,0,1))
