@@ -10,17 +10,17 @@ import org.scalatest.mock.MockitoSugar
 import uk.co.scassandra.priming._
 import org.mockito.Mockito._
 import org.mockito.Matchers._
-import com.batey.narinc.client.cqlmessages.response._
+import org.scassandra.cqlmessages.response._
 import scala.Some
-import com.batey.narinc.client.cqlmessages.response.ReadRequestTimeout
-import com.batey.narinc.client.cqlmessages.response.VoidResult
-import com.batey.narinc.client.cqlmessages.response.Row
-import com.batey.narinc.client.cqlmessages.response.SetKeyspace
-import com.batey.narinc.client.cqlmessages.response.UnavailableException
-import com.batey.narinc.client.cqlmessages.response.Rows
+import org.scassandra.cqlmessages.response.ReadRequestTimeout
+import org.scassandra.cqlmessages.response.VoidResult
+import org.scassandra.cqlmessages.response.Row
+import org.scassandra.cqlmessages.response.SetKeyspace
+import org.scassandra.cqlmessages.response.UnavailableException
+import org.scassandra.cqlmessages.response.Rows
 import scala.Some
 import uk.co.scassandra.priming.Prime
-import com.batey.narinc.client.cqlmessages.{CqlInt, CqlVarchar}
+import org.scassandra.cqlmessages.{CqlInt, CqlVarchar}
 
 class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter with TestKitBase with MockitoSugar {
   implicit lazy val system = ActorSystem()

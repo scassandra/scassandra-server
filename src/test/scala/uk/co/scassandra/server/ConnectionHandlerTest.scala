@@ -6,8 +6,8 @@ import akka.testkit._
 import akka.util.ByteString
 import org.scalatest._
 import uk.co.scassandra.server.QueryHandlerMessages.Query
-import com.batey.narinc.client.cqlmessages.{HeaderConsts, OpCodes}
-import com.batey.narinc.client.cqlmessages.response.{QueryBeforeReadyMessage, Ready}
+import org.scassandra.cqlmessages.{HeaderConsts, OpCodes}
+import org.scassandra.cqlmessages.response.{QueryBeforeReadyMessage, Ready}
 
 class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
 

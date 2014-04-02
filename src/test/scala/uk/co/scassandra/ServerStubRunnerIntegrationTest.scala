@@ -5,8 +5,8 @@ import java.io._
 import java.net.Socket
 import java.util
 import scala.collection.immutable.IndexedSeq
-import com.batey.narinc.client.cqlmessages.OpCodes
-import com.batey.narinc.client.cqlmessages.response.ResultKinds
+import org.scassandra.cqlmessages.OpCodes
+import org.scassandra.cqlmessages.response.ResultKinds
 import uk.co.scassandra.server.MessageHelper
 
 class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {

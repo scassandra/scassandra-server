@@ -3,7 +3,7 @@ package uk.co.scassandra
 import com.datastax.driver.core.Cluster
 import com.datastax.driver.core.exceptions.ReadTimeoutException
 import uk.co.scassandra.priming.{Success, ReadTimeout}
-import com.batey.narinc.client.cqlmessages.{ColumnType, CqlVarchar}
+import org.scassandra.cqlmessages.{ColumnType, CqlVarchar}
 
 class ProgrammaticPrimingIntegrationTest extends AbstractIntegrationTest {
   test("Test prime and query with single row") {

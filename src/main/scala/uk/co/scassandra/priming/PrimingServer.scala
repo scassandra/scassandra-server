@@ -10,7 +10,7 @@ import spray.json.DefaultJsonProtocol
 import spray.httpx.SprayJsonSupport
 import spray.http.StatusCodes
 import akka.actor.Actor
-import com.batey.narinc.client.cqlmessages._
+import org.scassandra.cqlmessages._
 import scala.Some
 
 object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {

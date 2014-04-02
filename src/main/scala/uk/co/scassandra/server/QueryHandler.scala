@@ -5,16 +5,16 @@ import akka.actor.{Actor, ActorRef}
 import com.typesafe.scalalogging.slf4j.Logging
 import akka.io.Tcp.Write
 import uk.co.scassandra.priming._
-import com.batey.narinc.client.cqlmessages.response._
+import org.scassandra.cqlmessages.response._
 import scala.Some
-import com.batey.narinc.client.cqlmessages.response.ReadRequestTimeout
-import com.batey.narinc.client.cqlmessages.response.VoidResult
-import com.batey.narinc.client.cqlmessages.response.Row
-import com.batey.narinc.client.cqlmessages.response.SetKeyspace
-import com.batey.narinc.client.cqlmessages.response.UnavailableException
-import com.batey.narinc.client.cqlmessages.response.Rows
+import org.scassandra.cqlmessages.response.ReadRequestTimeout
+import org.scassandra.cqlmessages.response.VoidResult
+import org.scassandra.cqlmessages.response.Row
+import org.scassandra.cqlmessages.response.SetKeyspace
+import org.scassandra.cqlmessages.response.UnavailableException
+import org.scassandra.cqlmessages.response.Rows
 import scala.Some
-import com.batey.narinc.client.cqlmessages.CqlVarchar
+import org.scassandra.cqlmessages.CqlVarchar
 
 class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) extends Actor with Logging {
   def receive = {

@@ -6,7 +6,7 @@ import akka.testkit.{TestActorRef, TestProbe, TestKit}
 import akka.util.ByteString
 import org.scalatest.FunSuiteLike
 import org.scalatest.matchers.ShouldMatchers
-import com.batey.narinc.client.cqlmessages.response.Ready
+import org.scassandra.cqlmessages.response.Ready
 
 class RegisterHandlerTest extends TestKit(ActorSystem("TestSystem")) with FunSuiteLike with ShouldMatchers {
   test("Should send Ready message on any Register message") {

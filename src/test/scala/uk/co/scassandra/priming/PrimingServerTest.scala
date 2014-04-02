@@ -5,7 +5,7 @@ import org.scalatest._
 import spray.http.StatusCodes._
 import spray.testkit.ScalatestRouteTest
 import spray.json._
-import com.batey.narinc.client.cqlmessages._
+import org.scassandra.cqlmessages._
 import scala.Some
 
 class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with PrimingServerRoute {

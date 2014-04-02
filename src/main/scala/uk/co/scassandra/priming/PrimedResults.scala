@@ -1,7 +1,7 @@
 package uk.co.scassandra.priming
 
 import com.typesafe.scalalogging.slf4j.Logging
-import com.batey.narinc.client.cqlmessages.ColumnType
+import org.scassandra.cqlmessages.ColumnType
 
 class PrimedResults extends Logging {
 
