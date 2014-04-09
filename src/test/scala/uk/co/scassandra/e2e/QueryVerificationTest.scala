@@ -5,6 +5,7 @@ import dispatch._, Defaults._
 import uk.co.scassandra.priming.{Query, ActivityLog, JsonImplicits}
 import spray.json._
 import uk.co.scassandra.AbstractIntegrationTest
+import com.datastax.driver.core.{ConsistencyLevel, SimpleStatement}
 
 class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -28,6 +29,8 @@ class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
   test("Test verification of a single query") {
     ActivityLog.clearQueries()
     val queryString: String = "select * from people"
+    val statement = new SimpleStatement(queryString)
+    statement.setConsistencyLevel(ConsistencyLevel.TWO)
     session.execute(queryString)
     val svc: Req = url("http://localhost:8043/query")
     val response = Http(svc OK as.String)
@@ -35,7 +38,7 @@ class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
     whenReady(response) { result =>
       val queryList = JsonParser(result).convertTo[List[Query]]
       println(queryList)
-      queryList.exists(query => query.query.equals(queryString))
+      queryList.exists(query => (query.query.equals(queryString) && query.consistency == "TWO"))
     }
   }
 

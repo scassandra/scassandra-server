@@ -1,6 +1,7 @@
 package uk.co.scassandra.priming
 
 import org.scalatest.{BeforeAndAfter, Matchers, FunSuite}
+import org.scassandra.cqlmessages.ONE
 
 class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
 
@@ -16,7 +17,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Clear query activity log") {
-    ActivityLog.recordQuery("select * from people")
+    ActivityLog.recordQuery("select * from people", ONE)
     ActivityLog.clearQueries()
     ActivityLog.retrieveQueries().size should equal(0)
   }
@@ -32,7 +33,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Store query and retrieve connection") {
     val query: String = "select * from people"
-    ActivityLog.recordQuery(query)
+    ActivityLog.recordQuery(query, ONE)
     ActivityLog.retrieveQueries().size should equal(1)
     ActivityLog.retrieveQueries()(0).query should equal(query)
   }

@@ -346,7 +346,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
     it("Should return queries from ActivityLog - single query") {
       ActivityLog.clearQueries()
       val query: String = "select * from people"
-      ActivityLog.recordQuery(query)
+      ActivityLog.recordQuery(query, ONE)
 
       Get("/query") ~> route ~> check {
         val response : String = responseAs[String]
@@ -357,7 +357,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
     }
 
     it("Should clear queries for a delete") {
-      ActivityLog.recordQuery("select * from people")
+      ActivityLog.recordQuery("select * from people", ONE)
 
       Delete("/query") ~> route ~> check {
         ActivityLog.retrieveQueries().size should equal(0)

@@ -1,7 +1,7 @@
 package uk.co.scassandra.server
 
 import akka.util.ByteString
-import org.scassandra.cqlmessages.{HeaderConsts, OpCodes}
+import org.scassandra.cqlmessages.{Consistency, ONE, HeaderConsts, OpCodes}
 import org.scassandra.cqlmessages.response.ResponseHeader
 
 object MessageHelper {
@@ -13,14 +13,14 @@ object MessageHelper {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
-  def createQueryMessage(queryString : String, stream : Byte = ResponseHeader.DefaultStreamId) : List[Byte] = {
+  def createQueryMessage(queryString : String, stream : Byte = ResponseHeader.DefaultStreamId, consistency: Consistency = ONE) : List[Byte] = {
     val bodyLength = serializeInt(queryString.size + 4 + 2 + 1)
     val header = List[Byte](0x02, 0x00, stream, OpCodes.Query) :::
       bodyLength
 
     val body : List[Byte] =
       serializeLongString(queryString) :::
-        serializeShort(0x001) ::: // consistency
+        serializeShort(consistency.code) ::: // consistency
         List[Byte](0x00) ::: // query flags
         List[Byte]()
 

@@ -20,7 +20,7 @@ import org.scassandra.cqlmessages.response.UnavailableException
 import org.scassandra.cqlmessages.response.Rows
 import scala.Some
 import uk.co.scassandra.priming.Prime
-import org.scassandra.cqlmessages.{CqlInt, CqlVarchar}
+import org.scassandra.cqlmessages.{TWO, ONE, CqlInt, CqlVarchar}
 
 class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter with TestKitBase with MockitoSugar {
   implicit lazy val system = ActorSystem()
@@ -152,19 +152,23 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
       rows.map(row => Row(row))).serialize()))
   }
 
-
   test("Should store query in the ActivityLog") {
     //given
     ActivityLog.clearQueries()
     val stream: Byte = 1
     val query = "select * from people"
-    val queryBody: ByteString = ByteString(MessageHelper.createQueryMessage(query).toArray.drop(8))
+    val consistency = TWO
+    val queryBody: ByteString = ByteString(MessageHelper.createQueryMessage(query, consistency = consistency).toArray.drop(8))
 
     //when
     underTest ! QueryHandlerMessages.Query(queryBody, stream)
 
     //then
-    ActivityLog.retrieveQueries().exists(p => p.query == query) should equal(true)
+    val recordedQueries = ActivityLog.retrieveQueries()
+    recordedQueries.size should equal(1)
+    val recordedQuery = recordedQueries(0)
+    recordedQuery.query should equal(query)
+    recordedQuery.consistency should equal(consistency.string)
   }
 
 }

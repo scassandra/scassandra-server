@@ -1,12 +1,14 @@
 package uk.co.scassandra.priming
 
+import org.scassandra.cqlmessages.Consistency
+
 object ActivityLog {
 
   var connections : List[Connection] = List()
   var queries : List[Query] = List()
 
-  def recordQuery(query: String) = {
-    queries = queries ::: Query(query) :: Nil
+  def recordQuery(query: String, consistency: Consistency) = {
+    queries = queries ::: Query(query, consistency.string) :: Nil
   }
 
   def recordConnection() = {
@@ -26,5 +28,5 @@ object ActivityLog {
   }
 }
 
-case class Query(query: String)
+case class Query(query: String, consistency: String)
 case class Connection(result: String = "success")

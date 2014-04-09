@@ -17,7 +17,7 @@ object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impThen = jsonFormat3(Then)
   implicit val impPrimeQueryResult = jsonFormat2(PrimeQueryResult)
   implicit val impConnection = jsonFormat1(Connection)
-  implicit val impQuery = jsonFormat1(Query)
+  implicit val impQuery = jsonFormat2(Query)
 }
 
 trait PrimingServerRoute extends HttpService with Logging {
@@ -86,6 +86,7 @@ trait PrimingServerRoute extends HttpService with Logging {
           complete {
             logger.debug("Deleting all recorded priming")
             primedResults.clear()
+            logger.debug("Return 200")
             StatusCodes.OK
           }
         }
