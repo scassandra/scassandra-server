@@ -4,7 +4,7 @@ import java.net.{Socket, ConnectException}
 import org.scalatest.{Matchers, BeforeAndAfterAll, BeforeAndAfter, FunSuite}
 import uk.co.scassandra.server.ServerStubAsThread
 import com.datastax.driver.core.{Session, Cluster}
-import uk.co.scassandra.priming.{Then, PrimeQueryResult}
+import uk.co.scassandra.priming.{When, Then, PrimeQueryResult}
 import dispatch._, Defaults._
 import spray.json._
 
@@ -16,8 +16,8 @@ abstract class AbstractIntegrationTest extends FunSuite with Matchers with Befor
 
   import uk.co.scassandra.priming.JsonImplicits._
 
-  def prime(query: String, rows: List[Map[String, String]], result: String, columnTypes: Map[String, String]) = {
-    val prime = PrimeQueryResult(query, Then(Some(rows), Some(result), Some(columnTypes))).toJson
+  def prime(query: String, rows: List[Map[String, String]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
+    val prime = PrimeQueryResult(When(query), Then(Some(rows), Some(result), Some(columnTypes))).toJson
 
     val svc = url("http://localhost:8043/prime") <<
       prime.toString()  <:<

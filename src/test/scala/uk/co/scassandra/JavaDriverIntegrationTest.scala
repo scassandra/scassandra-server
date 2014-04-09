@@ -15,9 +15,8 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test prime and query with single row") {
     // priming
     val whenQuery = "Test prime and query with single row"
-    val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": { "rows" : [{"name":"Chris"}] } }"""  <:< Map("Content-Type" -> "application/json")
-    val response = Http(svc OK as.String)
-    response()
+    val rows: List[Map[String, String]] = List(Map("name" -> s"Chris"))
+    prime(whenQuery, rows)
 
     val result = session.execute(whenQuery)
 
@@ -29,9 +28,8 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test prime and query with many rows") {
     // priming
     val whenQuery = "Test prime and query with many rows"
-    val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": { "rows" :[{"name":"Chris"}, {"name":"Alexandra"}] }} """  <:< Map("Content-Type" -> "application/json")
-    val response = Http(svc OK as.String)
-    response()
+    val rows: List[Map[String, String]] = List(Map("name" -> s"Chris"), Map("name"->"Alexandra"))
+    prime(whenQuery, rows)
 
     val result = session.execute(whenQuery)
 
@@ -44,9 +42,8 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test prime and query with many columns") {
     // priming
     val whenQuery = "Test prime and query with many columns"
-    val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": { "rows" :[{"name":"Chris", "age":"28"}, {"name":"Alexandra", "age":"24"}] }} """  <:< Map("Content-Type" -> "application/json")
-    val response = Http(svc OK as.String)
-    response()
+    val rows: List[Map[String, String]] = List(Map("name" -> s"Chris", "age"->"28"), Map("name"->"Alexandra", "age"->"24"))
+    prime(whenQuery, rows)
 
     val result = session.execute(whenQuery)
 
@@ -61,9 +58,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test read timeout on query") {
     // priming
     val whenQuery = "read timeout query"
-    val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": {"result":"read_request_timeout"} } """  <:< Map("Content-Type" -> "application/json")
-    val response = Http(svc OK as.String)
-    response()
+    prime(whenQuery, List(), "read_request_timeout")
 
     intercept[ReadTimeoutException] {
       session.execute(whenQuery)
@@ -73,9 +68,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test unavailable exception on query") {
     // priming
     val whenQuery = "unavailable exception query"
-    val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": {"result":"unavailable"} } """  <:< Map("Content-Type" -> "application/json")
-    val response = Http(svc OK as.String)
-    response()
+    prime(whenQuery, List(), "unavailable")
 
     intercept[UnavailableException] {
       session.execute(whenQuery)
@@ -85,9 +78,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test write timeout on query") {
     // priming
     val whenQuery = "some write query"
-    val svc = url("http://localhost:8043/prime") << s""" {"when":"${whenQuery}", "then": {"result":"write_request_timeout"} } """  <:< Map("Content-Type" -> "application/json")
-    val response = Http(svc OK as.String)
-    response()
+    prime(whenQuery, List(), "write_request_timeout")
 
     intercept[WriteTimeoutException] {
       session.execute(whenQuery)
