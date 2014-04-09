@@ -46,10 +46,10 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   }
 
   test("Should return void result when PrimedResults returns None") {
-    val someCqlStatement: String = "some other cql statement"
+    val someCqlStatement: When = When("some other cql statement")
     val stream: Byte = 0x05
-    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
-    when(mockPrimedResults.get(anyString())).thenReturn(None)
+    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(None)
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
@@ -57,10 +57,10 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   }
 
   test("Should return empty rows result when PrimedResults returns empty list") {
-    val someCqlStatement: String = "some other cql statement"
+    val someCqlStatement: When = When("some other cql statement")
     val stream: Byte = 0x05
-    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
-    when(mockPrimedResults.get(anyString())).thenReturn(Some(Prime(someCqlStatement, List())))
+    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement.query, List())))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
@@ -68,10 +68,10 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   }
 
   test("Should return rows result when PrimedResults returns a list of rows") {
-    val someCqlStatement: String = "some other cql statement"
+     val someCqlStatement: When = When("some other cql statement")
     val stream: Byte = 0x05
-    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement, List[Map[String, Any]](
+    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement.query, List[Map[String, Any]](
       Map(
         "name" -> "Mickey",
         "age" -> 99
@@ -94,10 +94,10 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   }
 
   test("Should return ReadRequestTimeout if result is ReadTimeout") {
-    val someCqlStatement: String = "some other cql statement"
+     val someCqlStatement: When = When("some other cql statement")
     val stream: Byte = 0x05
-    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement, List(), ReadTimeout)))
+    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement.query, List(), ReadTimeout)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
@@ -105,10 +105,10 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   }
 
   test("Should return WriteRequestTimeout if result is WriteTimeout") {
-    val someCqlStatement: String = "some other cql statement"
+     val someCqlStatement: When = When("some other cql statement")
     val stream: Byte = 0x05
-    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement, List(), WriteTimeout)))
+    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement.query, List(), WriteTimeout)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
@@ -116,10 +116,10 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   }
 
   test("Should return Unavailable Exception if result is UnavailableException") {
-    val someCqlStatement: String = "some other cql statement"
+     val someCqlStatement: When = When("some other cql statement")
     val stream: Byte = 0x05
-    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement, List(), Unavailable)))
+    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement.query, List(), Unavailable)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
@@ -127,9 +127,9 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   }
 
   test("Test multiple rows") {
-    val someCqlStatement: String = "some other cql statement"
+     val someCqlStatement: When = When("some other cql statement")
     val stream: Byte = 0x05
-    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement).toArray.drop(8))
+    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
     val rows = List[Map[String, String]](
       Map(
         "name" -> "Mickey",
@@ -144,7 +144,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
       "name" -> CqlVarchar,
       "age" -> CqlVarchar
     )
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement, rows, Success, colTypes)))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement.query, rows, Success, colTypes)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 

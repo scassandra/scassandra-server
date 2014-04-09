@@ -5,14 +5,14 @@ import org.scassandra.cqlmessages.ColumnType
 
 class PrimedResults extends Logging {
 
-  var queryToResults: Map[String, Prime] = Map()
+  var queryToResults: Map[When, Prime] = Map()
 
-  def add(keyValue: String, rows: List[Map[String, Any]], result : Result = Success, columnTypes : Map[String, ColumnType] = Map()) = {
+  def add(keyValue: When, rows: List[Map[String, Any]], result : Result = Success, columnTypes : Map[String, ColumnType] = Map()) = {
     logger.info(s"Adding prime ${keyValue}")
-    queryToResults += (keyValue -> Prime(keyValue, rows, result, columnTypes))
+    queryToResults += (keyValue -> Prime(keyValue.query, rows, result, columnTypes))
   }
 
-  def get(query: String): Option[Prime] = {
+  def get(query: When): Option[Prime] = {
     logger.debug("Current primes: " + queryToResults)
     logger.debug(s"Query for |${query}|")
     queryToResults get(query)

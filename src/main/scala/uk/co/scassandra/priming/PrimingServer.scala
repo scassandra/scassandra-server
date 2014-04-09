@@ -76,7 +76,7 @@ trait PrimingServerRoute extends HttpService with Logging {
                 case None => (columnName, CqlVarchar)
               }).toMap
 
-              primedResults.add(primeRequest.when.query, resultsAsList, result, columnTypesWithMissingDefaultedToVarchar)
+              primedResults.add(primeRequest.when, resultsAsList, result, columnTypesWithMissingDefaultedToVarchar)
 
               // all good
               StatusCodes.OK
