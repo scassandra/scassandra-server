@@ -10,7 +10,7 @@ class PrimedResultsTest extends FunSpec with ShouldMatchers {
       // given
       val primeResults = PrimedResults()
 
-      val query: When = When("select * from users")
+      val query = PrimeKey("select * from users")
       val expectedResult: List[Map[String, String]] =
         List(
           Map(
@@ -34,7 +34,7 @@ class PrimedResultsTest extends FunSpec with ShouldMatchers {
     it("should return passed in metadata") {
       // given
       val primeResults = PrimedResults()
-      val query = When("some query")
+      val query = PrimeKey("some query")
 
       // when
       primeResults add (query, List(), ReadTimeout)
@@ -50,7 +50,7 @@ class PrimedResultsTest extends FunSpec with ShouldMatchers {
       // given
       val primeResults = PrimedResults()
       // when
-      val actualResult = primeResults get When("some random query")
+      val actualResult = primeResults get PrimeKey("some random query")
 
       // then
       actualResult.isEmpty should equal(true)
@@ -62,7 +62,7 @@ class PrimedResultsTest extends FunSpec with ShouldMatchers {
       // given
       val primeResults = PrimedResults()
 
-      val query: When = When("select * from users")
+      val query = PrimeKey("select * from users")
       val result: List[Map[String, String]] =
         List(
           Map(

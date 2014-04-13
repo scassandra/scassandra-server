@@ -22,7 +22,8 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
 
   describe("Priming") {
     it("should return OK on valid request") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenResults =
         List(
           Map(
@@ -42,7 +43,8 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
     }
 
     it("should populate PrimedResults on valid request") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenResults =
         List(
           Map(
@@ -57,52 +59,56 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       val defaultedColumnTypes = Map[String, ColumnType]("name" -> CqlVarchar, "age" -> CqlVarchar)
 
       Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults)))) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenResults, Success, defaultedColumnTypes))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenResults, Success, defaultedColumnTypes))
       }
     }
 
     it("should populate PrimedResults with ReadTimeout when result is read_request_timeout") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenResults = List[Map[String, String]]()
       val result = Some("read_request_timeout")
 
       Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults), result))) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenResults, ReadTimeout))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenResults, ReadTimeout))
       }
     }
 
     it("should populate PrimedResults with WriteTimeout when result is write_request_timeout") {
-      val whenQuery = When("insert into something")
+      val query = "insert into something"
+      val whenQuery = When(query)
       val thenResults = List[Map[String, String]]()
       val result = Some("write_request_timeout")
 
       Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults), result))) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenResults, WriteTimeout))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenResults, WriteTimeout))
       }
     }
 
     it("should populate PrimedResults with Success for result success") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenResults = List[Map[String, String]]()
       val result = Some("success")
 
       Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults), result))) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenResults, Success))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenResults, Success))
       }
     }
 
     it("should populate PrimedResults with Unavailable for result unavailable") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenResults = List[Map[String, String]]()
       val result = Some("unavailable")
 
       Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults), result))) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenResults, Unavailable))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenResults, Unavailable))
       }
     }
 
     it("should delete all primes for a HTTP delete") {
-      val query = When("anything")
+      val query = PrimeKey("anything")
       primedResults.add(query, List())
 
       Delete("/prime") ~> route ~> check {
@@ -113,7 +119,8 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
 
   describe("Priming of types") {
     it("Should convert int to ColumnType CqlInt") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows =
         List(
           Map(
@@ -127,12 +134,13 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("age" -> CqlInt)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("age" -> CqlInt)))
       }
     }
 
     it("Should default column types to CqlVarchar") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows =
         List(
           Map(
@@ -146,159 +154,173 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("age" -> CqlVarchar)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("age" -> CqlVarchar)))
       }
     }
 
     it("Should convert boolean to ColumnType CqlBoolean") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows = List(Map("booleanValue" -> "false"))
       val thenColumnTypes = Map("booleanValue" -> "boolean")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("booleanValue" -> CqlBoolean)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("booleanValue" -> CqlBoolean)))
       }
     }
 
     it("Should convert ascii to ColumnType CqlAscii") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows = List(Map("asciiValue" -> "Hello"))
       val thenColumnTypes = Map("asciiValue" -> "ascii")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("asciiValue" -> CqlAscii)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("asciiValue" -> CqlAscii)))
       }
     }
 
     it("Should convert bigint to ColumnType CqlBigint") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows = List(Map("field" -> "1234"))
       val thenColumnTypes = Map("field" -> "bigint")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlBigint)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlBigint)))
       }
     }
 
     it("Should convert counter to ColumnType CqlCounter") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows = List(Map("field" -> "1234"))
       val thenColumnTypes = Map("field" -> "counter")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlCounter)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlCounter)))
       }
     }
 
     it("Should convert blob to ColumnType CqlBlob") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows = List(Map("field" -> "0x48656c6c6f"))
       val thenColumnTypes = Map("field" -> "blob")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlBlob)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlBlob)))
       }
     }
 
     it("Should convert decimal to ColumnType CqlDecimal") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows = List(Map("field" -> "533.78867"))
       val thenColumnTypes = Map("field" -> "decimal")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlDecimal)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlDecimal)))
       }
     }
 
     it("Should convert double to ColumnType CqlDouble") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows = List(Map("field" -> "533.78867"))
       val thenColumnTypes = Map("field" -> "double")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlDouble)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlDouble)))
       }
     }
 
     it("Should convert float to ColumnType CqlFloat") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows = List(Map("field" -> "533.78867"))
       val thenColumnTypes = Map("field" -> "float")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlFloat)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlFloat)))
       }
     }
 
     it("Should convert text to ColumnType CqlText") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows = List(Map("field" -> "533.78867"))
       val thenColumnTypes = Map("field" -> "text")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlText)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlText)))
       }
     }
 
     it("Should convert timestamp to ColumnType CqlTimestamp") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows = List(Map("field" -> "533.78867"))
       val thenColumnTypes = Map("field" -> "timestamp")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlTimestamp)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlTimestamp)))
       }
     }
 
     it("Should convert uuid to ColumnType CqlUUID") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows = List(Map("field" -> "533.78867"))
       val thenColumnTypes = Map("field" -> "uuid")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlUUID)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlUUID)))
       }
     }
 
     it("Should convert inet to ColumnType CqlInet") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows = List(Map("field" -> "533.78867"))
       val thenColumnTypes = Map("field" -> "inet")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlInet)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlInet)))
       }
     }
     it("Should convert varint to ColumnType CqlVarint") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows = List(Map("field" -> "533"))
       val thenColumnTypes = Map("field" -> "varint")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlVarint)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlVarint)))
       }
     }
     it("Should convert timeuuid to ColumnType CqlTimeUUID") {
-      val whenQuery = When("select * from users")
+      val query = "select * from users"
+      val whenQuery = When(query)
       val thenRows = List(Map("field" -> "533"))
       val thenColumnTypes = Map("field" -> "timeuuid")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post("/prime", primePayload) ~> route ~> check {
-        primedResults.get(whenQuery).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlTimeUUID)))
+        primedResults.get(PrimeKey(query)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlTimeUUID)))
       }
     }
   }
@@ -309,7 +331,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       ActivityLog.recordConnection()
 
       Get("/connection") ~> route ~> check {
-        val response : String = responseAs[String]
+        val response: String = responseAs[String]
         val connectionList = JsonParser(response).convertTo[List[Connection]]
         connectionList.size should equal(1)
       }
@@ -319,7 +341,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       ActivityLog.clearConnections()
 
       Get("/connection") ~> route ~> check {
-        val response : String = responseAs[String]
+        val response: String = responseAs[String]
         val connectionList = JsonParser(response).convertTo[List[Connection]]
         connectionList.size should equal(0)
       }
@@ -337,7 +359,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       ActivityLog.clearQueries()
 
       Get("/query") ~> route ~> check {
-        val response : String = responseAs[String]
+        val response: String = responseAs[String]
         val queryList = JsonParser(response).convertTo[List[Query]]
         queryList.size should equal(0)
       }
@@ -349,7 +371,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       ActivityLog.recordQuery(query, ONE)
 
       Get("/query") ~> route ~> check {
-        val response : String = responseAs[String]
+        val response: String = responseAs[String]
         val queryList = JsonParser(response).convertTo[List[Query]]
         queryList.size should equal(1)
         queryList(0).query should equal(query)

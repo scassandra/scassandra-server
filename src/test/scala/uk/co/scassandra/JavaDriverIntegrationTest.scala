@@ -3,6 +3,7 @@ package uk.co.scassandra
 import org.scalatest.concurrent.ScalaFutures
 import dispatch._, Defaults._
 import com.datastax.driver.core.exceptions.{WriteTimeoutException, UnavailableException, ReadTimeoutException}
+import uk.co.scassandra.priming.When
 
 class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -16,7 +17,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
     // priming
     val whenQuery = "Test prime and query with single row"
     val rows: List[Map[String, String]] = List(Map("name" -> s"Chris"))
-    prime(whenQuery, rows)
+    prime(When(whenQuery), rows)
 
     val result = session.execute(whenQuery)
 
@@ -29,7 +30,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
     // priming
     val whenQuery = "Test prime and query with many rows"
     val rows: List[Map[String, String]] = List(Map("name" -> s"Chris"), Map("name"->"Alexandra"))
-    prime(whenQuery, rows)
+    prime(When(whenQuery), rows)
 
     val result = session.execute(whenQuery)
 
@@ -43,7 +44,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
     // priming
     val whenQuery = "Test prime and query with many columns"
     val rows: List[Map[String, String]] = List(Map("name" -> s"Chris", "age"->"28"), Map("name"->"Alexandra", "age"->"24"))
-    prime(whenQuery, rows)
+    prime(When(whenQuery), rows)
 
     val result = session.execute(whenQuery)
 
@@ -58,7 +59,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test read timeout on query") {
     // priming
     val whenQuery = "read timeout query"
-    prime(whenQuery, List(), "read_request_timeout")
+    prime(When(whenQuery), List(), "read_request_timeout")
 
     intercept[ReadTimeoutException] {
       session.execute(whenQuery)
@@ -68,7 +69,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test unavailable exception on query") {
     // priming
     val whenQuery = "unavailable exception query"
-    prime(whenQuery, List(), "unavailable")
+    prime(When(whenQuery), List(), "unavailable")
 
     intercept[UnavailableException] {
       session.execute(whenQuery)
@@ -78,7 +79,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test write timeout on query") {
     // priming
     val whenQuery = "some write query"
-    prime(whenQuery, List(), "write_request_timeout")
+    prime(When(whenQuery), List(), "write_request_timeout")
 
     intercept[WriteTimeoutException] {
       session.execute(whenQuery)
