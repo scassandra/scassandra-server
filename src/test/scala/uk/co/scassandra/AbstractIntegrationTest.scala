@@ -16,8 +16,8 @@ abstract class AbstractIntegrationTest extends FunSuite with Matchers with Befor
 
   import uk.co.scassandra.priming.JsonImplicits._
 
-  def prime(query: String, rows: List[Map[String, String]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
-    val prime = PrimeQueryResult(When(query), Then(Some(rows), Some(result), Some(columnTypes))).toJson
+  def prime(query: When, rows: List[Map[String, String]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
+    val prime = PrimeQueryResult(query, Then(Some(rows), Some(result), Some(columnTypes))).toJson
 
     val svc = url("http://localhost:8043/prime") <<
       prime.toString()  <:<
@@ -49,10 +49,10 @@ abstract class AbstractIntegrationTest extends FunSuite with Matchers with Befor
 
     try {
       ConnectionToServerStub()
-      println("Was able to connect to localhost 8042, there must be something running")
+      println(s"Succesfully connected to ${ConnectionToServerStub.ServerHost}:${ConnectionToServerStub.ServerPort}. There must be something running.")
     } catch {
       case ce: ConnectException =>
-        println("Could not connect to localhost 8042, going to start the server")
+        println(s"No open connection found on ${ConnectionToServerStub.ServerHost}:${ConnectionToServerStub.ServerPort}. Starting the server.")
         somethingAlreadyRunning = false
 
     }
