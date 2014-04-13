@@ -1,6 +1,6 @@
 package uk.co.scassandra.e2e
 
-import uk.co.scassandra.AbstractIntegrationTest
+import uk.co.scassandra.{ConnectionToServerStub, AbstractIntegrationTest}
 import org.scalatest.concurrent.ScalaFutures
 import uk.co.scassandra.priming.{JsonImplicits, Connection, ActivityLog}
 import dispatch._, Defaults._
@@ -19,17 +19,18 @@ class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutur
     poolingOptions.setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
     poolingOptions.setCoreConnectionsPerHost(HostDistance.REMOTE, 0)
 
-    val cluster = Cluster.builder().withPoolingOptions(poolingOptions).addContactPoint("localhost").withPort(8042).build()
+    val cluster = Cluster.builder().withPoolingOptions(poolingOptions).addContactPoint(ConnectionToServerStub.ServerHost).withPort(ConnectionToServerStub.ServerPort).build()
     cluster.connect()
     val svc: Req = url("http://localhost:8043/connection")
     val response = Http(svc OK as.String)
     response()
 
-    whenReady(response) { result =>
-      val connectionList = JsonParser(result).convertTo[List[Connection]]
-      // What ever the pooling options are set to the java driver appears to make 2 connections
-      // verified with wireshark
-      connectionList.size should equal(2)
+    whenReady(response) {
+      result =>
+        val connectionList = JsonParser(result).convertTo[List[Connection]]
+        // What ever the pooling options are set to the java driver appears to make 2 connections
+        // verified with wireshark
+        connectionList.size should equal(2)
     }
   }
 
@@ -38,9 +39,10 @@ class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutur
     val svc: Req = url("http://localhost:8043/connection")
     val response = Http(svc OK as.String)
 
-    whenReady(response) { result =>
-      val connectionList = JsonParser(result).convertTo[List[Connection]]
-      connectionList.size should equal(0)
+    whenReady(response) {
+      result =>
+        val connectionList = JsonParser(result).convertTo[List[Connection]]
+        connectionList.size should equal(0)
     }
   }
 

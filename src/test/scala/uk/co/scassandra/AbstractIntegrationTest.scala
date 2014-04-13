@@ -44,7 +44,7 @@ abstract class AbstractIntegrationTest extends FunSuite with Matchers with Befor
 
   override def beforeAll() {
     println("Trying to start server")
-    // First ensure nothing else is running on port 8042
+    // First ensure nothing else is running on the port we are trying to connect to
     var somethingAlreadyRunning = true
 
     try {
@@ -64,8 +64,8 @@ abstract class AbstractIntegrationTest extends FunSuite with Matchers with Befor
     // Then start the server
     startServerStub()
 
-    cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
-    session = cluster.connect("people")
+    cluster = Cluster.builder().addContactPoint(ConnectionToServerStub.ServerHost).withPort(ConnectionToServerStub.ServerPort).build()
+    session = cluster.connect("mykeyspace")
   }
 
   override def afterAll() {
