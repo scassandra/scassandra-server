@@ -41,7 +41,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       }
     }
 
-    it("should return populate PrimedResults on valid request") {
+    it("should populate PrimedResults on valid request") {
       val whenQuery = When("select * from users")
       val thenResults =
         List(
@@ -61,7 +61,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       }
     }
 
-    it("should return populate PrimedResults with ReadTimeout when result is read_request_timeout") {
+    it("should populate PrimedResults with ReadTimeout when result is read_request_timeout") {
       val whenQuery = When("select * from users")
       val thenResults = List[Map[String, String]]()
       val result = Some("read_request_timeout")
@@ -71,7 +71,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       }
     }
 
-    it("should return populate PrimedResults with WriteTimeout when result is write_request_timeout") {
+    it("should populate PrimedResults with WriteTimeout when result is write_request_timeout") {
       val whenQuery = When("insert into something")
       val thenResults = List[Map[String, String]]()
       val result = Some("write_request_timeout")
@@ -81,7 +81,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       }
     }
 
-    it("should return populate PrimedResults with Success for result success") {
+    it("should populate PrimedResults with Success for result success") {
       val whenQuery = When("select * from users")
       val thenResults = List[Map[String, String]]()
       val result = Some("success")
@@ -91,7 +91,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       }
     }
 
-    it("should return populate PrimedResults with Unavailable for result unavailable") {
+    it("should populate PrimedResults with Unavailable for result unavailable") {
       val whenQuery = When("select * from users")
       val thenResults = List[Map[String, String]]()
       val result = Some("unavailable")
