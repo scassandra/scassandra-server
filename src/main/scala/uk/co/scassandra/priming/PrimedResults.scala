@@ -31,6 +31,10 @@ class PrimedResults extends Logging {
     queryToResults.find(findPrime).map(_._2)
   }
 
+  def getPrimeCriteriaByQuery(query: String): List[PrimeCriteria] = {
+    queryToResults.keys.filter(primeCriteria => primeCriteria.query == query).toList
+  }
+
   def clear() = {
     queryToResults = Map()
   }

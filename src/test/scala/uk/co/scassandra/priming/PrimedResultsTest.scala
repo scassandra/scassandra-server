@@ -5,7 +5,6 @@ import org.scassandra.cqlmessages._
 
 class PrimedResultsTest extends FunSpec with Matchers {
 
-
   describe("add() and get()") {
     it("should add so that it can be retrieved using get") {
       // given
@@ -155,6 +154,25 @@ class PrimedResultsTest extends FunSpec with Matchers {
       actualResult.get.rows should equal(resultForThree)
     }
 
+  }
+
+  describe("Get PrimeCriteria by query") {
+    it("should get all PrimeCriteria with the same query") {
+      val primeResults = PrimedResults()
+      val query: String = "select * from users"
+      val primeForOneAndTwo = PrimeCriteria(query, List(ONE, TWO))
+      val primeForThreeAndAny = PrimeCriteria(query, List(THREE, ANY))
+      val resultForTwo: List[Map[String, String]] = List( Map("name" -> "FIRST"))
+      val resultForThree: List[Map[String, String]] = List( Map("name" -> "SECOND"))
+
+      primeResults.add(primeForOneAndTwo, resultForTwo)
+      primeResults.add(primeForThreeAndAny, resultForThree)
+      val actualResult = primeResults.getPrimeCriteriaByQuery(query)
+
+      actualResult.size should equal(2)
+      actualResult(0) should equal(PrimeCriteria(query, List(ONE, TWO)))
+      actualResult(1) should equal(PrimeCriteria(query, List(THREE, ANY)))
+    }
   }
 
 
