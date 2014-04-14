@@ -174,7 +174,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     val someCqlStatement = PrimeKey("some cql statement")
     val stream: Byte = 0x05
     val someQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    val expectedKeyspace: String = "somekeyspace"
+    val expectedKeyspace = "somekeyspace"
 
     when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement.query, List(), Success, Map(), expectedKeyspace)))
 
@@ -183,6 +183,22 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
 
     // then
     testProbeForTcpConnection.expectMsg(Write(Rows(expectedKeyspace, "", stream, Map()).serialize()))
+  }
+
+  test("Should return table name when set in PrimedResults") {
+    // given
+    val someCqlStatement = PrimeKey("some cql statement")
+    val stream: Byte = 0x05
+    val someQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
+    val expectedTable = "sometable"
+
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(someCqlStatement.query, List(), Success, Map(), "", expectedTable)))
+
+    // when
+    underTest ! QueryHandlerMessages.Query(someQuery, stream)
+
+    // then
+    testProbeForTcpConnection.expectMsg(Write(Rows("", expectedTable, stream, Map()).serialize()))
   }
 
 }

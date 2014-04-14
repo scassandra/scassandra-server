@@ -7,14 +7,15 @@ class PrimedResults extends Logging {
 
   var queryToResults: Map[PrimeKey, Prime] = Map()
 
-  // TODO All arguments are passed when this method is called from PrimingServer. Is it therefore needed to set result to Success and columnTypes to empty Map() if not passed?
+  // TODO All arguments are passed when this method is called from PrimingServer. Is it therefore needed to set default values?
   def add(
            keyValue: PrimeKey, rows: List[Map[String, Any]],
            result: Result = Success, columnTypes: Map[String, ColumnType] = Map(),
-           keyspace: String = ""
+           keyspace: String = "",
+           table: String = ""
            ) = {
     logger.info(s"Adding prime ${keyValue}")
-    queryToResults += (keyValue -> Prime(keyValue.query, rows, result, columnTypes, keyspace))
+    queryToResults += (keyValue -> Prime(keyValue.query, rows, result, columnTypes, keyspace, table))
   }
 
   def get(query: PrimeKey): Option[Prime] = {
@@ -33,7 +34,8 @@ case class Prime(
                   rows: List[Map[String, Any]],
                   result: Result = Success,
                   columnTypes: Map[String, ColumnType] = Map(),
-                  keyspace: String = ""
+                  keyspace: String = "",
+                  table: String = ""
                   )
 
 abstract class Result

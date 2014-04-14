@@ -119,7 +119,6 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
 
   describe("Setting optional values in 'when'") {
     describe("keyspace") {
-
       it("should correctly populate PrimedResults with empty string if keyspace name not set") {
         val query = "select * from users"
         val whenQuery = When(query)
@@ -145,6 +144,37 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         Post("/prime", primePayload) ~> route ~> check {
           val prime = primedResults.get(PrimeKey(query)).get
           prime.keyspace should equal(expectedKeyspace)
+        }
+
+      }
+    }
+
+    describe("table") {
+      it("should correctly populate PrimedResults with empty string if table name not set") {
+        val query = "select * from users"
+        val whenQuery = When(query)
+        val thenRows = List()
+
+        val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows)))
+
+        Post("/prime", primePayload) ~> route ~> check {
+          val prime = primedResults.get(PrimeKey(query)).get
+          prime.table should equal("")
+        }
+
+      }
+
+      it("should correctly populate PrimedResults if table name is set") {
+        val expectedTable = "mytable"
+        val query = "select * from users"
+        val whenQuery = When(query, None, Some(expectedTable))
+        val thenRows = List()
+
+        val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows)))
+
+        Post("/prime", primePayload) ~> route ~> check {
+          val prime = primedResults.get(PrimeKey(query)).get
+          prime.table should equal(expectedTable)
         }
 
       }

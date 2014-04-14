@@ -41,7 +41,7 @@ class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) exten
             prime.result match {
               case Success => {
                 logger.info(s"Handling query ${queryText} with rows ${prime}")
-                val bytesToSend: ByteString = Rows(prime.keyspace, "", stream, prime.columnTypes, prime.rows.map(row => Row(row))).serialize()
+                val bytesToSend: ByteString = Rows(prime.keyspace, prime.table, stream, prime.columnTypes, prime.rows.map(row => Row(row))).serialize()
                 logger.debug(s"Sending bytes ${bytesToSend}")
                 tcpConnection ! Write(bytesToSend)
               }
