@@ -15,7 +15,7 @@ import scala.Some
 
 object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impThen = jsonFormat3(Then)
-  implicit val impWhen = jsonFormat1(When)
+  implicit val impWhen = jsonFormat2(When)
   implicit val impPrimeQueryResult = jsonFormat2(PrimeQueryResult)
   implicit val impConnection = jsonFormat1(Connection)
   implicit val impQuery = jsonFormat2(Query)
@@ -71,13 +71,19 @@ trait PrimingServerRoute extends HttpService with Logging {
               //check that all the columns in thr rows have a type
               val columnNamesInAllRows = resultsAsList.flatMap(row => row.keys).distinct
 
-              val columnTypesWithMissingDefaultedToVarchar = columnNamesInAllRows.map( columnName => columnTypes.get(columnName) match {
+              val columnTypesWithMissingDefaultedToVarchar = columnNamesInAllRows.map(columnName => columnTypes.get(columnName) match {
                 case Some(columnType) => (columnName, columnType)
                 case None => (columnName, CqlVarchar)
               }).toMap
 
               val primeKey = PrimeKey(primeRequest.when.query)
-              primedResults.add(primeKey, resultsAsList, result, columnTypesWithMissingDefaultedToVarchar)
+
+              val keyspace = primeRequest.when.keyspace match {
+                case Some(string) => string
+                case None => ""
+              }
+
+              primedResults.add(primeKey, resultsAsList, result, columnTypesWithMissingDefaultedToVarchar, keyspace)
 
               // all good
               StatusCodes.OK

@@ -9,10 +9,10 @@ import dispatch._, Defaults._
 import spray.json._
 
 abstract class AbstractIntegrationTest extends FunSuite with Matchers with BeforeAndAfter with BeforeAndAfterAll {
-  var serverThread : ServerStubAsThread = null
+  var serverThread: ServerStubAsThread = null
 
-  var cluster : Cluster = _
-  var session : Session = _
+  var cluster: Cluster = _
+  var session: Session = _
 
   import uk.co.scassandra.priming.JsonImplicits._
 
@@ -20,7 +20,7 @@ abstract class AbstractIntegrationTest extends FunSuite with Matchers with Befor
     val prime = PrimeQueryResult(query, Then(Some(rows), Some(result), Some(columnTypes))).toJson
 
     val svc = url("http://localhost:8043/prime") <<
-      prime.toString()  <:<
+      prime.toString() <:<
       Map("Content-Type" -> "application/json")
 
     val response = Http(svc OK as.String)

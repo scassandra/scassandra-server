@@ -117,6 +117,41 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
     }
   }
 
+  describe("Setting optional values in 'when'") {
+    describe("keyspace") {
+
+      it("should correctly populate PrimedResults with empty string if keyspace name not set") {
+        val query = "select * from users"
+        val whenQuery = When(query)
+        val thenRows = List()
+
+        val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows)))
+
+        Post("/prime", primePayload) ~> route ~> check {
+          val prime = primedResults.get(PrimeKey(query)).get
+          prime.keyspace should equal("")
+        }
+
+      }
+
+      it("should correctly populate PrimedResults if keyspace name is set") {
+        val expectedKeyspace = "mykeyspace"
+        val query = "select * from users"
+        val whenQuery = When(query, Some(expectedKeyspace))
+        val thenRows = List()
+
+        val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows)))
+
+        Post("/prime", primePayload) ~> route ~> check {
+          val prime = primedResults.get(PrimeKey(query)).get
+          prime.keyspace should equal(expectedKeyspace)
+        }
+
+      }
+    }
+
+  }
+
   describe("Priming of types") {
     it("Should convert int to ColumnType CqlInt") {
       val query = "select * from users"
