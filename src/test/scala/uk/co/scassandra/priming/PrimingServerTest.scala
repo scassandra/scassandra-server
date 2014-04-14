@@ -109,6 +109,18 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         primedResults.get(PrimeMatch(whenQuery.query, ONE)) should equal(None)
       }
     }
+
+    it("should turn handle rejected primes as 405") {
+      primedResults.add(PrimeCriteria("select * from people", List(ONE, TWO)), List[Map[String, Any]]())
+
+      val whenQuery = When("select * from people")
+      val thenResults = List[Map[String, String]]()
+      val result = Some("success")
+
+      Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults), result))) ~> route ~> check {
+        status should equal(BadRequest)
+      }
+    }
   }
 
   describe("Priming of types") {

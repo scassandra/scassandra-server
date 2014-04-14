@@ -81,11 +81,14 @@ trait PrimingServerRoute extends HttpService with Logging {
                 case Some(consistencyMap) => consistencyMap.map(Consistency.fromString(_))
                 case None => Consistency.all
               }
-              primedResults.add(PrimeCriteria(primeRequest.when.query, primeConsistencies),
-                resultsAsList, result, columnTypesWithMissingDefaultedToVarchar)
-
-              // all good
-              StatusCodes.OK
+              try {
+                primedResults.add(PrimeCriteria(primeRequest.when.query, primeConsistencies),
+                  resultsAsList, result, columnTypesWithMissingDefaultedToVarchar)
+                StatusCodes.OK
+              }
+              catch {
+                case e: IllegalStateException => StatusCodes.BadRequest
+              }
             }
         }
       } ~
