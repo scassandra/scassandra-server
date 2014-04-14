@@ -36,7 +36,7 @@ class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) exten
         logger.info(s"Handling use statement $queryText for keyspacename |$keyspaceName|")
         tcpConnection ! Write(SetKeyspace(keyspaceName, stream).serialize())
       } else {
-        primedResults.get(When(queryText)) match {
+        primedResults.get(PrimeMatch(queryText, Consistency.fromCode(consistency))) match {
           case Some(prime) => {
             prime.result match {
               case Success => {

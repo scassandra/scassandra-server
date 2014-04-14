@@ -8,6 +8,7 @@ import scala.collection.immutable.IndexedSeq
 import org.scassandra.cqlmessages.OpCodes
 import org.scassandra.cqlmessages.response.ResultKinds
 import uk.co.scassandra.server.MessageHelper
+import org.scalatest.BeforeAndAfter
 
 class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
   var connectionToServerStub: Socket = null

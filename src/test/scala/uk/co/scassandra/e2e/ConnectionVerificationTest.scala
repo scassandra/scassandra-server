@@ -11,6 +11,14 @@ class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutur
 
   import JsonImplicits._
 
+
+  before {
+    println("Deleting old primes")
+    val svc = url("http://localhost:8043/prime").DELETE
+    val response = Http(svc OK as.String)
+    response()
+  }
+
   test("Test verification of connection for a single java driver") {
     ActivityLog.clearConnections()
     val poolingOptions = new PoolingOptions

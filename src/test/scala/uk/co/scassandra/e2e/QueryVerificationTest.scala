@@ -11,6 +11,14 @@ class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 
   import JsonImplicits._
 
+
+  before {
+    println("Deleting old primes")
+    val svc = url("http://localhost:8043/prime").DELETE
+    val response = Http(svc OK as.String)
+    response()
+  }
+
   test("Test clearing of query results") {
     ActivityLog.clearQueries()
     val queryString: String = "select * from people"

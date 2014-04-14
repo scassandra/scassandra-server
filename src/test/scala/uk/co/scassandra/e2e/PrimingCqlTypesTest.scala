@@ -7,8 +7,17 @@ import java.nio.ByteBuffer
 import java.util.{UUID, Date}
 import java.net.InetAddress
 import java.math.BigInteger
+import dispatch._, Defaults._
 
 class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
+
+
+  before {
+    println("Deleting old primes")
+    val svc = url("http://localhost:8043/prime").DELETE
+    val response = Http(svc OK as.String)
+    response()
+  }
 
   test("Priming with missing type defaults to CqlVarchar") {
     // priming

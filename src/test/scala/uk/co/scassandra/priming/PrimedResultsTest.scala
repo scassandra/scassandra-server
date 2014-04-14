@@ -1,16 +1,17 @@
 package uk.co.scassandra.priming
 
-import org.scalatest.FunSpec
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.{Matchers, FunSpec}
+import org.scassandra.cqlmessages._
 
-class PrimedResultsTest extends FunSpec with ShouldMatchers {
+class PrimedResultsTest extends FunSpec with Matchers {
+
 
   describe("add() and get()") {
     it("should add so that it can be retrieved using get") {
       // given
       val primeResults = PrimedResults()
 
-      val query: When = When("select * from users")
+      val query: PrimeCriteria = PrimeCriteria("select * from users", Consistency.all)
       val expectedResult: List[Map[String, String]] =
         List(
           Map(
@@ -25,7 +26,7 @@ class PrimedResultsTest extends FunSpec with ShouldMatchers {
 
       // when
       primeResults add (query, expectedResult)
-      val actualResult = primeResults get query
+      val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
       // then
       actualResult.get.rows should equal(expectedResult)
@@ -34,11 +35,12 @@ class PrimedResultsTest extends FunSpec with ShouldMatchers {
     it("should return passed in metadata") {
       // given
       val primeResults = PrimedResults()
-      val query = When("some query")
+      val query: PrimeCriteria = PrimeCriteria("some query", Consistency.all)
+
 
       // when
       primeResults add (query, List(), ReadTimeout)
-      val actualResult = primeResults get query
+      val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
       // then
       actualResult.get.result should equal(ReadTimeout)
@@ -50,7 +52,7 @@ class PrimedResultsTest extends FunSpec with ShouldMatchers {
       // given
       val primeResults = PrimedResults()
       // when
-      val actualResult = primeResults get When("some random query")
+      val actualResult = primeResults.get(PrimeMatch("some random query", ONE))
 
       // then
       actualResult.isEmpty should equal(true)
@@ -61,8 +63,7 @@ class PrimedResultsTest extends FunSpec with ShouldMatchers {
     it("should clear all results") {
       // given
       val primeResults = PrimedResults()
-
-      val query: When = When("select * from users")
+      val query: PrimeCriteria = PrimeCriteria("select * from users", Consistency.all)
       val result: List[Map[String, String]] =
         List(
           Map(
@@ -78,10 +79,83 @@ class PrimedResultsTest extends FunSpec with ShouldMatchers {
       // when
       primeResults add (query, result)
       primeResults clear()
-      val actualResult = primeResults get query
+      val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
       // then
       actualResult.isEmpty should equal(true)
     }
   }
+
+  describe("add() with specific consistency") {
+    it("should only return if consistency matches - single") {
+      val primeResults = PrimedResults()
+      val query = PrimeCriteria("select * from users", List(ONE))
+      val result: List[Map[String, String]] = List( Map("name" -> "Mickey","age" -> "99"))
+
+      // when
+      primeResults add (query, result)
+      val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
+
+      // then
+      actualResult.get.rows should equal(result)
+    }
+
+    it("should not return if consistency does not match - single") {
+      val primeResults = PrimedResults()
+      val query = PrimeCriteria("select * from users", List(TWO))
+      val result: List[Map[String, String]] = List( Map("name" -> "Mickey","age" -> "99"))
+
+      // when
+      primeResults add (query, result)
+      val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
+
+      // then
+      actualResult should equal(None)
+    }
+
+    it("should not return if consistency does not match - many") {
+      val primeResults = PrimedResults()
+      val query = PrimeCriteria("select * from users", List(TWO, ANY))
+      val result: List[Map[String, String]] = List( Map("name" -> "Mickey","age" -> "99"))
+
+      // when
+      primeResults.add(query, result)
+      val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
+
+      // then
+      actualResult should equal(None)
+    }
+
+    it("should throw something if primes over lap partially") {
+      val primeResults = PrimedResults()
+      val query: String = "select * from users"
+      val primeForTwoAndAny = PrimeCriteria(query, List(TWO, ANY))
+      val primeForThreeAndAny = PrimeCriteria(query, List(THREE, ANY))
+      val resultForTwo: List[Map[String, String]] = List( Map("name" -> "TWO_ANY"))
+      val resultForThree: List[Map[String, String]] = List( Map("name" -> "THREE_ANY"))
+
+      intercept[IllegalStateException] {
+        primeResults.add(primeForTwoAndAny, resultForTwo)
+        primeResults.add(primeForThreeAndAny, resultForThree)
+      }
+    }
+
+    it("should override if it is the same prime criteria") {
+      val primeResults = PrimedResults()
+      val query: String = "select * from users"
+      val primeForTwoAndAny = PrimeCriteria(query, List(TWO, ANY))
+      val primeForTwoAndAnyAgain = PrimeCriteria(query, List(TWO, ANY))
+      val resultForTwo: List[Map[String, String]] = List( Map("name" -> "FIRST_TIME"))
+      val resultForThree: List[Map[String, String]] = List( Map("name" -> "SECOND_TIME"))
+
+      primeResults.add(primeForTwoAndAny, resultForTwo)
+      primeResults.add(primeForTwoAndAnyAgain, resultForThree)
+
+      val actualResult = primeResults.get(PrimeMatch(query, ANY))
+      actualResult.get.rows should equal(resultForThree)
+    }
+
+  }
+
+
 }

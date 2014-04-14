@@ -6,21 +6,28 @@ scalaVersion := "2.10.2"
 
 val sprayVersion = "1.2.0"
 
-libraryDependencies ++= Seq(
+val akkaVersion = "2.2.+"
+
+val testDependencies = Seq(
+  "io.spray" % "spray-testkit" % sprayVersion % "test",
+  "com.datastax.cassandra" % "cassandra-driver-core" % "2+" % "test",
+  "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test",
   "org.scalatest" %% "scalatest" % "2.0" % "test",
-  "org.mockito" % "mockito-core" % "1.9.5" % "test",
-  "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
+  "org.mockito" % "mockito-core" % "1.9.5" % "test"
+)
+
+libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.0.13",
-  "com.typesafe.akka" % "akka-actor_2.10" % "2.2.+",
-  "com.typesafe.akka" % "akka-remote_2.10" % "2.2.+",
-  "com.typesafe.akka" % "akka-testkit_2.10" % "2.2.+",
-  "com.datastax.cassandra" % "cassandra-driver-core" % "2+",
+  "com.typesafe.akka" % "akka-actor_2.10" % akkaVersion,
+  "com.typesafe.akka" % "akka-remote_2.10" % akkaVersion,
+  "com.typesafe.akka" % "akka-testkit_2.10" % akkaVersion,
   "io.spray" %% "spray-json" % "1.2.5",
   "io.spray" % "spray-can" % sprayVersion,
   "io.spray" % "spray-routing" % sprayVersion,
-  "io.spray" % "spray-testkit" % sprayVersion % "test",
-  "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test"
+  "com.typesafe" %% "scalalogging-slf4j" % "1.0.1"
 )
+
+libraryDependencies ++= testDependencies
 
 scalacOptions in Test ++= Seq("-Yrangepos")
 
