@@ -78,15 +78,9 @@ trait PrimingServerRoute extends HttpService with Logging {
 
               val primeKey = PrimeKey(primeRequest.when.query)
 
-              val keyspace = primeRequest.when.keyspace match {
-                case Some(string) => string
-                case None => ""
-              }
+              val keyspace = emptyStringIfNone(primeRequest.when.keyspace)
 
-              val table = primeRequest.when.table match {
-                case Some(string) => string
-                case None => ""
-              }
+              val table = emptyStringIfNone(primeRequest.when.table)
 
               primedResults.add(primeKey, resultsAsList, result, columnTypesWithMissingDefaultedToVarchar, keyspace, table)
 
@@ -134,6 +128,11 @@ trait PrimingServerRoute extends HttpService with Logging {
           }
         }
     }
+
+  def emptyStringIfNone(option: Option[String]): String = option match {
+    case Some(s) => s
+    case None => ""
+  }
 }
 
 class PrimingServer(port: Int, implicit val primedResults: PrimedResults) extends Actor with PrimingServerRoute with Logging {
