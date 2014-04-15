@@ -66,6 +66,18 @@ case object Unavailable extends Result
 
 case object WriteTimeout extends Result
 
+object Result {
+  def fromString(string: String) : Result = {
+    string match {
+      case "read_request_timeout" => ReadTimeout
+      case "unavailable" => Unavailable
+      case "write_request_timeout" => WriteTimeout
+      case "success" => Success
+    }
+  }
+}
+
+
 case class PrimeKey(query: String)
 
 object PrimedResults {

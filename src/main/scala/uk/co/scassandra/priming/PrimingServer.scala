@@ -68,12 +68,7 @@ trait PrimingServerRoute extends HttpService with Logging {
               // add the deserialized JSON request to the map of prime requests
               val resultsAsList = primeRequest.then.rows.getOrElse(List())
               val then = primeRequest.then
-              val result = then match {
-                case Then(_, Some("read_request_timeout"), _) => ReadTimeout
-                case Then(_, Some("unavailable"), _) => Unavailable
-                case Then(_, Some("write_request_timeout"), _) => WriteTimeout
-                case _ => Success
-              }
+              val result = then.result.map(Result.fromString(_)).getOrElse(Success)
               logger.debug("Column types " + primeRequest.then.column_types)
               val columnTypes = primeRequest.then.column_types match {
                 case Some(types) => types.map({
