@@ -7,7 +7,10 @@ class PrimedResults extends Logging {
 
   var queryToResults: Map[PrimeCriteria, Prime] = Map()
 
-  def add(primeCriteria: PrimeCriteria, rows: List[Map[String, Any]], result : Result = Success, columnTypes : Map[String, ColumnType] = Map()) = {
+  def add(primeCriteria: PrimeCriteria, rows: List[Map[String, Any]], 
+          result : Result = Success, columnTypes : Map[String, ColumnType] = Map(),
+          keyspace: String = "",
+          table: String = "") = {
     logger.info(s"Adding prime ${primeCriteria}")
     def findExistingPrime: (PrimeCriteria) => Boolean = {
       prime => (prime.query == primeCriteria.query && (prime.consistency.intersect(primeCriteria.consistency).size > 0))
@@ -18,7 +21,7 @@ class PrimedResults extends Logging {
       case head :: Nil if head != primeCriteria => throw new IllegalStateException()
       case _ =>  // carry on
     }
-    queryToResults += (primeCriteria -> Prime(primeCriteria.query, rows, result, columnTypes))
+    queryToResults += (primeCriteria -> Prime(primeCriteria.query, rows, result, columnTypes, keyspace, table))
   }
 
   def get(primeMatch: PrimeMatch): Option[Prime] = {
@@ -44,14 +47,26 @@ class PrimedResults extends Logging {
 case class PrimeCriteria(query: String, consistency: List[Consistency])
 case class PrimeMatch(query: String, consistency: Consistency)
 
-case class Prime(query: String, rows: List[Map[String, Any]], result : Result = Success, columnTypes : Map[String, ColumnType] = Map())
+case class Prime(
+                  query: String,
+                  rows: List[Map[String, Any]],
+                  result: Result = Success,
+                  columnTypes: Map[String, ColumnType] = Map(),
+                  keyspace: String = "",
+                  table: String = ""
+                  )
 
 abstract class Result
+
 case object Success extends Result
+
 case object ReadTimeout extends Result
+
 case object Unavailable extends Result
+
 case object WriteTimeout extends Result
 
+case class PrimeKey(query: String)
 
 object PrimedResults {
   def apply() = {

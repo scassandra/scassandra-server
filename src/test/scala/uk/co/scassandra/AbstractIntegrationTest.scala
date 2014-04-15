@@ -9,10 +9,10 @@ import dispatch._, Defaults._
 import spray.json._
 
 abstract class AbstractIntegrationTest extends FunSuite with Matchers with BeforeAndAfter with BeforeAndAfterAll {
-  var serverThread : ServerStubAsThread = null
+  var serverThread: ServerStubAsThread = null
 
-  var cluster : Cluster = _
-  var session : Session = _
+  var cluster: Cluster = _
+  var session: Session = _
 
   import uk.co.scassandra.priming.JsonImplicits._
 
@@ -24,7 +24,7 @@ abstract class AbstractIntegrationTest extends FunSuite with Matchers with Befor
     val prime = PrimeQueryResult(When(query, consistencyStrings), Then(Some(rows), Some(result), Some(columnTypes))).toJson
 
     val svc = url("http://localhost:8043/prime") <<
-      prime.toString()  <:<
+      prime.toString() <:<
       Map("Content-Type" -> "application/json")
 
     val response = Http(svc OK as.String)
@@ -48,15 +48,15 @@ abstract class AbstractIntegrationTest extends FunSuite with Matchers with Befor
 
   override def beforeAll() {
     println("Trying to start server")
-    // First ensure nothing else is running on port 8042
+    // First ensure nothing else is running on the port we are trying to connect to
     var somethingAlreadyRunning = true
 
     try {
       ConnectionToServerStub()
-      println("Was able to connect to localhost 8042, there must be something running")
+      println(s"Succesfully connected to ${ConnectionToServerStub.ServerHost}:${ConnectionToServerStub.ServerPort}. There must be something running.")
     } catch {
       case ce: ConnectException =>
-        println("Could not connect to localhost 8042, going to start the server")
+        println(s"No open connection found on ${ConnectionToServerStub.ServerHost}:${ConnectionToServerStub.ServerPort}. Starting the server.")
         somethingAlreadyRunning = false
 
     }
@@ -68,8 +68,8 @@ abstract class AbstractIntegrationTest extends FunSuite with Matchers with Befor
     // Then start the server
     startServerStub()
 
-    cluster = Cluster.builder().addContactPoint("localhost").withPort(8042).build()
-    session = cluster.connect("people")
+    cluster = Cluster.builder().addContactPoint(ConnectionToServerStub.ServerHost).withPort(ConnectionToServerStub.ServerPort).build()
+    session = cluster.connect("mykeyspace")
   }
 
   override def afterAll() {
