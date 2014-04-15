@@ -153,6 +153,19 @@ class PrimedResultsTest extends FunSpec with Matchers {
       val actualResult = primeResults.get(PrimeMatch(query, ANY))
       actualResult.get.rows should equal(resultForThree)
     }
+    
+    it("should allow many primes for the same criteria if consistency is different") {
+      val primeResults = PrimedResults()
+      val query: String = "select * from users"
+      val primeForONE = PrimeCriteria(query, List(ONE))
+      val primeForTWO = PrimeCriteria(query, List(TWO))
+      val primeForTHREE = PrimeCriteria(query, List(THREE))
+      val rows: List[Map[String, String]] = List( Map("name" -> "FIRST_TIME"))
+
+      primeResults.add(primeForONE, rows)
+      primeResults.add(primeForTWO, rows)
+      primeResults.add(primeForTHREE, rows)
+    }
 
   }
 
