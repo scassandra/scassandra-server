@@ -110,7 +110,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       }
     }
 
-    it("should turn handle rejected primes as 405") {
+    it("should turn handle rejected primes as bad request") {
       val consistencies: List[Consistency] = List(ONE, TWO)
       val query: String = "select * from people"
       primedResults.add(PrimeCriteria(query, consistencies), List[Map[String, Any]]())

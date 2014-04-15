@@ -12,8 +12,7 @@ import spray.http.StatusCodes
 import akka.actor.Actor
 import org.scassandra.cqlmessages._
 import scala.Some
-
-
+import uk.co.scassandra.ErrorMessage
 
 
 object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
@@ -23,6 +22,7 @@ object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
 
     def read(value: JsValue) = value match {
       case JsString(value) => Consistency.fromString(value)
+      case _ => throw new IllegalArgumentException("Expected Consistency as JsString")
     }
   }
 
@@ -32,8 +32,7 @@ object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impConnection = jsonFormat1(Connection)
   implicit val impQuery = jsonFormat2(Query)
   implicit val impPrimeCriteria = jsonFormat2(PrimeCriteria)
-  implicit val impConflictingPrimes = jsonFormat2(ConflictingPrimes)
-
+  implicit val impConflictingPrimes = jsonFormat1(ConflictingPrimes)
 }
 
 trait PrimingServerRoute extends HttpService with Logging {
@@ -103,7 +102,7 @@ trait PrimingServerRoute extends HttpService with Logging {
               }
               catch {
                 case e: IllegalStateException =>
-                  StatusCodes.BadRequest -> ConflictingPrimes(existingPrimes = primedResults.getPrimeCriteriaByQuery(primeRequest.when.query))
+                  StatusCodes.BadRequest -> new ConflictingPrimes(existingPrimes = primedResults.getPrimeCriteriaByQuery(primeRequest.when.query))
               }
             }
         }
@@ -169,4 +168,4 @@ class PrimingServer(port: Int, implicit val primedResults: PrimedResults) extend
   logger.info(s"Server bound to port $port")
 }
 
-case class ConflictingPrimes(errorMessage: String = "Conflicting Primes", existingPrimes: List[PrimeCriteria]);
+case class ConflictingPrimes(existingPrimes: List[PrimeCriteria]) extends ErrorMessage("Conflicting Primes");
