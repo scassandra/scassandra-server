@@ -142,7 +142,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows)))
 
         Post("/prime", primePayload) ~> route ~> check {
-          val prime = primedResults.get(PrimeKey(query)).get
+          val prime = primedResults.get(PrimeMatch(query, ONE)).get
           prime.keyspace should equal("")
         }
 
@@ -151,13 +151,13 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       it("should correctly populate PrimedResults if keyspace name is set") {
         val expectedKeyspace = "mykeyspace"
         val query = "select * from users"
-        val whenQuery = When(query, Some(expectedKeyspace))
+        val whenQuery = When(query, keyspace = Some(expectedKeyspace))
         val thenRows = List()
 
         val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows)))
 
         Post("/prime", primePayload) ~> route ~> check {
-          val prime = primedResults.get(PrimeKey(query)).get
+          val prime = primedResults.get(PrimeMatch(query, ONE)).get
           prime.keyspace should equal(expectedKeyspace)
         }
 
@@ -173,7 +173,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows)))
 
         Post("/prime", primePayload) ~> route ~> check {
-          val prime = primedResults.get(PrimeKey(query)).get
+          val prime = primedResults.get(PrimeMatch(query, ONE)).get
           prime.table should equal("")
         }
 
@@ -182,13 +182,13 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       it("should correctly populate PrimedResults if table name is set") {
         val expectedTable = "mytable"
         val query = "select * from users"
-        val whenQuery = When(query, None, Some(expectedTable))
+        val whenQuery = When(query, table = Some(expectedTable))
         val thenRows = List()
 
         val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows)))
 
         Post("/prime", primePayload) ~> route ~> check {
-          val prime = primedResults.get(PrimeKey(query)).get
+          val prime = primedResults.get(PrimeMatch(query, ONE)).get
           prime.table should equal(expectedTable)
         }
 

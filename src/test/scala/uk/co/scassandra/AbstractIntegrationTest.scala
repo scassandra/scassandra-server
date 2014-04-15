@@ -16,12 +16,12 @@ abstract class AbstractIntegrationTest extends FunSuite with Matchers with Befor
 
   import uk.co.scassandra.priming.JsonImplicits._
 
-  def prime(query: String, rows: List[Map[String, String]], result: String = "success", columnTypes: Map[String, String] = Map(), consistency : List[ConsistencyLevel] = List()) = {
-    val consistencyStrings = consistency match {
-      case List() => None
-      case _ => Some(consistency.map(_.name()))
-    }
-    val prime = PrimeQueryResult(When(query, consistencyStrings), Then(Some(rows), Some(result), Some(columnTypes))).toJson
+  def prime(query: When, rows: List[Map[String, String]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
+//    val consistencyStrings = consistency match {
+//      case List() => None
+//      case _ => Some(consistency.map(_.name()))
+//    }
+    val prime = PrimeQueryResult(query, Then(Some(rows), Some(result), Some(columnTypes))).toJson
 
     val svc = url("http://localhost:8043/prime") <<
       prime.toString() <:<

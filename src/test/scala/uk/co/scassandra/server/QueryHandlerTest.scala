@@ -18,7 +18,7 @@ import org.scassandra.cqlmessages.response.UnavailableException
 import org.scassandra.cqlmessages.response.Rows
 import scala.Some
 import uk.co.scassandra.priming.Prime
-import org.scassandra.cqlmessages.{TWO, CqlInt, CqlVarchar}
+import org.scassandra.cqlmessages.{ONE, TWO, CqlInt, CqlVarchar}
 
 class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter with TestKitBase with MockitoSugar {
   implicit lazy val system = ActorSystem()
@@ -26,6 +26,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   var underTest: ActorRef = null
   var testProbeForTcpConnection: TestProbe = null
   val mockPrimedResults = mock[PrimedResults]
+  val someCqlStatement = PrimeMatch("some cql statement", ONE)
 
   before {
     testProbeForTcpConnection = TestProbe()
@@ -55,7 +56,6 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   }
 
   test("Should return empty rows result when PrimedResults returns empty list") {
-    val someCqlStatement = PrimeKey("some other cql statement")
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
     when(mockPrimedResults.get(PrimeMatch(someCqlStatement.query, ONE))).thenReturn(Some(Prime(someCqlStatement.query, List())))
@@ -66,7 +66,6 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   }
 
   test("Should return rows result when PrimedResults returns a list of rows") {
-     val someCqlStatement = PrimeKey("some other cql statement")
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
     when(mockPrimedResults.get(PrimeMatch(someCqlStatement.query, ONE))).thenReturn(Some(Prime(someCqlStatement.query, List[Map[String, Any]](
@@ -170,7 +169,6 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
 
   test("Should return keyspace name when set in PrimedResults") {
     // given
-    val someCqlStatement = PrimeKey("some cql statement")
     val stream: Byte = 0x05
     val someQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
     val expectedKeyspace = "somekeyspace"
@@ -186,7 +184,6 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
 
   test("Should return table name when set in PrimedResults") {
     // given
-    val someCqlStatement = PrimeKey("some cql statement")
     val stream: Byte = 0x05
     val someQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
     val expectedTable = "sometable"

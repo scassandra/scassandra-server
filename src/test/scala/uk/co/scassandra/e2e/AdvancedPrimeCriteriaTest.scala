@@ -4,6 +4,7 @@ import uk.co.scassandra.AbstractIntegrationTest
 import org.scalatest.concurrent.ScalaFutures
 import com.datastax.driver.core.{ResultSet, ConsistencyLevel, SimpleStatement}
 import dispatch._, Defaults._
+import uk.co.scassandra.priming.When
 
 class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -21,7 +22,7 @@ class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFuture
 
   test("Priming by default should apply to the query regardless of consistency") {
     // priming
-    prime(whenQuery, rows, "success")
+    prime(When(whenQuery), rows, "success")
   
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.ONE)
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.TWO)
@@ -31,7 +32,7 @@ class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFuture
 
   test("Priming for a specific consistency should only return results for that consistency") {
     // priming
-    prime(whenQuery, rows, "success", consistency = List(ConsistencyLevel.ONE))
+    prime(When(whenQuery, Some(List("ONE"))), rows, "success")
 
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.ONE)
     executeQueryAndVerifyNoResultsConsistencyLevel(ConsistencyLevel.TWO)
@@ -39,7 +40,7 @@ class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFuture
 
   test("Priming for a multiple consistencies should only return results for those consistencies") {
     // priming
-    prime(whenQuery, rows, "success", consistency = List(ConsistencyLevel.ONE, ConsistencyLevel.ALL))
+    prime(When(whenQuery, Some(List("ONE", "ALL"))), rows, "success")
 
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.ONE)
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.ALL)
@@ -50,8 +51,8 @@ class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFuture
     // priming
     val anotherName: String = "anotherName"
     val someDifferentRows: List[Map[String, String]] = List(Map(nameColumn -> anotherName))
-    prime(whenQuery, rows, "success", consistency = List(ConsistencyLevel.ONE, ConsistencyLevel.ALL))
-    prime(whenQuery, someDifferentRows, "success", consistency = List(ConsistencyLevel.TWO, ConsistencyLevel.THREE))
+    prime(When(whenQuery, Some(List("ONE", "ALL"))), rows, "success")
+    prime(When(whenQuery, Some(List("TWO", "THREE"))), someDifferentRows, "success")
 
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.ONE, name)
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.ALL, name)
