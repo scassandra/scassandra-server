@@ -1,0 +1,49 @@
+See:
+- https://docs.sonatype.org/display/Repository/Central+Sync+Requirements
+- https://maven.apache.org/guides/mini/guide-central-repository-upload.html
+
+Example:
+- https://github.com/kevinsawicki/github-maven-example/blob/master/example/pom.xml
+
+Notes:
+- can't publish snapshots to Maven Central :(
+- will need to specify URL. Use project URL on GitHub?
+- will need to produce the following fake jars with simple README inside:
+  - "-javadoc.jar"
+  - "-sources.jar"
+  - All project artifacts are signed using GPG, and the public key is distributed to hkp://pool.sks-keyservers.net/ . See: https://docs.sonatype.org/display/Repository/How+To+Generate+PGP+Signatures+With+Maven
+
+<modelVersion>4.0.0</modelVersion>
+<groupId>org.scassandra</groupId>
+<artifactId>cassandra-server-stub</artifactId>
+<version>0.0.0</version>
+<packaging>jar</packaging>
+<name>Cassandra Server Stub</name>
+<description>A stub that helps testing the interactions of your application with Cassandra</description>
+<url>GitHub project URL or http://www.scassandra.org</url>
+<licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+<scm>
+  <url>https://github.com/path_to_repository</url>
+  <connection>git:git://github.com/path_to_repository</connection>
+<scm>
+<developers>
+  <developer>
+    <email>christopher.batey@gmail.com</email>
+    <name>Christopher Batey</name>
+    <url>https://github.com/chbatey</url>
+    <id>chbatey</id>
+  </developer>
+  <developer>
+    <email>tepafoo@gmail.com</email>
+    <name>Dogan Narinc</name>
+    <url>https://github.com/tepafoo</url>
+    <id>tepafoo</id>
+  </developer>
+</developers>
+
