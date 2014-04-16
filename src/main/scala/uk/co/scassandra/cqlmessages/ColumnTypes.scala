@@ -1,0 +1,20 @@
+package org.scassandra.cqlmessages
+
+abstract class ColumnType(val code : Short)
+
+case object CqlAscii extends ColumnType(0x0001)
+case object CqlBigint extends ColumnType(0x0002)
+case object CqlBlob extends ColumnType(0x0003)
+case object CqlBoolean extends ColumnType(0x0004)
+case object CqlCounter extends ColumnType(0x0005)
+case object CqlDecimal extends ColumnType(0x0006)
+case object CqlDouble extends ColumnType(0x0007)
+case object CqlFloat extends ColumnType(0x0008)
+case object CqlInt extends ColumnType(0x0009)
+case object CqlText extends ColumnType(0x000A)
+case object CqlTimestamp extends ColumnType(0x000B)
+case object CqlUUID extends ColumnType(0x000C)
+case object CqlVarchar extends ColumnType(0x000D)
+case object CqlVarint extends ColumnType(0x000E)
+case object CqlTimeUUID extends ColumnType(0x000F)
+case object CqlInet extends ColumnType(0x0010)
