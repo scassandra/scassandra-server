@@ -7,17 +7,20 @@ import uk.co.scassandra.server.TcpServer
 
 object ServerStubRunner extends Logging {
   def main(args: Array[String]) {
-    var portNumber = 8042
-    if (args.length > 0) {
-      val port = args(0)
-      logger.info(s"Overriding port to $port")
-      portNumber = port.toInt
+    var binaryPortNumber = 8042
+    var adminPortNumber = 8043
+    if (args.length == 2) {
+      val binaryPort = args(0)
+      val adminPort = args(1)
+      logger.info(s"Overriding binary port to ${binaryPort} and admin port to $adminPort")
+      binaryPortNumber = binaryPort.toInt
+      adminPortNumber = adminPort.toInt
     }
-    new ServerStubRunner(portNumber).start()
+    new ServerStubRunner(binaryPortNumber, adminPortNumber).start()
   }
 }
 
-class ServerStubRunner(val serverPortNumber: Int = 8042, val primingPortNumber : Int = 8043) extends Logging {
+class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber : Int = 8043) extends Logging {
 
   var system : ActorSystem = _
 
@@ -26,7 +29,7 @@ class ServerStubRunner(val serverPortNumber: Int = 8042, val primingPortNumber :
   def start() = {
     system = ActorSystem("CassandraServerStub")
     system.actorOf(Props(classOf[TcpServer], serverPortNumber, primedResults))
-    system.actorOf(Props(classOf[PrimingServer], primingPortNumber, primedResults))
+    system.actorOf(Props(classOf[PrimingServer], adminPortNumber, primedResults))
     system.awaitTermination()
   }
 
