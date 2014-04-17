@@ -21,6 +21,13 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
   }
 
   describe("Priming") {
+
+    it("should return all primes for get") {
+      Get("/prime") ~> route ~> check {
+        status should equal(OK)
+      }
+    }
+
     it("should return OK on valid request") {
       val query = "select * from users"
       val whenQuery = When(query)
@@ -401,6 +408,24 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
 
       Post("/prime", primePayload) ~> route ~> check {
         primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(whenQuery.query, thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlTimeUUID)))
+      }
+    }
+  }
+
+  describe("Retrieving of primes") {
+    it("should convert a prime back to the original JSON format") {
+      val query = "select * from users"
+      val whenQuery = When(query)
+      val thenRows = List(Map("field" -> "533"))
+      val thenColumnTypes = Map("field" -> "timeuuid")
+      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
+
+      Post("/prime", primePayload) ~> route
+
+      Get("/prime") ~> route ~> check {
+        val response = responseAs[List[PrimeQueryResult]]
+        response.size should equal(1)
+        response(0) should equal(primePayload)
       }
     }
   }
