@@ -1,7 +1,7 @@
 package uk.co.scassandra.server
 
 import akka.util.ByteString
-import org.scassandra.cqlmessages.{Consistency, ONE, HeaderConsts, OpCodes}
+import org.scassandra.cqlmessages.{Consistency, ONE, ProtocolVersions, OpCodes}
 import org.scassandra.cqlmessages.response.ResponseHeader
 
 object MessageHelper {
@@ -34,7 +34,7 @@ object MessageHelper {
       List[Byte](0x0, "3.0.0".length.toByte) :::
       "3.0.0".getBytes.toList
 
-    val bytes : List[Byte] = List[Byte](HeaderConsts.ClientProtocolVersion, 0x0, 0x0, OpCodes.Startup) :::
+    val bytes : List[Byte] = List[Byte](ProtocolVersions.ClientProtocolVersionTwo, 0x0, 0x0, OpCodes.Startup) :::
       List[Byte](0x0, 0x0, 0x0, messageBody.length.toByte) :::
       messageBody
 
@@ -43,7 +43,7 @@ object MessageHelper {
 
   def createRegisterMessage() : List[Byte] = {
     val header = List[Byte](
-      HeaderConsts.ClientProtocolVersion,
+      ProtocolVersions.ClientProtocolVersionTwo,
       0x0,
       0x0,
       OpCodes.Register

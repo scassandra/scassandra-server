@@ -6,7 +6,7 @@ import akka.testkit._
 import akka.util.ByteString
 import org.scalatest._
 import uk.co.scassandra.server.QueryHandlerMessages.Query
-import org.scassandra.cqlmessages.{HeaderConsts, OpCodes}
+import org.scassandra.cqlmessages.{ProtocolVersions, OpCodes}
 import org.scassandra.cqlmessages.response.{QueryBeforeReadyMessage, Ready}
 
 class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
@@ -19,14 +19,14 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     queryHandlerTestProbe = TestProbe()
     registerHandlerTestProbe = TestProbe()
     testActorRef = TestActorRef(new ConnectionHandler(
-      (_, _) => queryHandlerTestProbe.ref,
-      (_, _) => registerHandlerTestProbe.ref))
+      (_,_,_) => queryHandlerTestProbe.ref,
+      (_,_,_) => registerHandlerTestProbe.ref))
   }
   
   test("Should do nothing if not a full message") {
     val partialMessage = ByteString(
       Array[Byte](
-        HeaderConsts.ServerProtocolVersion, 0x0, 0x0, OpCodes.Query, // header
+        ProtocolVersions.ServerProtocolVersionTwo, 0x0, 0x0, OpCodes.Query, // header
         0x0, 0x0, 0x0, 0x5,  // length
         0x0 // 4 bytes missing
       )
@@ -40,7 +40,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
   test("Should send ready message when startup message sent") {
     val readyMessage = ByteString(
       Array[Byte](
-        HeaderConsts.ServerProtocolVersion, 0x0, 0x0, OpCodes.Startup, // header
+        ProtocolVersions.ServerProtocolVersionTwo, 0x0, 0x0, OpCodes.Startup, // header
         0x0, 0x0, 0x0, 0x0 // length
       )
     )
@@ -53,7 +53,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
   test("Should send back error if query before ready message") {
     val queryMessage = ByteString(
       Array[Byte](
-        HeaderConsts.ServerProtocolVersion, 0x0, 0x0, OpCodes.Query, // header
+        ProtocolVersions.ServerProtocolVersionTwo, 0x0, 0x0, OpCodes.Query, // header
         0x0, 0x0, 0x0, 0x0 // length
       )
     )
@@ -66,7 +66,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
   test("Should do nothing if an unrecognised opcode") {
     val unrecognisedOpCode = ByteString(
       Array[Byte](
-        HeaderConsts.ServerProtocolVersion  , 0x0, 0x0, 0x56, // header
+        ProtocolVersions.ServerProtocolVersionTwo  , 0x0, 0x0, 0x56, // header
         0x0, 0x0, 0x0, 0x0 // length
       )
     )
@@ -78,7 +78,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
   }
 
 
-  test("Should forward query to a new uk.co.scassandra.server.co.uk.scassandra.uk.co.scassandra.server.QueryHandler") {
+  test("Should forward query to a new QueryHandler") {
     sendStartupMessage()
     val stream : Byte = 0x04
     val query = "select * from people"
@@ -111,7 +111,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
   }
 
-  test("Should forward register message to uk.co.scassandra.server.co.uk.scassandra.uk.co.scassandra.server.RegisterHandler") {
+  test("Should forward register message to RegisterHandler") {
     sendStartupMessage()
 
     val registerMessage = MessageHelper.createRegisterMessage()

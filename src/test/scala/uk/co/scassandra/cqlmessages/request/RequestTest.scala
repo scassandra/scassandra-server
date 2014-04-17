@@ -1,7 +1,7 @@
 package org.scassandra.cqlmessages.request
 
 import org.scalatest._
-import org.scassandra.cqlmessages.{OpCodes, HeaderConsts}
+import org.scassandra.cqlmessages.{OpCodes, ProtocolVersions}
 
 class RequestTest extends FunSuite with Matchers {
 
@@ -9,7 +9,7 @@ class RequestTest extends FunSuite with Matchers {
     val body = StartupRequest
     body.serialize() should equal(
       Seq(
-        HeaderConsts.ClientProtocolVersion, 0, 0, OpCodes.Startup,// header
+        ProtocolVersions.ClientProtocolVersionTwo, 0, 0, OpCodes.Startup,// header
         0, 0, 0, 22, // length
         0x00, 0x01, // length of map
         0x00, 0x0b, // length of key
@@ -25,7 +25,7 @@ class RequestTest extends FunSuite with Matchers {
     val serialzation = queryRequest.serialize()
     serialzation should equal(
       Seq(
-        HeaderConsts.ClientProtocolVersion, 0, stream, OpCodes.Query,
+        ProtocolVersions.ClientProtocolVersionTwo, 0, stream, OpCodes.Query,
         0, 0, 0, 17, 
         0x00, 0x00, 0x00, 0x0a, // length of query
         0x75, 0x73, 0x65, 0x20, 0x70, 0x65, 0x6f, 0x70, 0x6c, 0x65, // query as ascii hex

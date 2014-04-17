@@ -4,9 +4,9 @@ import akka.util.ByteString
 import org.scassandra.cqlmessages._
 
 // Current has a fixed stream ID as only sent on startup
-case object StartupHeader extends Header(HeaderConsts.ClientProtocolVersion, opCode = OpCodes.Startup, streamId = 0)
+case object StartupHeader extends Header(ProtocolVersions.ClientProtocolVersionTwo, opCode = OpCodes.Startup, streamId = 0)
 
-case class QueryHeader(stream: Byte) extends Header(HeaderConsts.ClientProtocolVersion, opCode = OpCodes.Query, streamId = stream)
+case class QueryHeader(stream: Byte) extends Header(ProtocolVersions.ClientProtocolVersionTwo, opCode = OpCodes.Query, streamId = stream)
 
 abstract class Request(header: Header) extends CqlMessage(header)
 

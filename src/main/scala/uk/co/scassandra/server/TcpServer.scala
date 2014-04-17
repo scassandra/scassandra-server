@@ -5,6 +5,7 @@ import akka.io.{IO, Tcp}
 import com.typesafe.scalalogging.slf4j.Logging
 import java.net.InetSocketAddress
 import uk.co.scassandra.priming.{ActivityLog, PrimedResults}
+import uk.co.scassandra.cqlmessages.response.{CqlMessageFactory, VersionTwoMessageFactory}
 
 class TcpServer(port: Int, primedResults: PrimedResults) extends Actor with Logging {
 
@@ -26,11 +27,10 @@ class TcpServer(port: Int, primedResults: PrimedResults) extends Actor with Logg
       logger.info(s"Incoming connection, creating a connection handler! ${remote} ${local}")
       ActivityLog.recordConnection()
       val handler = context.actorOf(Props(classOf[ConnectionHandler],
-        (af: ActorRefFactory, sender: ActorRef) => af.actorOf(Props(classOf[QueryHandler], sender, primedResults)),
-        (af: ActorRefFactory, sender: ActorRef) => af.actorOf(Props(classOf[RegisterHandler], sender))
+        (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[QueryHandler], sender, primedResults, msgFactory)),
+        (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[RegisterHandler], sender, msgFactory))
       ))
       logger.info(s"Sending register with connection handler $handler")
       sender ! Register(handler)
-
   }
 }

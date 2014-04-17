@@ -6,6 +6,7 @@ import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.cqlmessages.OpCodes
 import org.scassandra.cqlmessages.response.{ResponseHeader, QueryBeforeReadyMessage, Ready}
+import uk.co.scassandra.cqlmessages.response.{CqlMessageFactory, VersionTwoMessageFactory}
 
 /*
  * TODO: This class is on the verge of needing split up.
@@ -18,8 +19,8 @@ import org.scassandra.cqlmessages.response.{ResponseHeader, QueryBeforeReadyMess
  *  This could be changed to only know how to read full messages and then pass to an actor
  *  per stream that could check the opcode and forward.
  */
-class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => ActorRef,
-                        registerHandlerFactory: (ActorRefFactory, ActorRef) => ActorRef) extends Actor with Logging {
+class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
+                        registerHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef) extends Actor with Logging {
 
   import Tcp._
 
@@ -61,27 +62,29 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
 
   }
 
-  private def processMessage(opCode: Byte, stream: Byte, messageBody: ByteString) = {
+  private def processMessage(opCode: Byte, stream: Byte, messageBody: ByteString, protocolVersion: Byte) = {
     logger.info(s"Whole body $messageBody with length ${messageBody.length}")
+
+    val cqlMessageFactory = new VersionTwoMessageFactory
 
     opCode match {
       case OpCodes.Startup =>
         logger.info("Sending ready message")
-        sender ! Write(Ready(stream).serialize())
+        sender ! Write(cqlMessageFactory.createReadyMessage(stream).serialize())
         ready = true
 
       case OpCodes.Query =>
         if (!ready) {
           logger.info("Received query before startup message, sending error")
-          sender ! Write(QueryBeforeReadyMessage(ResponseHeader.DefaultStreamId).serialize())
+          sender ! Write(cqlMessageFactory.createQueryBeforeErrorMessage().serialize())
         } else {
-          val queryHandler = queryHandlerFactory(context, sender)
+          val queryHandler = queryHandlerFactory(context, sender, cqlMessageFactory)
           queryHandler ! QueryHandlerMessages.Query(messageBody, stream)
         }
 
       case OpCodes.Register =>
         logger.info("Received register message. Sending to RegisterHandler")
-        val registerHandler = registerHandlerFactory(context, sender)
+        val registerHandler = registerHandlerFactory(context, sender, cqlMessageFactory)
         registerHandler ! RegisterHandlerMessages.Register(messageBody)
 
       case opCode@_ =>
@@ -93,8 +96,9 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
   /* should not be called if there isn't at least a header */
   private def takeMessage(): Boolean = {
 
-    val opCode: Byte = currentData(3)
+    val protocolVersion = currentData(0)
     val stream: Byte = currentData(2)
+    val opCode: Byte = currentData(3)
 
     val bodyLengthArray = currentData.take(HeaderLength).drop(4)
     logger.info(s"Body length array $bodyLengthArray")
@@ -105,7 +109,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
       logger.info("Received exactly the whole message")
       partialMessage = false
       val messageBody = currentData.drop(HeaderLength)
-      processMessage(opCode, stream, messageBody)
+      processMessage(opCode, stream, messageBody, protocolVersion)
       currentData = ByteString()
       return false
     } else if (currentData.length > (bodyLength + HeaderLength)) {
@@ -113,7 +117,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef) => Acto
       logger.info("Received a larger message than the length specifies - assume the rest is another message")
       val messageBody = currentData.drop(HeaderLength).take(bodyLength)
       logger.info(s"Message received ${messageBody.utf8String}")
-      processMessage(opCode, stream, messageBody)
+      processMessage(opCode, stream, messageBody, protocolVersion)
       currentData = currentData.drop(HeaderLength + bodyLength)
       return true
     } else {

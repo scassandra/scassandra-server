@@ -10,7 +10,7 @@ object ErrorCodes {
   val WriteTimeout = 0x1100
 }
 
-class Error(val errorCode : Int, val errorMessage : String, stream: Byte) extends Response(new Header(HeaderConsts.ServerProtocolVersion, opCode = OpCodes.Error, streamId = stream)) {
+class Error(val errorCode : Int, val errorMessage : String, stream: Byte) extends Response(new Header(ProtocolVersions.ServerProtocolVersionTwo, opCode = OpCodes.Error, streamId = stream)) {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 

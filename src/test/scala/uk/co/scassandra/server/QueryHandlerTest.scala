@@ -19,6 +19,7 @@ import org.scassandra.cqlmessages.response.Rows
 import scala.Some
 import uk.co.scassandra.priming.Prime
 import org.scassandra.cqlmessages.{ONE, TWO, CqlInt, CqlVarchar}
+import uk.co.scassandra.cqlmessages.response.{VersionTwoMessageFactory, CqlMessageFactory}
 
 class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter with TestKitBase with MockitoSugar {
   implicit lazy val system = ActorSystem()
@@ -27,10 +28,11 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   var testProbeForTcpConnection: TestProbe = null
   val mockPrimedResults = mock[PrimedResults]
   val someCqlStatement = PrimeMatch("some cql statement", ONE)
+  val cqlMessageFactory = new VersionTwoMessageFactory
 
   before {
     testProbeForTcpConnection = TestProbe()
-    underTest = TestActorRef(new QueryHandler(testProbeForTcpConnection.ref, mockPrimedResults))
+    underTest = TestActorRef(new QueryHandler(testProbeForTcpConnection.ref, mockPrimedResults, cqlMessageFactory))
     reset(mockPrimedResults)
   }
 
