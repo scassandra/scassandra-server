@@ -25,7 +25,7 @@ object ResponseDeserializer extends Logging {
     if (iterator.len < bodyLength) throw new IllegalArgumentException
 
     opCode  match {
-      case OpCodes.Ready => new Ready
+      case OpCodes.Ready => new Ready(protocolVersion, stream)
       case OpCodes.Result => Result.fromByteString(byteString)
       case opCode @ _ =>
         throw new IllegalArgumentException(s"Received unknown opcode ${opCode}")

@@ -47,7 +47,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
     testActorRef ! Received(readyMessage)
 
-    expectMsg(Write(Ready().serialize()))
+    expectMsg(Write(Ready(ProtocolVersions.ServerProtocolVersionTwo, 0x0).serialize()))
   }
 
   test("Should send back error if query before ready message") {

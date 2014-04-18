@@ -6,10 +6,11 @@ import org.scassandra.cqlmessages.response.Rows
 import org.scassandra.cqlmessages.response.Ready
 import org.scassandra.cqlmessages.response.SetKeyspace
 import uk.co.scassandra.priming.Prime
+import org.scassandra.cqlmessages.ProtocolVersions
 
 class VersionTwoMessageFactory extends CqlMessageFactory {
   override def createReadyMessage(stream: Byte): Ready = {
-    Ready(stream)
+    Ready(ProtocolVersions.ServerProtocolVersionTwo, stream)
   }
 
   def createQueryBeforeErrorMessage(): QueryBeforeReadyMessage = {

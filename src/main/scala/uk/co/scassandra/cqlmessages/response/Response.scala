@@ -12,7 +12,7 @@ object ResponseHeader {
 
 abstract class Response(header : Header) extends CqlMessage(header)
 
-case class Ready(stream : Byte = ResponseHeader.DefaultStreamId) extends Response(new Header(ProtocolVersions.ServerProtocolVersionTwo, opCode = OpCodes.Ready, streamId = stream)) {
+case class Ready(protocolVersion: Byte, stream : Byte = ResponseHeader.DefaultStreamId) extends Response(new Header(protocolVersion, opCode = OpCodes.Ready, streamId = stream)) {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
   val MessageLength = 0
