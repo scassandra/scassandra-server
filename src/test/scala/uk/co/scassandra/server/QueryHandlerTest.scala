@@ -18,7 +18,20 @@ import org.scassandra.cqlmessages.response.UnavailableException
 import org.scassandra.cqlmessages.response.Rows
 import scala.Some
 import uk.co.scassandra.priming.Prime
-import org.scassandra.cqlmessages.{ONE, TWO, CqlInt, CqlVarchar}
+import org.scassandra.cqlmessages._
+import uk.co.scassandra.cqlmessages.response.{VersionTwoMessageFactory, CqlMessageFactory}
+import org.scassandra.cqlmessages.response.ReadRequestTimeout
+import org.scassandra.cqlmessages.response.VoidResult
+import scala.Some
+import org.scassandra.cqlmessages.response.WriteRequestTimeout
+import org.scassandra.cqlmessages.response.Row
+import org.scassandra.cqlmessages.response.SetKeyspace
+import uk.co.scassandra.priming.PrimeMatch
+import org.scassandra.cqlmessages.response.UnavailableException
+import org.scassandra.cqlmessages.response.Rows
+import uk.co.scassandra.priming.PrimeKey
+import uk.co.scassandra.priming.Prime
+import uk.co.scassandra.priming.Query
 
 class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter with TestKitBase with MockitoSugar {
   implicit lazy val system = ActorSystem()
@@ -27,16 +40,20 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   var testProbeForTcpConnection: TestProbe = null
   val mockPrimedResults = mock[PrimedResults]
   val someCqlStatement = PrimeMatch("some cql statement", ONE)
+  val cqlMessageFactory = VersionTwoMessageFactory
+  val protocolVersion : Byte = ProtocolVersion.ServerProtocolVersionTwo
+  implicit val impProtocolVersion = VersionTwo
 
   before {
     testProbeForTcpConnection = TestProbe()
-    underTest = TestActorRef(new QueryHandler(testProbeForTcpConnection.ref, mockPrimedResults))
+    underTest = TestActorRef(new QueryHandler(testProbeForTcpConnection.ref, mockPrimedResults, cqlMessageFactory))
     reset(mockPrimedResults)
   }
 
   test("Should return set keyspace message for use statement") {
     val useStatement: String = "use keyspace"
     val stream: Byte = 0x02
+
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(useStatement).toArray.drop(8))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)

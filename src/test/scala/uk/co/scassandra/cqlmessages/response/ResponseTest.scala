@@ -1,8 +1,11 @@
 package org.scassandra.cqlmessages.response
 
 import org.scalatest._
+import org.scassandra.cqlmessages.{VersionTwo, ProtocolVersion}
 
 class ResponseTest extends FunSuite with Matchers {
+
+  implicit val protocolVersion = VersionTwo
 
   test("Serialisation of a ready response") {
     val stream : Byte = 2
@@ -10,7 +13,7 @@ class ResponseTest extends FunSuite with Matchers {
     val bytes = readyMessage.serialize().toList
 
     bytes should equal(List[Byte](
-      (0x82 & 0xFF).toByte, // protocol version
+      protocolVersion.serverCode, // protocol version
       0x00, // flags
       stream, // stream
       0x02, // message type - 2 (Ready)

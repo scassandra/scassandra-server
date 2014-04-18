@@ -5,17 +5,11 @@ import akka.actor.{Actor, ActorRef}
 import com.typesafe.scalalogging.slf4j.Logging
 import akka.io.Tcp.Write
 import uk.co.scassandra.priming._
-import org.scassandra.cqlmessages.response._
-import org.scassandra.cqlmessages.response.ReadRequestTimeout
-import org.scassandra.cqlmessages.response.VoidResult
-import org.scassandra.cqlmessages.response.Row
-import org.scassandra.cqlmessages.response.SetKeyspace
-import org.scassandra.cqlmessages.response.UnavailableException
-import org.scassandra.cqlmessages.response.Rows
 import scala.Some
-import org.scassandra.cqlmessages.{Consistency, ONE}
+import org.scassandra.cqlmessages.Consistency
+import uk.co.scassandra.cqlmessages.response.CqlMessageFactory
 
-class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) extends Actor with Logging {
+class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults, msgFactory: CqlMessageFactory) extends Actor with Logging {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
   def receive = {
@@ -34,31 +28,31 @@ class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults) exten
       if (queryText.startsWith("use ")) {
         val keyspaceName: String = queryText.substring(4, queryLength)
         logger.info(s"Handling use statement $queryText for keyspacename |$keyspaceName|")
-        tcpConnection ! Write(SetKeyspace(keyspaceName, stream).serialize())
+        tcpConnection ! Write(msgFactory.createSetKeyspaceMessage(keyspaceName, stream).serialize())
       } else {
         primedResults.get(PrimeMatch(queryText, Consistency.fromCode(consistency))) match {
           case Some(prime) => {
             prime.result match {
               case Success => {
                 logger.info(s"Handling query ${queryText} with rows ${prime}")
-                val bytesToSend: ByteString = Rows(prime.keyspace, prime.table, stream, prime.columnTypes, prime.rows.map(row => Row(row))).serialize()
+                val bytesToSend: ByteString = msgFactory.createRowsMessage(prime, stream).serialize()
                 logger.debug(s"Sending bytes ${bytesToSend}")
                 tcpConnection ! Write(bytesToSend)
               }
               case ReadTimeout => {
-                tcpConnection ! Write(ReadRequestTimeout(stream).serialize())
+                tcpConnection ! Write(msgFactory.createReadTimeoutMessage(stream).serialize())
               }
               case Unavailable => {
-                tcpConnection ! Write(UnavailableException(stream).serialize())
+                tcpConnection ! Write(msgFactory.createUnavailableMessage(stream).serialize())
               }
               case WriteTimeout => {
-                tcpConnection ! Write(WriteRequestTimeout(stream).serialize())
+                tcpConnection ! Write(msgFactory.createWriteTimeoutMessage(stream).serialize())
               }
             }
           }
           case None => {
             logger.info("Sending void result")
-            tcpConnection ! Write(VoidResult(stream).serialize())
+            tcpConnection ! Write(msgFactory.createVoidMessage(stream).serialize())
           }
           case msg @ _ => {
             logger.error(s"Got unexpected result back from primed results ${msg}")

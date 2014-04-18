@@ -6,9 +6,9 @@ import com.typesafe.scalalogging.slf4j.Logging
 import java.nio.ByteOrder
 import org.scassandra.cqlmessages._
 
-abstract class Result(val resultKind: Int, val streamId: Byte) extends Response(new Header(ResponseHeader.VersionByte, OpCodes.Result, streamId))
+abstract class Result(val resultKind: Int, val streamId: Byte, protocolVersion : Byte) extends Response(new Header(protocolVersion, OpCodes.Result, streamId))
 
-case class VoidResult(stream : Byte) extends Result(ResultKinds.VoidResult, stream) {
+case class VoidResult(stream : Byte)(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.VoidResult, stream, protocolVersion.serverCode) {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
   val Length = 4
 
@@ -25,7 +25,10 @@ object Result extends Logging {
 
   implicit val byteOrder : ByteOrder = ByteOrder.BIG_ENDIAN
 
+
   def fromByteString(byteString : ByteString) : Result = {
+    // TODO: change to be based off the incoming message
+    implicit val impProtocolVersion = VersionTwo
     val iterator = byteString.iterator
     val protocolVersion = iterator.getByte
     val flags = iterator.getByte
@@ -107,7 +110,7 @@ object Result extends Logging {
   }
 }
 
-case class SetKeyspace(keyspaceName : String, stream : Byte = ResponseHeader.DefaultStreamId) extends Result(resultKind = ResultKinds.SetKeyspace, streamId = stream) {
+case class SetKeyspace(keyspaceName : String, stream : Byte = ResponseHeader.DefaultStreamId)(implicit protocolVersion: ProtocolVersion) extends Result(resultKind = ResultKinds.SetKeyspace, streamId = stream, protocolVersion.serverCode) {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 

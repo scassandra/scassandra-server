@@ -3,11 +3,12 @@ package org.scassandra.cqlmessages.response
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
 import akka.util.ByteString
-import org.scassandra.cqlmessages.{CqlVarchar, ColumnType, OpCodes}
+import org.scassandra.cqlmessages._
 
 class RowsResponseTest extends FunSuite with Matchers {
 
   val defaultStreamId : Byte = 1
+  implicit val protocolVersion  = VersionOne
   val defaultColumnNames = Map[String, ColumnType]()
 
   test("Rows message should have Result opcode") {
@@ -36,7 +37,7 @@ class RowsResponseTest extends FunSuite with Matchers {
       List[Byte](0x0, 0x0, 0x0, 0x0) // row count
 
     val result = List[Byte](
-      (0x82 & 0xFF).toByte, // protocol version
+      protocolVersion.serverCode, // protocol version
       0x00, // flags
       stream, // stream
       0x08, // message type - 8 (Result)
@@ -98,7 +99,7 @@ class RowsResponseTest extends FunSuite with Matchers {
       ("74".getBytes.toList)
 
     val expectedHeader = List[Byte](
-      (0x82 & 0xFF).toByte, // protocol version
+      protocolVersion.serverCode, // protocol version
       0x00, // flags
       stream, // stream
       0x08 // message type - 8 (Result)

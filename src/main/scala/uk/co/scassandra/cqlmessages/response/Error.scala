@@ -10,7 +10,7 @@ object ErrorCodes {
   val WriteTimeout = 0x1100
 }
 
-class Error(val errorCode : Int, val errorMessage : String, stream: Byte) extends Response(new Header(HeaderConsts.ServerProtocolVersion, opCode = OpCodes.Error, streamId = stream)) {
+class Error(protocolVersion: ProtocolVersion, val errorCode : Int, val errorMessage : String, stream: Byte) extends Response(new Header(protocolVersion.serverCode, opCode = OpCodes.Error, streamId = stream)) {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
@@ -28,9 +28,9 @@ class Error(val errorCode : Int, val errorMessage : String, stream: Byte) extend
   }
 }
 
-case class QueryBeforeReadyMessage(stream : Byte = ResponseHeader.DefaultStreamId) extends Error(ErrorCodes.ProtocolError, "Query sent before StartUp message", stream)
+case class QueryBeforeReadyMessage(stream : Byte = ResponseHeader.DefaultStreamId)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.ProtocolError, "Query sent before StartUp message", stream)
 
-case class ReadRequestTimeout(stream : Byte) extends Error(ErrorCodes.ReadTimeout, "Read Request Timeout", stream) {
+case class ReadRequestTimeout(stream : Byte)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.ReadTimeout, "Read Request Timeout", stream) {
 
   val consistency : Short = ONE.code
   val receivedResponses : Int = 0
@@ -57,7 +57,7 @@ case class ReadRequestTimeout(stream : Byte) extends Error(ErrorCodes.ReadTimeou
   }
 }
 
-case class UnavailableException(stream: Byte) extends Error(ErrorCodes.UnavailableException, "Unavailable Exception", stream) {
+case class UnavailableException(stream: Byte)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.UnavailableException, "Unavailable Exception", stream) {
   val consistency : Short = ONE.code
   val required : Int = 1
   val alive : Int = 0
@@ -81,7 +81,7 @@ case class UnavailableException(stream: Byte) extends Error(ErrorCodes.Unavailab
   }
 }
 
-case class WriteRequestTimeout(stream: Byte) extends Error(ErrorCodes.WriteTimeout, "Write Request Timeout", stream) {
+case class WriteRequestTimeout(stream: Byte)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.WriteTimeout, "Write Request Timeout", stream) {
   //<cl><received><blockfor><writeType>
   val consistency : Short = ONE.code
   val receivedResponses : Int = 0

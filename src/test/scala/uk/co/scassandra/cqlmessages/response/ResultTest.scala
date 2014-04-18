@@ -6,6 +6,7 @@ import org.scassandra.cqlmessages._
 
 class ResultTest extends FunSuite with Matchers {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+  implicit val protocolVersion : ProtocolVersion = VersionOne
 
   test("test rows message from real cassandra") {
     val msg = ByteString(-126, 0, 0, 8,
@@ -68,7 +69,7 @@ class ResultTest extends FunSuite with Matchers {
     val bytes = voidResult.serialize().toList
 
     bytes should equal(List[Byte](
-      (0x82 & 0xFF).toByte, // protocol version
+      protocolVersion.serverCode, // protocol version
       0x00, // flags
       stream, // stream
       0x08, // message type - 8 (Result)
@@ -147,7 +148,7 @@ class ResultTest extends FunSuite with Matchers {
     val bytes = setKeyspaceMessage.serialize()
 
     bytes should equal(List[Byte](
-      (0x82 & 0xFF).toByte, // protocol version
+      protocolVersion.serverCode, // protocol version
       0x00, // flags
       stream, // stream
       0x08, // message type - 8 (Result)

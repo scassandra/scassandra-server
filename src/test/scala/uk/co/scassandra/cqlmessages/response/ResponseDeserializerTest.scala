@@ -2,8 +2,11 @@ package org.scassandra.cqlmessages.response
 
 import org.scalatest.{Matchers, FunSuite}
 import akka.util.ByteString
+import org.scassandra.cqlmessages.{VersionTwo, ProtocolVersion}
 
 class ResponseDeserializerTest extends FunSuite with Matchers {
+  implicit val protocolVersion = VersionTwo
+
   test("Test rows msg from real Cassandra") {
     val msg = ByteString(-126, 0, 0, 8,
       0, 0, 0, 81, // length

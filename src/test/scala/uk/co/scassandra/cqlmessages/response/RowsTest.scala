@@ -8,6 +8,7 @@ import java.net.InetAddress
 
 class RowsTest extends FunSuite with Matchers {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+  implicit val protocolVersion = VersionTwo
 
   test("Serialization of Varchar column type") {
     val columnNames: Map[String, ColumnType] = Map("age" -> CqlVarchar)
