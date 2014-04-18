@@ -2,9 +2,11 @@ package org.scassandra.cqlmessages.response
 
 import org.scalatest.{Matchers, FunSuite}
 import akka.util.ByteString
-import org.scassandra.cqlmessages.ProtocolVersion
+import org.scassandra.cqlmessages.{VersionTwo, ProtocolVersion}
 
 class ResponseDeserializerTest extends FunSuite with Matchers {
+  implicit val protocolVersion = VersionTwo
+
   test("Test rows msg from real Cassandra") {
     val msg = ByteString(-126, 0, 0, 8,
       0, 0, 0, 81, // length
@@ -65,8 +67,7 @@ class ResponseDeserializerTest extends FunSuite with Matchers {
 
   test("Void message de-serialize") {
     val streamId : Byte = 1
-    val protocolVersion = ProtocolVersion.ClientProtocolVersionOne
-    val result = ResponseDeserializer.deserialize(VoidResult(streamId, protocolVersion).serialize())
+    val result = ResponseDeserializer.deserialize(VoidResult(streamId).serialize())
 
     result.isInstanceOf[VoidResult]
   }

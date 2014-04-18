@@ -22,11 +22,11 @@ object VersionTwoMessageFactory extends CqlMessageFactory {
   }
 
   def createSetKeyspaceMessage(keyspaceName: String, stream: Byte): SetKeyspace = {
-    SetKeyspace(protocolVersion, keyspaceName, stream)
+    SetKeyspace(keyspaceName, stream)
   }
 
   def createRowsMessage(prime: Prime, stream: Byte): Rows = {
-    Rows(prime.keyspace, prime.table, stream, prime.columnTypes, prime.rows.map(row => Row(row)), protocolVersion)
+    Rows(prime.keyspace, prime.table, stream, prime.columnTypes, prime.rows.map(row => Row(row)))
   }
 
   def createReadTimeoutMessage(stream: Byte): ReadRequestTimeout = {
@@ -42,6 +42,6 @@ object VersionTwoMessageFactory extends CqlMessageFactory {
   }
 
   def createVoidMessage(stream: Byte): VoidResult = {
-    VoidResult(protocolVersion, stream)
+    VoidResult(stream)
   }
 }

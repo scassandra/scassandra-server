@@ -6,6 +6,7 @@ import org.scassandra.cqlmessages._
 
 class ResultTest extends FunSuite with Matchers {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+  implicit val protocolVersion : ProtocolVersion = VersionOne
 
   test("test rows message from real cassandra") {
     val msg = ByteString(-126, 0, 0, 8,
@@ -55,9 +56,8 @@ class ResultTest extends FunSuite with Matchers {
 
   test("Void message de-serialize") {
     val streamId: Byte = 1
-    val protocolVersion: Byte = 1
 
-    val result = Result.fromByteString(VoidResult(streamId, protocolVersion).serialize())
+    val result = Result.fromByteString(VoidResult(streamId).serialize())
 
     result.isInstanceOf[VoidResult]
     result.asInstanceOf[VoidResult].stream should equal(streamId)
@@ -65,12 +65,11 @@ class ResultTest extends FunSuite with Matchers {
 
   test("Serialisation of a void result") {
     val stream: Byte = 0x01
-    val protocolVersion: Byte = 1
-    val voidResult = VoidResult(stream, protocolVersion)
+    val voidResult = VoidResult(stream)
     val bytes = voidResult.serialize().toList
 
     bytes should equal(List[Byte](
-      protocolVersion, // protocol version
+      protocolVersion.serverCode, // protocol version
       0x00, // flags
       stream, // stream
       0x08, // message type - 8 (Result)
@@ -145,12 +144,11 @@ class ResultTest extends FunSuite with Matchers {
   test("Serialisation of a SetKeyspace result response") {
     val keyspaceName = "people"
     val stream: Byte = 0x02
-    val protocolVersion = ProtocolVersion.ServerProtocolVersionOne
-    val setKeyspaceMessage = SetKeyspace(protocolVersion, keyspaceName, stream)
+    val setKeyspaceMessage = SetKeyspace(keyspaceName, stream)
     val bytes = setKeyspaceMessage.serialize()
 
     bytes should equal(List[Byte](
-      protocolVersion, // protocol version
+      protocolVersion.serverCode, // protocol version
       0x00, // flags
       stream, // stream
       0x08, // message type - 8 (Result)

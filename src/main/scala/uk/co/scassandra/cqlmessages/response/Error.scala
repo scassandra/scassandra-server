@@ -28,7 +28,7 @@ class Error(protocolVersion: ProtocolVersion, val errorCode : Int, val errorMess
   }
 }
 
-case class QueryBeforeReadyMessage(stream : Byte = ResponseHeader.DefaultStreamId) extends Error(VersionTwo, ErrorCodes.ProtocolError, "Query sent before StartUp message", stream)
+case class QueryBeforeReadyMessage(stream : Byte = ResponseHeader.DefaultStreamId)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.ProtocolError, "Query sent before StartUp message", stream)
 
 case class ReadRequestTimeout(stream : Byte)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.ReadTimeout, "Read Request Timeout", stream) {
 

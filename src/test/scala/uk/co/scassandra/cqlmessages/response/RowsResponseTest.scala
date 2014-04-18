@@ -3,21 +3,21 @@ package org.scassandra.cqlmessages.response
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
 import akka.util.ByteString
-import org.scassandra.cqlmessages.{ProtocolVersion, CqlVarchar, ColumnType, OpCodes}
+import org.scassandra.cqlmessages._
 
 class RowsResponseTest extends FunSuite with Matchers {
 
   val defaultStreamId : Byte = 1
-  val protocolVersion : Byte = ProtocolVersion.ServerProtocolVersionTwo
+  implicit val protocolVersion  = VersionOne
   val defaultColumnNames = Map[String, ColumnType]()
 
   test("Rows message should have Result opcode") {
-    val rows = Rows("","", defaultStreamId, defaultColumnNames, protocolVersion = protocolVersion)
+    val rows = Rows("","", defaultStreamId, defaultColumnNames)
     rows.header.opCode should equal(OpCodes.Result)
   }
 
   test("Rows message should have result type 0x0002") {
-    val rows = Rows("","", defaultStreamId, defaultColumnNames, protocolVersion = protocolVersion)
+    val rows = Rows("","", defaultStreamId, defaultColumnNames)
     rows.resultKind should equal(ResultKinds.Rows)
   }
 
@@ -25,7 +25,7 @@ class RowsResponseTest extends FunSuite with Matchers {
     val keyspaceName = "keyspace"
     val tableName = "table"
     val stream : Byte = 2
-    val rows = Rows(keyspaceName,tableName, stream, defaultColumnNames, protocolVersion = protocolVersion)
+    val rows = Rows(keyspaceName,tableName, stream, defaultColumnNames)
 
     val body = List(0x0,0x0, 0x0, 0x2, // 4 byte integer for the type of result, 2 is rows
       0x0, 0x0, 0x0, 0x1, // Meta-data - flays saying global table spec
@@ -37,7 +37,7 @@ class RowsResponseTest extends FunSuite with Matchers {
       List[Byte](0x0, 0x0, 0x0, 0x0) // row count
 
     val result = List[Byte](
-      (0x82 & 0xFF).toByte, // protocol version
+      protocolVersion.serverCode, // protocol version
       0x00, // flags
       stream, // stream
       0x08, // message type - 8 (Result)
@@ -64,7 +64,7 @@ class RowsResponseTest extends FunSuite with Matchers {
         ))
       )
     val stream: Byte = 0x01
-    val rows = Rows(keyspaceName, tableName, stream, columnNames, rowsToSerialise, protocolVersion = protocolVersion)
+    val rows = Rows(keyspaceName, tableName, stream, columnNames, rowsToSerialise)
     val actualBytes = rows.serialize().toList
 
     val expectedBody = List[Byte](
@@ -99,7 +99,7 @@ class RowsResponseTest extends FunSuite with Matchers {
       ("74".getBytes.toList)
 
     val expectedHeader = List[Byte](
-      (0x82 & 0xFF).toByte, // protocol version
+      protocolVersion.serverCode, // protocol version
       0x00, // flags
       stream, // stream
       0x08 // message type - 8 (Result)

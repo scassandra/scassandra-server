@@ -77,9 +77,10 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
   }
 
   test("Should send back error if query before ready message") {
+    implicit val protocolVersion = VersionTwo
     val queryMessage = ByteString(
       Array[Byte](
-        ProtocolVersion.ServerProtocolVersionTwo, 0x0, 0x0, OpCodes.Query, // header
+        protocolVersion.clientCode, 0x0, 0x0, OpCodes.Query, // header
         0x0, 0x0, 0x0, 0x0 // length
       )
     )

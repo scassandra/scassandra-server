@@ -8,12 +8,12 @@ import java.net.InetAddress
 
 class RowsTest extends FunSuite with Matchers {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
-  val protocolVersion : Byte = 5
+  implicit val protocolVersion = VersionTwo
 
   test("Serialization of Varchar column type") {
     val columnNames: Map[String, ColumnType] = Map("age" -> CqlVarchar)
     val rows: List[Row] = List(Row(Map("age" -> "18")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -38,7 +38,7 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Text column type") {
     val columnNames: Map[String, ColumnType] = Map("age" -> CqlText)
     val rows: List[Row] = List(Row(Map("age" -> "18")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -63,7 +63,7 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Int column type where value is a Scala Int") {
     val columnNames: Map[String, ColumnType] = Map("age" -> CqlInt)
     val rows: List[Row] = List(Row(Map("age" -> 18)))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -88,7 +88,7 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Int column type where value is a Scala String") {
     val columnNames: Map[String, ColumnType] = Map("age" -> CqlInt)
     val rows: List[Row] = List(Row(Map("age" -> "18")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -113,7 +113,7 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Boolean column type where value is false") {
     val columnNames: Map[String, ColumnType] = Map("booleanValue" -> CqlBoolean)
     val rows: List[Row] = List(Row(Map("booleanValue" -> "false")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -138,7 +138,7 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Ascii column type") {
     val columnNames: Map[String, ColumnType] = Map("name" -> CqlAscii)
     val rows: List[Row] = List(Row(Map("name" -> "Chris Batey")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -163,7 +163,7 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of BigInt column type when value is a String") {
     val columnNames: Map[String, ColumnType] = Map("field" -> CqlBigint)
     val rows: List[Row] = List(Row(Map("field" -> "1234")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -188,7 +188,7 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of BigInt column type when value is a Long") {
     val columnNames: Map[String, ColumnType] = Map("field" -> CqlBigint)
     val rows: List[Row] = List(Row(Map("field" -> 1234)))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -213,7 +213,7 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Counter column type when value is a String") {
     val columnNames: Map[String, ColumnType] = Map("field" -> CqlCounter)
     val rows: List[Row] = List(Row(Map("field" -> "1234")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -238,7 +238,7 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Blob column type") {
     val columnNames: Map[String, ColumnType] = Map("field" -> CqlBlob)
     val rows: List[Row] = List(Row(Map("field" -> "0x48656c6c6f")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -263,7 +263,7 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Decimal column type") {
     val columnNames: Map[String, ColumnType] = Map("field" -> CqlDecimal)
     val rows: List[Row] = List(Row(Map("field" -> "5.5456")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -288,7 +288,7 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Double column type") {
     val columnNames: Map[String, ColumnType] = Map("field" -> CqlDouble)
     val rows: List[Row] = List(Row(Map("field" -> "5.5456")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -313,7 +313,7 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Float column type") {
     val columnNames: Map[String, ColumnType] = Map("field" -> CqlFloat)
     val rows: List[Row] = List(Row(Map("field" -> "5.5456")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -338,7 +338,7 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Timestamp column type") {
     val columnNames: Map[String, ColumnType] = Map("field" -> CqlTimestamp)
     val rows: List[Row] = List(Row(Map("field" -> "1368438171000")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -364,7 +364,7 @@ class RowsTest extends FunSuite with Matchers {
     val uuid = UUID.randomUUID()
     val columnNames: Map[String, ColumnType] = Map("field" -> CqlUUID)
     val rows: List[Row] = List(Row(Map("field" -> uuid.toString)))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -390,7 +390,7 @@ class RowsTest extends FunSuite with Matchers {
     val uuid = UUID.fromString("2c530380-b9f9-11e3-850e-338bb2a2e74f")
     val columnNames: Map[String, ColumnType] = Map("field" -> CqlTimeUUID)
     val rows: List[Row] = List(Row(Map("field" -> uuid.toString)))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -416,7 +416,7 @@ class RowsTest extends FunSuite with Matchers {
     val inet = InetAddress.getByAddress(Array[Byte](127,0,0,1))
     val columnNames: Map[String, ColumnType] = Map("field" -> CqlInet)
     val rows: List[Row] = List(Row(Map("field" -> "127.0.0.1")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
@@ -442,7 +442,7 @@ class RowsTest extends FunSuite with Matchers {
     val varint = BigInt("1234")
     val columnNames: Map[String, ColumnType] = Map("field" -> CqlVarint)
     val rows: List[Row] = List(Row(Map("field" -> "1234")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows, protocolVersion).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 

@@ -8,7 +8,7 @@ import org.scassandra.cqlmessages._
 
 abstract class Result(val resultKind: Int, val streamId: Byte, protocolVersion : Byte) extends Response(new Header(protocolVersion, OpCodes.Result, streamId))
 
-case class VoidResult(stream : Byte, protocolVersion : Byte) extends Result(ResultKinds.VoidResult, stream, protocolVersion) {
+case class VoidResult(stream : Byte)(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.VoidResult, stream, protocolVersion.serverCode) {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
   val Length = 4
 
@@ -25,7 +25,10 @@ object Result extends Logging {
 
   implicit val byteOrder : ByteOrder = ByteOrder.BIG_ENDIAN
 
+
   def fromByteString(byteString : ByteString) : Result = {
+    // TODO: change to be based off the incoming message
+    implicit val impProtocolVersion = VersionTwo
     val iterator = byteString.iterator
     val protocolVersion = iterator.getByte
     val flags = iterator.getByte
@@ -39,9 +42,9 @@ object Result extends Logging {
         val keyspaceNameLength = iterator.getShort
         val keyspaceName = ResponseDeserializer.readString(iterator, keyspaceNameLength)
         logger.info(s"Received set keyspace '${keyspaceName}'")
-        SetKeyspace(protocolVersion, keyspaceName)
+        SetKeyspace(keyspaceName)
       case ResultKinds.VoidResult =>
-        VoidResult(protocolVersion, stream)
+        VoidResult(stream)
       case ResultKinds.Rows => {
         val rowsFlags = iterator.getInt
         logger.debug(s"Rows flags ${rowsFlags}")
@@ -101,13 +104,13 @@ object Result extends Logging {
 
           new Row(colValues.toMap)
         }).toList
-        Rows(keyspaceName, tableName, stream, columnNamesAndTypes.map( col => (col._1,CqlVarchar) ).toMap , rowData, protocolVersion)
+        Rows(keyspaceName, tableName, stream, columnNamesAndTypes.map( col => (col._1,CqlVarchar) ).toMap , rowData)
      }
     }
   }
 }
 
-case class SetKeyspace(protocolVersion: Byte, keyspaceName : String, stream : Byte = ResponseHeader.DefaultStreamId) extends Result(resultKind = ResultKinds.SetKeyspace, streamId = stream, protocolVersion) {
+case class SetKeyspace(keyspaceName : String, stream : Byte = ResponseHeader.DefaultStreamId)(implicit protocolVersion: ProtocolVersion) extends Result(resultKind = ResultKinds.SetKeyspace, streamId = stream, protocolVersion.serverCode) {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
