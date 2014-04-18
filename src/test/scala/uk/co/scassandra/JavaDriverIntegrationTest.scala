@@ -13,19 +13,6 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
     result.all().size() should equal(0)
   }
 
-  test("Test prime and query with single row") {
-    // priming
-    val whenQuery = "Test prime and query with single row"
-    val rows: List[Map[String, String]] = List(Map("name" -> s"Chris"))
-    prime(When(whenQuery), rows)
-
-    val result = session.execute(whenQuery)
-
-    val results = result.all()
-    results.size() should equal(1)
-    results.get(0).getString("name") should equal("Chris")
-  }
-
   test("Test prime and query with many rows") {
     // priming
     val whenQuery = "Test prime and query with many rows"

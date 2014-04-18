@@ -71,7 +71,7 @@ abstract class AbstractIntegrationTest extends FunSuite with Matchers with Befor
   override def afterAll() {
     stopServerStub()
 
-    cluster.close()
+    cluster.shutdown()
   }
 }
 

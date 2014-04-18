@@ -4,9 +4,9 @@ import akka.actor.{ActorRef, ActorRefFactory, Actor}
 import akka.io.Tcp
 import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
-import org.scassandra.cqlmessages.OpCodes
+import org.scassandra.cqlmessages.{ProtocolVersion, OpCodes}
 import org.scassandra.cqlmessages.response.{ResponseHeader, QueryBeforeReadyMessage, Ready}
-import uk.co.scassandra.cqlmessages.response.{CqlMessageFactory, VersionTwoMessageFactory}
+import uk.co.scassandra.cqlmessages.response.{VersionOneMessageFactory, CqlMessageFactory, VersionTwoMessageFactory}
 
 /*
  * TODO: This class is on the verge of needing split up.
@@ -65,7 +65,13 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
   private def processMessage(opCode: Byte, stream: Byte, messageBody: ByteString, protocolVersion: Byte) = {
     logger.info(s"Whole body $messageBody with length ${messageBody.length}")
 
-    val cqlMessageFactory = new VersionTwoMessageFactory
+    val cqlMessageFactory = if (protocolVersion == ProtocolVersion.ClientProtocolVersionOne) {
+      logger.debug("Received protocol one message")
+      VersionOneMessageFactory
+    } else {
+      logger.debug("Received protocol two message")
+      VersionTwoMessageFactory
+    }
 
     opCode match {
       case OpCodes.Startup =>

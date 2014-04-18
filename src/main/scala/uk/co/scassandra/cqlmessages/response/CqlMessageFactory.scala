@@ -1,9 +1,6 @@
 package uk.co.scassandra.cqlmessages.response
 
 import org.scassandra.cqlmessages.response._
-import uk.co.scassandra.priming.Prime
-import uk.co.scassandra.priming.Prime
-import uk.co.scassandra.priming.Prime
 import org.scassandra.cqlmessages.response.QueryBeforeReadyMessage
 import org.scassandra.cqlmessages.response.Rows
 import org.scassandra.cqlmessages.response.UnavailableException

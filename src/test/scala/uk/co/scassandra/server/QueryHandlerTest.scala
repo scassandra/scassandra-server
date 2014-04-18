@@ -18,8 +18,20 @@ import org.scassandra.cqlmessages.response.UnavailableException
 import org.scassandra.cqlmessages.response.Rows
 import scala.Some
 import uk.co.scassandra.priming.Prime
-import org.scassandra.cqlmessages.{ONE, TWO, CqlInt, CqlVarchar}
+import org.scassandra.cqlmessages._
 import uk.co.scassandra.cqlmessages.response.{VersionTwoMessageFactory, CqlMessageFactory}
+import org.scassandra.cqlmessages.response.ReadRequestTimeout
+import org.scassandra.cqlmessages.response.VoidResult
+import scala.Some
+import org.scassandra.cqlmessages.response.WriteRequestTimeout
+import org.scassandra.cqlmessages.response.Row
+import org.scassandra.cqlmessages.response.SetKeyspace
+import uk.co.scassandra.priming.PrimeMatch
+import org.scassandra.cqlmessages.response.UnavailableException
+import org.scassandra.cqlmessages.response.Rows
+import uk.co.scassandra.priming.PrimeKey
+import uk.co.scassandra.priming.Prime
+import uk.co.scassandra.priming.Query
 
 class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter with TestKitBase with MockitoSugar {
   implicit lazy val system = ActorSystem()
@@ -28,7 +40,9 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   var testProbeForTcpConnection: TestProbe = null
   val mockPrimedResults = mock[PrimedResults]
   val someCqlStatement = PrimeMatch("some cql statement", ONE)
-  val cqlMessageFactory = new VersionTwoMessageFactory
+  val cqlMessageFactory = VersionTwoMessageFactory
+  val protocolVersion : Byte = ProtocolVersion.ServerProtocolVersionTwo
+  implicit val impProtocolVersion = VersionTwo
 
   before {
     testProbeForTcpConnection = TestProbe()
@@ -39,11 +53,12 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   test("Should return set keyspace message for use statement") {
     val useStatement: String = "use keyspace"
     val stream: Byte = 0x02
+
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(useStatement).toArray.drop(8))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(SetKeyspace("keyspace", stream).serialize()))
+    testProbeForTcpConnection.expectMsg(Write(SetKeyspace(protocolVersion, "keyspace", stream).serialize()))
   }
 
   test("Should return void result when PrimedResults returns None") {
@@ -54,7 +69,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(VoidResult(stream).serialize()))
+    testProbeForTcpConnection.expectMsg(Write(VoidResult(protocolVersion, stream).serialize()))
   }
 
   test("Should return empty rows result when PrimedResults returns empty list") {
@@ -64,7 +79,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, Map()).serialize()))
+    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, Map(), protocolVersion = protocolVersion).serialize()))
   }
 
   test("Should return rows result when PrimedResults returns a list of rows") {
@@ -89,7 +104,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
         "name" -> "Mickey",
         "age" -> 99
       ))
-    )).serialize()))
+    ), protocolVersion = protocolVersion).serialize()))
   }
 
   test("Should return ReadRequestTimeout if result is ReadTimeout") {
@@ -148,7 +163,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
     testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, Map("name" -> CqlVarchar, "age" -> CqlVarchar),
-      rows.map(row => Row(row))).serialize()))
+      rows.map(row => Row(row)), protocolVersion = protocolVersion).serialize()))
   }
 
   test("Should store query in the ActivityLog") {
@@ -181,7 +196,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     underTest ! QueryHandlerMessages.Query(someQuery, stream)
 
     // then
-    testProbeForTcpConnection.expectMsg(Write(Rows(expectedKeyspace, "", stream, Map()).serialize()))
+    testProbeForTcpConnection.expectMsg(Write(Rows(expectedKeyspace, "", stream, Map(), protocolVersion = protocolVersion).serialize()))
   }
 
   test("Should return table name when set in PrimedResults") {
@@ -196,7 +211,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     underTest ! QueryHandlerMessages.Query(someQuery, stream)
 
     // then
-    testProbeForTcpConnection.expectMsg(Write(Rows("", expectedTable, stream, Map()).serialize()))
+    testProbeForTcpConnection.expectMsg(Write(Rows("", expectedTable, stream, Map(), protocolVersion = protocolVersion).serialize()))
   }
 
 }

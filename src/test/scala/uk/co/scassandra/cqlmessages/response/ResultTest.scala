@@ -55,8 +55,9 @@ class ResultTest extends FunSuite with Matchers {
 
   test("Void message de-serialize") {
     val streamId: Byte = 1
+    val protocolVersion: Byte = 1
 
-    val result = Result.fromByteString(VoidResult(streamId).serialize())
+    val result = Result.fromByteString(VoidResult(streamId, protocolVersion).serialize())
 
     result.isInstanceOf[VoidResult]
     result.asInstanceOf[VoidResult].stream should equal(streamId)
@@ -64,11 +65,12 @@ class ResultTest extends FunSuite with Matchers {
 
   test("Serialisation of a void result") {
     val stream: Byte = 0x01
-    val voidResult = VoidResult(stream)
+    val protocolVersion: Byte = 1
+    val voidResult = VoidResult(stream, protocolVersion)
     val bytes = voidResult.serialize().toList
 
     bytes should equal(List[Byte](
-      (0x82 & 0xFF).toByte, // protocol version
+      protocolVersion, // protocol version
       0x00, // flags
       stream, // stream
       0x08, // message type - 8 (Result)
@@ -143,11 +145,12 @@ class ResultTest extends FunSuite with Matchers {
   test("Serialisation of a SetKeyspace result response") {
     val keyspaceName = "people"
     val stream: Byte = 0x02
-    val setKeyspaceMessage = SetKeyspace(keyspaceName, stream)
+    val protocolVersion = ProtocolVersion.ServerProtocolVersionOne
+    val setKeyspaceMessage = SetKeyspace(protocolVersion, keyspaceName, stream)
     val bytes = setKeyspaceMessage.serialize()
 
     bytes should equal(List[Byte](
-      (0x82 & 0xFF).toByte, // protocol version
+      protocolVersion, // protocol version
       0x00, // flags
       stream, // stream
       0x08, // message type - 8 (Result)

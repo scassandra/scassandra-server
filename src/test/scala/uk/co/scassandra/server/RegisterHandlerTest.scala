@@ -12,7 +12,7 @@ import uk.co.scassandra.cqlmessages.response.VersionTwoMessageFactory
 class RegisterHandlerTest extends TestKit(ActorSystem("TestSystem")) with FunSuiteLike with ShouldMatchers {
   test("Should send Ready message on any Register message") {
     val senderTestProbe = TestProbe()
-    val cqlMessageFactory = new VersionTwoMessageFactory
+    val cqlMessageFactory = VersionTwoMessageFactory
     val expectedReadyMessage = cqlMessageFactory.createReadyMessage(ResponseHeader.DefaultStreamId)
     val underTest = TestActorRef(new RegisterHandler(senderTestProbe.ref, cqlMessageFactory))
     val registerBody = MessageHelper.createRegisterMessageBody()

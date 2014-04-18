@@ -1,17 +1,22 @@
 package uk.co.scassandra.cqlmessages.response
 
 import org.scassandra.cqlmessages.response._
+import org.scassandra.cqlmessages.{VersionOne, VersionTwo, ProtocolVersion}
 import org.scassandra.cqlmessages.response.QueryBeforeReadyMessage
+import org.scassandra.cqlmessages.response.UnavailableException
+import org.scassandra.cqlmessages.response.ReadRequestTimeout
+import org.scassandra.cqlmessages.response.WriteRequestTimeout
+import org.scassandra.cqlmessages.response.VoidResult
 import org.scassandra.cqlmessages.response.Rows
 import org.scassandra.cqlmessages.response.Ready
-import org.scassandra.cqlmessages.response.SetKeyspace
 import uk.co.scassandra.priming.Prime
-import org.scassandra.cqlmessages.{VersionTwo, VersionOne, ProtocolVersion}
+import org.scassandra.cqlmessages.response.Row
+import org.scassandra.cqlmessages.response.SetKeyspace
 
-object VersionTwoMessageFactory extends CqlMessageFactory {
+object VersionOneMessageFactory extends CqlMessageFactory {
 
-  val protocolVersion = ProtocolVersion.ServerProtocolVersionTwo
-  implicit val protocolVersionImp = VersionTwo
+  val protocolVersion = ProtocolVersion.ServerProtocolVersionOne
+  implicit val protocolVersionImp = VersionOne
 
   override def createReadyMessage(stream: Byte): Ready = {
     Ready(stream)
@@ -42,6 +47,6 @@ object VersionTwoMessageFactory extends CqlMessageFactory {
   }
 
   def createVoidMessage(stream: Byte): VoidResult = {
-    VoidResult(protocolVersion, stream)
+    VoidResult(stream, protocolVersion = protocolVersion)
   }
 }

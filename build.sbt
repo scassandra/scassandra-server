@@ -10,7 +10,7 @@ val akkaVersion = "2.2.+"
 
 val testDependencies = Seq(
   "io.spray" % "spray-testkit" % sprayVersion % "test",
-  "com.datastax.cassandra" % "cassandra-driver-core" % "2+" % "test",
+  "com.datastax.cassandra" % "cassandra-driver-core" % "1+" % "test" exclude("com.google.guava", "guava"),
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test",
   "org.scalatest" %% "scalatest" % "2.0" % "test",
   "org.mockito" % "mockito-core" % "1.9.5" % "test"
@@ -27,6 +27,8 @@ libraryDependencies ++= Seq(
   "com.typesafe" %% "scalalogging-slf4j" % "1.0.1"
 )
 
+libraryDependencies += "com.google.guava" % "guava" % "16.0.1" % "test" force()
+
 libraryDependencies ++= testDependencies
 
 scalacOptions in Test ++= Seq("-Yrangepos")
@@ -39,3 +41,5 @@ resolvers ++= Seq("snapshots" at "http://oss.sonatype.org/content/repositories/s
   "spray repo" at "http://repo.spray.io")
 
 parallelExecution in Test := false
+
+net.virtualvoid.sbt.graph.Plugin.graphSettings

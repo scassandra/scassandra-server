@@ -6,16 +6,18 @@ import org.scassandra.cqlmessages._
 class ErrorTest extends FunSuite with Matchers {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+  implicit val protocolVersion = VersionTwo
+  val defaultStream : Byte = 0x1
 
   test("Serialisation of a error response client protocol error") {
     val errorCode: Byte = 0xA
     val errorText = "Any old error message"
     val stream: Byte = 0x04
-    val errorMessage = new response.Error(errorCode, errorText, stream)
+    val errorMessage = new response.Error(protocolVersion, errorCode, errorText, stream)
     val bytes: List[Byte] = errorMessage.serialize().toList
 
     bytes should equal(List[Byte](
-      (0x82 & 0xFF).toByte, // protocol version
+      protocolVersion.serverCode, // protocol version
       0x00, // flags
       stream, // stream
       OpCodes.Error,
@@ -37,7 +39,7 @@ class ErrorTest extends FunSuite with Matchers {
   }
 
   test("Read request timeout has error code 0x1200 and message Read Request Timeout") {
-    val readTimeout = ReadRequestTimeout(0x1)
+    val readTimeout = ReadRequestTimeout(defaultStream)
 
     readTimeout.errorCode should equal(ErrorCodes.ReadTimeout)
     readTimeout.errorMessage should equal("Read Request Timeout")
@@ -63,8 +65,7 @@ Read_timeout: Timeout exception during a read request. The rest
                                responded. Otherwise, the value is != 0.
  */
   test("Serialization of Read Request Timeout - hard coded data for now") {
-    val readTimeoutBytes = ReadRequestTimeout(0x1).serialize().iterator
-    println(ReadRequestTimeout(0x1).serialize())
+    val readTimeoutBytes = ReadRequestTimeout(defaultStream).serialize().iterator
     val header = readTimeoutBytes.drop(4)
     val length = readTimeoutBytes.getInt
     val errorCode = readTimeoutBytes.getInt

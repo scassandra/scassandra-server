@@ -6,9 +6,9 @@ import com.typesafe.scalalogging.slf4j.Logging
 import java.nio.ByteOrder
 import org.scassandra.cqlmessages._
 
-abstract class Result(val resultKind: Int, val streamId: Byte) extends Response(new Header(ResponseHeader.VersionByte, OpCodes.Result, streamId))
+abstract class Result(val resultKind: Int, val streamId: Byte, protocolVersion : Byte) extends Response(new Header(protocolVersion, OpCodes.Result, streamId))
 
-case class VoidResult(stream : Byte) extends Result(ResultKinds.VoidResult, stream) {
+case class VoidResult(stream : Byte, protocolVersion : Byte) extends Result(ResultKinds.VoidResult, stream, protocolVersion) {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
   val Length = 4
 
@@ -39,9 +39,9 @@ object Result extends Logging {
         val keyspaceNameLength = iterator.getShort
         val keyspaceName = ResponseDeserializer.readString(iterator, keyspaceNameLength)
         logger.info(s"Received set keyspace '${keyspaceName}'")
-        SetKeyspace(keyspaceName)
+        SetKeyspace(protocolVersion, keyspaceName)
       case ResultKinds.VoidResult =>
-        VoidResult(stream)
+        VoidResult(protocolVersion, stream)
       case ResultKinds.Rows => {
         val rowsFlags = iterator.getInt
         logger.debug(s"Rows flags ${rowsFlags}")
@@ -101,13 +101,13 @@ object Result extends Logging {
 
           new Row(colValues.toMap)
         }).toList
-        Rows(keyspaceName, tableName, stream, columnNamesAndTypes.map( col => (col._1,CqlVarchar) ).toMap , rowData)
+        Rows(keyspaceName, tableName, stream, columnNamesAndTypes.map( col => (col._1,CqlVarchar) ).toMap , rowData, protocolVersion)
      }
     }
   }
 }
 
-case class SetKeyspace(keyspaceName : String, stream : Byte = ResponseHeader.DefaultStreamId) extends Result(resultKind = ResultKinds.SetKeyspace, streamId = stream) {
+case class SetKeyspace(protocolVersion: Byte, keyspaceName : String, stream : Byte = ResponseHeader.DefaultStreamId) extends Result(resultKind = ResultKinds.SetKeyspace, streamId = stream, protocolVersion) {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 

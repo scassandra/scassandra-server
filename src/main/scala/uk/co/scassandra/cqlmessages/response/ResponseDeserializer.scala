@@ -16,16 +16,17 @@ object ResponseDeserializer extends Logging {
     if (byteString.length < HeaderLength) throw new IllegalArgumentException
 
     val iterator = byteString.iterator
-    val protocolVersion = iterator.getByte
+    val protocolVersionByte = iterator.getByte
     val flags = iterator.getByte
     val stream = iterator.getByte
     val opCode = iterator.getByte
     val bodyLength = iterator.getInt
+    implicit val protocolVersion = ProtocolVersion.protocol(protocolVersionByte)
 
     if (iterator.len < bodyLength) throw new IllegalArgumentException
 
     opCode  match {
-      case OpCodes.Ready => new Ready(protocolVersion, stream)
+      case OpCodes.Ready => new Ready(stream)
       case OpCodes.Result => Result.fromByteString(byteString)
       case opCode @ _ =>
         throw new IllegalArgumentException(s"Received unknown opcode ${opCode}")

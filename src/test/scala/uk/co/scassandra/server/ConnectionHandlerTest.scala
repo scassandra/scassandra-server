@@ -6,27 +6,38 @@ import akka.testkit._
 import akka.util.ByteString
 import org.scalatest._
 import uk.co.scassandra.server.QueryHandlerMessages.Query
-import org.scassandra.cqlmessages.{ProtocolVersions, OpCodes}
+import org.scassandra.cqlmessages.{VersionOne, VersionTwo, ProtocolVersion, OpCodes}
 import org.scassandra.cqlmessages.response.{QueryBeforeReadyMessage, Ready}
+import uk.co.scassandra.cqlmessages.response.{CqlMessageFactory, VersionTwoMessageFactory, VersionOneMessageFactory}
 
 class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
 
-  var queryHandlerTestProbe : TestProbe = null
+  var queryHandlerTestProbeForVersionTwo : TestProbe = null
   var registerHandlerTestProbe : TestProbe = null
   var testActorRef : TestActorRef[ConnectionHandler] = null
-  
+  var lastMsgFactoryUsedForQuery : CqlMessageFactory = null
+  var lastMsgFactoryUsedForRegister : CqlMessageFactory = null
+
   before {
-    queryHandlerTestProbe = TestProbe()
+    queryHandlerTestProbeForVersionTwo = TestProbe()
     registerHandlerTestProbe = TestProbe()
     testActorRef = TestActorRef(new ConnectionHandler(
-      (_,_,_) => queryHandlerTestProbe.ref,
-      (_,_,_) => registerHandlerTestProbe.ref))
+      (_,_,msgFactory) => {
+        lastMsgFactoryUsedForQuery = msgFactory
+        queryHandlerTestProbeForVersionTwo.ref
+      },
+      (_,_,msgFactory) => {
+        lastMsgFactoryUsedForRegister = msgFactory
+        registerHandlerTestProbe.ref
+      }))
+
+    lastMsgFactoryUsedForQuery = null
   }
-  
+
   test("Should do nothing if not a full message") {
     val partialMessage = ByteString(
       Array[Byte](
-        ProtocolVersions.ServerProtocolVersionTwo, 0x0, 0x0, OpCodes.Query, // header
+        ProtocolVersion.ServerProtocolVersionTwo, 0x0, 0x0, OpCodes.Query, // header
         0x0, 0x0, 0x0, 0x5,  // length
         0x0 // 4 bytes missing
       )
@@ -34,26 +45,41 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
     testActorRef ! Received(partialMessage)
 
-    queryHandlerTestProbe.expectNoMsg()
+    queryHandlerTestProbeForVersionTwo.expectNoMsg()
   }
 
-  test("Should send ready message when startup message sent") {
+  test("Should send ready message when startup message sent - version one") {
+    implicit val protocolVersion = VersionOne
     val readyMessage = ByteString(
       Array[Byte](
-        ProtocolVersions.ServerProtocolVersionTwo, 0x0, 0x0, OpCodes.Startup, // header
+        ProtocolVersion.ClientProtocolVersionOne, 0x0, 0x0, OpCodes.Startup, // header
         0x0, 0x0, 0x0, 0x0 // length
       )
     )
 
     testActorRef ! Received(readyMessage)
 
-    expectMsg(Write(Ready(ProtocolVersions.ServerProtocolVersionTwo, 0x0).serialize()))
+    expectMsg(Write(Ready(0x0.toByte).serialize()))
+  }
+
+  test("Should send ready message when startup message sent - version two") {
+    implicit val protocolVersion = VersionTwo
+    val readyMessage = ByteString(
+      Array[Byte](
+        ProtocolVersion.ClientProtocolVersionTwo, 0x0, 0x0, OpCodes.Startup, // header
+        0x0, 0x0, 0x0, 0x0 // length
+      )
+    )
+
+    testActorRef ! Received(readyMessage)
+
+    expectMsg(Write(Ready(0x0.toByte).serialize()))
   }
 
   test("Should send back error if query before ready message") {
     val queryMessage = ByteString(
       Array[Byte](
-        ProtocolVersions.ServerProtocolVersionTwo, 0x0, 0x0, OpCodes.Query, // header
+        ProtocolVersion.ServerProtocolVersionTwo, 0x0, 0x0, OpCodes.Query, // header
         0x0, 0x0, 0x0, 0x0 // length
       )
     )
@@ -66,7 +92,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
   test("Should do nothing if an unrecognised opcode") {
     val unrecognisedOpCode = ByteString(
       Array[Byte](
-        ProtocolVersions.ServerProtocolVersionTwo  , 0x0, 0x0, 0x56, // header
+        ProtocolVersion.ServerProtocolVersionTwo  , 0x0, 0x0, 0x56, // header
         0x0, 0x0, 0x0, 0x0 // length
       )
     )
@@ -74,22 +100,37 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     testActorRef ! Received(unrecognisedOpCode)
 
     expectNoMsg()
-    queryHandlerTestProbe.expectNoMsg()
+    queryHandlerTestProbeForVersionTwo.expectNoMsg()
   }
 
 
-  test("Should forward query to a new QueryHandler") {
+  test("Should forward query to a new QueryHandler - version two of protocol") {
     sendStartupMessage()
     val stream : Byte = 0x04
     val query = "select * from people"
     val queryLength = Array[Byte](0x0, 0x0, 0x0, query.length.toByte)
     val queryOptions = Array[Byte](0,1,0)
     val queryWithLengthAndOptions = queryLength ++ query.getBytes() ++ queryOptions
-    val queryMessage = MessageHelper.createQueryMessage(query, stream)
+    val queryMessage = MessageHelper.createQueryMessage(query, stream, protocolVersion = ProtocolVersion.ClientProtocolVersionTwo)
 
     testActorRef ! Received(ByteString(queryMessage.toArray))
 
-    queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
+    queryHandlerTestProbeForVersionTwo.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
+    lastMsgFactoryUsedForQuery should equal(VersionTwoMessageFactory)
+  }
+  test("Should forward query to a new QueryHandler - version one of protocol") {
+    sendStartupMessage()
+    val stream : Byte = 0x04
+    val query = "select * from people"
+    val queryLength = Array[Byte](0x0, 0x0, 0x0, query.length.toByte)
+    val queryOptions = Array[Byte](0,1,0)
+    val queryWithLengthAndOptions = queryLength ++ query.getBytes() ++ queryOptions
+    val queryMessage = MessageHelper.createQueryMessage(query, stream, protocolVersion = ProtocolVersion.ClientProtocolVersionOne)
+
+    testActorRef ! Received(ByteString(queryMessage.toArray))
+
+    queryHandlerTestProbeForVersionTwo.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
+    lastMsgFactoryUsedForQuery should equal(VersionOneMessageFactory)
   }
 
   test("Should handle query message coming in two parts") {
@@ -105,20 +146,32 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     val queryMessageSecondHalf = queryMessage drop 5 toArray
 
     testActorRef ! Received(ByteString(queryMessageFirstHalf))
-    queryHandlerTestProbe.expectNoMsg()
+    queryHandlerTestProbeForVersionTwo.expectNoMsg()
     
     testActorRef ! Received(ByteString(queryMessageSecondHalf))
-    queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
+    queryHandlerTestProbeForVersionTwo.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
   }
 
-  test("Should forward register message to RegisterHandler") {
+  test("Should forward register message to RegisterHandler - version two protocol") {
     sendStartupMessage()
 
-    val registerMessage = MessageHelper.createRegisterMessage()
+    val registerMessage = MessageHelper.createRegisterMessage(ProtocolVersion.ClientProtocolVersionTwo)
 
     testActorRef ! Received(ByteString(registerMessage.toArray))
 
     registerHandlerTestProbe.expectMsg(RegisterHandlerMessages.Register(ByteString(MessageHelper.dropHeaderAndLength(registerMessage.toArray))))
+    lastMsgFactoryUsedForRegister should equal(VersionTwoMessageFactory)
+  }
+
+  test("Should forward register message to RegisterHandler - version one protocol") {
+    sendStartupMessage()
+
+    val registerMessage = MessageHelper.createRegisterMessage(ProtocolVersion.ClientProtocolVersionOne)
+
+    testActorRef ! Received(ByteString(registerMessage.toArray))
+
+    registerHandlerTestProbe.expectMsg(RegisterHandlerMessages.Register(ByteString(MessageHelper.dropHeaderAndLength(registerMessage.toArray))))
+    lastMsgFactoryUsedForRegister should equal(VersionOneMessageFactory)
   }
 
   test("Should handle two cql messages in the same data message") {
@@ -134,7 +187,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
     testActorRef ! Received(ByteString(twoMessages.toArray))
 
-    queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
+    queryHandlerTestProbeForVersionTwo.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
   }
 
   private def sendStartupMessage() = {

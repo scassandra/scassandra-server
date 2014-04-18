@@ -1,7 +1,7 @@
 package uk.co.scassandra.server
 
 import akka.util.ByteString
-import org.scassandra.cqlmessages.{Consistency, ONE, ProtocolVersions, OpCodes}
+import org.scassandra.cqlmessages.{Consistency, ONE, ProtocolVersion, OpCodes}
 import org.scassandra.cqlmessages.response.ResponseHeader
 
 object MessageHelper {
@@ -13,9 +13,9 @@ object MessageHelper {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
-  def createQueryMessage(queryString : String, stream : Byte = ResponseHeader.DefaultStreamId, consistency: Consistency = ONE) : List[Byte] = {
+  def createQueryMessage(queryString : String, stream : Byte = ResponseHeader.DefaultStreamId, consistency: Consistency = ONE, protocolVersion : Byte = ProtocolVersion.ClientProtocolVersionTwo) : List[Byte] = {
     val bodyLength = serializeInt(queryString.size + 4 + 2 + 1)
-    val header = List[Byte](0x02, 0x00, stream, OpCodes.Query) :::
+    val header = List[Byte](protocolVersion, 0x00, stream, OpCodes.Query) :::
       bodyLength
 
     val body : List[Byte] =
@@ -34,16 +34,16 @@ object MessageHelper {
       List[Byte](0x0, "3.0.0".length.toByte) :::
       "3.0.0".getBytes.toList
 
-    val bytes : List[Byte] = List[Byte](ProtocolVersions.ClientProtocolVersionTwo, 0x0, 0x0, OpCodes.Startup) :::
+    val bytes : List[Byte] = List[Byte](ProtocolVersion.ClientProtocolVersionTwo, 0x0, 0x0, OpCodes.Startup) :::
       List[Byte](0x0, 0x0, 0x0, messageBody.length.toByte) :::
       messageBody
 
     bytes
   }
 
-  def createRegisterMessage() : List[Byte] = {
+  def createRegisterMessage(protocolVersion : Byte = ProtocolVersion.ClientProtocolVersionTwo) : List[Byte] = {
     val header = List[Byte](
-      ProtocolVersions.ClientProtocolVersionTwo,
+      protocolVersion,
       0x0,
       0x0,
       OpCodes.Register

@@ -6,7 +6,7 @@ import java.math.BigDecimal
 import java.util.UUID
 import java.net.InetAddress
 
-case class Rows(keyspaceName: String, tableName: String, stream : Byte, columns : Map[String, ColumnType], rows : List[Row] = List[Row]()) extends Result(ResultKinds.Rows, stream) {
+case class Rows(keyspaceName: String, tableName: String, stream : Byte, columns : Map[String, ColumnType], rows : List[Row] = List[Row](), protocolVersion : Byte) extends Result(ResultKinds.Rows, stream, protocolVersion) {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
