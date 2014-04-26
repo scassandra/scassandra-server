@@ -12,9 +12,7 @@ import uk.co.scassandra.priming.When
 
 class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
 
-
   before {
-    println("Deleting old primes")
     val svc = url("http://localhost:8043/prime").DELETE
     val response = Http(svc OK as.String)
     response()

@@ -14,7 +14,6 @@ class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFuture
   val rows: List[Map[String, String]] = List(Map(nameColumn -> name))
 
   before {
-    println("Deleting old primes")
     val svc = url("http://localhost:8043/prime").DELETE
     val response = Http(svc OK as.String)
     response()
@@ -27,7 +26,6 @@ class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFuture
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.ONE)
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.TWO)
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.ALL)
-
   }
 
   test("Priming for a specific consistency should only return results for that consistency") {

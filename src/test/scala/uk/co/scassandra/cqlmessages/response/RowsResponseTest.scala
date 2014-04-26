@@ -106,8 +106,6 @@ class RowsResponseTest extends FunSuite with Matchers {
       0x08 // message type - 8 (Result)
     ) ::: serializeInt(expectedBody.length) // 4 byte integer - length of body (number of bytes)
 
-    println("Expected body " + expectedBody)
-
     actualBytes should equal(
       expectedHeader ::: expectedBody
     )

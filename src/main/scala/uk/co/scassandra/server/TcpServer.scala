@@ -24,13 +24,13 @@ class TcpServer(port: Int, primedResults: PrimedResults) extends Actor with Logg
       context stop self
 
     case c @ Connected(remote, local) =>
-      logger.info(s"Incoming connection, creating a connection handler! ${remote} ${local}")
+      logger.debug(s"Incoming connection, creating a connection handler! $remote $local")
       ActivityLog.recordConnection()
       val handler = context.actorOf(Props(classOf[ConnectionHandler],
         (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[QueryHandler], sender, primedResults, msgFactory)),
         (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[RegisterHandler], sender, msgFactory))
       ))
-      logger.info(s"Sending register with connection handler $handler")
+      logger.debug(s"Sending register with connection handler $handler")
       sender ! Register(handler)
   }
 }

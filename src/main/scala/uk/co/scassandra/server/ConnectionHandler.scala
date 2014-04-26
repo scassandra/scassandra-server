@@ -34,7 +34,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
   def receive = {
 
     case Received(data: ByteString) =>
-      logger.info(s"Received a message of length ${data.length} data:: $data")
+      logger.debug(s"Received a message of length ${data.length} data:: $data")
 
       currentData = data
       if (partialMessage) {
@@ -42,14 +42,14 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
       }
 
       val messageLength = currentData.length
-      logger.info(s"Whole message length so far is $messageLength")
+      logger.debug(s"Whole message length so far is $messageLength")
 
       // TODO - [DN] is this code blocking?
       // [CB] How so? It works until there is nothing else to do. There are no sleeps.
       while (currentData.length >= HeaderLength && takeMessage()) {}
 
       if (currentData.length > 0) {
-        logger.info("Not received length yet..")
+        logger.debug("Not received length yet..")
         partialMessage = true
         dataFromPreviousMessage = currentData
         currentData = ByteString()
@@ -63,7 +63,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
   }
 
   private def processMessage(opCode: Byte, stream: Byte, messageBody: ByteString, protocolVersion: Byte) = {
-    logger.info(s"Whole body $messageBody with length ${messageBody.length}")
+    logger.debug(s"Whole body $messageBody with length ${messageBody.length}")
 
     val cqlMessageFactory = if (protocolVersion == ProtocolVersion.ClientProtocolVersionOne) {
       logger.debug("Received protocol one message")
@@ -89,7 +89,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
         }
 
       case OpCodes.Register =>
-        logger.info("Received register message. Sending to RegisterHandler")
+        logger.debug("Received register message. Sending to RegisterHandler")
         val registerHandler = registerHandlerFactory(context, sender, cqlMessageFactory)
         registerHandler ! RegisterHandlerMessages.Register(messageBody)
 
@@ -107,12 +107,12 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
     val opCode: Byte = currentData(3)
 
     val bodyLengthArray = currentData.take(HeaderLength).drop(4)
-    logger.info(s"Body length array $bodyLengthArray")
+    logger.debug(s"Body length array $bodyLengthArray")
     val bodyLength = bodyLengthArray.asByteBuffer.getInt
-    logger.info(s"Body length $bodyLength")
+    logger.debug(s"Body length $bodyLength")
 
     if (currentData.length == bodyLength + HeaderLength) {
-      logger.info("Received exactly the whole message")
+      logger.debug("Received exactly the whole message")
       partialMessage = false
       val messageBody = currentData.drop(HeaderLength)
       processMessage(opCode, stream, messageBody, protocolVersion)
@@ -120,14 +120,14 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
       return false
     } else if (currentData.length > (bodyLength + HeaderLength)) {
       partialMessage = true
-      logger.info("Received a larger message than the length specifies - assume the rest is another message")
+      logger.debug("Received a larger message than the length specifies - assume the rest is another message")
       val messageBody = currentData.drop(HeaderLength).take(bodyLength)
-      logger.info(s"Message received ${messageBody.utf8String}")
+      logger.debug(s"Message received ${messageBody.utf8String}")
       processMessage(opCode, stream, messageBody, protocolVersion)
       currentData = currentData.drop(HeaderLength + bodyLength)
       return true
     } else {
-      logger.info(s"Not received whole message yet, currently ${currentData.length} but need ${bodyLength + 8}")
+      logger.debug(s"Not received whole message yet, currently ${currentData.length} but need ${bodyLength + 8}")
       partialMessage = true
       dataFromPreviousMessage = currentData
       return false
