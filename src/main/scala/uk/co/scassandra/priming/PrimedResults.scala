@@ -47,6 +47,7 @@ class PrimedResults extends Logging {
 
 
 case class PrimeCriteria(query: String, consistency: List[Consistency])
+
 case class PrimeMatch(query: String, consistency: Consistency)
 
 case class Prime(
@@ -68,7 +69,7 @@ case object Unavailable extends Result
 case object WriteTimeout extends Result
 
 object Result {
-  def fromString(string: String) : Result = {
+  def fromString(string: String): Result = {
     string match {
       case "read_request_timeout" => ReadTimeout
       case "unavailable" => Unavailable
