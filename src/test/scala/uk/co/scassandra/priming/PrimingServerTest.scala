@@ -109,7 +109,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
 
     it("should delete all primes for a HTTP delete") {
       val whenQuery = PrimeCriteria("anything", List())
-      primedResults.add(whenQuery, List())
+      primedResults.add(whenQuery, Prime(List()))
 
       Delete("/prime") ~> route ~> check {
         primedResults.get(PrimeMatch(whenQuery.query, ONE)) should equal(None)
@@ -119,7 +119,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
     it("should turn handle rejected primes as bad request") {
       val consistencies: List[Consistency] = List(ONE, TWO)
       val query: String = "select * from people"
-      primedResults.add(PrimeCriteria(query, consistencies), List[Map[String, Any]]())
+      primedResults.add(PrimeCriteria(query, consistencies), Prime(List[Map[String, Any]]()))
 
       val whenQuery = When("select * from people")
       val thenResults = List[Map[String, String]]()

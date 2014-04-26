@@ -95,8 +95,10 @@ trait PrimingServerRoute extends HttpService with Logging {
 
                 val table = emptyStringIfNone(primeRequest.when.table)
 
-                primedResults.add(PrimeCriteria(primeRequest.when.query, primeConsistencies),
-                  resultsAsList, result, columnTypesWithMissingDefaultedToVarchar, keyspace, table)
+                primedResults.add(
+                  PrimeCriteria(primeRequest.when.query, primeConsistencies),
+                  Prime(resultsAsList, result, columnTypesWithMissingDefaultedToVarchar, keyspace, table)
+                )
                 StatusCodes.OK
               }
               catch {

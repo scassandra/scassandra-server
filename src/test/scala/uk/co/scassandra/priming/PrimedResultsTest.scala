@@ -24,7 +24,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
         )
 
       // when
-      primeResults add (query, expectedResult)
+      primeResults add (query, Prime(expectedResult))
       val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
       // then
@@ -38,7 +38,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
 
 
       // when
-      primeResults add (query, List(), ReadTimeout)
+      primeResults add (query, Prime(List(), ReadTimeout))
       val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
       // then
@@ -76,7 +76,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
         )
 
       // when
-      primeResults add (query, result)
+      primeResults add (query, Prime(result))
       primeResults clear()
       val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
@@ -92,7 +92,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
       val result: List[Map[String, String]] = List( Map("name" -> "Mickey","age" -> "99"))
 
       // when
-      primeResults add (query, result)
+      primeResults add (query, Prime(result))
       val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
       // then
@@ -105,7 +105,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
       val result: List[Map[String, String]] = List( Map("name" -> "Mickey","age" -> "99"))
 
       // when
-      primeResults add (query, result)
+      primeResults add (query, Prime(result))
       val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
       // then
@@ -118,7 +118,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
       val result: List[Map[String, String]] = List( Map("name" -> "Mickey","age" -> "99"))
 
       // when
-      primeResults.add(query, result)
+      primeResults.add(query, Prime(result))
       val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
       // then
@@ -130,8 +130,8 @@ class PrimedResultsTest extends FunSpec with Matchers {
       val query: String = "select * from users"
       val primeForTwoAndAny = PrimeCriteria(query, List(TWO, ANY))
       val primeForThreeAndAny = PrimeCriteria(query, List(THREE, ANY))
-      val resultForTwo: List[Map[String, String]] = List( Map("name" -> "TWO_ANY"))
-      val resultForThree: List[Map[String, String]] = List( Map("name" -> "THREE_ANY"))
+      val resultForTwo = Prime(List( Map("name" -> "TWO_ANY")))
+      val resultForThree = Prime(List( Map("name" -> "THREE_ANY")))
 
       intercept[IllegalStateException] {
         primeResults.add(primeForTwoAndAny, resultForTwo)
@@ -144,29 +144,28 @@ class PrimedResultsTest extends FunSpec with Matchers {
       val query: String = "select * from users"
       val primeForTwoAndAny = PrimeCriteria(query, List(TWO, ANY))
       val primeForTwoAndAnyAgain = PrimeCriteria(query, List(TWO, ANY))
-      val resultForTwo: List[Map[String, String]] = List( Map("name" -> "FIRST_TIME"))
-      val resultForThree: List[Map[String, String]] = List( Map("name" -> "SECOND_TIME"))
+      val resultForTwo = Prime(List( Map("name" -> "FIRST_TIME")))
+      val resultForThree = Prime(List( Map("name" -> "SECOND_TIME")))
 
       primeResults.add(primeForTwoAndAny, resultForTwo)
       primeResults.add(primeForTwoAndAnyAgain, resultForThree)
 
       val actualResult = primeResults.get(PrimeMatch(query, ANY))
-      actualResult.get.rows should equal(resultForThree)
+      actualResult.get should equal(resultForThree)
     }
     
     it("should allow many primes for the same criteria if consistency is different") {
       val primeResults = PrimedResults()
       val query: String = "select * from users"
-      val primeForONE = PrimeCriteria(query, List(ONE))
-      val primeForTWO = PrimeCriteria(query, List(TWO))
-      val primeForTHREE = PrimeCriteria(query, List(THREE))
-      val rows: List[Map[String, String]] = List( Map("name" -> "FIRST_TIME"))
+      val primeCriteriaForONE = PrimeCriteria(query, List(ONE))
+      val primeCriteriaForTWO = PrimeCriteria(query, List(TWO))
+      val primeCriteriaForTHREE = PrimeCriteria(query, List(THREE))
+      val rowsPrime = Prime(List( Map("name" -> "FIRST_TIME")))
 
-      primeResults.add(primeForONE, rows)
-      primeResults.add(primeForTWO, rows)
-      primeResults.add(primeForTHREE, rows)
+      primeResults.add(primeCriteriaForONE, rowsPrime)
+      primeResults.add(primeCriteriaForTWO, rowsPrime)
+      primeResults.add(primeCriteriaForTHREE, rowsPrime)
     }
-
   }
 
   describe("Get PrimeCriteria by query") {
@@ -175,8 +174,8 @@ class PrimedResultsTest extends FunSpec with Matchers {
       val query: String = "select * from users"
       val primeForOneAndTwo = PrimeCriteria(query, List(ONE, TWO))
       val primeForThreeAndAny = PrimeCriteria(query, List(THREE, ANY))
-      val resultForTwo: List[Map[String, String]] = List( Map("name" -> "FIRST"))
-      val resultForThree: List[Map[String, String]] = List( Map("name" -> "SECOND"))
+      val resultForTwo = Prime(List( Map("name" -> "FIRST")))
+      val resultForThree = Prime(List( Map("name" -> "SECOND")))
 
       primeResults.add(primeForOneAndTwo, resultForTwo)
       primeResults.add(primeForThreeAndAny, resultForThree)
@@ -187,6 +186,4 @@ class PrimedResultsTest extends FunSpec with Matchers {
       actualResult(1) should equal(PrimeCriteria(query, List(THREE, ANY)))
     }
   }
-
-
 }
