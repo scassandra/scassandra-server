@@ -80,8 +80,6 @@ object Result {
 }
 
 
-case class PrimeKey(query: String)
-
 object PrimedResults {
   def apply() = {
     new PrimedResults()

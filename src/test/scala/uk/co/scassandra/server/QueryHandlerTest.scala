@@ -9,17 +9,8 @@ import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.mock.MockitoSugar
 import uk.co.scassandra.priming._
 import org.mockito.Mockito._
-import uk.co.scassandra.cqlmessages.response._
-import uk.co.scassandra.cqlmessages.response.ReadRequestTimeout
-import uk.co.scassandra.cqlmessages.response.VoidResult
-import uk.co.scassandra.cqlmessages.response.Row
-import uk.co.scassandra.cqlmessages.response.SetKeyspace
-import uk.co.scassandra.cqlmessages.response.UnavailableException
-import uk.co.scassandra.cqlmessages.response.Rows
-import scala.Some
-import uk.co.scassandra.priming.Prime
 import uk.co.scassandra.cqlmessages._
-import uk.co.scassandra.cqlmessages.response.{VersionTwoMessageFactory, CqlMessageFactory}
+import uk.co.scassandra.cqlmessages.response.VersionTwoMessageFactory
 import uk.co.scassandra.cqlmessages.response.ReadRequestTimeout
 import uk.co.scassandra.cqlmessages.response.VoidResult
 import scala.Some
@@ -29,7 +20,6 @@ import uk.co.scassandra.cqlmessages.response.SetKeyspace
 import uk.co.scassandra.priming.PrimeMatch
 import uk.co.scassandra.cqlmessages.response.UnavailableException
 import uk.co.scassandra.cqlmessages.response.Rows
-import uk.co.scassandra.priming.PrimeKey
 import uk.co.scassandra.priming.Prime
 import uk.co.scassandra.priming.Query
 
@@ -41,7 +31,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   val mockPrimedResults = mock[PrimedResults]
   val someCqlStatement = PrimeMatch("some cql statement", ONE)
   val cqlMessageFactory = VersionTwoMessageFactory
-  val protocolVersion : Byte = ProtocolVersion.ServerProtocolVersionTwo
+  val protocolVersion: Byte = ProtocolVersion.ServerProtocolVersionTwo
   implicit val impProtocolVersion = VersionTwo
 
   before {
@@ -62,10 +52,9 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   }
 
   test("Should return void result when PrimedResults returns None") {
-    val someCqlStatement = PrimeKey("some other cql statement")
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch(someCqlStatement.query, ONE))).thenReturn(None)
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(None)
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
@@ -108,10 +97,9 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   }
 
   test("Should return ReadRequestTimeout if result is ReadTimeout") {
-     val someCqlStatement = PrimeKey("some other cql statement")
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch(someCqlStatement.query, ONE))).thenReturn(Some(Prime(List(), ReadTimeout)))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), ReadTimeout)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
@@ -119,10 +107,9 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   }
 
   test("Should return WriteRequestTimeout if result is WriteTimeout") {
-     val someCqlStatement = PrimeKey("some other cql statement")
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch(someCqlStatement.query, ONE))).thenReturn(Some(Prime(List(), WriteTimeout)))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), WriteTimeout)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
@@ -130,10 +117,9 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   }
 
   test("Should return Unavailable Exception if result is UnavailableException") {
-     val someCqlStatement = PrimeKey("some other cql statement")
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch(someCqlStatement.query, ONE))).thenReturn(Some(Prime(List(), Unavailable)))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), Unavailable)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
@@ -141,7 +127,6 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
   }
 
   test("Test multiple rows") {
-     val someCqlStatement = PrimeKey("some other cql statement")
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
     val rows = List[Map[String, String]](
@@ -158,7 +143,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
       "name" -> CqlVarchar,
       "age" -> CqlVarchar
     )
-    when(mockPrimedResults.get(PrimeMatch(someCqlStatement.query, ONE))).thenReturn(Some(Prime(rows, Success, colTypes)))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(rows, Success, colTypes)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
