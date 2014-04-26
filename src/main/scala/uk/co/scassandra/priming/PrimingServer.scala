@@ -21,7 +21,7 @@ object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
     def write(c: Consistency) = JsString(c.string)
 
     def read(value: JsValue) = value match {
-      case JsString(value) => Consistency.fromString(value)
+      case JsString(consistency) => Consistency.fromString(consistency)
       case _ => throw new IllegalArgumentException("Expected Consistency as JsString")
     }
   }
@@ -68,7 +68,7 @@ trait PrimingServerRoute extends HttpService with Logging {
               // add the deserialized JSON request to the map of prime requests
               val resultsAsList = primeRequest.then.rows.getOrElse(List())
               val then = primeRequest.then
-              val result = then.result.map(Result.fromString(_)).getOrElse(Success)
+              val result = then.result.map(Result.fromString).getOrElse(Success)
               logger.debug("Column types " + primeRequest.then.column_types)
               val columnTypes = primeRequest.then.column_types match {
                 case Some(types) => types.map({
@@ -77,7 +77,7 @@ trait PrimingServerRoute extends HttpService with Logging {
                 case _ => Map[String, ColumnType]()
               }
 
-              //check that all the columns in thr rows have a type
+              // check that all the columns in the rows have a type
               val columnNamesInAllRows = resultsAsList.flatMap(row => row.keys).distinct
 
               val columnTypesWithMissingDefaultedToVarchar = columnNamesInAllRows.map(columnName => columnTypes.get(columnName) match {
@@ -87,7 +87,7 @@ trait PrimingServerRoute extends HttpService with Logging {
 
               logger.debug("Incoming when {}", primeRequest.when)
               val primeConsistencies = primeRequest.when.consistency match {
-                case Some(consistencyMap) => consistencyMap.map(Consistency.fromString(_))
+                case Some(consistencyMap) => consistencyMap.map(Consistency.fromString)
                 case None => Consistency.all
               }
               try {
@@ -156,7 +156,7 @@ class PrimingServer(port: Int, implicit val primedResults: PrimedResults) extend
 
   implicit def actorRefFactory = context.system
 
-  logger.info(s"Opening port ${port} for priming")
+  logger.info(s"Opening port $port for priming")
 
   IO(Http) ! Http.Bind(self, "localhost", port)
 
