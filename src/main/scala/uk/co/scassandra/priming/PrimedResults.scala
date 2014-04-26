@@ -11,7 +11,7 @@ class PrimedResults extends Logging {
           result : Result = Success, columnTypes : Map[String, ColumnType] = Map(),
           keyspace: String = "",
           table: String = "") = {
-    logger.info(s"Adding prime ${primeCriteria}")
+    logger.info(s"Adding prime $primeCriteria")
     def findExistingPrime: (PrimeCriteria) => Boolean = {
       prime => (prime.query == primeCriteria.query && (prime.consistency.intersect(primeCriteria.consistency).size > 0))
     }
@@ -26,7 +26,7 @@ class PrimedResults extends Logging {
 
   def get(primeMatch: PrimeMatch): Option[Prime] = {
     logger.debug("Current primes: " + queryToResults)
-    logger.debug(s"Query for |${primeMatch}|")
+    logger.debug(s"Query for |$primeMatch|")
     def findPrime: ((PrimeCriteria, Prime)) => Boolean = {
       entry => entry._1.query == primeMatch.query &&
         entry._1.consistency.contains(primeMatch.consistency)
