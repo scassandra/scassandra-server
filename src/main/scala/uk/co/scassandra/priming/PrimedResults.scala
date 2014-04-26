@@ -11,14 +11,17 @@ class PrimedResults extends Logging {
     logger.debug(s"Adding prime with criteria $criteria")
 
     def intersectsExistingCriteria: (PrimeCriteria) => Boolean = {
-      otherCriteria => otherCriteria.query == criteria.query && otherCriteria.consistency.intersect(criteria.consistency).size > 0
+      existing => existing.query == criteria.query && existing.consistency.intersect(criteria.consistency).size > 0
     }
 
-    val keys = queryToResults.filterKeys(intersectsExistingCriteria).keySet.toList
-    keys match {
-      case head :: second :: rest => throw new IllegalStateException()
+    val intersectingCriteria = queryToResults.filterKeys(intersectsExistingCriteria).keySet.toList
+    intersectingCriteria match {
+      // exactly one intersecting criteria: if the criteria is the newly passed one, this is just an override. Otherwise, conflict.
       case head :: Nil if head != criteria => throw new IllegalStateException()
-      case _ =>  // carry on
+      // two or more intersecting criteria: this means one or more conflicts
+      case head :: second :: rest => throw new IllegalStateException()
+      // all other cases: carry on
+      case _ =>
     }
     queryToResults += (criteria -> prime)
   }
