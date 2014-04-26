@@ -7,18 +7,20 @@ class PrimedResults extends Logging {
 
   var queryToResults: Map[PrimeCriteria, Prime] = Map()
 
-  def add(primeCriteria: PrimeCriteria, prime: Prime) = {
-    logger.info(s"Adding prime $primeCriteria")
-    def findExistingPrime: (PrimeCriteria) => Boolean = {
-      prime => (prime.query == primeCriteria.query && (prime.consistency.intersect(primeCriteria.consistency).size > 0))
+  def add(criteria: PrimeCriteria, prime: Prime) = {
+    logger.debug(s"Adding prime with criteria $criteria")
+
+    def intersectsExistingCriteria: (PrimeCriteria) => Boolean = {
+      otherCriteria => otherCriteria.query == criteria.query && otherCriteria.consistency.intersect(criteria.consistency).size > 0
     }
-    val keys = queryToResults.filterKeys(findExistingPrime).keySet.toList
+
+    val keys = queryToResults.filterKeys(intersectsExistingCriteria).keySet.toList
     keys match {
       case head :: second :: rest => throw new IllegalStateException()
-      case head :: Nil if head != primeCriteria => throw new IllegalStateException()
+      case head :: Nil if head != criteria => throw new IllegalStateException()
       case _ =>  // carry on
     }
-    queryToResults += (primeCriteria -> prime)
+    queryToResults += (criteria -> prime)
   }
 
   def get(primeMatch: PrimeMatch): Option[Prime] = {
