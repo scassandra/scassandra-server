@@ -87,7 +87,7 @@ trait PrimingServerRoute extends HttpService with Logging {
 
               logger.debug("Incoming when {}", primeRequest.when)
               val primeConsistencies = primeRequest.when.consistency match {
-                case Some(consistencyMap) => consistencyMap.map(Consistency.fromString)
+                case Some(list) => list.map(Consistency.fromString)
                 case None => Consistency.all
               }
               try {

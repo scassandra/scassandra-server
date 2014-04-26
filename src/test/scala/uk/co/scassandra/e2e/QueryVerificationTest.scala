@@ -44,8 +44,7 @@ class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
     whenReady(response) { result =>
       val queryList = JsonParser(result).convertTo[List[Query]]
       println(queryList)
-      queryList.exists(query => (query.query.equals(queryString) && query.consistency == "TWO"))
+      queryList.exists(query => query.query.equals(queryString) && query.consistency == "TWO")
     }
   }
-
 }
