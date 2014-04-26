@@ -6,7 +6,7 @@ import java.math.BigDecimal
 import java.util.UUID
 import java.net.InetAddress
 
-case class Rows(keyspaceName: String, tableName: String, stream : Byte, columns : Map[String, ColumnType], rows : List[Row] = List[Row]())(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Rows, stream, protocolVersion.serverCode) {
+case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTypes : Map[String, ColumnType], rows : List[Row] = List[Row]())(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Rows, stream, protocolVersion.serverCode) {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
@@ -18,13 +18,13 @@ case class Rows(keyspaceName: String, tableName: String, stream : Byte, columns 
 
     bodyBuilder.putInt(resultKind)
     bodyBuilder.putInt(1) // flags
-    bodyBuilder.putInt(columns.size) // col count
+    bodyBuilder.putInt(columnTypes.size) // col count
 
     bodyBuilder.putBytes(CqlProtocolHelper.serializeString(keyspaceName).toArray)
     bodyBuilder.putBytes(CqlProtocolHelper.serializeString(tableName).toArray)
 
-    // column specs // every thing is a varchar for now
-    columns.foreach( {case (colName, colType) => {
+    // column specs
+    columnTypes.foreach( {case (colName, colType) => {
       bodyBuilder.putBytes(CqlProtocolHelper.serializeString(colName).toArray)
       bodyBuilder.putShort(colType.code)
     }})
@@ -33,7 +33,7 @@ case class Rows(keyspaceName: String, tableName: String, stream : Byte, columns 
 
     rows.foreach(row => {
       row.columns.foreach({ case (name, value) => {
-        columns(name) match {
+        columnTypes(name) match {
           case CqlVarchar | CqlAscii | CqlText => bodyBuilder.putBytes(CqlProtocolHelper.serializeLongString(value.toString))
           case CqlInt => {
             bodyBuilder.putInt(4)
