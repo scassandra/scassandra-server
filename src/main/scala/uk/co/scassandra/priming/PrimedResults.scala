@@ -21,7 +21,7 @@ class PrimedResults extends Logging {
       case head :: Nil if head != primeCriteria => throw new IllegalStateException()
       case _ =>  // carry on
     }
-    queryToResults += (primeCriteria -> Prime(primeCriteria.query, rows, result, columnTypes, keyspace, table))
+    queryToResults += (primeCriteria -> Prime(rows, result, columnTypes, keyspace, table))
   }
 
   def get(primeMatch: PrimeMatch): Option[Prime] = {
@@ -48,7 +48,6 @@ case class PrimeCriteria(query: String, consistency: List[Consistency])
 case class PrimeMatch(query: String, consistency: Consistency)
 
 case class Prime(
-                  query: String,
                   rows: List[Map[String, Any]],
                   result: Result = Success,
                   columnTypes: Map[String, ColumnType] = Map(),
