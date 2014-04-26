@@ -1,4 +1,4 @@
-package org.scassandra.cqlmessages
+package uk.co.scassandra.cqlmessages
 
 import org.scalatest.{FunSuite, Matchers}
 import akka.util.ByteString

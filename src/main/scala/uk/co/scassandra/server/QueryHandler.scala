@@ -6,7 +6,7 @@ import com.typesafe.scalalogging.slf4j.Logging
 import akka.io.Tcp.Write
 import uk.co.scassandra.priming._
 import scala.Some
-import org.scassandra.cqlmessages.Consistency
+import uk.co.scassandra.cqlmessages.Consistency
 import uk.co.scassandra.cqlmessages.response.CqlMessageFactory
 
 class QueryHandler(tcpConnection: ActorRef, primedResults : PrimedResults, msgFactory: CqlMessageFactory) extends Actor with Logging {

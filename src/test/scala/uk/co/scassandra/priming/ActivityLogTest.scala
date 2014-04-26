@@ -1,7 +1,7 @@
 package uk.co.scassandra.priming
 
 import org.scalatest.{BeforeAndAfter, Matchers, FunSuite}
-import org.scassandra.cqlmessages.ONE
+import uk.co.scassandra.cqlmessages.ONE
 
 class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
 

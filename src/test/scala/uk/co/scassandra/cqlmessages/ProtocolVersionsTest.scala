@@ -1,7 +1,6 @@
 package uk.co.scassandra.cqlmessages
 
 import org.scalatest.{Matchers, FunSuite}
-import org.scassandra.cqlmessages.{VersionOne, VersionTwo, ProtocolVersion}
 
 class ProtocolVersionsTest extends FunSuite with Matchers {
   test("Mapping client protocol version to server - version 1") {

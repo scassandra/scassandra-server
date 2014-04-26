@@ -1,4 +1,4 @@
-package org.scassandra.cqlmessages
+package uk.co.scassandra.cqlmessages
 
 abstract class ColumnType(val code : Short)
 

@@ -1,6 +1,6 @@
-package org.scassandra.cqlmessages.response
+package uk.co.scassandra.cqlmessages.response
 
-import org.scassandra.cqlmessages._
+import uk.co.scassandra.cqlmessages._
 import akka.util.ByteString
 import java.math.BigDecimal
 import java.util.UUID

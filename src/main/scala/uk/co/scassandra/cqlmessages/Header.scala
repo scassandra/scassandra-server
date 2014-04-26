@@ -1,4 +1,4 @@
-package org.scassandra.cqlmessages
+package uk.co.scassandra.cqlmessages
 
 import akka.util.ByteString
 

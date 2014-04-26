@@ -1,8 +1,8 @@
 package uk.co.scassandra.server
 
 import akka.util.ByteString
-import org.scassandra.cqlmessages.{Consistency, ONE, ProtocolVersion, OpCodes}
-import org.scassandra.cqlmessages.response.ResponseHeader
+import uk.co.scassandra.cqlmessages.{Consistency, ONE, ProtocolVersion, OpCodes}
+import uk.co.scassandra.cqlmessages.response.ResponseHeader
 
 object MessageHelper {
   def dropHeaderAndLength(bytes: Array[Byte]) : Array[Byte] = {

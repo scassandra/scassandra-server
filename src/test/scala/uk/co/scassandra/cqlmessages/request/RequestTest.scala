@@ -1,7 +1,7 @@
-package org.scassandra.cqlmessages.request
+package uk.co.scassandra.cqlmessages.request
 
 import org.scalatest._
-import org.scassandra.cqlmessages.{OpCodes, ProtocolVersion}
+import uk.co.scassandra.cqlmessages.{OpCodes, ProtocolVersion}
 
 class RequestTest extends FunSuite with Matchers {
 

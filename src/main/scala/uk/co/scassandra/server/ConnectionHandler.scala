@@ -4,8 +4,8 @@ import akka.actor.{ActorRef, ActorRefFactory, Actor}
 import akka.io.Tcp
 import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
-import org.scassandra.cqlmessages.{ProtocolVersion, OpCodes}
-import org.scassandra.cqlmessages.response.{ResponseHeader, QueryBeforeReadyMessage, Ready}
+import uk.co.scassandra.cqlmessages.{ProtocolVersion, OpCodes}
+import uk.co.scassandra.cqlmessages.response.{ResponseHeader, QueryBeforeReadyMessage, Ready}
 import uk.co.scassandra.cqlmessages.response.{VersionOneMessageFactory, CqlMessageFactory, VersionTwoMessageFactory}
 
 /*

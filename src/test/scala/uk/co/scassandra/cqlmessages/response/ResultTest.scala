@@ -1,8 +1,8 @@
-package org.scassandra.cqlmessages.response
+package uk.co.scassandra.cqlmessages.response
 
 import org.scalatest.{Matchers, FunSuite}
 import akka.util.ByteString
-import org.scassandra.cqlmessages._
+import uk.co.scassandra.cqlmessages._
 
 class ResultTest extends FunSuite with Matchers {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN

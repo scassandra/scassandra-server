@@ -1,7 +1,8 @@
-package org.scassandra.cqlmessages.response
+package uk.co.scassandra.cqlmessages.response
 
 import org.scalatest.{Matchers, FunSuite}
-import org.scassandra.cqlmessages._
+import uk.co.scassandra.cqlmessages._
+import uk.co.scassandra.cqlmessages.VersionTwo
 
 class ErrorTest extends FunSuite with Matchers {
 

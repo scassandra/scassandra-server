@@ -1,4 +1,4 @@
-package org.scassandra.cqlmessages.response
+package uk.co.scassandra.cqlmessages.response
 
 object ResultKinds {
   val SetKeyspace : Int = 0x0003

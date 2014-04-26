@@ -5,8 +5,8 @@ import java.io._
 import java.net.Socket
 import java.util
 import scala.collection.immutable.IndexedSeq
-import org.scassandra.cqlmessages.OpCodes
-import org.scassandra.cqlmessages.response.ResultKinds
+import uk.co.scassandra.cqlmessages.OpCodes
+import uk.co.scassandra.cqlmessages.response.ResultKinds
 import uk.co.scassandra.server.MessageHelper
 import org.scalatest.BeforeAndAfter
 

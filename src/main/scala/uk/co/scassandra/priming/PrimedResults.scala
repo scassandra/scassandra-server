@@ -1,7 +1,7 @@
 package uk.co.scassandra.priming
 
 import com.typesafe.scalalogging.slf4j.Logging
-import org.scassandra.cqlmessages.{Consistency, ColumnType}
+import uk.co.scassandra.cqlmessages.{Consistency, ColumnType}
 
 class PrimedResults extends Logging {
 

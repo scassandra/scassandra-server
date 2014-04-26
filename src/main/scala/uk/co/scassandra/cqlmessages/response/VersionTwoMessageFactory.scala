@@ -1,12 +1,7 @@
 package uk.co.scassandra.cqlmessages.response
 
-import org.scassandra.cqlmessages.response._
-import org.scassandra.cqlmessages.response.QueryBeforeReadyMessage
-import org.scassandra.cqlmessages.response.Rows
-import org.scassandra.cqlmessages.response.Ready
-import org.scassandra.cqlmessages.response.SetKeyspace
 import uk.co.scassandra.priming.Prime
-import org.scassandra.cqlmessages.{VersionTwo, VersionOne, ProtocolVersion}
+import uk.co.scassandra.cqlmessages.{VersionTwo, ProtocolVersion}
 
 object VersionTwoMessageFactory extends CqlMessageFactory {
 

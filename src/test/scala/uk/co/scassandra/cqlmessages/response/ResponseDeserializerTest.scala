@@ -1,8 +1,9 @@
-package org.scassandra.cqlmessages.response
+package uk.co.scassandra.cqlmessages.response
 
 import org.scalatest.{Matchers, FunSuite}
 import akka.util.ByteString
-import org.scassandra.cqlmessages.{VersionTwo, ProtocolVersion}
+import uk.co.scassandra.cqlmessages.{VersionTwo, ProtocolVersion}
+import uk.co.scassandra.cqlmessages.VersionTwo
 
 class ResponseDeserializerTest extends FunSuite with Matchers {
   implicit val protocolVersion = VersionTwo

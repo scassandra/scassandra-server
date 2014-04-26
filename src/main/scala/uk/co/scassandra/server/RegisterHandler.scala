@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorRef}
 import com.typesafe.scalalogging.slf4j.Logging
 import akka.io.Tcp.Write
 import akka.util.ByteString
-import org.scassandra.cqlmessages.response.{ResponseHeader, Ready}
+import uk.co.scassandra.cqlmessages.response.{ResponseHeader, Ready}
 import uk.co.scassandra.cqlmessages.response.CqlMessageFactory
 
 class RegisterHandler(connection: ActorRef, msgFactory: CqlMessageFactory) extends Actor with Logging {

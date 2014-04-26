@@ -1,10 +1,11 @@
-package org.scassandra.cqlmessages.response
+package uk.co.scassandra.cqlmessages.response
 
 import org.scalatest.{Matchers, FunSuite}
 import akka.util.ByteIterator
-import org.scassandra.cqlmessages._
+import uk.co.scassandra.cqlmessages._
 import java.util.UUID
 import java.net.InetAddress
+import uk.co.scassandra.cqlmessages.{CqlVarchar, ColumnType, VersionTwo}
 
 class RowsTest extends FunSuite with Matchers {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN

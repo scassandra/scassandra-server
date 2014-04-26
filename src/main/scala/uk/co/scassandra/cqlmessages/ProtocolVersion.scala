@@ -1,4 +1,4 @@
-package org.scassandra.cqlmessages
+package uk.co.scassandra.cqlmessages
 
 object ProtocolVersion {
   val ServerProtocolVersionTwo : Byte = (0x82 & 0xFF).toByte

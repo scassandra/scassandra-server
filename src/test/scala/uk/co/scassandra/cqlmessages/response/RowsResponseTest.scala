@@ -1,9 +1,10 @@
-package org.scassandra.cqlmessages.response
+package uk.co.scassandra.cqlmessages.response
 
 import org.scalatest.FunSuite
 import org.scalatest.Matchers
 import akka.util.ByteString
-import org.scassandra.cqlmessages._
+import uk.co.scassandra.cqlmessages._
+import uk.co.scassandra.cqlmessages.VersionOne
 
 class RowsResponseTest extends FunSuite with Matchers {
 

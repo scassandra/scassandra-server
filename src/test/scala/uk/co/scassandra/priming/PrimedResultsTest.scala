@@ -1,7 +1,7 @@
 package uk.co.scassandra.priming
 
 import org.scalatest.{Matchers, FunSpec}
-import org.scassandra.cqlmessages._
+import uk.co.scassandra.cqlmessages._
 
 class PrimedResultsTest extends FunSpec with Matchers {
 

@@ -1,7 +1,7 @@
-package org.scassandra.cqlmessages.response
+package uk.co.scassandra.cqlmessages.response
 
 import akka.util.ByteString
-import org.scassandra.cqlmessages._
+import uk.co.scassandra.cqlmessages._
 
 object ResponseHeader {
   val FlagsNoCompressionByte = 0x00

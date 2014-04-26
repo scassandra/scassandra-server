@@ -1,7 +1,7 @@
-package org.scassandra.cqlmessages.request
+package uk.co.scassandra.cqlmessages.request
 
 import akka.util.ByteString
-import org.scassandra.cqlmessages._
+import uk.co.scassandra.cqlmessages._
 
 // Current has a fixed stream ID as only sent on startup
 case object StartupHeader extends Header(ProtocolVersion.ClientProtocolVersionTwo, opCode = OpCodes.Startup, streamId = 0)

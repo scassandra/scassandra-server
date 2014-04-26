@@ -1,7 +1,7 @@
-package org.scassandra.cqlmessages.response
+package uk.co.scassandra.cqlmessages.response
 
 import akka.util.{ByteIterator, ByteString}
-import org.scassandra.cqlmessages._
+import uk.co.scassandra.cqlmessages._
 import com.typesafe.scalalogging.slf4j.Logging
 import java.nio.ByteOrder
 

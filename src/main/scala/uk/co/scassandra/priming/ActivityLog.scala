@@ -1,6 +1,6 @@
 package uk.co.scassandra.priming
 
-import org.scassandra.cqlmessages.Consistency
+import uk.co.scassandra.cqlmessages.Consistency
 
 object ActivityLog {
 

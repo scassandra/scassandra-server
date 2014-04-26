@@ -10,7 +10,7 @@ import spray.json.{JsValue, JsString, RootJsonFormat, DefaultJsonProtocol}
 import spray.httpx.SprayJsonSupport
 import spray.http.StatusCodes
 import akka.actor.Actor
-import org.scassandra.cqlmessages._
+import uk.co.scassandra.cqlmessages._
 import scala.Some
 import uk.co.scassandra.ErrorMessage
 
