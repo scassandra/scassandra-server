@@ -33,6 +33,7 @@ object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impQuery = jsonFormat2(Query)
   implicit val impPrimeCriteria = jsonFormat2(PrimeCriteria)
   implicit val impConflictingPrimes = jsonFormat1(ConflictingPrimes)
+  implicit val impTypeMismatch = jsonFormat3(TypeMismatch)
 }
 
 trait PrimingServerRoute extends HttpService with Logging {
@@ -174,4 +175,6 @@ class PrimingServer(port: Int, implicit val primedResults: PrimedResults) extend
   logger.info(s"Server bound to port $port")
 }
 
-case class ConflictingPrimes(existingPrimes: List[PrimeCriteria]) extends ErrorMessage("Conflicting Primes");
+case class ConflictingPrimes(existingPrimes: List[PrimeCriteria]) extends ErrorMessage("Conflicting Primes")
+
+case class TypeMismatch(value: String, name: String, columnType: String) extends ErrorMessage("Type mismatch")

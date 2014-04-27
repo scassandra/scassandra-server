@@ -115,8 +115,11 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         primedResults.get(PrimeMatch(whenQuery.query, ONE)) should equal(None)
       }
     }
+  }
 
-    it("should turn handle rejected primes as bad request") {
+  describe("Priming incorrectly") {
+
+    it("should reject conlficting primes as bad request") {
       val consistencies: List[Consistency] = List(ONE, TWO)
       val query: String = "select * from people"
       primedResults.add(PrimeCriteria(query, consistencies), Prime(List[Map[String, Any]]()))
@@ -128,6 +131,31 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       Post("/prime", PrimeQueryResult(whenQuery, Then(Some(thenResults), result))) ~> route ~> check {
         status should equal(BadRequest)
         responseAs[ConflictingPrimes] should equal(ConflictingPrimes(existingPrimes = List(PrimeCriteria(query, consistencies))))
+      }
+    }
+
+    // TODO [DN|27-04-2014] - remove ignore flag and implement
+    ignore("should reject type mismatch in primes as bad request") {
+      val when = When("select * from people")
+
+      val thenResults: List[Map[String, String]] =
+        List(
+          Map(
+            "name" -> "Mickey",
+            "age" -> "99"
+          ),
+          Map(
+            "name" -> "Mario",
+            "age" -> "12"
+          )
+        )
+      val thenColumnTypes = Map("age" -> "boolean")
+
+      val then = Then(Some(thenResults), Some("success"), Some(thenColumnTypes))
+
+      Post("/prime", PrimeQueryResult(when, then)) ~> route ~> check {
+        status should equal(BadRequest)
+        responseAs[TypeMismatch] should equal(TypeMismatch("99", "age", "boolean"))
       }
     }
   }
