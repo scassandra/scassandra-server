@@ -21,6 +21,13 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
   }
 
   describe("Priming") {
+
+    it("should return all primes for get") {
+      Get("/prime") ~> route ~> check {
+        status should equal(OK)
+      }
+    }
+
     it("should return OK on valid request") {
       val query = "select * from users"
       val whenQuery = When(query)
@@ -119,7 +126,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
 
   describe("Priming incorrectly") {
 
-    it("should reject conlficting primes as bad request") {
+    it("should reject conflicting primes as bad request") {
       val consistencies: List[Consistency] = List(ONE, TWO)
       val query: String = "select * from people"
       primedResults.add(PrimeCriteria(query, consistencies), Prime(List[Map[String, Any]]()))
@@ -431,6 +438,46 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlTimeUUID)))
       }
     }
+  }
+
+  describe("Retrieving of primes") {
+    it("should convert a prime back to the original JSON format") {
+      val query = "select * from users"
+      val whenQuery = When(query)
+      val thenRows = List(Map("field" -> "533"))
+      val thenColumnTypes = Map("field" -> "timeuuid")
+      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
+      val expectedPrimePayloadWithDefaults = PrimeQueryResult(whenQuery, Then(Some(thenRows), Some("success"), Some(thenColumnTypes)))
+
+      Post("/prime", primePayload) ~> route
+
+      Get("/prime") ~> route ~> check {
+        val response = responseAs[List[PrimeQueryResult]]
+        response.size should equal(1)
+        response(0) should equal(expectedPrimePayloadWithDefaults)
+      }
+    }
+
+    it ("should convert result back to original JSON format") {
+      val query = "select * from users"
+      val whenQuery = When(query)
+      val thenRows = List(Map("one"->"two"))
+      val defaultColumnTypes = Map("one"->"varchar")
+      val result = "read_request_timeout"
+      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), Some(result)))
+      val expectedPrimePayloadWithDefaults = PrimeQueryResult(whenQuery, Then(Some(thenRows), Some(result), Some(defaultColumnTypes)))
+      Post("/prime", primePayload) ~> route
+
+      Get("/prime") ~> route ~> check {
+        val response = responseAs[List[PrimeQueryResult]]
+        response.size should equal(1)
+        response(0) should equal(expectedPrimePayloadWithDefaults)
+      }
+    }
+
+    ignore("when keyspace") {}
+    ignore("when tablename") {}
+    ignore("when consistencies") {}
   }
 
   describe("Retrieving activity") {

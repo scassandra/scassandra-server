@@ -7,6 +7,8 @@ class PrimedResults extends Logging {
 
   var queryToResults: Map[PrimeCriteria, Prime] = Map()
 
+  def getAllPrimes() : Map[PrimeCriteria, Prime] = queryToResults
+
   def add(criteria: PrimeCriteria, prime: Prime) = {
     logger.debug(s"Adding prime with criteria $criteria")
 
@@ -58,23 +60,23 @@ case class Prime(
                   table: String = ""
                   )
 
-abstract class Result
+abstract class Result(val string: String)
 
-case object Success extends Result
+case object Success extends Result("success")
 
-case object ReadTimeout extends Result
+case object ReadTimeout extends Result("read_request_timeout")
 
-case object Unavailable extends Result
+case object Unavailable extends Result("unavailable")
 
-case object WriteTimeout extends Result
+case object WriteTimeout extends Result("write_request_timeout")
 
 object Result {
   def fromString(string: String): Result = {
     string match {
-      case "read_request_timeout" => ReadTimeout
-      case "unavailable" => Unavailable
-      case "write_request_timeout" => WriteTimeout
-      case "success" => Success
+      case ReadTimeout.string => ReadTimeout
+      case Unavailable.string => Unavailable
+      case WriteTimeout.string => WriteTimeout
+      case Success.string => Success
     }
   }
 }

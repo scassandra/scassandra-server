@@ -6,13 +6,13 @@ import spray.routing._
 import spray.util.LoggingContext
 import akka.event.Logging
 import com.typesafe.scalalogging.slf4j.Logging
-import spray.json.{JsValue, JsString, RootJsonFormat, DefaultJsonProtocol}
+import spray.json._
 import spray.httpx.SprayJsonSupport
 import spray.http.StatusCodes
 import akka.actor.Actor
 import uk.co.scassandra.cqlmessages._
-import scala.Some
 import uk.co.scassandra.ErrorMessage
+import scala.Some
 
 
 object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
@@ -36,11 +36,7 @@ object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impTypeMismatch = jsonFormat3(TypeMismatch)
 }
 
-trait PrimingServerRoute extends HttpService with Logging {
-
-  import JsonImplicits._
-
-  implicit val primedResults: PrimedResults
+object ColumnTypeMappings {
 
   val ColumnTypeMapping = Map[String, ColumnType](
     "int" -> CqlInt,
@@ -60,8 +56,33 @@ trait PrimingServerRoute extends HttpService with Logging {
     "timeuuid" -> CqlTimeUUID
   )
 
+}
+
+trait PrimingServerRoute extends HttpService with Logging {
+
+  import JsonImplicits._
+
+  implicit val primedResults: PrimedResults
+
   val route = {
     path("prime") {
+      get {
+        complete {
+          val allPrimes: Map[PrimeCriteria, Prime] = primedResults.getAllPrimes()
+          val primesConvertedBackToDto = allPrimes.map({ case (primeCriteria, prime) => {
+            val when = When(primeCriteria.query)
+            val rowsValuesAsString = prime.rows.map(eachRow => eachRow.map({
+              case(key, valueAsAny) => (key, valueAsAny.toString)
+            }))
+            val columns = prime.columnTypes.map({case(colName, colType) => (colName, colType.stringRep)})
+            val result = prime.result.string
+            val then = Then(Some(rowsValuesAsString), result = Some(result), column_types = Some(columns))
+
+            PrimeQueryResult(when, then)
+          }})
+          primesConvertedBackToDto
+        }
+      } ~
       post {
         entity(as[PrimeQueryResult]) {
           primeRequest =>
@@ -73,7 +94,7 @@ trait PrimingServerRoute extends HttpService with Logging {
               logger.debug("Column types " + primeRequest.then.column_types)
               val columnTypes = primeRequest.then.column_types match {
                 case Some(types) => types.map({
-                  case (key: String, value) => (key, ColumnTypeMapping.getOrElse(value, CqlVarchar))
+                  case (key: String, value) => (key, ColumnTypeMappings.ColumnTypeMapping.getOrElse(value, CqlVarchar))
                 })
                 case _ => Map[String, ColumnType]()
               }
@@ -92,10 +113,8 @@ trait PrimingServerRoute extends HttpService with Logging {
                 case None => Consistency.all
               }
               try {
-                val keyspace = emptyStringIfNone(primeRequest.when.keyspace)
-
-                val table = emptyStringIfNone(primeRequest.when.table)
-
+                val keyspace = primeRequest.when.keyspace.getOrElse("")
+                val table = primeRequest.when.table.getOrElse("")
                 primedResults.add(
                   PrimeCriteria(primeRequest.when.query, primeConsistencies),
                   Prime(resultsAsList, result, columnTypesWithMissingDefaultedToVarchar, keyspace, table)
@@ -148,11 +167,6 @@ trait PrimingServerRoute extends HttpService with Logging {
           }
         }
     }
-
-  def emptyStringIfNone(option: Option[String]): String = option match {
-    case Some(s) => s
-    case None => ""
-  }
 }
 
 class PrimingServer(port: Int, implicit val primedResults: PrimedResults) extends Actor with PrimingServerRoute with Logging {
