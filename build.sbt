@@ -1,6 +1,6 @@
-name := "Cassandra Server Stub"
+name := "scassandra-server"
 
-version := "0.1"
+version := "0.1-SNAPSHOT"
 
 scalaVersion := "2.10.3"
 
@@ -28,6 +28,17 @@ resolvers ++= Seq(
 )
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
+
+publishTo := Some(Resolver.file("file",  new File( "../scassandra-repo/snapshots" )) )
+
+pomExtra :=
+<licenses>
+  <license>
+    <name>Apache 2</name>
+    <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    <distribution>repo</distribution>
+  </license>
+</licenses>
 
 /*
  *
