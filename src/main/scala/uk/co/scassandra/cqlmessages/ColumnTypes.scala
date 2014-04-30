@@ -18,3 +18,27 @@ case object CqlVarchar extends ColumnType(0x000D, "varchar")
 case object CqlVarint extends ColumnType(0x000E, "varint")
 case object CqlTimeUUID extends ColumnType(0x000F, "timeuuid")
 case object CqlInet extends ColumnType(0x0010, "inet")
+
+object ColumnType {
+  val ColumnTypeMapping = Map[String, ColumnType](
+    CqlInt.stringRep -> CqlInt,
+    CqlBoolean.stringRep -> CqlBoolean,
+    CqlAscii.stringRep -> CqlAscii,
+    CqlBigint.stringRep -> CqlBigint,
+    CqlCounter.stringRep -> CqlCounter,
+    CqlBlob.stringRep -> CqlBlob,
+    CqlDecimal.stringRep -> CqlDecimal,
+    CqlDouble.stringRep -> CqlDouble,
+    CqlFloat.stringRep -> CqlFloat,
+    CqlText.stringRep -> CqlText,
+    CqlTimestamp.stringRep -> CqlTimestamp,
+    CqlUUID.stringRep -> CqlUUID,
+    CqlInet.stringRep -> CqlInet,
+    CqlVarint.stringRep -> CqlVarint,
+    CqlTimeUUID.stringRep -> CqlTimeUUID
+  )
+
+  def fromString(string: String) : Option[ColumnType] = {
+    ColumnTypeMapping.get(string)
+  }
+}

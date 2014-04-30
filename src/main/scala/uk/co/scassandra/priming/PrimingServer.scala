@@ -36,28 +36,6 @@ object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impTypeMismatch = jsonFormat3(TypeMismatch)
 }
 
-object ColumnTypeMappings {
-
-  val ColumnTypeMapping = Map[String, ColumnType](
-    "int" -> CqlInt,
-    "boolean" -> CqlBoolean,
-    "ascii" -> CqlAscii,
-    "bigint" -> CqlBigint,
-    "counter" -> CqlCounter,
-    "blob" -> CqlBlob,
-    "decimal" -> CqlDecimal,
-    "double" -> CqlDouble,
-    "float" -> CqlFloat,
-    "text" -> CqlText,
-    "timestamp" -> CqlTimestamp,
-    "uuid" -> CqlUUID,
-    "inet" -> CqlInet,
-    "varint" -> CqlVarint,
-    "timeuuid" -> CqlTimeUUID
-  )
-
-}
-
 trait PrimingServerRoute extends HttpService with Logging {
 
   import JsonImplicits._
@@ -93,9 +71,9 @@ trait PrimingServerRoute extends HttpService with Logging {
               val then = primeRequest.then
               val result = then.result.map(Result.fromString).getOrElse(Success)
               logger.debug("Column types " + primeRequest.then.column_types)
-              val columnTypes = primeRequest.then.column_types match {
+              val columnTypes= primeRequest.then.column_types match {
                 case Some(types) => types.map({
-                  case (key: String, value) => (key, ColumnTypeMappings.ColumnTypeMapping.getOrElse(value, CqlVarchar))
+                  case (columnName: String, columnTypeAsString) => (columnName, ColumnType.fromString(columnTypeAsString).getOrElse(CqlVarchar))
                 })
                 case _ => Map[String, ColumnType]()
               }
