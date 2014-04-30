@@ -444,10 +444,10 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
     it("should convert a prime back to the original JSON format") {
       val query = "select * from users"
       val whenQuery = When(query)
-      val thenRows = List(Map("field" -> "533"))
-      val thenColumnTypes = Map("field" -> "timeuuid")
-      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
-      val expectedPrimePayloadWithDefaults = PrimeQueryResult(whenQuery, Then(Some(thenRows), Some("success"), Some(thenColumnTypes)))
+      val thenRows = Some(List(Map("field" -> "533")))
+      val thenColumnTypes = Some(Map("field" -> "timeuuid"))
+      val primePayload = PrimeQueryResult(whenQuery, Then(thenRows, column_types = thenColumnTypes))
+      val expectedPrimePayloadWithDefaults = createPrimeQueryResultWithDefaults(query, thenRows = thenRows, columnTypes = thenColumnTypes)
 
       Post("/prime", primePayload) ~> route
 
@@ -461,11 +461,10 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
     it ("should convert result back to original JSON format") {
       val query = "select * from users"
       val whenQuery = When(query)
-      val thenRows = List(Map("one"->"two"))
-      val defaultColumnTypes = Map("one"->"varchar")
+      val thenRows = Some(List(Map("one"->"two")))
       val result = "read_request_timeout"
-      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), Some(result)))
-      val expectedPrimePayloadWithDefaults = PrimeQueryResult(whenQuery, Then(Some(thenRows), Some(result), Some(defaultColumnTypes)))
+      val primePayload = PrimeQueryResult(whenQuery, Then(thenRows, Some(result)))
+      val expectedPrimePayloadWithDefaults = createPrimeQueryResultWithDefaults(query, thenRows = thenRows, result = result)
       Post("/prime", primePayload) ~> route
 
       Get("/prime") ~> route ~> check {
@@ -475,9 +474,57 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
       }
     }
 
-    ignore("when keyspace") {}
-    ignore("when tablename") {}
-    ignore("when consistencies") {}
+
+    it("Should return keyspace passed into prime") {
+      val query = "select * from users"
+      val whenQuery = When(query, keyspace = Some("myKeyspace"))
+      val thenRows = Some(List(Map("one"->"two")))
+      val columnTypes = Map("one"->"varchar")
+      val primePayload = PrimeQueryResult(whenQuery, Then(thenRows, column_types =  Some(columnTypes)))
+      val expectedPrimePayloadWithDefaults = createPrimeQueryResultWithDefaults(query, thenRows = thenRows, keyspace = "myKeyspace")
+
+      Post("/prime", primePayload) ~> route
+
+      Get("/prime") ~> route ~> check {
+        val response = responseAs[List[PrimeQueryResult]]
+        response.size should equal(1)
+        response(0) should equal(expectedPrimePayloadWithDefaults)
+      }
+    }
+    it("Should return table passed into prime") {
+      val query = "select * from users"
+      val whenQuery = When(query, table = Some("tablename"))
+      val thenRows = Some(List(Map("one"->"two")))
+      val primePayload = PrimeQueryResult(whenQuery, Then(thenRows))
+      val expectedPrimePayloadWithDefaults = createPrimeQueryResultWithDefaults(query, thenRows = thenRows, table = "tablename")
+
+      Post("/prime", primePayload) ~> route
+
+      Get("/prime") ~> route ~> check {
+        val response = responseAs[List[PrimeQueryResult]]
+        response.size should equal(1)
+        response(0) should equal(expectedPrimePayloadWithDefaults)
+      }
+    }
+
+    it("Should return consistencies passed into prime") {
+      val query = "select * from users"
+      val consistencies = Some(List("ONE", "ALL"))
+      val whenQuery = When(query, consistency = consistencies)
+      val thenRows = Some(List(Map("one"->"two")))
+      val primePayload = PrimeQueryResult(whenQuery, Then(thenRows))
+      val expectedPrimePayloadWithDefaults = createPrimeQueryResultWithDefaults(query, thenRows = thenRows, consistencies = consistencies)
+
+      Post("/prime", primePayload) ~> route
+
+      Get("/prime") ~> route ~> check {
+        val response = responseAs[List[PrimeQueryResult]]
+        response.size should equal(1)
+        response(0) should equal(expectedPrimePayloadWithDefaults)
+      }
+    }
+
+
   }
 
   describe("Retrieving activity") {
@@ -540,5 +587,30 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         ActivityLog.retrieveQueries().size should equal(0)
       }
     }
+  }
+
+
+  private def createPrimeQueryResultWithDefaults(query: String,
+                                                 keyspace : String = "",
+                                                 table : String = "",
+                                                 thenRows : Option[List[Map[String, String]]] = None,
+                                                 result : String = "success",
+                                                 columnTypes : Option[Map[String, String]] = None,
+                                                 consistencies : Option[List[String]] = None) = {
+
+
+    val consistenciesDefaultingToAll = if (consistencies.isDefined) {
+      consistencies.get
+    } else {
+      Consistency.all.map(_.string)
+    }
+    val colTypesDefaultingToVarchar = if (columnTypes.isDefined) {
+      columnTypes.get
+    } else {
+      // check that all the columns in the rows have a type
+      val columnNamesInAllRows = thenRows.get.flatMap(row => row.keys).distinct
+      columnNamesInAllRows.map(colName => (colName, "varchar")).toMap
+    }
+    PrimeQueryResult(When(query, keyspace = Some(keyspace), table = Some(table), consistency = Some(consistenciesDefaultingToAll)), Then(thenRows, Some(result), Some(colTypesDefaultingToVarchar)))
   }
 }

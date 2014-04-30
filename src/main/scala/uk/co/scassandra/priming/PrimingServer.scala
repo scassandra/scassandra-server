@@ -70,7 +70,8 @@ trait PrimingServerRoute extends HttpService with Logging {
         complete {
           val allPrimes: Map[PrimeCriteria, Prime] = primedResults.getAllPrimes()
           val primesConvertedBackToDto = allPrimes.map({ case (primeCriteria, prime) => {
-            val when = When(primeCriteria.query)
+            val consistencies = primeCriteria.consistency.map(_.string)
+            val when = When(primeCriteria.query, keyspace = Some(prime.keyspace), table = Some(prime.table), consistency = Some(consistencies))
             val rowsValuesAsString = prime.rows.map(eachRow => eachRow.map({
               case(key, valueAsAny) => (key, valueAsAny.toString)
             }))
