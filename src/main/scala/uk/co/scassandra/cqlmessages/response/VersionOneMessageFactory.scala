@@ -1,6 +1,6 @@
 package uk.co.scassandra.cqlmessages.response
 
-import uk.co.scassandra.cqlmessages.{VersionOne, ProtocolVersion}
+import uk.co.scassandra.cqlmessages.{ColumnType, VersionOne, ProtocolVersion}
 import uk.co.scassandra.priming.Prime
 
 object VersionOneMessageFactory extends CqlMessageFactory {
@@ -38,5 +38,9 @@ object VersionOneMessageFactory extends CqlMessageFactory {
 
   def createVoidMessage(stream: Byte): VoidResult = {
     VoidResult(stream)
+  }
+
+  def createPreparedResult(stream: Byte, id : Int, columnTypes: Map[String, ColumnType]): PreparedResultV1 = {
+    PreparedResultV1(stream, id, "keyspace", "table", columnTypes)
   }
 }

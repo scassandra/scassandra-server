@@ -8,4 +8,6 @@ object OpCodes {
   val Options: Byte = 0x05
   val Query: Byte = 0x07
   val Result: Byte = 0x08
+  val Prepare: Byte = 0x09
+  val Execute: Byte = 0x0A
 }

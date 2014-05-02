@@ -27,14 +27,39 @@ object StartupRequest extends Request(StartupHeader) {
 
 case class QueryRequest(stream: Byte, query: String, val consistency : Short = 0x0001, val flags : Byte = 0x00) extends Request(QueryHeader(stream)) {
   override def serialize() = {
-    val header = QueryHeader(stream).serialize()
-    header.toList
     val body =  CqlProtocolHelper.serializeLongString(query) ++
       CqlProtocolHelper.serializeShort(consistency) ++
       CqlProtocolHelper.serializeByte(flags)
 
-    header ++ CqlProtocolHelper.serializeInt(body.size) ++ body
-    ByteString((header ++ CqlProtocolHelper.serializeInt(body.size) ++ body))
+    ByteString(header.serialize() ++ CqlProtocolHelper.serializeInt(body.size) ++ body)
+  }
+}
+
+case class PrepareRequest(protocolVersion: Byte, stream: Byte, query: String) extends Request(new Header(protocolVersion, OpCodes.Prepare, stream)) {
+  def serialize(): ByteString = {
+    val headerBytes: Array[Byte] = header.serialize()
+    val body: Array[Byte] = CqlProtocolHelper.serializeLongString(query)
+    ByteString(headerBytes ++ CqlProtocolHelper.serializeInt(body.size) ++ body)
+  }
+}
+
+case class ExecuteRequest(protocolVersion: Byte, stream: Byte, id: Int, val consistency : Short = 0x0001, val flags : Byte = 0x00) extends Request(new Header(protocolVersion, OpCodes.Execute, stream)) {
+
+  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+
+  def serialize(): ByteString = {
+    val headerBytes: Array[Byte] = header.serialize()
+    val bs = ByteString.newBuilder
+
+    bs.putShort(4)
+    bs.putInt(id)
+
+    bs.putShort(consistency)
+    bs.putByte(flags)
+
+
+    val body = bs.result()
+    ByteString(headerBytes ++ CqlProtocolHelper.serializeInt(body.size) ++ body)
   }
 }
 

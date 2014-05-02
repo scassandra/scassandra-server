@@ -179,6 +179,13 @@ object CqlProtocolHelper {
     iterator.getBytes(bytes)
     BigInt(bytes)
   }
+
+  def readShortBytes(iterator: ByteIterator) : Array[Byte] = {
+    val length = iterator.getShort
+    val bytes = new Array[Byte](length)
+    iterator.getBytes(bytes)
+    bytes
+  }
 }
 /*
 [-126, 0, 0, 8, // result msg

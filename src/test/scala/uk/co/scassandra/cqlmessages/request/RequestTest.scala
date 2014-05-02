@@ -1,9 +1,11 @@
 package uk.co.scassandra.cqlmessages.request
 
 import org.scalatest._
-import uk.co.scassandra.cqlmessages.{OpCodes, ProtocolVersion}
+import uk.co.scassandra.cqlmessages.{CqlProtocolHelper, VersionOne, OpCodes, ProtocolVersion}
 
 class RequestTest extends FunSuite with Matchers {
+
+  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
   test("Serialization of StartupRequest") {
     val body = StartupRequest
@@ -33,5 +35,43 @@ class RequestTest extends FunSuite with Matchers {
         0x00 // flags - none set
       )
     )
+  }
+
+  test("Serialization of Prepare") {
+    val queryString = "use people"
+    val stream : Byte = 0x01
+    val protocolVersion = VersionOne.clientCode
+    val prepareRequest = new PrepareRequest(protocolVersion, stream, queryString)
+    val serialisation = prepareRequest.serialize()
+    serialisation should equal(
+      Seq(
+        ProtocolVersion.ClientProtocolVersionOne, 0, stream, OpCodes.Prepare,
+        0, 0, 0, 14,
+        0x00, 0x00, 0x00, 0x0a, // length of query
+        0x75, 0x73, 0x65, 0x20, 0x70, 0x65, 0x6f, 0x70, 0x6c, 0x65 // query as ascii hex
+      )
+    )
+  }
+  
+  test("Seralisation of a execute") {
+    val stream : Byte = 0x01
+    val protocolVersion : Byte = 0x1
+    val consistency : Short = 2
+    val id : Byte = 5
+    val executeRequest = new ExecuteRequest(protocolVersion, stream, id, consistency)
+    val serialisation = executeRequest.serialize().iterator
+
+    serialisation.getByte should equal(protocolVersion)
+    serialisation.getByte // ignore the flags
+    serialisation.getByte should equal(stream)
+    serialisation.getByte should equal(OpCodes.Execute)
+
+    serialisation.drop(4) // length
+
+    CqlProtocolHelper.readShortBytes(serialisation) should equal(Array[Byte](0,0,0,id))
+    serialisation.getShort should equal(consistency)
+    serialisation.getByte should equal(0)
+    
+    serialisation.isEmpty should equal(true)
   }
 }

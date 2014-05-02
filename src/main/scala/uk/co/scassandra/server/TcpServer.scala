@@ -15,6 +15,7 @@ class TcpServer(port: Int, primedResults: PrimedResults) extends Actor with Logg
   val manager = IO(Tcp)
 
   IO(Tcp) ! Bind(self, new InetSocketAddress("localhost", port))
+  val preparedHandler = context.actorOf(Props[PrepareHandler])
 
   def receive = {
     case b @ Bound(localAddress) =>
@@ -28,8 +29,10 @@ class TcpServer(port: Int, primedResults: PrimedResults) extends Actor with Logg
       ActivityLog.recordConnection()
       val handler = context.actorOf(Props(classOf[ConnectionHandler],
         (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[QueryHandler], sender, primedResults, msgFactory)),
-        (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[RegisterHandler], sender, msgFactory))
-      ))
+        (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[RegisterHandler], sender, msgFactory)),
+        preparedHandler,
+        (af: ActorRefFactory, tcpConnection: ActorRef) => af.actorOf(Props(classOf[TcpConnectionWrapper], tcpConnection)))
+      )
       logger.debug(s"Sending register with connection handler $handler")
       sender ! Register(handler)
   }

@@ -8,8 +8,6 @@ object MessageHelper {
   def dropHeaderAndLength(bytes: Array[Byte]) : Array[Byte] = {
     bytes drop 8 // drops the header and length
   }
-  
-
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 

@@ -25,7 +25,6 @@ object Result extends Logging {
 
   implicit val byteOrder : ByteOrder = ByteOrder.BIG_ENDIAN
 
-
   def fromByteString(byteString : ByteString) : Result = {
     // TODO: change to be based off the incoming message
     implicit val impProtocolVersion = VersionTwo
@@ -126,4 +125,78 @@ case class SetKeyspace(keyspaceName : String, stream : Byte = ResponseHeader.Def
 
     bs.result()
   }
+}
+
+case class PreparedResultV1(stream: Byte, preparedStatementId: Int, keyspaceName: String, tableName: String, columnTypes : Map[String, ColumnType])(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Prepared, stream, protocolVersion.serverCode) {
+
+  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+
+  def serialize(): ByteString = {
+    val bs = ByteString.newBuilder
+
+    bs.putBytes(header.serialize())
+
+    val bodyBs = ByteString.newBuilder
+    bodyBs.putInt(ResultKinds.Prepared)
+
+    bodyBs.putShort(4)
+    bodyBs.putInt(preparedStatementId)
+
+    bodyBs.putInt(1) // flags
+    bodyBs.putInt(columnTypes.size) // col count
+
+    bodyBs.putBytes(CqlProtocolHelper.serializeString(keyspaceName).toArray)
+    bodyBs.putBytes(CqlProtocolHelper.serializeString(tableName).toArray)
+
+    // column specs
+    columnTypes.foreach( {case (colName, colType) => {
+      bodyBs.putBytes(CqlProtocolHelper.serializeString(colName).toArray)
+      bodyBs.putShort(colType.code)
+    }})
+
+
+    val bodyResult: ByteString = bodyBs.result()
+    bs.putInt(bodyResult.size)
+    bs.putBytes(bodyResult.toArray)
+    bs.result()
+  }
+}
+
+case class PreparedResultV2(stream: Byte, preparedStatementId: Int, keyspaceName: String, tableName: String, columnTypes : Map[String, ColumnType])(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Prepared, stream, protocolVersion.serverCode) {
+
+    implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+
+    def serialize(): ByteString = {
+      val bs = ByteString.newBuilder
+
+      bs.putBytes(header.serialize())
+
+      val bodyBs = ByteString.newBuilder
+      bodyBs.putInt(ResultKinds.Prepared)
+
+      bodyBs.putShort(4)
+      bodyBs.putInt(preparedStatementId)
+
+      bodyBs.putInt(1) // flags
+      bodyBs.putInt(columnTypes.size) // col count
+
+      bodyBs.putBytes(CqlProtocolHelper.serializeString(keyspaceName).toArray)
+      bodyBs.putBytes(CqlProtocolHelper.serializeString(tableName).toArray)
+
+      // column specs
+      columnTypes.foreach( {case (colName, colType) => {
+        bodyBs.putBytes(CqlProtocolHelper.serializeString(colName).toArray)
+        bodyBs.putShort(colType.code)
+      }})
+
+      // second meta data - 3 indicates it does not exist
+      bodyBs.putInt(RowsFlags.HasNoMetaData)
+      // 0 columns
+      bodyBs.putInt(0)
+
+      val bodyResult: ByteString = bodyBs.result()
+      bs.putInt(bodyResult.size)
+      bs.putBytes(bodyResult.toArray)
+      bs.result()
+    }
 }

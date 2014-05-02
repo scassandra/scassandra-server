@@ -20,14 +20,14 @@ case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTy
     bodyBuilder.putInt(1) // flags
     bodyBuilder.putInt(columnTypes.size) // col count
 
-    bodyBuilder.putBytes(CqlProtocolHelper.serializeString(keyspaceName).toArray)
-    bodyBuilder.putBytes(CqlProtocolHelper.serializeString(tableName).toArray)
+      bodyBuilder.putBytes(CqlProtocolHelper.serializeString(keyspaceName).toArray)
+      bodyBuilder.putBytes(CqlProtocolHelper.serializeString(tableName).toArray)
 
-    // column specs
-    columnTypes.foreach( {case (colName, colType) => {
-      bodyBuilder.putBytes(CqlProtocolHelper.serializeString(colName).toArray)
-      bodyBuilder.putShort(colType.code)
-    }})
+      // column specs
+      columnTypes.foreach( {case (colName, colType) => {
+        bodyBuilder.putBytes(CqlProtocolHelper.serializeString(colName).toArray)
+        bodyBuilder.putShort(colType.code)
+      }})
 
     bodyBuilder.putInt(rows.length)
 

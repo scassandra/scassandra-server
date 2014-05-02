@@ -1,6 +1,7 @@
 package uk.co.scassandra.cqlmessages.response
 
 import uk.co.scassandra.priming.Prime
+import uk.co.scassandra.cqlmessages.ColumnType
 
 trait CqlMessageFactory {
   def createReadyMessage(stream : Byte) : Ready
@@ -11,4 +12,5 @@ trait CqlMessageFactory {
   def createWriteTimeoutMessage(stream: Byte): WriteRequestTimeout
   def createUnavailableMessage(stream: Byte): UnavailableException
   def createVoidMessage(stream: Byte): VoidResult
+  def createPreparedResult(stream: Byte, id: Int, columnTypes: Map[String, ColumnType]): Result
 }

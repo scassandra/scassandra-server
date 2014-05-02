@@ -1,6 +1,6 @@
 package uk.co.scassandra.server
 
-import akka.actor.{ActorRef, ActorRefFactory, Actor}
+import akka.actor.{Props, ActorRef, ActorRefFactory, Actor}
 import akka.io.Tcp
 import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
@@ -20,7 +20,9 @@ import uk.co.scassandra.cqlmessages.response.{VersionOneMessageFactory, CqlMessa
  *  per stream that could check the opcode and forward.
  */
 class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
-                        registerHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef) extends Actor with Logging {
+                        registerHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
+                        prepareHandler: ActorRef,
+                        connectionWrapperFactory: (ActorRefFactory, ActorRef) => ActorRef) extends Actor with Logging {
 
   import Tcp._
 
@@ -58,7 +60,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
 
     case PeerClosed => context stop self
     case unknown@_ =>
-      logger.info(s"Unknown message $unknown")
+      logger.warn(s"Unknown message $unknown")
 
   }
 
@@ -74,12 +76,12 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
     }
 
     opCode match {
-      case OpCodes.Startup =>
+      case OpCodes.Startup => {
         logger.info("Sending ready message")
         sender ! Write(cqlMessageFactory.createReadyMessage(stream).serialize())
         ready = true
-
-      case OpCodes.Query =>
+      }
+      case OpCodes.Query => {
         if (!ready) {
           logger.info("Received query before startup message, sending error")
           sender ! Write(cqlMessageFactory.createQueryBeforeErrorMessage().serialize())
@@ -87,14 +89,26 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
           val queryHandler = queryHandlerFactory(context, sender, cqlMessageFactory)
           queryHandler ! QueryHandlerMessages.Query(messageBody, stream)
         }
-
-      case OpCodes.Register =>
+      }
+      case OpCodes.Register => {
         logger.debug("Received register message. Sending to RegisterHandler")
         val registerHandler = registerHandlerFactory(context, sender, cqlMessageFactory)
         registerHandler ! RegisterHandlerMessages.Register(messageBody)
-
-      case opCode@_ =>
-        logger.info(s"Received unknown opcode $opCode")
+      }
+      case OpCodes.Prepare => {
+        logger.debug("Received prepare message. Sending to PrepareHandler")
+//        val wrappedSender = context.actorOf(Props(classOf[TcpConnectionWrapper], sender))
+        val wrappedSender = connectionWrapperFactory(context, sender)
+        prepareHandler ! PrepareHandlerMessages.Prepare(messageBody, stream, cqlMessageFactory, wrappedSender)
+      }
+      case OpCodes.Execute => {
+        logger.debug("Received execute message. Sending to ExecuteHandler")
+        //val wrappedSender = context.actorOf(Props(classOf[TcpConnectionWrapper], sender))
+        val wrappedSender = connectionWrapperFactory(context, sender)
+        prepareHandler ! PrepareHandlerMessages.Execute(messageBody, stream, cqlMessageFactory, wrappedSender)
+      }
+      case opCode @ _ =>
+        logger.warn(s"Received unknown opcode $opCode this probably means this feature is yet to be implemented the message body is $messageBody")
 
     }
   }

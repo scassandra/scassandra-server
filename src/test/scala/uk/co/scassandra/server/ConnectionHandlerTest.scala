@@ -6,30 +6,46 @@ import akka.testkit._
 import akka.util.ByteString
 import org.scalatest._
 import uk.co.scassandra.server.QueryHandlerMessages.Query
-import uk.co.scassandra.cqlmessages.{VersionOne, VersionTwo, ProtocolVersion, OpCodes}
+import uk.co.scassandra.cqlmessages._
 import uk.co.scassandra.cqlmessages.response.{QueryBeforeReadyMessage, Ready}
 import uk.co.scassandra.cqlmessages.response.{CqlMessageFactory, VersionTwoMessageFactory, VersionOneMessageFactory}
+import uk.co.scassandra.cqlmessages.response.QueryBeforeReadyMessage
+import akka.io.Tcp.Received
+import uk.co.scassandra.cqlmessages.response.Ready
+import uk.co.scassandra.server.QueryHandlerMessages.Query
 
 class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
 
-  var queryHandlerTestProbeForVersionTwo : TestProbe = null
-  var registerHandlerTestProbe : TestProbe = null
   var testActorRef : TestActorRef[ConnectionHandler] = null
+
+  var queryHandlerTestProbe : TestProbe = null
+  var registerHandlerTestProbe : TestProbe = null
+  var prepareHandlerTestProbe : TestProbe = null
+  var tcpWrapperTestProbe : TestProbe = null
+
   var lastMsgFactoryUsedForQuery : CqlMessageFactory = null
   var lastMsgFactoryUsedForRegister : CqlMessageFactory = null
+  var lastMsgFactoryUsedForPrepare : CqlMessageFactory = null
 
   before {
-    queryHandlerTestProbeForVersionTwo = TestProbe()
+    tcpWrapperTestProbe = TestProbe()
+    queryHandlerTestProbe = TestProbe()
     registerHandlerTestProbe = TestProbe()
+    prepareHandlerTestProbe = TestProbe()
     testActorRef = TestActorRef(new ConnectionHandler(
       (_,_,msgFactory) => {
         lastMsgFactoryUsedForQuery = msgFactory
-        queryHandlerTestProbeForVersionTwo.ref
+        queryHandlerTestProbe.ref
       },
       (_,_,msgFactory) => {
         lastMsgFactoryUsedForRegister = msgFactory
         registerHandlerTestProbe.ref
-      }))
+      },
+      prepareHandlerTestProbe.ref,
+      (_,_) => {
+        tcpWrapperTestProbe.ref
+      }
+    ))
 
     lastMsgFactoryUsedForQuery = null
   }
@@ -45,7 +61,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
     testActorRef ! Received(partialMessage)
 
-    queryHandlerTestProbeForVersionTwo.expectNoMsg()
+    queryHandlerTestProbe.expectNoMsg()
   }
 
   test("Should send ready message when startup message sent - version one") {
@@ -101,7 +117,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     testActorRef ! Received(unrecognisedOpCode)
 
     expectNoMsg()
-    queryHandlerTestProbeForVersionTwo.expectNoMsg()
+    queryHandlerTestProbe.expectNoMsg()
   }
 
 
@@ -116,7 +132,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
     testActorRef ! Received(ByteString(queryMessage.toArray))
 
-    queryHandlerTestProbeForVersionTwo.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
+    queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
     lastMsgFactoryUsedForQuery should equal(VersionTwoMessageFactory)
   }
   test("Should forward query to a new QueryHandler - version one of protocol") {
@@ -130,7 +146,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
     testActorRef ! Received(ByteString(queryMessage.toArray))
 
-    queryHandlerTestProbeForVersionTwo.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
+    queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
     lastMsgFactoryUsedForQuery should equal(VersionOneMessageFactory)
   }
 
@@ -147,10 +163,10 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     val queryMessageSecondHalf = queryMessage drop 5 toArray
 
     testActorRef ! Received(ByteString(queryMessageFirstHalf))
-    queryHandlerTestProbeForVersionTwo.expectNoMsg()
+    queryHandlerTestProbe.expectNoMsg()
     
     testActorRef ! Received(ByteString(queryMessageSecondHalf))
-    queryHandlerTestProbeForVersionTwo.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
+    queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
   }
 
   test("Should forward register message to RegisterHandler - version two protocol") {
@@ -188,7 +204,33 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
     testActorRef ! Received(ByteString(twoMessages.toArray))
 
-    queryHandlerTestProbeForVersionTwo.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
+    queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
+  }
+
+  test("Should forward Preprare messages to the prepare handler") {
+    sendStartupMessage()
+    val streamId : Byte = 0x1
+    val headerForPrepareMessage = new Header(ProtocolVersion.ClientProtocolVersionTwo,
+                                             OpCodes.Prepare, streamId)
+    val emptyPrepareMessage = headerForPrepareMessage.serialize() ++ Array[Byte](0,0,0,0)
+    
+    testActorRef ! Received(ByteString(emptyPrepareMessage))
+
+    prepareHandlerTestProbe.expectMsg(PrepareHandlerMessages.Prepare(ByteString(), streamId, VersionTwoMessageFactory, tcpWrapperTestProbe.ref))
+  }
+
+  test("Should forward Execute messages to the prepare handler") {
+    sendStartupMessage()
+    val streamId : Byte = 0x1
+    val headerForPrepareMessage = new Header(ProtocolVersion.ClientProtocolVersionTwo,
+      OpCodes.Execute, streamId)
+    val messageBody = Array[Byte](5,6)
+    val emptyPrepareMessage = headerForPrepareMessage.serialize() ++
+      Array[Byte](0,0,0,messageBody.length.toByte) ++ messageBody
+
+    testActorRef ! Received(ByteString(emptyPrepareMessage))
+
+    prepareHandlerTestProbe.expectMsg(PrepareHandlerMessages.Execute(ByteString(messageBody), streamId, VersionTwoMessageFactory, tcpWrapperTestProbe.ref))
   }
 
   private def sendStartupMessage() = {
