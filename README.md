@@ -19,7 +19,7 @@ In addition to a binary port Scassandra opens an admin port for priming and veri
 * [Getting started](https://github.com/scassandra/scassandra-server/wiki/Getting-Started)
 * [Priming](https://github.com/scassandra/scassandra-server/wiki/Priming)
 * [Activity Verification](https://github.com/scassandra/scassandra-server/wiki/Activity-Verification)
-* [Using Scassandra from Java Gradle] (Using-Scassandra-from-Java-Gradle)
+* [Using Scassandra from Java Gradle] (https://github.com/scassandra/scassandra-server/wiki/Using-Scassandra-from-Java-Gradle)
 
 Current limitations:
 * Only tested with Java Datastax driver version 2 and above. Support for version 1 will come later. Other drivers will be tested and supported soon. 
