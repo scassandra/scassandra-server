@@ -29,4 +29,17 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
     results.size() should equal(0)
   }
 
+  test("Prepared statement for schema change") {
+    //given
+    val preparedStatement = session.prepare("CREATE KEYSPACE ? WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': ?, 'dc2': ?};")
+    val boundStatement = preparedStatement.bind("keyspaceName","3","1")
+
+    //when
+    val result = session.execute(boundStatement)
+
+    //then
+    val results = result.all()
+    results.size() should equal(0)
+  }
+
 }
