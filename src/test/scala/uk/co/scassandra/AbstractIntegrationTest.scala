@@ -19,7 +19,7 @@ abstract class AbstractIntegrationTest extends FunSuite with Matchers with Befor
   def prime(query: When, rows: List[Map[String, String]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
     val prime = PrimeQueryResult(query, Then(Some(rows), Some(result), Some(columnTypes))).toJson
 
-    val svc = url("http://localhost:8043/prime") <<
+    val svc = url("http://localhost:8043/prime-single") <<
       prime.toString() <:<
       Map("Content-Type" -> "application/json")
 

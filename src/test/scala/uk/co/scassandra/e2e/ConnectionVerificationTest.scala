@@ -12,7 +12,7 @@ class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutur
   import JsonImplicits._
 
   before {
-    val svc = url("http://localhost:8043/prime").DELETE
+    val svc = url("http://localhost:8043/prime-single").DELETE
     val response = Http(svc OK as.String)
     response()
   }
