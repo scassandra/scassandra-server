@@ -43,7 +43,15 @@ trait PrimingServerRoute extends HttpService with Logging {
   implicit val primedResults: PrimedResults
 
   val route = {
-    path("prime") {
+    path("prime-sequence") {
+      post {
+        complete {
+          // TODO - implement multi primes
+          StatusCodes.NotFound
+        }
+      }
+    } ~
+    path("prime-single") {
       get {
         complete {
           val allPrimes: Map[PrimeCriteria, Prime] = primedResults.getAllPrimes()
