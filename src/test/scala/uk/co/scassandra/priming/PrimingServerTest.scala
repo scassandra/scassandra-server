@@ -10,7 +10,7 @@ import scala.Some
 
 class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with PrimingServerRoute {
 
-  import JsonImplicits._
+  import PrimingJsonImplicits._
 
   implicit def actorRefFactory = system
 

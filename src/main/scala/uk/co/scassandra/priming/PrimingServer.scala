@@ -14,53 +14,9 @@ import uk.co.scassandra.cqlmessages._
 import uk.co.scassandra.ErrorMessage
 import scala.Some
 
-
-object JsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
-
-  implicit object ConsistencyJsonFormat extends RootJsonFormat[Consistency] {
-    def write(c: Consistency) = JsString(c.string)
-
-    def read(value: JsValue) = value match {
-      case JsString(consistency) => Consistency.fromString(consistency)
-      case _ => throw new IllegalArgumentException("Expected Consistency as JsString")
-    }
-  }
-
-  implicit object AnyJsonFormat extends JsonFormat[Any] {
-    def write(x: Any) = x match {
-      case n: Int => JsNumber(n)
-      case s: String => JsString(s)
-      case x: Seq[_] => seqFormat[Any].write(x)
-      case m: Map[String, _] => mapFormat[String, Any].write(m)
-      case b: Boolean if b == true => JsTrue
-      case b: Boolean if b == false => JsFalse
-      case set: Set[Any] => setFormat[Any].write(set)
-      case x => serializationError("Do not understand object of type " + x.getClass.getName)
-    }
-    def read(value: JsValue) = value match {
-      case JsNumber(n) => n.intValue()
-      case JsString(s) => s
-      case a: JsArray => listFormat[Any].read(value)
-      case o: JsObject => mapFormat[String, Any].read(value)
-      case JsTrue => true
-      case JsFalse => false
-      case x => deserializationError("Do not understand how to deserialize " + x)
-    }
-  }
-
-  implicit val impThen = jsonFormat3(Then)
-  implicit val impWhen = jsonFormat4(When)
-  implicit val impPrimeQueryResult = jsonFormat2(PrimeQueryResult)
-  implicit val impConnection = jsonFormat1(Connection)
-  implicit val impQuery = jsonFormat2(Query)
-  implicit val impPrimeCriteria = jsonFormat2(PrimeCriteria)
-  implicit val impConflictingPrimes = jsonFormat1(ConflictingPrimes)
-  implicit val impTypeMismatch = jsonFormat3(TypeMismatch)
-}
-
 trait PrimingServerRoute extends HttpService with Logging {
 
-  import JsonImplicits._
+  import PrimingJsonImplicits._
 
   implicit val primedResults: PrimedResults
 
@@ -94,40 +50,12 @@ trait PrimingServerRoute extends HttpService with Logging {
       } ~
       post {
         entity(as[PrimeQueryResult]) {
-          primeRequest =>
+          primeRequest => {
             complete {
-              // add the deserialized JSON request to the map of prime requests
-              val resultsAsList = primeRequest.then.rows.getOrElse(List())
-              val then = primeRequest.then
-              val result = then.result.map(Result.fromString).getOrElse(Success)
-              logger.trace("Column types " + primeRequest.then.column_types)
-              val columnTypes= primeRequest.then.column_types match {
-                case Some(types) => types.map({
-                  case (columnName: String, columnTypeAsString) => (columnName, ColumnType.fromString(columnTypeAsString).getOrElse(CqlVarchar))
-                })
-                case _ => Map[String, ColumnType]()
-              }
-
-              // check that all the columns in the rows have a type
-              val columnNamesInAllRows = resultsAsList.flatMap(row => row.keys).distinct
-
-              val columnTypesWithMissingDefaultedToVarchar = columnNamesInAllRows.map(columnName => columnTypes.get(columnName) match {
-                case Some(columnType) => (columnName, columnType)
-                case None => (columnName, CqlVarchar)
-              }).toMap
-
-              logger.trace("Incoming when {}", primeRequest.when)
-              val primeConsistencies = primeRequest.when.consistency match {
-                case Some(list) => list.map(Consistency.fromString)
-                case None => Consistency.all
-              }
+              val primeResult = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+              val primeCriteria = PrimeQueryResultExtractor.extractPrimeCriteria(primeRequest)
               try {
-                val keyspace = primeRequest.when.keyspace.getOrElse("")
-                val table = primeRequest.when.table.getOrElse("")
-                primedResults.add(
-                  PrimeCriteria(primeRequest.when.query, primeConsistencies),
-                  Prime(resultsAsList, result, columnTypesWithMissingDefaultedToVarchar, keyspace, table)
-                )
+                primedResults.add(primeCriteria,primeResult)
                 StatusCodes.OK
               }
               catch {
@@ -135,6 +63,7 @@ trait PrimingServerRoute extends HttpService with Logging {
                   StatusCodes.BadRequest -> new ConflictingPrimes(existingPrimes = primedResults.getPrimeCriteriaByQuery(primeRequest.when.query))
               }
             }
+          }
         }
       } ~
         delete {
@@ -153,7 +82,7 @@ trait PrimingServerRoute extends HttpService with Logging {
           ActivityLog.retrieveConnections()
         }
       } ~
-        delete {
+      delete {
           complete {
             logger.debug("Deleting all recorded connections")
             ActivityLog.clearConnections()

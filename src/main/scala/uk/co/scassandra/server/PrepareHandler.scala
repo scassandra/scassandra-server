@@ -8,7 +8,7 @@ import uk.co.scassandra.cqlmessages.{ColumnType, CqlVarchar, CqlProtocolHelper}
 
 class PrepareHandler() extends Actor with Logging {
 
-  var sequence : Int = 1
+  var preparedStatementId : Int = 1
 
   def receive: Actor.Receive = {
     case PrepareHandlerMessages.Prepare(body, stream, msgFactory, connection) => {
@@ -17,8 +17,8 @@ class PrepareHandler() extends Actor with Logging {
       logger.debug(s"Prepare for query $query")
       val numberOfParameters = query.toCharArray.filter(_ == '?').size
       val columnTypes: Map[String, ColumnType] = (0 until numberOfParameters).map(num => (num.toString,CqlVarchar)).toMap
-      val preparedResult = msgFactory.createPreparedResult(stream, sequence, columnTypes)
-      sequence = sequence+1
+      val preparedResult = msgFactory.createPreparedResult(stream, preparedStatementId, columnTypes)
+      preparedStatementId = preparedStatementId+1
       logger.debug(s"Sending back prepared result ${preparedResult}")
       connection ! preparedResult
     }

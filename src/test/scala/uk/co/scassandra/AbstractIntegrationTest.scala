@@ -10,7 +10,7 @@ import spray.json._
 
 object AbstractIntegrationTest {
 
-  import uk.co.scassandra.priming.JsonImplicits._
+  import uk.co.scassandra.priming.PrimingJsonImplicits._
 
   def prime(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
     val prime = PrimeQueryResult(query, Then(Some(rows), Some(result), Some(columnTypes))).toJson

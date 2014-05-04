@@ -2,14 +2,14 @@ package uk.co.scassandra.e2e
 
 import org.scalatest.concurrent.ScalaFutures
 import dispatch._, Defaults._
-import uk.co.scassandra.priming.{Query, ActivityLog, JsonImplicits}
+import uk.co.scassandra.priming.{Query, ActivityLog, PrimingJsonImplicits}
 import spray.json._
 import uk.co.scassandra.AbstractIntegrationTest
 import com.datastax.driver.core.{ConsistencyLevel, SimpleStatement}
 
 class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 
-  import JsonImplicits._
+  import PrimingJsonImplicits._
 
   before {
     val svc = url("http://localhost:8043/prime-single").DELETE

@@ -2,14 +2,14 @@ package uk.co.scassandra.e2e
 
 import uk.co.scassandra.{ConnectionToServerStub, AbstractIntegrationTest}
 import org.scalatest.concurrent.ScalaFutures
-import uk.co.scassandra.priming.{JsonImplicits, Connection, ActivityLog}
+import uk.co.scassandra.priming.{PrimingJsonImplicits, Connection, ActivityLog}
 import dispatch._, Defaults._
 import spray.json.JsonParser
 import com.datastax.driver.core.{Cluster, HostDistance, PoolingOptions}
 
 class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 
-  import JsonImplicits._
+  import PrimingJsonImplicits._
 
   before {
     val svc = url("http://localhost:8043/prime-single").DELETE
