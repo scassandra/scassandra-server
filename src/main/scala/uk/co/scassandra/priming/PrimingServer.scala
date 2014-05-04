@@ -100,7 +100,7 @@ trait PrimingServerRoute extends HttpService with Logging {
               val resultsAsList = primeRequest.then.rows.getOrElse(List())
               val then = primeRequest.then
               val result = then.result.map(Result.fromString).getOrElse(Success)
-              logger.debug("Column types " + primeRequest.then.column_types)
+              logger.trace("Column types " + primeRequest.then.column_types)
               val columnTypes= primeRequest.then.column_types match {
                 case Some(types) => types.map({
                   case (columnName: String, columnTypeAsString) => (columnName, ColumnType.fromString(columnTypeAsString).getOrElse(CqlVarchar))
@@ -116,7 +116,7 @@ trait PrimingServerRoute extends HttpService with Logging {
                 case None => (columnName, CqlVarchar)
               }).toMap
 
-              logger.debug("Incoming when {}", primeRequest.when)
+              logger.trace("Incoming when {}", primeRequest.when)
               val primeConsistencies = primeRequest.when.consistency match {
                 case Some(list) => list.map(Consistency.fromString)
                 case None => Consistency.all

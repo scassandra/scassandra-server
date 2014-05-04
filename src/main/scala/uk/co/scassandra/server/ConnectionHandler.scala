@@ -36,7 +36,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
   def receive = {
 
     case Received(data: ByteString) =>
-      logger.debug(s"Received a message of length ${data.length} data:: $data")
+      logger.trace(s"Received a message of length ${data.length} data:: $data")
 
       currentData = data
       if (partialMessage) {
@@ -44,14 +44,14 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
       }
 
       val messageLength = currentData.length
-      logger.debug(s"Whole message length so far is $messageLength")
+      logger.trace(s"Whole message length so far is $messageLength")
 
       // TODO - [DN] is this code blocking?
       // [CB] How so? It works until there is nothing else to do. There are no sleeps.
       while (currentData.length >= HeaderLength && takeMessage()) {}
 
       if (currentData.length > 0) {
-        logger.debug("Not received length yet..")
+        logger.trace("Not received length yet..")
         partialMessage = true
         dataFromPreviousMessage = currentData
         currentData = ByteString()
@@ -65,7 +65,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
   }
 
   private def processMessage(opCode: Byte, stream: Byte, messageBody: ByteString, protocolVersion: Byte) = {
-    logger.debug(s"Whole body $messageBody with length ${messageBody.length}")
+    logger.trace(s"Whole body $messageBody with length ${messageBody.length}")
 
     val cqlMessageFactory = if (protocolVersion == ProtocolVersion.ClientProtocolVersionOne) {
       logger.debug("Received protocol one message")
@@ -77,7 +77,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
 
     opCode match {
       case OpCodes.Startup => {
-        logger.info("Sending ready message")
+        logger.debug("Sending ready message")
         sender ! Write(cqlMessageFactory.createReadyMessage(stream).serialize())
         ready = true
       }

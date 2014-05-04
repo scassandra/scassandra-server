@@ -10,7 +10,7 @@ class PrimedResults extends Logging {
   def getAllPrimes() : Map[PrimeCriteria, Prime] = queryToResults
 
   def add(criteria: PrimeCriteria, prime: Prime) = {
-    logger.debug(s"Adding prime with criteria $criteria")
+    logger.info(s"Adding prime with criteria $criteria and prime result ${prime}")
 
     def intersectsExistingCriteria: (PrimeCriteria) => Boolean = {
       existing => existing.query == criteria.query && existing.consistency.intersect(criteria.consistency).size > 0
