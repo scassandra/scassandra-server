@@ -10,13 +10,15 @@ It is especially aimed edge case testing such as read and write timeouts.
 
 It acts as a real Cassandra instance and can be primed to respond with results or with exceptions like read time outs. It does this by implementing the server side of the CQL binary protocol.
 
-To use it in Java unit and integration tests simply add the following maven repo and dependency to your pom or gradle build file. A standalone executable version will be released soon for those not using Java and a dependency management tool compatible with maven.
+We plan to release a standalone executable (we haven't yet). You can checkout Scassandra and build an executable jar for now:
+* [Getting started](https://github.com/scassandra/scassandra-server/wiki/Getting-Started)
+
+Scassandra is written in Scala but we also have a Java wrapper for use with Java unit and integration tests. Simply add the following maven repo and dependency to your pom or gradle build file.
 * Maven repo: https://raw.githubusercontent.com/scassandra/scassandra-repo/master/snapshots
 *   Deppendency: 'org.scassandra:java-client:0.0-SNAPSHOT'
 
 In addition to a binary port Scassandra opens an admin port for priming and verifying queries. Information on how to prime is here:
 
-* [Getting started](https://github.com/scassandra/scassandra-server/wiki/Getting-Started)
 * [Priming](https://github.com/scassandra/scassandra-server/wiki/Priming)
 * [Activity Verification](https://github.com/scassandra/scassandra-server/wiki/Activity-Verification)
 * [Using Scassandra from Java Gradle] (https://github.com/scassandra/scassandra-server/wiki/Using-Scassandra-from-Java-Gradle)
