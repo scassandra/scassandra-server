@@ -14,7 +14,7 @@ object AbstractIntegrationTest {
 
   def prime(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
     val prime = PrimeQueryResult(query, Then(Some(rows), Some(result), Some(columnTypes))).toJson
-
+    println("Sending JSON: " + prime.toString)
     val svc = url("http://localhost:8043/prime-single") <<
       prime.toString() <:<
       Map("Content-Type" -> "application/json")
