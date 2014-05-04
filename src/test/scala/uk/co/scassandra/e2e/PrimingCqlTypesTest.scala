@@ -9,6 +9,7 @@ import java.net.InetAddress
 import java.math.BigInteger
 import dispatch._, Defaults._
 import uk.co.scassandra.priming.When
+import java.util
 
 class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -275,5 +276,27 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     results.get(0).getColumnDefinitions.getType("field") should equal(DataType.varint())
 
     results.get(0).getVarint("field") should equal(varint)
+  }
+
+  test("Priming a CQL set of text") {
+    // priming
+    val set = Set("one", "two", "three")
+    val whenQuery = "Test prime with cql set"
+    val rows: List[Map[String, Any]] = List(Map("field" -> set))
+    val columnTypes: Map[String, String] = Map("field" -> "set")
+    prime(When(whenQuery), rows, "success", columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getColumnDefinitions.getType("field") should equal(DataType.set(DataType.varchar()))
+
+    val c: Class[_] = Class.forName("java.lang.String")
+    val expectedSet = new util.HashSet[String]() // comes back as a java set
+    expectedSet.add("one")
+    expectedSet.add("two")
+    expectedSet.add("three")
+    results.get(0).getSet("field",c) should equal(expectedSet)
   }
 }

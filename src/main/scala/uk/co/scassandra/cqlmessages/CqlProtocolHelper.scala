@@ -3,6 +3,7 @@ package uk.co.scassandra.cqlmessages
 import akka.util.{ByteIterator, ByteString}
 import java.util.UUID
 import java.net.InetAddress
+import scala.collection.immutable.IndexedSeq
 
 object CqlProtocolHelper {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
@@ -101,6 +102,17 @@ object CqlProtocolHelper {
     frameBuilder.result().toArray
   }
 
+  def serializeVarcharSetValue(set : Iterable[String]) : Array[Byte] = {
+    val frameBuilder = ByteString.newBuilder
+    frameBuilder.putShort(set.size)
+    for (valueToSerialise <- set) {
+      frameBuilder.putShort(valueToSerialise.size)
+      frameBuilder.putBytes(valueToSerialise.getBytes())
+    }
+    val serialisedSet = frameBuilder.result().toArray
+    serializeInt(serialisedSet.length) ++ serialisedSet
+  }
+
   def readString(iterator: ByteIterator) : String = {
     val stringLength = iterator.getShort
     val stringBytes = new Array[Byte](stringLength)
@@ -186,7 +198,51 @@ object CqlProtocolHelper {
     iterator.getBytes(bytes)
     bytes
   }
+
+  def readVarcharSet(iterator: ByteIterator)  = {
+    val setLength = iterator.getInt
+    val setSize = iterator.getShort
+      (0 until setSize).map(it => {
+        val bytes = readShortBytes(iterator)
+        new String(bytes)
+      }).toSet
+  }
 }
+
+// example sets
+/*
+[-126, 0, 0, 8, // header
+0, 0, 0, 92, // length
+0, 0, 0, 2, // rows
+0, 0, 0, 1, // flagz
+0, 0, 0, 3, // col count
+0, 6, // keyspace length
+112, 101, 111, 112, 108, 101,
+0, 9,
+115, 101, 116, 95, 116, 97, 98, 108, 101,
+0, 2, // length of id
+105, 100, // id
+0, 9, // id tyoe - int
+0, 4, // lengh of blob
+98, 108, 111, 98, // blob
+0, 3, // blob
+0, 7, length of   text set
+116, 101, 120, 116, 115, 101, 116, // text set
+0, 34, // set
+0, 13, // type of set - varchar
+ 0, 0, 0, 1,  // number of rows
+ 0, 0, 0, 4, // id length
+ 0, 0, 0, 1,  // id value - 1
+ 0, 0, 0, 2, // blob length
+ 0, 4, //blob value
+ 0, 0, 0, 12, // set length
+ 0, 2, // length of set
+  0, 3, 111, 110, 101, // one
+  0, 3, 116, 119, 111] // two
+
+ */
+
+
 /*
 [-126, 0, 0, 8, // result msg
 0, 0, 1, 77, // length

@@ -114,4 +114,14 @@ class CqlProtocolHelperTest extends FunSuite with Matchers {
     val varint = CqlProtocolHelper.readVarintValue(ByteString(varintAsBytes).iterator)
     varint should equal(BigInt("123456789101112131415"))
   }
+  test("Reading a set of strings") {
+    val serialisedSet = Array[Byte](0, 0, 0, 12, // set length
+    0, 2, // length of set
+    0, 3, 111, 110, 101, // one
+    0, 3, 116, 119, 111) // two
+
+    val set = CqlProtocolHelper.readVarcharSet(ByteString(serialisedSet).iterator)
+
+    set should equal(Set("one", "two"))
+  }
 }

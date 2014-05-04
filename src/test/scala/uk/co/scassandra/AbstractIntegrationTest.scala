@@ -8,15 +8,11 @@ import uk.co.scassandra.priming.{When, Then, PrimeQueryResult}
 import dispatch._, Defaults._
 import spray.json._
 
-abstract class AbstractIntegrationTest extends FunSuite with Matchers with BeforeAndAfter with BeforeAndAfterAll {
-  var serverThread: ServerStubAsThread = null
-
-  var cluster: Cluster = _
-  var session: Session = _
+object AbstractIntegrationTest {
 
   import uk.co.scassandra.priming.JsonImplicits._
 
-  def prime(query: When, rows: List[Map[String, String]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
+  def prime(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
     val prime = PrimeQueryResult(query, Then(Some(rows), Some(result), Some(columnTypes))).toJson
 
     val svc = url("http://localhost:8043/prime-single") <<
@@ -25,6 +21,17 @@ abstract class AbstractIntegrationTest extends FunSuite with Matchers with Befor
 
     val response = Http(svc OK as.String)
     response()
+  }
+}
+
+abstract class AbstractIntegrationTest(clusterConnect : Boolean = true) extends FunSuite with Matchers with BeforeAndAfter with BeforeAndAfterAll {
+  var serverThread: ServerStubAsThread = null
+
+  var cluster: Cluster = _
+  var session: Session = _
+
+  def prime(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
+    AbstractIntegrationTest.prime(query, rows, result, columnTypes)
   }
 
   def startServerStub() = {
@@ -64,8 +71,10 @@ abstract class AbstractIntegrationTest extends FunSuite with Matchers with Befor
     // Then start the server
     startServerStub()
 
-    cluster = Cluster.builder().addContactPoint(ConnectionToServerStub.ServerHost).withPort(ConnectionToServerStub.ServerPort).build()
-    session = cluster.connect("mykeyspace")
+    if (clusterConnect) {
+      cluster = Cluster.builder().addContactPoint(ConnectionToServerStub.ServerHost).withPort(ConnectionToServerStub.ServerPort).build()
+      session = cluster.connect("mykeyspace")
+    }
   }
 
   override def afterAll() {

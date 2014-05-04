@@ -19,7 +19,7 @@ class QueryHandler(tcpConnection: ActorRef, primedResults: PrimedResults, msgFac
       val iterator = queryBody.iterator
       // the first 4 bytes are an int which is the length of the query
       val queryLength = iterator.getInt
-      logger.debug(s"Query length is $queryLength")
+      logger.trace(s"Query length is $queryLength")
       val bodyAsBytes = new Array[Byte](queryLength)
       iterator.getBytes(bodyAsBytes)
       val queryText = new String(bodyAsBytes)
@@ -36,9 +36,9 @@ class QueryHandler(tcpConnection: ActorRef, primedResults: PrimedResults, msgFac
             prime.result match {
               case Success => {
                 logger.debug(s"Handling {{ query }} with {{ rows }} {{ $queryText }} {{ $prime }}")
-                val bytesToSend: ByteString = msgFactory.createRowsMessage(prime, stream).serialize()
-                logger.debug(s"Sending bytes: $bytesToSend")
-                tcpConnection ! Write(bytesToSend)
+                val message = msgFactory.createRowsMessage(prime, stream)
+                logger.debug(s"Sending message: $message")
+                tcpConnection ! Write(message.serialize())
               }
               case ReadTimeout => {
                 tcpConnection ! Write(msgFactory.createReadTimeoutMessage(stream).serialize())

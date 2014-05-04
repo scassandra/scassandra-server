@@ -1,5 +1,7 @@
 package uk.co.scassandra.cqlmessages
 
+import uk.co.scassandra.cqlmessages.CqlSet
+
 abstract class ColumnType(val code : Short, val stringRep: String)
 
 case object CqlAscii extends ColumnType(0x0001, "ascii")
@@ -18,6 +20,7 @@ case object CqlVarchar extends ColumnType(0x000D, "varchar")
 case object CqlVarint extends ColumnType(0x000E, "varint")
 case object CqlTimeUUID extends ColumnType(0x000F, "timeuuid")
 case object CqlInet extends ColumnType(0x0010, "inet")
+case object CqlSet extends ColumnType(0x0022, "set")
 
 object ColumnType {
   val ColumnTypeMapping = Map[String, ColumnType](
@@ -35,7 +38,8 @@ object ColumnType {
     CqlUUID.stringRep -> CqlUUID,
     CqlInet.stringRep -> CqlInet,
     CqlVarint.stringRep -> CqlVarint,
-    CqlTimeUUID.stringRep -> CqlTimeUUID
+    CqlTimeUUID.stringRep -> CqlTimeUUID,
+    CqlSet.stringRep -> CqlSet
   )
 
   def fromString(string: String) : Option[ColumnType] = {

@@ -438,6 +438,17 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
         primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlTimeUUID)))
       }
     }
+    it("Should convert set to ColumnType CqlSet") {
+      val query = "select * from users"
+      val whenQuery = When(query)
+      val thenRows = List(Map("field" -> "533"))
+      val thenColumnTypes = Map("field" -> "set")
+      val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
+
+      Post("/prime-single", primePayload) ~> route ~> check {
+        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlSet)))
+      }
+    }
   }
 
   describe("Retrieving of primes") {

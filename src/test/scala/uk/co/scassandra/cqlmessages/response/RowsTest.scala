@@ -464,6 +464,34 @@ class RowsTest extends FunSuite with Matchers {
     val rowValue = CqlProtocolHelper.readVarintValue(rowsBytes)
     rowValue should equal(varint)
   }
+ test("Serialization of Set of varchars column type") {
+    val varcharSet = Set("one","two")
+    val columnNames: Map[String, ColumnType] = Map("field" -> CqlSet)
+    val rows: List[Row] = List(Row(Map("field" -> varcharSet)))
+    val rowsBytes = Rows("keyspaceName", "tableName", 1, columnNames, rows).serialize().iterator
+
+    dropHeaderAndLength(rowsBytes)
+
+    val numberOfColumns = rowsBytes.getInt
+    numberOfColumns should equal(1)
+
+    dropKeyspaceAndTableName(rowsBytes)
+
+    val rowName = CqlProtocolHelper.readString(rowsBytes)
+    rowName should equal("field")
+
+    val rowType = rowsBytes.getShort
+    rowType should equal(CqlSet.code)
+
+    val setType = rowsBytes.getShort
+    setType should equal(CqlVarchar.code)
+
+    val numberOfRows = rowsBytes.getInt
+    numberOfRows should equal(1)
+
+    val rowValue = CqlProtocolHelper.readVarcharSet(rowsBytes)
+    rowValue should equal(varcharSet)
+  }
 
   def dropKeyspaceAndTableName(rowsBytes: ByteIterator) {
     // keyspace name

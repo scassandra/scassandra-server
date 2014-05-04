@@ -27,6 +27,10 @@ case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTy
       columnTypes.foreach( {case (colName, colType) => {
         bodyBuilder.putBytes(CqlProtocolHelper.serializeString(colName).toArray)
         bodyBuilder.putShort(colType.code)
+        colType match {
+          case CqlSet => bodyBuilder.putShort(CqlVarchar.code)
+          case _ => // do nothing
+        }
       }})
 
     bodyBuilder.putInt(rows.length)
@@ -56,6 +60,7 @@ case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTy
             bodyBuilder.putBytes(CqlProtocolHelper.serializeInetValue(InetAddress.getByName(value.toString)))
           }
           case CqlVarint => bodyBuilder.putBytes(CqlProtocolHelper.serializeVarintValue(BigInt(value.toString)))
+          case CqlSet => bodyBuilder.putBytes(CqlProtocolHelper.serializeVarcharSetValue(value.asInstanceOf[Iterable[String]]))
         }
       }})
     })
