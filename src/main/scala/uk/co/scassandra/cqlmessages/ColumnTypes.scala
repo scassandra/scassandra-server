@@ -1,7 +1,5 @@
 package uk.co.scassandra.cqlmessages
 
-import uk.co.scassandra.cqlmessages.CqlSet
-
 abstract class ColumnType(val code : Short, val stringRep: String)
 
 case object CqlAscii extends ColumnType(0x0001, "ascii")
@@ -43,6 +41,6 @@ object ColumnType {
   )
 
   def fromString(string: String) : Option[ColumnType] = {
-    ColumnTypeMapping.get(string)
+    ColumnTypeMapping.get(string.toLowerCase( ))
   }
 }
