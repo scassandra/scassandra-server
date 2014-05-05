@@ -2,6 +2,11 @@ package uk.co.scassandra.priming
 
 import uk.co.scassandra.cqlmessages.{CqlVarchar, ColumnType, Consistency}
 import com.typesafe.scalalogging.slf4j.Logging
+import scala.Predef._
+import uk.co.scassandra.priming.PrimeCriteria
+import uk.co.scassandra.priming.PrimeQueryResult
+import scala.Some
+import uk.co.scassandra.priming.Prime
 
 object PrimeQueryResultExtractor extends Logging {
   def extractPrimeCriteria(primeQueryRequest : PrimeQueryResult) : PrimeCriteria = {
@@ -40,5 +45,20 @@ object PrimeQueryResultExtractor extends Logging {
 
 
     Prime(resultsAsList, result, columnTypesWithMissingDefaultedToVarchar, keyspace, table)
+  }
+
+  def convertBackToPrimeQueryResult(allPrimes: Map[PrimeCriteria, Prime]) ={
+    allPrimes.map({ case (primeCriteria, prime) => {
+      val consistencies = primeCriteria.consistency.map(_.string)
+      val when = When(primeCriteria.query, keyspace = Some(prime.keyspace), table = Some(prime.table), consistency = Some(consistencies))
+      val rowsValuesAsString = prime.rows.map(eachRow => eachRow.map({
+        case(key, valueAsAny) => (key, valueAsAny.toString)
+      }))
+      val columns = prime.columnTypes.map({case(colName, colType) => (colName, colType.stringRep)})
+      val result = prime.result.string
+      val then = Then(Some(rowsValuesAsString), result = Some(result), column_types = Some(columns))
+
+      PrimeQueryResult(when, then)
+    }})
   }
 }

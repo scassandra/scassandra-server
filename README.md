@@ -8,7 +8,7 @@ It can also be used for acceptance testing of applications that use Cassandra.
 
 It is especially aimed edge case testing such as read and write timeouts.
 
-It acts as a real Cassandra instance and can be primed to respond with results or with exceptions like read time outs. It does this by implementing the server side of the CQL binary protocol.
+It acts as a real Cassandra instance and can be primed to respond with results or with exceptions like read timeouts. It does this by implementing the server side of the CQL binary protocol.
 
 We plan to release a standalone executable (we haven't yet). You can checkout Scassandra and build an executable jar for now:
 * [Getting started](https://github.com/scassandra/scassandra-server/wiki/Getting-Started)

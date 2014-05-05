@@ -33,19 +33,7 @@ trait PrimingServerRoute extends HttpService with Logging {
       get {
         complete {
           val allPrimes: Map[PrimeCriteria, Prime] = primedResults.getAllPrimes()
-          val primesConvertedBackToDto = allPrimes.map({ case (primeCriteria, prime) => {
-            val consistencies = primeCriteria.consistency.map(_.string)
-            val when = When(primeCriteria.query, keyspace = Some(prime.keyspace), table = Some(prime.table), consistency = Some(consistencies))
-            val rowsValuesAsString = prime.rows.map(eachRow => eachRow.map({
-              case(key, valueAsAny) => (key, valueAsAny.toString)
-            }))
-            val columns = prime.columnTypes.map({case(colName, colType) => (colName, colType.stringRep)})
-            val result = prime.result.string
-            val then = Then(Some(rowsValuesAsString), result = Some(result), column_types = Some(columns))
-
-            PrimeQueryResult(when, then)
-          }})
-          primesConvertedBackToDto
+          PrimeQueryResultExtractor.convertBackToPrimeQueryResult(allPrimes)
         }
       } ~
       post {
