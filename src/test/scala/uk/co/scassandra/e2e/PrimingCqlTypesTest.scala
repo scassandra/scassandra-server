@@ -191,7 +191,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     results.get(0).getFloat("field") should equal(4.3456f)
   }
 
-  test("Priming a CQL Timestamp") {
+  test("Priming a CQL Timestamp - send as string") {
     // priming
     val date = new Date()
     val whenQuery = "Test prime with cql timestamp"
@@ -206,6 +206,24 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     results.get(0).getColumnDefinitions.getType("field") should equal(DataType.timestamp())
 
     results.get(0).getDate("field") should equal(date)
+  }
+
+  test("Priming a CQL Timestamp - send as long") {
+    // priming
+    val date = new Date()
+    val long : Long = date.getTime
+    val whenQuery = "Test prime with cql timestamp"
+    val rows: List[Map[String, Any]] = List(Map("atimestamp" -> long))
+    val columnTypes: Map[String, String] = Map("atimestamp" -> "timestamp")
+    prime(When(whenQuery), rows, "success", columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getColumnDefinitions.getType("atimestamp") should equal(DataType.timestamp())
+
+    results.get(0).getDate("atimestamp") should equal(date)
   }
 
   test("Priming a CQL UUID") {

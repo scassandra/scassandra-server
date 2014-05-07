@@ -384,7 +384,7 @@ class PrimingServerTest extends FunSpec with BeforeAndAfter with Matchers with S
     it("Should convert timestamp to ColumnType CqlTimestamp") {
       val query = "select * from users"
       val whenQuery = When(query)
-      val thenRows = List(Map("field" -> "533.78867"))
+      val thenRows = List(Map("field" -> "1399464117971"))
       val thenColumnTypes = Map("field" -> "timestamp")
       val primePayload = PrimeQueryResult(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 

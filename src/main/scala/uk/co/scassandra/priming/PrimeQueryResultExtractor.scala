@@ -3,10 +3,7 @@ package uk.co.scassandra.priming
 import uk.co.scassandra.cqlmessages.{CqlVarchar, ColumnType, Consistency}
 import com.typesafe.scalalogging.slf4j.Logging
 import scala.Predef._
-import uk.co.scassandra.priming.PrimeCriteria
-import uk.co.scassandra.priming.PrimeQueryResult
 import scala.Some
-import uk.co.scassandra.priming.Prime
 
 object PrimeQueryResultExtractor extends Logging {
   def extractPrimeCriteria(primeQueryRequest : PrimeQueryResult) : PrimeCriteria = {
