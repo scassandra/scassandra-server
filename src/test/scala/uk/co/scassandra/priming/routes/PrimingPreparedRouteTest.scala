@@ -4,11 +4,14 @@ import org.scalatest.{FunSpec, Matchers, FunSuite}
 import spray.testkit.ScalatestRouteTest
 import uk.co.scassandra.priming.{PrimingJsonImplicits}
 import spray.http.StatusCodes
-import uk.co.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
+import uk.co.scassandra.priming.prepared.{PrimePreparedStore, ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
+import org.scalatest.mock.MockitoSugar
+import org.mockito.Mockito._
 
-class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRouteTest with PrimingPreparedRoute {
+class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRouteTest with PrimingPreparedRoute with MockitoSugar {
 
   implicit def actorRefFactory = system
+  implicit val primePreparedStore : PrimePreparedStore = mock[PrimePreparedStore]
 
   import PrimingJsonImplicits._
 
@@ -19,6 +22,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       val prime = PrimePreparedSingle(when, then)
       Post("/prime-prepared-single", prime) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.OK)
+        verify(primePreparedStore).record(prime)
       }
     }
   }

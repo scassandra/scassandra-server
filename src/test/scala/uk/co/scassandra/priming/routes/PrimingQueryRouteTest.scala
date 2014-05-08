@@ -24,12 +24,12 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
 
   implicit def actorRefFactory = system
 
-  implicit val primedResults = PrimeQueryStore()
+  implicit val primeQueryStore = PrimeQueryStore()
 
   val primeQuerySinglePath: String = "/prime-query-single"
   
   after {
-    primedResults.clear()
+    primeQueryStore.clear()
   }
 
   describe("Priming single queries") {
@@ -78,7 +78,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val defaultedColumnTypes = Map[String, ColumnType]("name" -> CqlVarchar, "age" -> CqlVarchar)
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults)))) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenResults, Success, defaultedColumnTypes))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenResults, Success, defaultedColumnTypes))
       }
     }
 
@@ -89,7 +89,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val result = Some("read_request_timeout")
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), result))) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenResults, ReadTimeout))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenResults, ReadTimeout))
       }
     }
 
@@ -100,7 +100,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val result = Some("write_request_timeout")
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), result))) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenResults, WriteTimeout))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenResults, WriteTimeout))
       }
     }
 
@@ -111,7 +111,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val result = Some("success")
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), result))) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenResults, Success))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenResults, Success))
       }
     }
 
@@ -122,16 +122,16 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val result = Some("unavailable")
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), result))) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenResults, Unavailable))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenResults, Unavailable))
       }
     }
 
     it("should delete all primes for a HTTP delete") {
       val whenQuery = PrimeCriteria("anything", List())
-      primedResults.add(whenQuery, Prime(List()))
+      primeQueryStore.add(whenQuery, Prime(List()))
 
       Delete(primeQuerySinglePath) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)) should equal(None)
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)) should equal(None)
       }
     }
   }
@@ -141,7 +141,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
     it("should reject conflicting primes as bad request") {
       val consistencies: List[Consistency] = List(ONE, TWO)
       val query: String = "select * from people"
-      primedResults.add(PrimeCriteria(query, consistencies), Prime(List[Map[String, Any]]()))
+      primeQueryStore.add(PrimeCriteria(query, consistencies), Prime(List[Map[String, Any]]()))
 
       val whenQuery = When("select * from people")
       val thenResults = List[Map[String, String]]()
@@ -189,7 +189,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows)))
 
         Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-          val prime = primedResults.get(PrimeMatch(query, ONE)).get
+          val prime = primeQueryStore.get(PrimeMatch(query, ONE)).get
           prime.keyspace should equal("")
         }
 
@@ -204,7 +204,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows)))
 
         Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-          val prime = primedResults.get(PrimeMatch(query, ONE)).get
+          val prime = primeQueryStore.get(PrimeMatch(query, ONE)).get
           prime.keyspace should equal(expectedKeyspace)
         }
 
@@ -220,7 +220,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows)))
 
         Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-          val prime = primedResults.get(PrimeMatch(query, ONE)).get
+          val prime = primeQueryStore.get(PrimeMatch(query, ONE)).get
           prime.table should equal("")
         }
 
@@ -235,7 +235,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows)))
 
         Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-          val prime = primedResults.get(PrimeMatch(query, ONE)).get
+          val prime = primeQueryStore.get(PrimeMatch(query, ONE)).get
           prime.table should equal(expectedTable)
         }
 
@@ -261,7 +261,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("age" -> CqlInt)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("age" -> CqlInt)))
       }
     }
 
@@ -281,7 +281,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("age" -> CqlVarchar)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("age" -> CqlVarchar)))
       }
     }
 
@@ -293,7 +293,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("booleanValue" -> CqlBoolean)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("booleanValue" -> CqlBoolean)))
       }
     }
 
@@ -305,7 +305,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("asciiValue" -> CqlAscii)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("asciiValue" -> CqlAscii)))
       }
     }
 
@@ -317,7 +317,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlBigint)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlBigint)))
       }
     }
 
@@ -329,7 +329,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlCounter)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlCounter)))
       }
     }
 
@@ -341,7 +341,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlBlob)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlBlob)))
       }
     }
 
@@ -353,7 +353,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlDecimal)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlDecimal)))
       }
     }
 
@@ -365,7 +365,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlDouble)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlDouble)))
       }
     }
 
@@ -377,7 +377,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlFloat)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlFloat)))
       }
     }
 
@@ -389,7 +389,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlText)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlText)))
       }
     }
 
@@ -401,7 +401,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlTimestamp)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlTimestamp)))
       }
     }
 
@@ -413,7 +413,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlUUID)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlUUID)))
       }
     }
 
@@ -425,7 +425,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlInet)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlInet)))
       }
     }
     it("Should convert varint to ColumnType CqlVarint") {
@@ -436,7 +436,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlVarint)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlVarint)))
       }
     }
     it("Should convert timeuuid to ColumnType CqlTimeUUID") {
@@ -447,7 +447,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlTimeUUID)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlTimeUUID)))
       }
     }
     it("Should convert set to ColumnType CqlSet") {
@@ -458,7 +458,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlSet)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlSet)))
       }
     }
     it("Should convert types case insensitive") {
@@ -469,7 +469,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primedResults.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlSet)))
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = Map[String, ColumnType]("field" -> CqlSet)))
       }
     }
   }

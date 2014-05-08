@@ -43,7 +43,7 @@ class PreparedStatementsTest extends PrimingHelper {
     results.size() should equal(0)
   }
 
-  test("Prepared statement with priming") {
+  test("Prepared statement with priming - empty rows") {
     val preparedStatementText: String = "select * from people where name = ?"
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(preparedStatementText),
@@ -59,6 +59,25 @@ class PreparedStatementsTest extends PrimingHelper {
     //then
     val results = result.all()
     results.size() should equal(0)
+  }
+
+  ignore("Prepared statement with priming - single row") {
+    val preparedStatementText: String = "select * from people where name = ?"
+    PrimingHelper.primePreparedStatement(
+      WhenPreparedSingle(preparedStatementText),
+      ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))
+    )
+
+    val preparedStatement = session.prepare(preparedStatementText)
+    val boundStatement = preparedStatement.bind("Chris")
+
+    //when
+    val result = session.execute(boundStatement)
+
+    //then
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getString("name") should equal("Chris")
   }
 
 }

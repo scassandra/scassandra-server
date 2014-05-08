@@ -1,7 +1,7 @@
 package uk.co.scassandra.priming.query
 
 import com.typesafe.scalalogging.slf4j.Logging
-import uk.co.scassandra.cqlmessages.{Consistency, ColumnType}
+import uk.co.scassandra.cqlmessages.{ONE, Consistency, ColumnType}
 import uk.co.scassandra.priming.{Success, Result}
 
 class PrimeQueryStore extends Logging {
@@ -51,7 +51,7 @@ class PrimeQueryStore extends Logging {
 
 case class PrimeCriteria(query: String, consistency: List[Consistency])
 
-case class PrimeMatch(query: String, consistency: Consistency)
+case class PrimeMatch(query: String, consistency: Consistency = ONE)
 
 case class Prime(
                   rows: List[Map[String, Any]],

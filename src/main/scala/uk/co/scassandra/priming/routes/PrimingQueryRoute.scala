@@ -10,7 +10,7 @@ trait PrimingQueryRoute extends HttpService with Logging {
 
   import PrimingJsonImplicits._
 
-  implicit val primedResults : PrimeQueryStore
+  implicit val primeQueryStore : PrimeQueryStore
 
   val queryRoute = {
     path("prime-prepared-sequence") {
@@ -31,8 +31,8 @@ trait PrimingQueryRoute extends HttpService with Logging {
     path("prime-query-single") {
       get {
         complete {
-          println(primedResults)
-          val allPrimes: Map[PrimeCriteria, Prime] = primedResults.getAllPrimes()
+          println(primeQueryStore)
+          val allPrimes: Map[PrimeCriteria, Prime] = primeQueryStore.getAllPrimes()
           PrimeQueryResultExtractor.convertBackToPrimeQueryResult(allPrimes)
         }
       } ~
@@ -43,12 +43,12 @@ trait PrimingQueryRoute extends HttpService with Logging {
               val primeResult = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
               val primeCriteria = PrimeQueryResultExtractor.extractPrimeCriteria(primeRequest)
               try {
-                primedResults.add(primeCriteria,primeResult)
+                primeQueryStore.add(primeCriteria,primeResult)
                 StatusCodes.OK
               }
               catch {
                 case e: IllegalStateException =>
-                  StatusCodes.BadRequest -> new ConflictingPrimes(existingPrimes = primedResults.getPrimeCriteriaByQuery(primeRequest.when.query))
+                  StatusCodes.BadRequest -> new ConflictingPrimes(existingPrimes = primeQueryStore.getPrimeCriteriaByQuery(primeRequest.when.query))
               }
             }
           }
@@ -57,7 +57,7 @@ trait PrimingQueryRoute extends HttpService with Logging {
         delete {
           complete {
             logger.debug("Deleting all recorded priming")
-            primedResults.clear()
+            primeQueryStore.clear()
             logger.debug("Return 200")
             StatusCodes.OK
           }
