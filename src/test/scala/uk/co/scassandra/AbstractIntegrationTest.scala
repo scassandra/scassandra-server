@@ -4,7 +4,7 @@ import java.net.{Socket, ConnectException}
 import org.scalatest.{Matchers, BeforeAndAfterAll, BeforeAndAfter, FunSuite}
 import uk.co.scassandra.server.ServerStubAsThread
 import com.datastax.driver.core.{ConsistencyLevel, Session, Cluster}
-import uk.co.scassandra.priming.{When, Then, PrimeQueryResult}
+import uk.co.scassandra.priming.{When, Then, PrimeQuerySingle}
 import dispatch._, Defaults._
 import spray.json._
 
@@ -12,15 +12,19 @@ object AbstractIntegrationTest {
 
   import uk.co.scassandra.priming.PrimingJsonImplicits._
 
-  def prime(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
-    val prime = PrimeQueryResult(query, Then(Some(rows), Some(result), Some(columnTypes))).toJson
+  def primeQuery(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
+    val prime = PrimeQuerySingle(query, Then(Some(rows), Some(result), Some(columnTypes))).toJson
     println("Sending JSON: " + prime.toString)
-    val svc = url("http://localhost:8043/prime-single") <<
+    val svc = url("http://localhost:8043/prime-query-single") <<
       prime.toString() <:<
       Map("Content-Type" -> "application/json")
 
     val response = Http(svc OK as.String)
     response()
+  }
+
+  def primePreparedStatement(query: When, rows: List[Map[String, Any]]) = {
+
   }
 }
 
@@ -31,7 +35,7 @@ abstract class AbstractIntegrationTest(clusterConnect : Boolean = true) extends 
   var session: Session = _
 
   def prime(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
-    AbstractIntegrationTest.prime(query, rows, result, columnTypes)
+    AbstractIntegrationTest.primeQuery(query, rows, result, columnTypes)
   }
 
   def startServerStub() = {

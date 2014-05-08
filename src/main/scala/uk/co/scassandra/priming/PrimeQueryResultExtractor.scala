@@ -6,7 +6,7 @@ import scala.Predef._
 import scala.Some
 
 object PrimeQueryResultExtractor extends Logging {
-  def extractPrimeCriteria(primeQueryRequest : PrimeQueryResult) : PrimeCriteria = {
+  def extractPrimeCriteria(primeQueryRequest : PrimeQuerySingle) : PrimeCriteria = {
     val primeConsistencies = primeQueryRequest.when.consistency match {
       case Some(list) => list.map(Consistency.fromString)
       case None => Consistency.all
@@ -14,7 +14,7 @@ object PrimeQueryResultExtractor extends Logging {
     PrimeCriteria(primeQueryRequest.when.query, primeConsistencies)
   }
 
-  def extractPrimeResult(primeRequest : PrimeQueryResult) : Prime = {
+  def extractPrimeResult(primeRequest : PrimeQuerySingle) : Prime = {
     // add the deserialized JSON request to the map of prime requests
     val resultsAsList = primeRequest.then.rows.getOrElse(List())
     val then = primeRequest.then
@@ -55,7 +55,7 @@ object PrimeQueryResultExtractor extends Logging {
       val result = prime.result.string
       val then = Then(Some(rowsValuesAsString), result = Some(result), column_types = Some(columns))
 
-      PrimeQueryResult(when, then)
+      PrimeQuerySingle(when, then)
     }})
   }
 }

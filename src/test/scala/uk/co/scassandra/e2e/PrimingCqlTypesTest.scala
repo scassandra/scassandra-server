@@ -14,7 +14,7 @@ import java.util
 class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
 
   before {
-    val svc = url("http://localhost:8043/prime-single").DELETE
+    val svc = url("http://localhost:8043/prime-query-single").DELETE
     val response = Http(svc OK as.String)
     response()
   }

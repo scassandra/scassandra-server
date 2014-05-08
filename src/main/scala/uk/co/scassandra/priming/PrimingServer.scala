@@ -9,7 +9,7 @@ import com.typesafe.scalalogging.slf4j.Logging
 import spray.json._
 import spray.httpx.SprayJsonSupport
 import spray.http.StatusCodes
-import akka.actor.Actor
+import akka.actor.{ActorRefFactory, Actor}
 import uk.co.scassandra.cqlmessages._
 import uk.co.scassandra.ErrorMessage
 import scala.Some
@@ -18,10 +18,17 @@ trait PrimingServerRoute extends HttpService with Logging {
 
   import PrimingJsonImplicits._
 
-  implicit val primedResults: PrimedResults
+  implicit val primedResults : PrimedResults
 
-  val route = {
-    path("prime-sequence") {
+  val queryRoute = {
+    path("prime-prepared-sequence") {
+      post {
+        complete {
+          StatusCodes.NotFound
+        }
+      }
+    } ~
+    path("prime-query-sequence") {
       post {
         complete {
           // TODO - implement multi primes
@@ -29,15 +36,16 @@ trait PrimingServerRoute extends HttpService with Logging {
         }
       }
     } ~
-    path("prime-single") {
+    path("prime-query-single") {
       get {
         complete {
+          println(primedResults)
           val allPrimes: Map[PrimeCriteria, Prime] = primedResults.getAllPrimes()
           PrimeQueryResultExtractor.convertBackToPrimeQueryResult(allPrimes)
         }
       } ~
       post {
-        entity(as[PrimeQueryResult]) {
+        entity(as[PrimeQuerySingle]) {
           primeRequest => {
             complete {
               val primeResult = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
@@ -63,14 +71,35 @@ trait PrimingServerRoute extends HttpService with Logging {
           }
         }
     }
-  } ~
+  }
+}
+
+trait PrimingPrepared extends HttpService with Logging {
+
+  import PrimingJsonImplicits._
+
+  val route =
+    path("prime-prepared-single") {
+      post {
+        complete {
+          StatusCodes.NotFound
+        }
+      }
+    }
+}
+
+trait ActivityVerification extends HttpService with Logging {
+
+  import PrimingJsonImplicits._
+
+  val activityVerificationRoute =
     path("connection") {
       get {
         complete {
           ActivityLog.retrieveConnections()
         }
       } ~
-      delete {
+        delete {
           complete {
             logger.debug("Deleting all recorded connections")
             ActivityLog.clearConnections()
@@ -95,7 +124,12 @@ trait PrimingServerRoute extends HttpService with Logging {
     }
 }
 
-class PrimingServer(port: Int, implicit val primedResults: PrimedResults) extends Actor with PrimingServerRoute with Logging {
+trait AllRoutes extends HttpService with PrimingPrepared with PrimingServerRoute with ActivityVerification with Logging {
+
+  val allRoutes = route ~ queryRoute ~ activityVerificationRoute
+}
+
+class PrimingServer(port: Int, implicit val primedResults: PrimedResults) extends Actor with AllRoutes with Logging {
 
   implicit def actorRefFactory = context.system
 
@@ -110,7 +144,7 @@ class PrimingServer(port: Int, implicit val primedResults: PrimedResults) extend
 
   val exceptionHandler = ExceptionHandler default(routingSettings, loggingContext)
 
-  def receive = runRoute(route)(exceptionHandler, RejectionHandler.Default, context, routingSettings, loggingContext)
+  def receive = runRoute(allRoutes)(exceptionHandler, RejectionHandler.Default, context, routingSettings, loggingContext)
 
   logger.info(s"Server bound to port $port")
 }

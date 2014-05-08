@@ -42,4 +42,11 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
     results.size() should equal(0)
   }
 
+  test("Prepared statement with priming") {
+    val preparedStatement = session.prepare("select * from people where name = ?")
+    val boundStatement = preparedStatement.bind("Chris")
+
+
+  }
+
 }

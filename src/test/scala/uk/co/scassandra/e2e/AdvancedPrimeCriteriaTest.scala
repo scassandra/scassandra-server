@@ -14,7 +14,7 @@ class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFuture
   val rows: List[Map[String, String]] = List(Map(nameColumn -> name))
 
   before {
-    val svc = url("http://localhost:8043/prime-single").DELETE
+    val svc = url("http://localhost:8043/prime-query-single").DELETE
     val response = Http(svc OK as.String)
     response()
   }

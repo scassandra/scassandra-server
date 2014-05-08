@@ -17,7 +17,7 @@ class MetaDataTest extends AbstractIntegrationTest(false) {
       "rack" -> "rc1",
       "release_version" -> "2.0.1",
       "tokens" -> Set("1743244960790844724")))
-    AbstractIntegrationTest.prime(when, rows, columnTypes = columnTypes)
+    AbstractIntegrationTest.primeQuery(when, rows, columnTypes = columnTypes)
 
     cluster = Cluster.builder()
       .addContactPoint(ConnectionToServerStub.ServerHost)

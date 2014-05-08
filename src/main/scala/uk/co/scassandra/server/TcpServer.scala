@@ -5,7 +5,7 @@ import akka.io.{IO, Tcp}
 import com.typesafe.scalalogging.slf4j.Logging
 import java.net.InetSocketAddress
 import uk.co.scassandra.priming.{ActivityLog, PrimedResults}
-import uk.co.scassandra.cqlmessages.response.{CqlMessageFactory, VersionTwoMessageFactory}
+import uk.co.scassandra.cqlmessages.response.{CqlMessageFactory}
 
 class TcpServer(port: Int, primedResults: PrimedResults) extends Actor with Logging {
 

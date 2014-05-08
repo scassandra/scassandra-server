@@ -33,6 +33,10 @@ class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber : I
     system.awaitTermination()
   }
 
+  def awaitStart() = {
+
+  }
+
   def shutdown() = {
     system.shutdown()
     system.awaitTermination()
