@@ -4,15 +4,13 @@ import spray.routing.HttpService
 import com.typesafe.scalalogging.slf4j.Logging
 import spray.http.StatusCodes
 import uk.co.scassandra.priming._
-import uk.co.scassandra.priming.PrimeCriteria
-import uk.co.scassandra.priming.PrimeQuerySingle
-import uk.co.scassandra.priming.Prime
+import uk.co.scassandra.priming.query.{PrimeQuerySingle, PrimeQueryStore, Prime, PrimeCriteria}
 
 trait PrimingQueryRoute extends HttpService with Logging {
 
   import PrimingJsonImplicits._
 
-  implicit val primedResults : PrimedResults
+  implicit val primedResults : PrimeQueryStore
 
   val queryRoute = {
     path("prime-prepared-sequence") {

@@ -1,4 +1,4 @@
-package uk.co.scassandra.priming
+package uk.co.scassandra.priming.query
 
 case class PrimeQuerySingle(when: When, then: Then)
 

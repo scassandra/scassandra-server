@@ -1,13 +1,13 @@
 package uk.co.scassandra.e2e
 
-import uk.co.scassandra.{ConnectionToServerStub, AbstractIntegrationTest}
+import uk.co.scassandra.{ConnectionToServerStub, PrimingHelper}
 import org.scalatest.concurrent.ScalaFutures
 import uk.co.scassandra.priming.{PrimingJsonImplicits, Connection, ActivityLog}
 import dispatch._, Defaults._
 import spray.json.JsonParser
 import com.datastax.driver.core.{Cluster, HostDistance, PoolingOptions}
 
-class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutures {
+class ConnectionVerificationTest extends PrimingHelper with ScalaFutures {
 
   import PrimingJsonImplicits._
 

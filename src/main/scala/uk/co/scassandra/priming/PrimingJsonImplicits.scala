@@ -3,6 +3,8 @@ package uk.co.scassandra.priming
 import spray.json._
 import spray.httpx.SprayJsonSupport
 import uk.co.scassandra.cqlmessages.Consistency
+import uk.co.scassandra.priming.query.{When, Then, PrimeQuerySingle, PrimeCriteria}
+import uk.co.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
 
@@ -46,4 +48,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impPrimeCriteria = jsonFormat2(PrimeCriteria)
   implicit val impConflictingPrimes = jsonFormat1(ConflictingPrimes)
   implicit val impTypeMismatch = jsonFormat3(TypeMismatch)
+  implicit val impWhenPreparedSingle = jsonFormat1(WhenPreparedSingle)
+  implicit val impThenPreparedSingle = jsonFormat1(ThenPreparedSingle)
+  implicit val impPrimePreparedSingle = jsonFormat2(PrimePreparedSingle)
 }

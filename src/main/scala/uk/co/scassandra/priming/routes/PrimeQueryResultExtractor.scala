@@ -1,9 +1,18 @@
-package uk.co.scassandra.priming
+package uk.co.scassandra.priming.routes
 
 import uk.co.scassandra.cqlmessages.{CqlVarchar, ColumnType, Consistency}
 import com.typesafe.scalalogging.slf4j.Logging
 import scala.Predef._
 import scala.Some
+import uk.co.scassandra.priming.query._
+import scala.Some
+import uk.co.scassandra.priming.{Success, Result}
+import uk.co.scassandra.priming.query.PrimeCriteria
+import uk.co.scassandra.priming.query.PrimeQuerySingle
+import uk.co.scassandra.priming.query.When
+import uk.co.scassandra.priming.query.Then
+import scala.Some
+import uk.co.scassandra.priming.query.Prime
 
 object PrimeQueryResultExtractor extends Logging {
   def extractPrimeCriteria(primeQueryRequest : PrimeQuerySingle) : PrimeCriteria = {

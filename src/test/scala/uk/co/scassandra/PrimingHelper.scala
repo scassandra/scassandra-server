@@ -4,11 +4,14 @@ import java.net.{Socket, ConnectException}
 import org.scalatest.{Matchers, BeforeAndAfterAll, BeforeAndAfter, FunSuite}
 import uk.co.scassandra.server.ServerStubAsThread
 import com.datastax.driver.core.{ConsistencyLevel, Session, Cluster}
-import uk.co.scassandra.priming.{When, Then, PrimeQuerySingle}
+import uk.co.scassandra.priming._
 import dispatch._, Defaults._
 import spray.json._
+import scala.Some
+import uk.co.scassandra.priming.query.{When, Then, PrimeQuerySingle}
+import uk.co.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
 
-object AbstractIntegrationTest {
+object PrimingHelper {
 
   import uk.co.scassandra.priming.PrimingJsonImplicits._
 
@@ -23,19 +26,26 @@ object AbstractIntegrationTest {
     response()
   }
 
-  def primePreparedStatement(query: When, rows: List[Map[String, Any]]) = {
+  def primePreparedStatement(query: WhenPreparedSingle, then: ThenPreparedSingle) = {
+    val prime = PrimePreparedSingle(query, then).toJson
+    println("Sending JSON: " + prime.toString)
+    val svc = url("http://localhost:8043/prime-query-single") <<
+      prime.toString <:<
+      Map("Content-Type" -> "application/json")
 
+    val response = Http(svc OK as.String)
+    response()
   }
 }
 
-abstract class AbstractIntegrationTest(clusterConnect : Boolean = true) extends FunSuite with Matchers with BeforeAndAfter with BeforeAndAfterAll {
+abstract class PrimingHelper(clusterConnect : Boolean = true) extends FunSuite with Matchers with BeforeAndAfter with BeforeAndAfterAll {
   var serverThread: ServerStubAsThread = null
 
   var cluster: Cluster = _
   var session: Session = _
 
   def prime(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
-    AbstractIntegrationTest.primeQuery(query, rows, result, columnTypes)
+    PrimingHelper.primeQuery(query, rows, result, columnTypes)
   }
 
   def startServerStub() = {

@@ -1,7 +1,7 @@
 package uk.co.scassandra.cqlmessages.response
 
-import uk.co.scassandra.priming.Prime
 import uk.co.scassandra.cqlmessages.{ColumnType, VersionTwo, ProtocolVersion}
+import uk.co.scassandra.priming.query.Prime
 
 object VersionTwoMessageFactory extends CqlMessageFactory {
 

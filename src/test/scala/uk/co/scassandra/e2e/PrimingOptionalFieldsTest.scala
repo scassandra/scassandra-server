@@ -1,10 +1,10 @@
 package uk.co.scassandra.e2e
 
-import uk.co.scassandra.AbstractIntegrationTest
+import uk.co.scassandra.PrimingHelper
 import org.scalatest.concurrent.ScalaFutures
-import uk.co.scassandra.priming.When
+import uk.co.scassandra.priming.query.When
 
-class PrimingOptionalFieldsTest extends AbstractIntegrationTest with ScalaFutures {
+class PrimingOptionalFieldsTest extends PrimingHelper with ScalaFutures {
 
   //
   //

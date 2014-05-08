@@ -9,6 +9,7 @@ import com.typesafe.scalalogging.slf4j.Logging
 import akka.actor.{Actor}
 import uk.co.scassandra.ErrorMessage
 import uk.co.scassandra.priming.routes.{ActivityVerificationRoute, PrimingQueryRoute, PrimingPreparedRoute}
+import uk.co.scassandra.priming.query.{PrimeCriteria, PrimeQueryStore}
 
 
 trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryRoute with ActivityVerificationRoute with Logging {
@@ -16,7 +17,7 @@ trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryR
   val allRoutes = routeForPreparedPriming ~ queryRoute ~ activityVerificationRoute
 }
 
-class PrimingServer(port: Int, implicit val primedResults: PrimedResults) extends Actor with AllRoutes with Logging {
+class PrimingServer(port: Int, implicit val primedResults: PrimeQueryStore) extends Actor with AllRoutes with Logging {
 
   implicit def actorRefFactory = context.system
 

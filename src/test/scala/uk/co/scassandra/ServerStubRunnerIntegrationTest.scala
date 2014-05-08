@@ -10,7 +10,7 @@ import uk.co.scassandra.cqlmessages.response.ResultKinds
 import uk.co.scassandra.server.MessageHelper
 import org.scalatest.BeforeAndAfter
 
-class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
+class ServerStubRunnerIntegrationTest extends PrimingHelper {
   var connectionToServerStub: Socket = null
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 

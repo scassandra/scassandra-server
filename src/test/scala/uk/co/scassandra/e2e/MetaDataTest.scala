@@ -1,10 +1,10 @@
 package uk.co.scassandra.e2e
 
-import uk.co.scassandra.{ConnectionToServerStub, AbstractIntegrationTest}
-import uk.co.scassandra.priming.When
+import uk.co.scassandra.{ConnectionToServerStub, PrimingHelper}
 import com.datastax.driver.core.Cluster
+import uk.co.scassandra.priming.query.When
 
-class MetaDataTest extends AbstractIntegrationTest(false) {
+class MetaDataTest extends PrimingHelper(false) {
 
 
   test("Cluster name") {
@@ -17,7 +17,7 @@ class MetaDataTest extends AbstractIntegrationTest(false) {
       "rack" -> "rc1",
       "release_version" -> "2.0.1",
       "tokens" -> Set("1743244960790844724")))
-    AbstractIntegrationTest.primeQuery(when, rows, columnTypes = columnTypes)
+    PrimingHelper.primeQuery(when, rows, columnTypes = columnTypes)
 
     cluster = Cluster.builder()
       .addContactPoint(ConnectionToServerStub.ServerHost)

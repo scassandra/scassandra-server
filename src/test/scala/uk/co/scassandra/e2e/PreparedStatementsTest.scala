@@ -1,8 +1,9 @@
 package uk.co.scassandra.e2e
 
-import uk.co.scassandra.AbstractIntegrationTest
+import uk.co.scassandra.PrimingHelper
+import uk.co.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle}
 
-class PreparedStatementsTest extends AbstractIntegrationTest {
+class PreparedStatementsTest extends PrimingHelper {
   test("Prepared statement without priming - no params") {
     //given
     val preparedStatement = session.prepare("select * from people")
@@ -43,10 +44,21 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
   }
 
   test("Prepared statement with priming") {
-    val preparedStatement = session.prepare("select * from people where name = ?")
+    val preparedStatementText: String = "select * from people where name = ?"
+    PrimingHelper.primePreparedStatement(
+      WhenPreparedSingle(preparedStatementText),
+      ThenPreparedSingle(Some(List()))
+    )
+
+    val preparedStatement = session.prepare(preparedStatementText)
     val boundStatement = preparedStatement.bind("Chris")
 
+    //when
+    val result = session.execute(boundStatement)
 
+    //then
+    val results = result.all()
+    results.size() should equal(0)
   }
 
 }

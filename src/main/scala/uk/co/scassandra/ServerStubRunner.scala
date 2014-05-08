@@ -2,8 +2,9 @@ package uk.co.scassandra
 
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.scalalogging.slf4j.Logging
-import uk.co.scassandra.priming.{PrimingServer, PrimedResults}
+import uk.co.scassandra.priming.{PrimingServer}
 import uk.co.scassandra.server.TcpServer
+import uk.co.scassandra.priming.query.PrimeQueryStore
 
 object ServerStubRunner extends Logging {
   def main(args: Array[String]) {
@@ -24,7 +25,7 @@ class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber : I
 
   var system : ActorSystem = _
 
-  val primedResults = PrimedResults()
+  val primedResults = PrimeQueryStore()
 
   def start() = {
     system = ActorSystem("CassandraServerStub")

@@ -9,8 +9,9 @@ import uk.co.scassandra.priming._
 import scala.Some
 import uk.co.scassandra.cqlmessages.Consistency
 import uk.co.scassandra.cqlmessages.response.CqlMessageFactory
+import uk.co.scassandra.priming.query.{PrimeMatch, PrimeQueryStore}
 
-class QueryHandler(tcpConnection: ActorRef, primedResults: PrimedResults, msgFactory: CqlMessageFactory) extends Actor with Logging {
+class QueryHandler(tcpConnection: ActorRef, primedResults: PrimeQueryStore, msgFactory: CqlMessageFactory) extends Actor with Logging {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
   def receive = {

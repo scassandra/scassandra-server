@@ -17,18 +17,17 @@ import scala.Some
 import uk.co.scassandra.cqlmessages.response.WriteRequestTimeout
 import uk.co.scassandra.cqlmessages.response.Row
 import uk.co.scassandra.cqlmessages.response.SetKeyspace
-import uk.co.scassandra.priming.PrimeMatch
 import uk.co.scassandra.cqlmessages.response.UnavailableException
 import uk.co.scassandra.cqlmessages.response.Rows
-import uk.co.scassandra.priming.Prime
 import uk.co.scassandra.priming.Query
+import uk.co.scassandra.priming.query.{PrimeQueryStore, Prime, PrimeMatch}
 
 class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter with TestKitBase with MockitoSugar {
   implicit lazy val system = ActorSystem()
 
   var underTest: ActorRef = null
   var testProbeForTcpConnection: TestProbe = null
-  val mockPrimedResults = mock[PrimedResults]
+  val mockPrimedResults = mock[PrimeQueryStore]
   val someCqlStatement = PrimeMatch("some cql statement", ONE)
   val cqlMessageFactory = VersionTwoMessageFactory
   val protocolVersion: Byte = ProtocolVersion.ServerProtocolVersionTwo

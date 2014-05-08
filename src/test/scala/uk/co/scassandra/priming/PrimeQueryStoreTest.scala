@@ -3,13 +3,14 @@ package uk.co.scassandra.priming
 import org.scalatest.{Matchers, FunSpec}
 import uk.co.scassandra.cqlmessages._
 import java.util.UUID
+import uk.co.scassandra.priming.query.{PrimeQueryStore, Prime, PrimeMatch, PrimeCriteria}
 
-class PrimedResultsTest extends FunSpec with Matchers {
+class PrimeQueryStoreTest extends FunSpec with Matchers {
 
   describe("add() and get()") {
     it("should add so that it can be retrieved using get") {
       // given
-      val primeResults = PrimedResults()
+      val primeResults = PrimeQueryStore()
 
       val query: PrimeCriteria = PrimeCriteria("select * from users", Consistency.all)
       val expectedResult: List[Map[String, String]] =
@@ -34,7 +35,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
 
     it("should return passed in metadata") {
       // given
-      val primeResults = PrimedResults()
+      val primeResults = PrimeQueryStore()
       val query: PrimeCriteria = PrimeCriteria("some query", Consistency.all)
 
 
@@ -50,7 +51,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
   describe("get()") {
     it("should return Nil if no results for given query") {
       // given
-      val primeResults = PrimedResults()
+      val primeResults = PrimeQueryStore()
       // when
       val actualResult = primeResults.get(PrimeMatch("some random query", ONE))
 
@@ -62,7 +63,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
   describe("clear()") {
     it("should clear all results") {
       // given
-      val primeResults = PrimedResults()
+      val primeResults = PrimeQueryStore()
       val query: PrimeCriteria = PrimeCriteria("select * from users", Consistency.all)
       val result: List[Map[String, String]] =
         List(
@@ -88,7 +89,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
 
   describe("add() with specific consistency") {
     it("should only return if consistency matches - single") {
-      val primeResults = PrimedResults()
+      val primeResults = PrimeQueryStore()
       val query = PrimeCriteria("select * from users", List(ONE))
       val result: List[Map[String, String]] = List(Map("name" -> "Mickey", "age" -> "99"))
 
@@ -101,7 +102,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
     }
 
     it("should not return if consistency does not match - single") {
-      val primeResults = PrimedResults()
+      val primeResults = PrimeQueryStore()
       val query = PrimeCriteria("select * from users", List(TWO))
       val result: List[Map[String, String]] = List(Map("name" -> "Mickey", "age" -> "99"))
 
@@ -114,7 +115,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
     }
 
     it("should not return if consistency does not match - many") {
-      val primeResults = PrimedResults()
+      val primeResults = PrimeQueryStore()
       val query = PrimeCriteria("select * from users", List(TWO, ANY))
       val result: List[Map[String, String]] = List(Map("name" -> "Mickey", "age" -> "99"))
 
@@ -127,7 +128,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
     }
 
     it("should throw something if primes over lap partially") {
-      val primeResults = PrimedResults()
+      val primeResults = PrimeQueryStore()
       val query: String = "select * from users"
       val primeForTwoAndAny = PrimeCriteria(query, List(TWO, ANY))
       val primeForThreeAndAny = PrimeCriteria(query, List(THREE, ANY))
@@ -141,7 +142,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
     }
 
     it("should override if it is the same prime criteria") {
-      val primeResults = PrimedResults()
+      val primeResults = PrimeQueryStore()
       val query: String = "select * from users"
       val primeForTwoAndAny = PrimeCriteria(query, List(TWO, ANY))
       val primeForTwoAndAnyAgain = PrimeCriteria(query, List(TWO, ANY))
@@ -156,7 +157,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
     }
 
     it("should allow many primes for the same criteria if consistency is different") {
-      val primeResults = PrimedResults()
+      val primeResults = PrimeQueryStore()
       val query: String = "select * from users"
       val primeCriteriaForONE = PrimeCriteria(query, List(ONE))
       val primeCriteriaForTWO = PrimeCriteria(query, List(TWO))
@@ -171,7 +172,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
 
   describe("Get PrimeCriteria by query") {
     it("should get all PrimeCriteria with the same query") {
-      val primeResults = PrimedResults()
+      val primeResults = PrimeQueryStore()
       val query: String = "select * from users"
       val primeForOneAndTwo = PrimeCriteria(query, List(ONE, TWO))
       val primeForThreeAndAny = PrimeCriteria(query, List(THREE, ANY))
@@ -193,7 +194,7 @@ class PrimedResultsTest extends FunSpec with Matchers {
 
     def interceptOnAdd(prime: Prime) {
       intercept[IllegalArgumentException] {
-        PrimedResults().add(PrimeCriteria("", List()), prime)
+        PrimeQueryStore().add(PrimeCriteria("", List()), prime)
       }
     }
 

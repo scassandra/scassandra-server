@@ -1,12 +1,12 @@
 package uk.co.scassandra.e2e
 
-import uk.co.scassandra.AbstractIntegrationTest
+import uk.co.scassandra.PrimingHelper
 import org.scalatest.concurrent.ScalaFutures
 import com.datastax.driver.core.{ResultSet, ConsistencyLevel, SimpleStatement}
 import dispatch._, Defaults._
-import uk.co.scassandra.priming.When
+import uk.co.scassandra.priming.query.When
 
-class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFutures {
+class AdvancedPrimeCriteriaTest extends PrimingHelper with ScalaFutures {
 
   val whenQuery = "select * from people"
   val name = "Chris"

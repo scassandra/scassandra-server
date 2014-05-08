@@ -9,6 +9,13 @@ import spray.testkit.ScalatestRouteTest
 import uk.co.scassandra.cqlmessages._
 import uk.co.scassandra.priming._
 import scala.Some
+import uk.co.scassandra.priming.query._
+import uk.co.scassandra.priming.query.PrimeCriteria
+import uk.co.scassandra.priming.ConflictingPrimes
+import scala.Some
+import uk.co.scassandra.priming.TypeMismatch
+import uk.co.scassandra.priming.query.PrimeMatch
+import uk.co.scassandra.priming.query.Prime
 
 
 class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with PrimingQueryRoute {
@@ -17,7 +24,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
 
   implicit def actorRefFactory = system
 
-  implicit val primedResults = PrimedResults()
+  implicit val primedResults = PrimeQueryStore()
 
   val primeQuerySinglePath: String = "/prime-query-single"
   

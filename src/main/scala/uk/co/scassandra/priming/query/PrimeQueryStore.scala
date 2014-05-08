@@ -1,9 +1,10 @@
-package uk.co.scassandra.priming
+package uk.co.scassandra.priming.query
 
 import com.typesafe.scalalogging.slf4j.Logging
 import uk.co.scassandra.cqlmessages.{Consistency, ColumnType}
+import uk.co.scassandra.priming.{Success, Result}
 
-class PrimedResults extends Logging {
+class PrimeQueryStore extends Logging {
 
   var queryToResults: Map[PrimeCriteria, Prime] = Map()
 
@@ -60,30 +61,8 @@ case class Prime(
                   table: String = ""
                   )
 
-abstract class Result(val string: String)
-
-case object Success extends Result("success")
-
-case object ReadTimeout extends Result("read_request_timeout")
-
-case object Unavailable extends Result("unavailable")
-
-case object WriteTimeout extends Result("write_request_timeout")
-
-object Result {
-  def fromString(string: String): Result = {
-    string match {
-      case ReadTimeout.string => ReadTimeout
-      case Unavailable.string => Unavailable
-      case WriteTimeout.string => WriteTimeout
-      case Success.string => Success
-    }
-  }
-}
-
-
-object PrimedResults {
+object PrimeQueryStore {
   def apply() = {
-    new PrimedResults()
+    new PrimeQueryStore()
   }
 }
