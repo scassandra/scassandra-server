@@ -8,6 +8,7 @@ import akka.event.Logging
 import com.typesafe.scalalogging.slf4j.Logging
 import akka.actor.{Actor}
 import uk.co.scassandra.ErrorMessage
+import uk.co.scassandra.priming.routes.{ActivityVerificationRoute, PrimingQueryRoute, PrimingPreparedRoute}
 
 
 trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryRoute with ActivityVerificationRoute with Logging {
