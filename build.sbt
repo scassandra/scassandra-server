@@ -1,3 +1,5 @@
+organization := "scassandra-server"
+
 name := "scassandra-server"
 
 version := "0.1-SNAPSHOT"
