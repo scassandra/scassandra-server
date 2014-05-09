@@ -9,13 +9,14 @@ import uk.co.scassandra.cqlmessages.response._
 import uk.co.scassandra.cqlmessages.{CqlVarchar, VersionTwo, ColumnType, ProtocolVersion}
 import akka.util.ByteString
 import akka.io.Tcp.Write
-import uk.co.scassandra.cqlmessages.request.PrepareRequest
+import uk.co.scassandra.cqlmessages.request.{ExecuteRequest, PrepareRequest}
 import uk.co.scassandra.cqlmessages.response.PreparedResultV2
-import uk.co.scassandra.cqlmessages.request.PrepareRequest
 import scala.concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
+import uk.co.scassandra.priming.prepared.PrimePreparedStore
+import uk.co.scassandra.priming.query.PrimeMatch
 
-class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with BeforeAndAfter {
+class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with BeforeAndAfter with MockitoSugar {
   implicit lazy val system = ActorSystem()
 
   var underTest: ActorRef = null
@@ -23,10 +24,11 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
   val cqlMessageFactory = VersionTwoMessageFactory
   val protocolVersion: Byte = ProtocolVersion.ServerProtocolVersionTwo
   implicit val impProtocolVersion = VersionTwo
+  val primePreparedStore = mock[PrimePreparedStore]
 
   before {
     testProbeForTcpConnection = TestProbe()
-    underTest = TestActorRef(new PrepareHandler())
+    underTest = TestActorRef(new PrepareHandler(primePreparedStore))
   }
 
 
@@ -43,9 +45,9 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
   test("Should return empty result message for execute - no params") {
     val stream: Byte = 0x02
     val query = "select * from something"
-    val prepareBody: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
+    val executeBody: ByteString = ExecuteRequest(protocolVersion, stream, 1).serialize().drop(8);
 
-    underTest ! PrepareHandlerMessages.Execute(prepareBody, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
 
     testProbeForTcpConnection.expectMsg(VoidResult(stream))
   }
@@ -61,7 +63,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
   }
   
   test("Should use incrementing IDs") {
-    underTest = TestActorRef(new PrepareHandler())
+    underTest = TestActorRef(new PrepareHandler(primePreparedStore))
     val stream: Byte = 0x02
     val queryOne = "select * from something where name = ?"
     val prepareBodyOne: ByteString = PrepareRequest(protocolVersion, stream, queryOne).serialize().drop(8)
@@ -77,9 +79,27 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
 
   }
 
-  def emptyTestProbe {
+  test("Should look up prepared prime in store") {
+    val stream: Byte = 0x02
+    val query = "select * from something where name = ?"
+    val preparedStatementId = sendPrepareAndCaptureId(stream, query)
+
+    val executeBody: ByteString = ExecuteRequest(protocolVersion, stream, preparedStatementId).serialize().drop(8);
+    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
+
+    verify(primePreparedStore).findPrime(PrimeMatch(query))
+  }
+
+  private def sendPrepareAndCaptureId(stream: Byte, query: String) = {
+    val prepareBodyOne: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
+    underTest ! PrepareHandlerMessages.Prepare(prepareBodyOne, stream, cqlMessageFactory , testProbeForTcpConnection.ref)
+    val preparedResponseWithId: PreparedResultV2 = testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", Map[String, ColumnType]("0" -> CqlVarchar)))
+    preparedResponseWithId.preparedStatementId
+  }
+
+  private def emptyTestProbe = {
     testProbeForTcpConnection.receiveWhile(idle = Duration(100, TimeUnit.MILLISECONDS))({
-      case msg@_ => println(s"Msg left over after test ${msg}")
+      case msg @ _ => println(s"Removing message from test probe ${msg}")
     })
   }
 }

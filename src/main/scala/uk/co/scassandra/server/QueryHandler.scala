@@ -11,7 +11,7 @@ import uk.co.scassandra.cqlmessages.Consistency
 import uk.co.scassandra.cqlmessages.response.CqlMessageFactory
 import uk.co.scassandra.priming.query.{PrimeMatch, PrimeQueryStore}
 
-class QueryHandler(tcpConnection: ActorRef, primedResults: PrimeQueryStore, msgFactory: CqlMessageFactory) extends Actor with Logging {
+class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, msgFactory: CqlMessageFactory) extends Actor with Logging {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
   def receive = {
@@ -32,7 +32,7 @@ class QueryHandler(tcpConnection: ActorRef, primedResults: PrimeQueryStore, msgF
         logger.debug(s"Handling {{ use statement }} for {{ keyspacename }} {{ $queryText }} {{ $keyspaceName }}")
         tcpConnection ! Write(msgFactory.createSetKeyspaceMessage(keyspaceName, stream).serialize())
       } else {
-        primedResults.get(PrimeMatch(queryText, Consistency.fromCode(consistency))) match {
+        primeQueryStore.get(PrimeMatch(queryText, Consistency.fromCode(consistency))) match {
           case Some(prime) => {
             prime.result match {
               case Success => {

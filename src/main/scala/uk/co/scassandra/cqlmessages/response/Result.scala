@@ -174,6 +174,7 @@ case class PreparedResultV2(stream: Byte, preparedStatementId: Int, keyspaceName
       val bodyBs = ByteString.newBuilder
       bodyBs.putInt(ResultKinds.Prepared)
 
+      // this is short bytes
       bodyBs.putShort(4)
       bodyBs.putInt(preparedStatementId)
 

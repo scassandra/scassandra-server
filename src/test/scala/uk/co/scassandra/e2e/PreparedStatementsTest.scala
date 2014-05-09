@@ -61,7 +61,7 @@ class PreparedStatementsTest extends PrimingHelper {
     results.size() should equal(0)
   }
 
-  ignore("Prepared statement with priming - single row") {
+  test("Prepared statement with priming - single row") {
     val preparedStatementText: String = "select * from people where name = ?"
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(preparedStatementText),
