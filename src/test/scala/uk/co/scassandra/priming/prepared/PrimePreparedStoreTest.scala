@@ -1,7 +1,8 @@
 package uk.co.scassandra.priming.prepared
 
 import org.scalatest.{Matchers, FunSuite}
-import uk.co.scassandra.priming.query.PrimeMatch
+import uk.co.scassandra.priming.query.{Prime, PrimeMatch}
+import uk.co.scassandra.cqlmessages.CqlVarchar
 
 class PrimePreparedStoreTest extends FunSuite with Matchers {
 
@@ -20,7 +21,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     actualPrime.get.rows should equal(List())
   }
 
-  test("Store a PreparedPrime and retrieve - many rows") {
+  test("Store a PreparedPrime and retrieve - single row without column type info") {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ?"
@@ -32,6 +33,6 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     underTest.record(prime)
     val actualPrime = underTest.findPrime(PrimeMatch(query))
     //then
-    actualPrime.get.rows should equal(rows)
+    actualPrime.get should equal(Prime(rows, columnTypes = Map("one"-> CqlVarchar)))
   }
 }

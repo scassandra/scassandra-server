@@ -1,6 +1,6 @@
 package uk.co.scassandra.e2e
 
-import uk.co.scassandra.PrimingHelper
+import uk.co.scassandra.AbstractIntegrationTest
 import org.scalatest.concurrent.ScalaFutures
 import com.datastax.driver.core.DataType
 import java.nio.ByteBuffer
@@ -11,7 +11,7 @@ import dispatch._, Defaults._
 import java.util
 import uk.co.scassandra.priming.query.When
 
-class PrimingCqlTypesTest extends PrimingHelper with ScalaFutures {
+class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
 
   before {
     val svc = url("http://localhost:8043/prime-query-single").DELETE

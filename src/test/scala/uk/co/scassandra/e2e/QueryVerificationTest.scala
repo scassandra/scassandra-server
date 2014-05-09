@@ -4,10 +4,10 @@ import org.scalatest.concurrent.ScalaFutures
 import dispatch._, Defaults._
 import uk.co.scassandra.priming.{Query, ActivityLog, PrimingJsonImplicits}
 import spray.json._
-import uk.co.scassandra.PrimingHelper
+import uk.co.scassandra.AbstractIntegrationTest
 import com.datastax.driver.core.{ConsistencyLevel, SimpleStatement}
 
-class QueryVerificationTest extends PrimingHelper with ScalaFutures {
+class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 
   import PrimingJsonImplicits._
 

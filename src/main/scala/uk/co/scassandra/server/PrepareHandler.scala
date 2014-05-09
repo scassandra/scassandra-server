@@ -39,15 +39,15 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
       val preparedStatementId = bodyIterator.getInt
 
       val query = preparedStatementsToId.get(preparedStatementId)
-
       if (query.isDefined) {
         val prime = primePreparedStore.findPrime(PrimeMatch(query.get))
-
+        logger.debug(s"Prime for prepared statement query: $query prime: $prime")
         prime match {
           case Some(prime) => connection ! msgFactory.createRowsMessage(prime, stream)
           case None => connection ! msgFactory.createVoidMessage(stream)
         }
       } else {
+        logger.debug(s"Didn't find prepared statement. Sending back a void result.")
         connection ! msgFactory.createVoidMessage(stream)
       }
     }

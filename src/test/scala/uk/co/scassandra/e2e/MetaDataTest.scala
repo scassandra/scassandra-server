@@ -1,10 +1,10 @@
 package uk.co.scassandra.e2e
 
-import uk.co.scassandra.{ConnectionToServerStub, PrimingHelper}
+import uk.co.scassandra.{PrimingHelper, ConnectionToServerStub, AbstractIntegrationTest}
 import com.datastax.driver.core.Cluster
 import uk.co.scassandra.priming.query.When
 
-class MetaDataTest extends PrimingHelper(false) {
+class MetaDataTest extends AbstractIntegrationTest(false) {
 
 
   test("Cluster name") {

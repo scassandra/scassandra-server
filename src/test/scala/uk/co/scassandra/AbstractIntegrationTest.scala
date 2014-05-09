@@ -29,7 +29,7 @@ object PrimingHelper {
   def primePreparedStatement(query: WhenPreparedSingle, then: ThenPreparedSingle) = {
     val prime = PrimePreparedSingle(query, then).toJson
     println("Sending JSON: " + prime.toString)
-    val svc = url("http://localhost:8043/prime-query-single") <<
+    val svc = url("http://localhost:8043/prime-prepared-single") <<
       prime.toString <:<
       Map("Content-Type" -> "application/json")
 
@@ -38,7 +38,7 @@ object PrimingHelper {
   }
 }
 
-abstract class PrimingHelper(clusterConnect : Boolean = true) extends FunSuite with Matchers with BeforeAndAfter with BeforeAndAfterAll {
+abstract class AbstractIntegrationTest(clusterConnect : Boolean = true) extends FunSuite with Matchers with BeforeAndAfter with BeforeAndAfterAll {
   var serverThread: ServerStubAsThread = null
 
   var cluster: Cluster = _

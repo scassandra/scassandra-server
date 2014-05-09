@@ -5,7 +5,7 @@ import dispatch._, Defaults._
 import com.datastax.driver.core.exceptions.{WriteTimeoutException, UnavailableException, ReadTimeoutException}
 import uk.co.scassandra.priming.query.When
 
-class JavaDriverIntegrationTest extends PrimingHelper with ScalaFutures {
+class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFutures {
 
   test("Should by by default return empty result set for any query") {
     val result = session.execute("select * from people")

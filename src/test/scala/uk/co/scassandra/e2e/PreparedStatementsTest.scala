@@ -1,9 +1,9 @@
 package uk.co.scassandra.e2e
 
-import uk.co.scassandra.PrimingHelper
+import uk.co.scassandra.{PrimingHelper, AbstractIntegrationTest}
 import uk.co.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle}
 
-class PreparedStatementsTest extends PrimingHelper {
+class PreparedStatementsTest extends AbstractIntegrationTest {
   test("Prepared statement without priming - no params") {
     //given
     val preparedStatement = session.prepare("select * from people")
