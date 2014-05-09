@@ -38,11 +38,18 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
       bodyIterator.drop(2)
       val preparedStatementId = bodyIterator.getInt
 
-      val query = preparedStatementsToId(preparedStatementId)
-      primePreparedStore.findPrime(PrimeMatch(query))
+      val query = preparedStatementsToId.get(preparedStatementId)
 
-      val rowsMessage = msgFactory.createVoidMessage(stream)
-      connection ! rowsMessage
+      if (query.isDefined) {
+        val prime = primePreparedStore.findPrime(PrimeMatch(query.get))
+
+        prime match {
+          case Some(prime) => connection ! msgFactory.createRowsMessage(prime, stream)
+          case None => connection ! msgFactory.createVoidMessage(stream)
+        }
+      } else {
+        connection ! msgFactory.createVoidMessage(stream)
+      }
     }
     case msg @ _ => {
       logger.debug(s"Received unknown message $msg")

@@ -6,6 +6,7 @@ import akka.testkit.{TestActorRef, ImplicitSender, TestKit}
 import akka.actor.ActorSystem
 import akka.io.Tcp.Connected
 import uk.co.scassandra.priming.query.PrimeQueryStore
+import uk.co.scassandra.priming.prepared.PrimePreparedStore
 
 /**
  * Unfortunately this test actually binds to the port. Not found a way to
@@ -16,7 +17,7 @@ class TcpServerTest extends TestKit(ActorSystem("Test")) with Matchers with Impl
   test("Should record a connection with the ActivityLog") {
     //given
     ActivityLog.clearConnections()
-    val underTest = TestActorRef(new TcpServer(8044, new PrimeQueryStore))
+    val underTest = TestActorRef(new TcpServer(8044, new PrimeQueryStore, new PrimePreparedStore))
     //when
     underTest ! Connected(null, null)
     //then

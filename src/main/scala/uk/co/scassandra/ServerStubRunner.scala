@@ -5,6 +5,7 @@ import com.typesafe.scalalogging.slf4j.Logging
 import uk.co.scassandra.priming.{PrimingServer}
 import uk.co.scassandra.server.TcpServer
 import uk.co.scassandra.priming.query.PrimeQueryStore
+import uk.co.scassandra.priming.prepared.PrimePreparedStore
 
 object ServerStubRunner extends Logging {
   def main(args: Array[String]) {
@@ -26,11 +27,12 @@ class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber : I
   var system : ActorSystem = _
 
   val primedResults = PrimeQueryStore()
+  val primePreparedStore = new PrimePreparedStore
 
   def start() = {
     system = ActorSystem("CassandraServerStub")
-    system.actorOf(Props(classOf[TcpServer], serverPortNumber, primedResults))
-    system.actorOf(Props(classOf[PrimingServer], adminPortNumber, primedResults))
+    system.actorOf(Props(classOf[TcpServer], serverPortNumber, primedResults, primePreparedStore))
+    system.actorOf(Props(classOf[PrimingServer], adminPortNumber, primedResults, primePreparedStore))
     system.awaitTermination()
   }
 

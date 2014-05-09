@@ -18,10 +18,9 @@ trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryR
   val allRoutes = routeForPreparedPriming ~ queryRoute ~ activityVerificationRoute
 }
 
-class PrimingServer(port: Int, implicit val primeQueryStore: PrimeQueryStore) extends Actor with AllRoutes with Logging {
+class PrimingServer(port: Int, implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore : PrimePreparedStore) extends Actor with AllRoutes with Logging {
 
   implicit def actorRefFactory = context.system
-  implicit val primePreparedStore : PrimePreparedStore = new PrimePreparedStore
 
   logger.info(s"Opening port $port for priming")
 

@@ -5,16 +5,16 @@ import akka.testkit.{TestActorRef, TestProbe, TestKitBase}
 import org.scalatest.mock.MockitoSugar
 import akka.actor.{ActorRef, ActorSystem}
 import org.mockito.Mockito._
+import org.mockito.Matchers._
 import uk.co.scassandra.cqlmessages.response._
 import uk.co.scassandra.cqlmessages.{CqlVarchar, VersionTwo, ColumnType, ProtocolVersion}
 import akka.util.ByteString
-import akka.io.Tcp.Write
 import uk.co.scassandra.cqlmessages.request.{ExecuteRequest, PrepareRequest}
 import uk.co.scassandra.cqlmessages.response.PreparedResultV2
 import scala.concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
 import uk.co.scassandra.priming.prepared.PrimePreparedStore
-import uk.co.scassandra.priming.query.PrimeMatch
+import uk.co.scassandra.priming.query.{Prime, PrimeMatch}
 
 class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with BeforeAndAfter with MockitoSugar {
   implicit lazy val system = ActorSystem()
@@ -88,6 +88,19 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     underTest ! PrepareHandlerMessages.Execute(executeBody, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
 
     verify(primePreparedStore).findPrime(PrimeMatch(query))
+  }
+
+  test("Should create rows message if prime matches") {
+    val stream: Byte = 0x02
+    val query = "select * from something where name = ?"
+    val preparedStatementId = sendPrepareAndCaptureId(stream, query)
+    val primeMatch = Some(Prime(List()))
+    when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
+
+    val executeBody: ByteString = ExecuteRequest(protocolVersion, stream, preparedStatementId).serialize().drop(8);
+    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
+
+    testProbeForTcpConnection.expectMsg(Rows("","",stream,Map(), List()))
   }
 
   private def sendPrepareAndCaptureId(stream: Byte, query: String) = {

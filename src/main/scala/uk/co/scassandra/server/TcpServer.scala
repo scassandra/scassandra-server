@@ -7,8 +7,9 @@ import java.net.InetSocketAddress
 import uk.co.scassandra.priming.{ActivityLog}
 import uk.co.scassandra.cqlmessages.response.{CqlMessageFactory}
 import uk.co.scassandra.priming.query.PrimeQueryStore
+import uk.co.scassandra.priming.prepared.PrimePreparedStore
 
-class TcpServer(port: Int, primedResults: PrimeQueryStore) extends Actor with Logging {
+class TcpServer(port: Int, primedResults: PrimeQueryStore, primePrepareStore: PrimePreparedStore) extends Actor with Logging {
 
   import Tcp._
   import context.system
@@ -16,7 +17,7 @@ class TcpServer(port: Int, primedResults: PrimeQueryStore) extends Actor with Lo
   val manager = IO(Tcp)
 
   IO(Tcp) ! Bind(self, new InetSocketAddress("localhost", port))
-  val preparedHandler = context.actorOf(Props[PrepareHandler])
+  val preparedHandler = context.actorOf(Props(classOf[PrepareHandler], primePrepareStore))
 
   def receive = {
     case b @ Bound(localAddress) =>
