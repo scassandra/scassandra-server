@@ -40,7 +40,7 @@ object VersionTwoMessageFactory extends CqlMessageFactory {
     VoidResult(stream)
   }
 
-  def createPreparedResult(stream: Byte, id : Int, columnTypes: Map[String, ColumnType]) = {
-    PreparedResultV2(stream, id, "keyspace", "table", columnTypes)
+  def createPreparedResult(stream: Byte, id : Int, variableTypes: List[ColumnType]) = {
+    PreparedResultV2(stream, id, "keyspace", "table", variableTypes)
   }
 }

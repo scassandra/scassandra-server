@@ -127,9 +127,9 @@ case class SetKeyspace(keyspaceName : String, stream : Byte = ResponseHeader.Def
   }
 }
 
-case class PreparedResultV1(stream: Byte, preparedStatementId: Int, keyspaceName: String, tableName: String, columnTypes : Map[String, ColumnType])(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Prepared, stream, protocolVersion.serverCode) {
+case class PreparedResultV1(stream: Byte, preparedStatementId: Int, keyspaceName: String, tableName: String, variableTypes : List[ColumnType])(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Prepared, stream, protocolVersion.serverCode) {
 
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+  import CqlProtocolHelper._
 
   def serialize(): ByteString = {
     val bs = ByteString.newBuilder
@@ -143,16 +143,16 @@ case class PreparedResultV1(stream: Byte, preparedStatementId: Int, keyspaceName
     bodyBs.putInt(preparedStatementId)
 
     bodyBs.putInt(1) // flags
-    bodyBs.putInt(columnTypes.size) // col count
+    bodyBs.putInt(variableTypes.size) // col count
 
     bodyBs.putBytes(CqlProtocolHelper.serializeString(keyspaceName).toArray)
     bodyBs.putBytes(CqlProtocolHelper.serializeString(tableName).toArray)
 
     // column specs
-    columnTypes.foreach( {case (colName, colType) => {
-      bodyBs.putBytes(CqlProtocolHelper.serializeString(colName).toArray)
-      bodyBs.putShort(colType.code)
-    }})
+    for (i <- 0 until variableTypes.length) {
+      bodyBs.putBytes(CqlProtocolHelper.serializeString(i.toString).toArray)
+      bodyBs.putShort(variableTypes(i).code)
+    }
 
 
     val bodyResult: ByteString = bodyBs.result()
@@ -162,7 +162,7 @@ case class PreparedResultV1(stream: Byte, preparedStatementId: Int, keyspaceName
   }
 }
 
-case class PreparedResultV2(stream: Byte, preparedStatementId: Int, keyspaceName: String, tableName: String, columnTypes : Map[String, ColumnType])(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Prepared, stream, protocolVersion.serverCode) {
+case class PreparedResultV2(stream: Byte, preparedStatementId: Int, keyspaceName: String, tableName: String, variableTypes: List[ColumnType])(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Prepared, stream, protocolVersion.serverCode) {
 
     implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
@@ -179,15 +179,19 @@ case class PreparedResultV2(stream: Byte, preparedStatementId: Int, keyspaceName
       bodyBs.putInt(preparedStatementId)
 
       bodyBs.putInt(1) // flags
-      bodyBs.putInt(columnTypes.size) // col count
+      bodyBs.putInt(variableTypes.size) // col count
 
       bodyBs.putBytes(CqlProtocolHelper.serializeString(keyspaceName).toArray)
       bodyBs.putBytes(CqlProtocolHelper.serializeString(tableName).toArray)
 
       // column specs
-      columnTypes.foreach( {case (colName, colType) => {
-        bodyBs.putBytes(CqlProtocolHelper.serializeString(colName).toArray)
-        bodyBs.putShort(colType.code)
+      for (i <- 0 until variableTypes.length) {
+        bodyBs.putBytes(CqlProtocolHelper.serializeString(i.toString).toArray)
+        bodyBs.putShort(variableTypes(i).code)
+      }
+
+      variableTypes.foreach( {case (colType) => {
+
       }})
 
       // second meta data - 3 indicates it does not exist

@@ -2,7 +2,7 @@ package uk.co.scassandra.priming
 
 import spray.json._
 import spray.httpx.SprayJsonSupport
-import uk.co.scassandra.cqlmessages.Consistency
+import uk.co.scassandra.cqlmessages.{ColumnType, Consistency}
 import uk.co.scassandra.priming.query.{When, Then, PrimeQuerySingle, PrimeCriteria}
 import uk.co.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
 
@@ -14,6 +14,15 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
     def read(value: JsValue) = value match {
       case JsString(consistency) => Consistency.fromString(consistency)
       case _ => throw new IllegalArgumentException("Expected Consistency as JsString")
+    }
+  }
+
+  implicit object ColumnTypeJsonFormat extends RootJsonFormat[ColumnType] {
+    def write(c: ColumnType) = JsString(c.stringRep)
+
+    def read(value: JsValue) = value match {
+      case JsString(string) => ColumnType.fromString(string).get
+      case _ => throw new IllegalArgumentException("Expected ColumnType as JsString")
     }
   }
 
@@ -49,6 +58,6 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impConflictingPrimes = jsonFormat1(ConflictingPrimes)
   implicit val impTypeMismatch = jsonFormat3(TypeMismatch)
   implicit val impWhenPreparedSingle = jsonFormat1(WhenPreparedSingle)
-  implicit val impThenPreparedSingle = jsonFormat1(ThenPreparedSingle)
+  implicit val impThenPreparedSingle = jsonFormat2(ThenPreparedSingle)
   implicit val impPrimePreparedSingle = jsonFormat2(PrimePreparedSingle)
 }

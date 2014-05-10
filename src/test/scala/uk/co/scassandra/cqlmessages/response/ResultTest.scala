@@ -164,8 +164,8 @@ class ResultTest extends FunSuite with Matchers {
     val preparedStatementId : Byte = 5
     val keyspace : String = "keyspace"
     val table : String = "table"
-    val columnTypes = Map("field" -> CqlVarint)
-    val preparedResult = PreparedResultV1(stream, preparedStatementId, keyspace, table, columnTypes)
+    val variableTypes = List(CqlVarint)
+    val preparedResult = PreparedResultV1(stream, preparedStatementId, keyspace, table, variableTypes)
     val bytes = preparedResult.serialize().iterator
     val length : Byte = 4
 
@@ -189,7 +189,7 @@ class ResultTest extends FunSuite with Matchers {
     actualTable should equal(table)
 
     val rowName = CqlProtocolHelper.readString(bytes)
-    rowName should equal("field")
+    rowName should equal("0")
 
     val rowType = bytes.getShort
     rowType should equal(CqlVarint.code)
@@ -203,8 +203,8 @@ class ResultTest extends FunSuite with Matchers {
     val preparedStatementId : Byte = 5
     val keyspace : String = "keyspace"
     val table : String = "table"
-    val columnTypes = Map("field" -> CqlVarint)
-    val preparedResult = PreparedResultV2(stream, preparedStatementId, keyspace, table, columnTypes)
+    val variableTypes = List(CqlVarint)
+    val preparedResult = PreparedResultV2(stream, preparedStatementId, keyspace, table, variableTypes)
     val bytes = preparedResult.serialize().iterator
 
     bytes.getByte should equal(protocolVersion.serverCode)
@@ -227,7 +227,7 @@ class ResultTest extends FunSuite with Matchers {
     actualTable should equal(table)
 
     val rowName = CqlProtocolHelper.readString(bytes)
-    rowName should equal("field")
+    rowName should equal("0")
 
     val rowType = bytes.getShort
     rowType should equal(CqlVarint.code)

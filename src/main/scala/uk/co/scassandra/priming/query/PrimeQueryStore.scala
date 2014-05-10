@@ -54,7 +54,7 @@ case class PrimeCriteria(query: String, consistency: List[Consistency])
 case class PrimeMatch(query: String, consistency: Consistency = ONE)
 
 case class Prime(
-                  rows: List[Map[String, Any]],
+                  rows: List[Map[String, Any]] = List(),
                   result: Result = Success,
                   columnTypes: Map[String, ColumnType] = Map(),
                   keyspace: String = "",

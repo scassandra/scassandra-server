@@ -37,7 +37,8 @@ object ColumnType {
     CqlInet.stringRep -> CqlInet,
     CqlVarint.stringRep -> CqlVarint,
     CqlTimeUUID.stringRep -> CqlTimeUUID,
-    CqlSet.stringRep -> CqlSet
+    CqlSet.stringRep -> CqlSet,
+    CqlVarchar.stringRep -> CqlVarchar
   )
 
   def fromString(string: String) : Option[ColumnType] = {

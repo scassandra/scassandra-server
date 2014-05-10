@@ -20,9 +20,15 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
       logger.debug(s"Received prepare message $body")
       val query = CqlProtocolHelper.readLongString(body.iterator)
       logger.debug(s"Prepare for query $query")
-      val numberOfParameters = query.toCharArray.filter(_ == '?').size
-      val columnTypes: Map[String, ColumnType] = (0 until numberOfParameters).map(num => (num.toString,CqlVarchar)).toMap
-      val preparedResult = msgFactory.createPreparedResult(stream, preparedStatementId, columnTypes)
+
+      val preparedPrime = primePreparedStore.findPrime(PrimeMatch(query))
+      val preparedResult = if (preparedPrime.isDefined) {
+        msgFactory.createPreparedResult(stream, preparedStatementId, preparedPrime.get.variableTypes)
+      } else {
+        val numberOfParameters = query.toCharArray.filter(_ == '?').size
+        val variableTypes: List[ColumnType] = (0 until numberOfParameters).map(num => CqlVarchar).toList
+        msgFactory.createPreparedResult(stream, preparedStatementId, variableTypes)
+      }
 
       preparedStatementsToId += (preparedStatementId -> query)
 
@@ -43,7 +49,7 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
         val prime = primePreparedStore.findPrime(PrimeMatch(query.get))
         logger.debug(s"Prime for prepared statement query: $query prime: $prime")
         prime match {
-          case Some(prime) => connection ! msgFactory.createRowsMessage(prime, stream)
+          case Some(preparedPrime) => connection ! msgFactory.createRowsMessage(preparedPrime.prime, stream)
           case None => connection ! msgFactory.createVoidMessage(stream)
         }
       } else {
