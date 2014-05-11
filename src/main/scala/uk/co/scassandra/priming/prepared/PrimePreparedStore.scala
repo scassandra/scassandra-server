@@ -21,8 +21,8 @@ class PrimePreparedStore {
         (0 until numberOfParameters).map(num => CqlVarchar).toList
       }
     }
-
-    val colTypes = PrimeQueryResultExtractor.convertStringColumnTypes(None, rows)
+    val providedColTypes = prime.then.column_types
+    val colTypes = PrimeQueryResultExtractor.convertStringColumnTypes(providedColTypes, rows)
     state += (query -> PreparedPrime(variableTypes, prime = Prime(rows, columnTypes = colTypes)))
   }
 

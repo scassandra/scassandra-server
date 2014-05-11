@@ -68,4 +68,37 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     actualPrime.get should equal(PreparedPrime(List(CqlInet, CqlVarchar), prime = Prime(rows, columnTypes = Map("one"-> CqlVarchar))))
   }
 
+  test("Store a PreparedPrime and retrieve - single row with all column types") {
+    //given
+    val underTest = new PrimePreparedStore
+    val query: String = "select * from people where name = ? and age = ?"
+    val when = WhenPreparedSingle(query)
+    val rows: List[Map[String, Any]] = List(Map("one"->"two"))
+    val columnTypes = Map("one"->CqlInet)
+    val then = ThenPreparedSingle(Some(rows), column_types = Some(columnTypes))
+    val prime = PrimePreparedSingle(when, then)
+    //when
+    underTest.record(prime)
+    val actualPrime = underTest.findPrime(PrimeMatch(query))
+    //then
+    actualPrime.get should equal(PreparedPrime(List(CqlVarchar, CqlVarchar), prime = Prime(rows, columnTypes = columnTypes)))
+  }
+
+  test("Store a PreparedPrime and retrieve - subset of column type info supplied (rest defaulted to varchar)") {
+    //given
+    val underTest = new PrimePreparedStore
+    val query: String = "select * from people where name = ? and age = ?"
+    val when = WhenPreparedSingle(query)
+    val rows: List[Map[String, Any]] = List(Map("column_type_specified" -> "two","column_type_not_specified"->"three"))
+    val columnTypes = Map("column_type_specified" -> CqlInet)
+    val then = ThenPreparedSingle(Some(rows), column_types = Some(columnTypes))
+    val prime = PrimePreparedSingle(when, then)
+    //when
+    underTest.record(prime)
+    val actualPrime = underTest.findPrime(PrimeMatch(query))
+    //then
+    val expectedColumnTypes = Map("column_type_specified" -> CqlInet, "column_type_not_specified" -> CqlVarchar)
+    actualPrime.get should equal(PreparedPrime(List(CqlVarchar, CqlVarchar), prime = Prime(rows, columnTypes = expectedColumnTypes)))
+  }
+
 }

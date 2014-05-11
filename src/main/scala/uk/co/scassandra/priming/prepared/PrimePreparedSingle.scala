@@ -6,5 +6,6 @@ case class PrimePreparedSingle(when: WhenPreparedSingle, then: ThenPreparedSingl
 
 case class WhenPreparedSingle(query: String)
 case class ThenPreparedSingle(rows: Option[List[Map[String, Any]]],
-                              variable_types: Option[List[ColumnType]] = None
+                              variable_types: Option[List[ColumnType]] = None,
+                              column_types: Option[Map[String, ColumnType]] = None
                                )

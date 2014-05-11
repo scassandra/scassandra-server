@@ -10,12 +10,13 @@ import spray.json._
 import scala.Some
 import uk.co.scassandra.priming.query.{When, Then, PrimeQuerySingle}
 import uk.co.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
+import uk.co.scassandra.cqlmessages.ColumnType
 
 object PrimingHelper {
 
   import uk.co.scassandra.priming.PrimingJsonImplicits._
 
-  def primeQuery(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
+  def primeQuery(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, ColumnType] = Map()) = {
     val prime = PrimeQuerySingle(query, Then(Some(rows), Some(result), Some(columnTypes))).toJson
     println("Sending JSON: " + prime.toString)
     val svc = url("http://localhost:8043/prime-query-single") <<
@@ -44,7 +45,7 @@ abstract class AbstractIntegrationTest(clusterConnect : Boolean = true) extends 
   var cluster: Cluster = _
   var session: Session = _
 
-  def prime(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, String] = Map()) = {
+  def prime(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, ColumnType] = Map()) = {
     PrimingHelper.primeQuery(query, rows, result, columnTypes)
   }
 

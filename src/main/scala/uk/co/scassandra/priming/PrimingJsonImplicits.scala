@@ -58,6 +58,6 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impConflictingPrimes = jsonFormat1(ConflictingPrimes)
   implicit val impTypeMismatch = jsonFormat3(TypeMismatch)
   implicit val impWhenPreparedSingle = jsonFormat1(WhenPreparedSingle)
-  implicit val impThenPreparedSingle = jsonFormat2(ThenPreparedSingle)
+  implicit val impThenPreparedSingle = jsonFormat3(ThenPreparedSingle)
   implicit val impPrimePreparedSingle = jsonFormat2(PrimePreparedSingle)
 }
