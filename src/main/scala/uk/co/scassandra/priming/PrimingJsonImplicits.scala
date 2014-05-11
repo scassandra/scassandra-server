@@ -2,9 +2,17 @@ package uk.co.scassandra.priming
 
 import spray.json._
 import spray.httpx.SprayJsonSupport
-import uk.co.scassandra.cqlmessages.{ColumnType, Consistency}
-import uk.co.scassandra.priming.query.{When, Then, PrimeQuerySingle, PrimeCriteria}
-import uk.co.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
+import uk.co.scassandra.cqlmessages.ColumnType
+import uk.co.scassandra.cqlmessages.Consistency
+import uk.co.scassandra.priming.query._
+import uk.co.scassandra.priming.query.PrimeCriteria
+import uk.co.scassandra.priming.prepared.ThenPreparedSingle
+import uk.co.scassandra.priming.prepared.WhenPreparedSingle
+import uk.co.scassandra.priming.query.PrimeQuerySingle
+import uk.co.scassandra.priming.query.TypeMismatch
+import uk.co.scassandra.priming.query.When
+import uk.co.scassandra.priming.query.Then
+import uk.co.scassandra.priming.prepared.PrimePreparedSingle
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
 
@@ -31,12 +39,12 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
       case n: Int => JsNumber(n)
       case n: Long => JsNumber(n)
       case s: String => JsString(s)
-      case x: Seq[_] => seqFormat[Any].write(x)
+      case seq: Seq[_] => seqFormat[Any].write(seq)
       case m: Map[String, _] => mapFormat[String, Any].write(m)
-      case b: Boolean if b == true => JsTrue
-      case b: Boolean if b == false => JsFalse
+      case b: Boolean if b => JsTrue
+      case b: Boolean if !b => JsFalse
       case set: Set[Any] => setFormat[Any].write(set)
-      case x => serializationError("Do not understand object of type " + x.getClass.getName)
+      case other => serializationError("Do not understand object of type " + other.getClass.getName)
     }
     def read(value: JsValue) = value match {
       case JsNumber(n) => n.longValue()
@@ -57,6 +65,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impPrimeCriteria = jsonFormat2(PrimeCriteria)
   implicit val impConflictingPrimes = jsonFormat1(ConflictingPrimes)
   implicit val impTypeMismatch = jsonFormat3(TypeMismatch)
+  implicit val impTypeMismatches = jsonFormat1(TypeMismatches)
   implicit val impWhenPreparedSingle = jsonFormat1(WhenPreparedSingle)
   implicit val impThenPreparedSingle = jsonFormat3(ThenPreparedSingle)
   implicit val impPrimePreparedSingle = jsonFormat2(PrimePreparedSingle)

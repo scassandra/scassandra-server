@@ -6,12 +6,10 @@ import spray.routing._
 import spray.util.LoggingContext
 import akka.event.Logging
 import com.typesafe.scalalogging.slf4j.Logging
-import akka.actor.{Actor}
-import uk.co.scassandra.ErrorMessage
+import akka.actor.Actor
 import uk.co.scassandra.priming.routes.{ActivityVerificationRoute, PrimingQueryRoute, PrimingPreparedRoute}
-import uk.co.scassandra.priming.query.{PrimeCriteria, PrimeQueryStore}
+import uk.co.scassandra.priming.query.PrimeQueryStore
 import uk.co.scassandra.priming.prepared.PrimePreparedStore
-
 
 trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryRoute with ActivityVerificationRoute with Logging {
 
@@ -37,7 +35,3 @@ class PrimingServer(port: Int, implicit val primeQueryStore: PrimeQueryStore, im
 
   logger.info(s"Server bound to port $port")
 }
-
-case class ConflictingPrimes(existingPrimes: List[PrimeCriteria]) extends ErrorMessage("Conflicting Primes")
-
-case class TypeMismatch(value: String, name: String, columnType: String) extends ErrorMessage("Type mismatch")

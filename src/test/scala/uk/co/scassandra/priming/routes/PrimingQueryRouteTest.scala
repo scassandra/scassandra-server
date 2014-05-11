@@ -1,19 +1,14 @@
 package uk.co.scassandra.priming.routes
 
-
-import uk.co.scassandra.priming.Success
 import org.scalatest._
 import spray.http.StatusCodes.BadRequest
 import spray.http.StatusCodes.OK
 import spray.testkit.ScalatestRouteTest
 import uk.co.scassandra.cqlmessages._
 import uk.co.scassandra.priming._
-import scala.Some
 import uk.co.scassandra.priming.query._
 import uk.co.scassandra.priming.query.PrimeCriteria
-import uk.co.scassandra.priming.ConflictingPrimes
 import scala.Some
-import uk.co.scassandra.priming.TypeMismatch
 import uk.co.scassandra.priming.query.PrimeMatch
 import uk.co.scassandra.priming.query.Prime
 
@@ -153,8 +148,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       }
     }
 
-    // TODO [DN|27-04-2014] - remove ignore flag and implement
-    ignore("should reject type mismatch in primes as bad request") {
+    describe("should reject type mismatch in primes as bad request") {
       val when = When("select * from people")
 
       val thenResults: List[Map[String, String]] =
@@ -174,7 +168,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
 
       Post(primeQuerySinglePath, PrimeQuerySingle(when, then)) ~> queryRoute ~> check {
         status should equal(BadRequest)
-        responseAs[TypeMismatch] should equal(TypeMismatch("99", "age", "boolean"))
+        responseAs[TypeMismatches] should equal(TypeMismatches(List(TypeMismatch("99", "age", "boolean"), TypeMismatch("12", "age", "boolean"))))
       }
     }
   }

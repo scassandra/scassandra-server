@@ -1,32 +1,27 @@
 package uk.co.scassandra.priming.query
 
 import com.typesafe.scalalogging.slf4j.Logging
-import uk.co.scassandra.cqlmessages.{ONE, Consistency, ColumnType}
+import uk.co.scassandra.cqlmessages._
 import uk.co.scassandra.priming.{Success, Result}
+import scala.collection.immutable.Map
 
 class PrimeQueryStore extends Logging {
 
+  val validator: PrimeValidator = PrimeValidator()
+
   var queryToResults: Map[PrimeCriteria, Prime] = Map()
 
-  def getAllPrimes() : Map[PrimeCriteria, Prime] = queryToResults
+  def getAllPrimes: Map[PrimeCriteria, Prime] = queryToResults
 
-  def add(criteria: PrimeCriteria, prime: Prime) = {
-    logger.info(s"Adding prime with criteria $criteria and prime result ${prime}")
+  def add(criteria: PrimeCriteria, prime: Prime): PrimeAddResult = {
+    logger.info(s"Adding prime with criteria $criteria and prime result $prime")
 
-    def intersectsExistingCriteria: (PrimeCriteria) => Boolean = {
-      existing => existing.query == criteria.query && existing.consistency.intersect(criteria.consistency).size > 0
+    validator.validate(criteria, prime, queryToResults) match {
+      case PrimeAddSuccess =>
+        queryToResults += (criteria -> prime)
+        PrimeAddSuccess
+      case notSuccess: PrimeAddResult => notSuccess
     }
-
-    val intersectingCriteria = queryToResults.filterKeys(intersectsExistingCriteria).keySet.toList
-    intersectingCriteria match {
-      // exactly one intersecting criteria: if the criteria is the newly passed one, this is just an override. Otherwise, conflict.
-      case head :: Nil if head != criteria => throw new IllegalStateException()
-      // two or more intersecting criteria: this means one or more conflicts
-      case head :: second :: rest => throw new IllegalStateException()
-      // all other cases: carry on
-      case _ =>
-    }
-    queryToResults += (criteria -> prime)
   }
 
   def get(primeMatch: PrimeMatch): Option[Prime] = {

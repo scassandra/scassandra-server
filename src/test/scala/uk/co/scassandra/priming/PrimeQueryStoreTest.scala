@@ -3,7 +3,12 @@ package uk.co.scassandra.priming
 import org.scalatest.{Matchers, FunSpec}
 import uk.co.scassandra.cqlmessages._
 import java.util.UUID
-import uk.co.scassandra.priming.query.{PrimeQueryStore, Prime, PrimeMatch, PrimeCriteria}
+import uk.co.scassandra.priming.query._
+import uk.co.scassandra.priming.query.PrimeCriteria
+import uk.co.scassandra.priming.query.TypeMismatches
+import uk.co.scassandra.priming.query.TypeMismatch
+import uk.co.scassandra.priming.query.PrimeMatch
+import uk.co.scassandra.priming.query.Prime
 
 class PrimeQueryStoreTest extends FunSpec with Matchers {
 
@@ -26,7 +31,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
         )
 
       // when
-      primeResults add(query, Prime(expectedResult))
+      primeResults add(query, Prime(expectedResult, columnTypes = Map("name" -> CqlVarchar, "age" -> CqlInt)))
       val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
       // then
@@ -78,7 +83,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
         )
 
       // when
-      primeResults add(query, Prime(result))
+      primeResults add(query, Prime(result, columnTypes = Map("name" -> CqlVarchar, "age" -> CqlInt)))
       primeResults clear()
       val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
@@ -94,7 +99,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       val result: List[Map[String, String]] = List(Map("name" -> "Mickey", "age" -> "99"))
 
       // when
-      primeResults add(query, Prime(result))
+      primeResults add(query, Prime(result, columnTypes = Map("name" -> CqlVarchar, "age" -> CqlInt)))
       val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
       // then
@@ -107,7 +112,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       val result: List[Map[String, String]] = List(Map("name" -> "Mickey", "age" -> "99"))
 
       // when
-      primeResults add(query, Prime(result))
+      primeResults add(query, Prime(result, columnTypes = Map("name" -> CqlVarchar, "age" -> CqlInt)))
       val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
       // then
@@ -120,7 +125,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       val result: List[Map[String, String]] = List(Map("name" -> "Mickey", "age" -> "99"))
 
       // when
-      primeResults.add(query, Prime(result))
+      primeResults.add(query, Prime(result, columnTypes = Map("name" -> CqlVarchar, "age" -> CqlInt)))
       val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
       // then
@@ -130,15 +135,15 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
     it("should throw something if primes over lap partially") {
       val primeResults = PrimeQueryStore()
       val query: String = "select * from users"
-      val primeForTwoAndAny = PrimeCriteria(query, List(TWO, ANY))
+      val consistencies: List[Consistency] = List(TWO, ANY)
+      val primeForTwoAndAny = PrimeCriteria(query, consistencies)
       val primeForThreeAndAny = PrimeCriteria(query, List(THREE, ANY))
-      val resultForTwo = Prime(List(Map("name" -> "TWO_ANY")))
-      val resultForThree = Prime(List(Map("name" -> "THREE_ANY")))
+      val resultForTwo = Prime(List(Map("name" -> "TWO_ANY")), columnTypes = Map("name" -> CqlVarchar))
+      val resultForThree = Prime(List(Map("name" -> "THREE_ANY")), columnTypes = Map("name" -> CqlVarchar))
 
-      intercept[IllegalStateException] {
-        primeResults.add(primeForTwoAndAny, resultForTwo)
-        primeResults.add(primeForThreeAndAny, resultForThree)
-      }
+      primeResults.add(primeForTwoAndAny, resultForTwo)
+      val primeAddResult = primeResults.add(primeForThreeAndAny, resultForThree)
+      primeAddResult should equal(ConflictingPrimes(List(PrimeCriteria(query, consistencies))))
     }
 
     it("should override if it is the same prime criteria") {
@@ -146,8 +151,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       val query: String = "select * from users"
       val primeForTwoAndAny = PrimeCriteria(query, List(TWO, ANY))
       val primeForTwoAndAnyAgain = PrimeCriteria(query, List(TWO, ANY))
-      val resultForTwo = Prime(List(Map("name" -> "FIRST_TIME")))
-      val resultForThree = Prime(List(Map("name" -> "SECOND_TIME")))
+      val resultForTwo = Prime(List(Map("name" -> "FIRST_TIME")), columnTypes = Map("name" -> CqlVarchar))
+      val resultForThree = Prime(List(Map("name" -> "SECOND_TIME")), columnTypes = Map("name" -> CqlVarchar))
 
       primeResults.add(primeForTwoAndAny, resultForTwo)
       primeResults.add(primeForTwoAndAnyAgain, resultForThree)
@@ -162,7 +167,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       val primeCriteriaForONE = PrimeCriteria(query, List(ONE))
       val primeCriteriaForTWO = PrimeCriteria(query, List(TWO))
       val primeCriteriaForTHREE = PrimeCriteria(query, List(THREE))
-      val rowsPrime = Prime(List(Map("name" -> "FIRST_TIME")))
+      val rowsPrime = Prime(List(Map("name" -> "FIRST_TIME")), columnTypes = Map("name" -> CqlVarchar))
 
       primeResults.add(primeCriteriaForONE, rowsPrime)
       primeResults.add(primeCriteriaForTWO, rowsPrime)
@@ -176,8 +181,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       val query: String = "select * from users"
       val primeForOneAndTwo = PrimeCriteria(query, List(ONE, TWO))
       val primeForThreeAndAny = PrimeCriteria(query, List(THREE, ANY))
-      val resultForTwo = Prime(List(Map("name" -> "FIRST")))
-      val resultForThree = Prime(List(Map("name" -> "SECOND")))
+      val resultForTwo = Prime(List(Map("name" -> "FIRST")), columnTypes = Map("name" -> CqlVarchar))
+      val resultForThree = Prime(List(Map("name" -> "SECOND")), columnTypes = Map("name" -> CqlVarchar))
 
       primeResults.add(primeForOneAndTwo, resultForTwo)
       primeResults.add(primeForThreeAndAny, resultForThree)
@@ -189,14 +194,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
     }
   }
 
-  // TODO [DN|27-04-2014] - remove ignore flag and implement
-  ignore("add() with type mismatch should throw an IllegalArgumentException") {
-
-    def interceptOnAdd(prime: Prime) {
-      intercept[IllegalArgumentException] {
-        PrimeQueryStore().add(PrimeCriteria("", List()), prime)
-      }
-    }
+  describe("add() with type mismatch should return validation errors") {
 
     it("when column value not CqlVarchar") {
       // given
@@ -209,7 +207,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlVarchar.stringRep))))
     }
 
     it("when column value not CqlInt") {
@@ -223,7 +222,9 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT AN INTEGER!", "hasInvalidValue", CqlInt.stringRep))))
+
     }
 
     it("when column value not CqlBoolean") {
@@ -237,7 +238,9 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A BOOLEAN!", "hasInvalidValue", CqlBoolean.stringRep))))
+
     }
 
     it("when column value not CqlAscii") {
@@ -251,7 +254,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlAscii.stringRep))))
     }
 
     it("when column value not CqlBigint") {
@@ -265,7 +269,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A BIGINT!", "hasInvalidValue", CqlBigint.stringRep))))
     }
 
     it("when column value not CqlCounter") {
@@ -279,7 +284,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A COUNTER!", "hasInvalidValue", CqlCounter.stringRep))))
     }
 
     it("when column value not CqlBlob") {
@@ -293,7 +299,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlBlob.stringRep))))
     }
 
     it("when column value not CqlDecimal") {
@@ -307,7 +314,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlDecimal.stringRep))))
     }
 
     it("when column value not CqlDouble") {
@@ -321,7 +329,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlDouble.stringRep))))
     }
 
     it("when column value not CqlFloat") {
@@ -335,7 +344,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlFloat.stringRep))))
     }
 
     it("when column value not CqlText") {
@@ -349,7 +359,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch(998, "hasInvalidValue", CqlText.stringRep))))
     }
 
     it("when column value not CqlTimestamp") {
@@ -363,7 +374,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TIMESTAMP!", "hasInvalidValue", CqlTimestamp.stringRep))))
     }
 
     it("when column value not CqlUUID") {
@@ -378,7 +390,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlUUID.stringRep))))
     }
 
     it("when column value not CqlInet") {
@@ -392,7 +405,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT AN INET!", "hasInvalidValue", CqlInet.stringRep))))
     }
 
     it("when column value not CqlVarint") {
@@ -406,7 +420,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A VARINT!", "hasInvalidValue", CqlVarint.stringRep))))
     }
 
     it("when column value not CqlTimeUUID") {
@@ -420,7 +435,8 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       )
 
       // when and then
-      interceptOnAdd(prime)
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TIME UUID!", "hasInvalidValue", CqlTimeUUID.stringRep))))
     }
   }
 }
