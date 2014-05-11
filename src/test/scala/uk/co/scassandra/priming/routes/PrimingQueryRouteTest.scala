@@ -264,7 +264,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
     it("should convert a prime back to the original JSON format") {
       val query = "select * from users"
       val whenQuery = When(query)
-      val thenRows = Some(List(Map("field" -> "533")))
+      val thenRows = Some(List(Map("field" -> "2c530380-b9f9-11e3-850e-338bb2a2e74f")))
       val thenColumnTypes = Some(Map("field" -> CqlTimeUUID))
       val primePayload = PrimeQuerySingle(whenQuery, Then(thenRows, column_types = thenColumnTypes))
       val expectedPrimePayloadWithDefaults = createPrimeQueryResultWithDefaults(query, thenRows = thenRows, columnTypes = thenColumnTypes)
