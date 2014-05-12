@@ -4,8 +4,9 @@ import uk.co.scassandra.priming.query.{Prime, PrimeMatch}
 import uk.co.scassandra.priming.routes.PrimeQueryResultExtractor
 import uk.co.scassandra.cqlmessages.{CqlVarchar, ColumnType}
 import uk.co.scassandra.priming.Success
+import com.typesafe.scalalogging.slf4j.Logging
 
-class PrimePreparedStore {
+class PrimePreparedStore extends Logging {
 
   var state: Map[String, PreparedPrime] = Map()
 
@@ -25,7 +26,9 @@ class PrimePreparedStore {
     }
     val providedColTypes = prime.then.column_types
     val colTypes = PrimeQueryResultExtractor.convertStringColumnTypes(providedColTypes, rows)
-    state += (query -> PreparedPrime(variableTypes, prime = Prime(rows, columnTypes = colTypes, result = result)))
+    val primeToStore: PreparedPrime = PreparedPrime(variableTypes, prime = Prime(rows, columnTypes = colTypes, result = result))
+    logger.info(s"Storing Prime for Prepared Statement $primeToStore")
+    state += (query -> primeToStore)
   }
 
   def findPrime(primeMatch : PrimeMatch) : Option[PreparedPrime] = {

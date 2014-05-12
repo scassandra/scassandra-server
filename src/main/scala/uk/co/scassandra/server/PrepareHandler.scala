@@ -39,7 +39,7 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
       connection ! preparedResult
     }
     case PrepareHandlerMessages.Execute(body, stream, msgFactory, connection) => {
-      logger.debug(s"Received execute message $body")
+      logger.trace(s"Received execute message $body")
       val bodyIterator: ByteIterator = body.iterator
       // length of the id - this is a short
       bodyIterator.drop(2)
