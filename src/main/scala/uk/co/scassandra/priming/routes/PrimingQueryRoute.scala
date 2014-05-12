@@ -16,13 +16,6 @@ trait PrimingQueryRoute extends HttpService with Logging {
   implicit val primeQueryStore: PrimeQueryStore
 
   val queryRoute = {
-    path("prime-prepared-sequence") {
-      post {
-        complete {
-          StatusCodes.NotFound
-        }
-      }
-    } ~
       path("prime-query-sequence") {
         post {
           complete {

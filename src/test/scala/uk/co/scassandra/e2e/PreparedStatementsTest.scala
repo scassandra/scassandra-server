@@ -127,6 +127,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
         Some(List(CqlBigint, CqlCounter, CqlDecimal, CqlDouble, CqlFloat, CqlInt, CqlVarint)),
         Some(resultColumnTypes))
     )
+
     //when
     val preparedStatement = session.prepare(preparedStatementText)
     val boundStatement = preparedStatement.bind(bigInt, counter, decimal, double, float, int, varint)
@@ -148,10 +149,17 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
   test("Prepared statement - priming non-numeric parameters") {
     //given
     val preparedStatementText = "insert into people(ascii, blob, boolean, timestamp, uuid, varchar, timeuuid, inet) = (?,?,?,?,?,?,?,?,?)"
-    PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(preparedStatementText),
-      ThenPreparedSingle(Some(List()), Some(List(CqlAscii, CqlBlob, CqlBoolean, CqlTimestamp, CqlUUID, CqlVarchar, CqlTimeUUID, CqlInet)))
+    val resultColumnTypes = Map(
+      "ascii" -> CqlAscii,
+      "blob" -> CqlBlob,
+      "boolean" -> CqlBoolean,
+      "timestamp" -> CqlTimestamp,
+      "uuid" -> CqlUUID,
+      "varchar" -> CqlVarchar,
+      "timeuuid" -> CqlTimeUUID,
+      "inet" -> CqlInet
     )
+
     val ascii : String = "ascii"
     val blob : ByteBuffer = ByteString().toByteBuffer
     val boolean : java.lang.Boolean = true
@@ -161,12 +169,41 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
     val timeuuid : UUID = UUIDs.timeBased()
     val inet : InetAddress = InetAddress.getLocalHost
 
+    val primedRow = Map(
+      "ascii" -> ascii.toString,
+      "blob" -> "0x",
+      "boolean" -> boolean,
+      "timestamp" -> timestamp.getTime,
+      "uuid" -> uuid.toString,
+      "varchar" -> varchar,
+      "timeuuid" -> timeuuid.toString,
+      "inet" -> "127.0.0.1"
+    )
+
+    PrimingHelper.primePreparedStatement(
+      WhenPreparedSingle(preparedStatementText),
+      ThenPreparedSingle(Some(List(primedRow)),
+        Some(List(CqlAscii, CqlBlob, CqlBoolean, CqlTimestamp, CqlUUID, CqlVarchar, CqlTimeUUID, CqlInet)),
+        column_types = Some(resultColumnTypes))
+    )
+
     //when
     val preparedStatement = session.prepare(preparedStatementText)
     val boundStatement = preparedStatement.bind(ascii, blob, boolean, timestamp, uuid, varchar, timeuuid, inet)
     val result = session.execute(boundStatement)
 
     //then
-    result.all().size() should equal(0)
+    val all: util.List[Row] = result.all()
+    all.size() should equal(1)
+    val resultRow = all.get(0)
+
+    resultRow.getString("ascii") should equal(ascii)
+    resultRow.getBytes("blob") should equal(blob)
+    resultRow.getBool("boolean") should equal(boolean)
+    resultRow.getDate("timestamp") should equal(timestamp)
+    resultRow.getUUID("uuid") should equal(uuid)
+    resultRow.getString("varchar") should equal(varchar)
+    resultRow.getUUID("timeuuid") should equal(timeuuid)
+    resultRow.getInet("inet") should equal(inet)
   }
 }
