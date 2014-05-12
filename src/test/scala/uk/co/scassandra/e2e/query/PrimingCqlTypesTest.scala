@@ -1,4 +1,4 @@
-package uk.co.scassandra.e2e
+package uk.co.scassandra.e2e.query
 
 import uk.co.scassandra.AbstractIntegrationTest
 import org.scalatest.concurrent.ScalaFutures
