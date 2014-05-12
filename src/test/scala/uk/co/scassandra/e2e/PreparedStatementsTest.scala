@@ -14,6 +14,9 @@ import com.datastax.driver.core.utils.UUIDs
 import java.net.InetAddress
 import java.util
 import com.datastax.driver.core.Row
+import uk.co.scassandra.cqlmessages.response.ReadRequestTimeout
+import uk.co.scassandra.priming.{Unavailable, WriteTimeout, ReadTimeout}
+import com.datastax.driver.core.exceptions.{UnavailableException, WriteTimeoutException, ReadTimeoutException}
 
 class PreparedStatementsTest extends AbstractIntegrationTest {
   test("Prepared statement without priming - no params") {
@@ -73,6 +76,53 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
     results.size() should equal(0)
   }
 
+  test("Prepared statement with priming - read_request_timeout") {
+    val preparedStatementText: String = "select * from people where name = ?"
+    PrimingHelper.primePreparedStatement(
+      WhenPreparedSingle(preparedStatementText),
+      ThenPreparedSingle(None, result = Some(ReadTimeout))
+    )
+    val preparedStatement = session.prepare(preparedStatementText)
+    val boundStatement = preparedStatement.bind("Chris")
+
+    //when
+    intercept[ReadTimeoutException] {
+      session.execute(boundStatement)
+    }
+  }
+
+  test("Prepared statement with priming - write_request_timeout") {
+    val preparedStatementText: String = "select * from people where name = ?"
+    PrimingHelper.primePreparedStatement(
+      WhenPreparedSingle(preparedStatementText),
+      ThenPreparedSingle(None, result = Some(WriteTimeout))
+    )
+
+    val preparedStatement = session.prepare(preparedStatementText)
+    val boundStatement = preparedStatement.bind("Chris")
+
+    //when
+    intercept[WriteTimeoutException] {
+      session.execute(boundStatement)
+    }
+  }
+
+  test("Prepared statement with priming - unavailable") {
+    val preparedStatementText: String = "select * from people where name = ?"
+    PrimingHelper.primePreparedStatement(
+      WhenPreparedSingle(preparedStatementText),
+      ThenPreparedSingle(None, result = Some(Unavailable))
+    )
+
+    val preparedStatement = session.prepare(preparedStatementText)
+    val boundStatement = preparedStatement.bind("Chris")
+
+    //when
+    intercept[UnavailableException] {
+      session.execute(boundStatement)
+    }
+  }
+
   test("Prepared statement with priming - single row") {
     val preparedStatementText: String = "select * from people where name = ?"
     PrimingHelper.primePreparedStatement(
@@ -91,6 +141,8 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
     results.size() should equal(1)
     results.get(0).getString("name") should equal("Chris")
   }
+
+  ignore("Type mis-match exceptions") {}
 
   test("Prepared statement - priming numeric parameters") {
     //given

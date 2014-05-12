@@ -3,11 +3,12 @@ package uk.co.scassandra.priming.prepared
 import org.scalatest.{Matchers, FunSuite}
 import uk.co.scassandra.priming.query.{Prime, PrimeMatch}
 import uk.co.scassandra.cqlmessages.{CqlInet, CqlVarchar}
+import uk.co.scassandra.priming.ReadTimeout
 
 class PrimePreparedStoreTest extends FunSuite with Matchers {
 
 
-  test("Store a PreparedPrime and retrieve - empty rows") {
+  test("Empty rows") {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ?"
@@ -21,7 +22,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     actualPrime.get.prime.rows should equal(List())
   }
 
-  test("Store a PreparedPrime and retrieve - single row without variable type info - defaults to varchar") {
+  test("Single row without variable type info - defaults to varchar") {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ? and age = ?"
@@ -36,7 +37,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     actualPrime.get should equal(PreparedPrime(List(CqlVarchar, CqlVarchar), prime = Prime(rows, columnTypes = Map("one"-> CqlVarchar))))
   }
 
-  test("Store a PreparedPrime and retrieve - variable type info supplied") {
+  test("Variable type info supplied") {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ? and age = ?"
@@ -52,7 +53,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     actualPrime.get should equal(PreparedPrime(variableTypes, prime = Prime(rows, columnTypes = Map("one"-> CqlVarchar))))
   }
 
-  test("Store a PreparedPrime and retrieve - subset of variable type info supplied") {
+  test("Subset of variable type info supplied") {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ? and age = ?"
@@ -68,7 +69,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     actualPrime.get should equal(PreparedPrime(List(CqlInet, CqlVarchar), prime = Prime(rows, columnTypes = Map("one"-> CqlVarchar))))
   }
 
-  test("Store a PreparedPrime and retrieve - single row with all column types") {
+  test("Single row with all column types") {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ? and age = ?"
@@ -84,7 +85,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     actualPrime.get should equal(PreparedPrime(List(CqlVarchar, CqlVarchar), prime = Prime(rows, columnTypes = columnTypes)))
   }
 
-  test("Store a PreparedPrime and retrieve - subset of column type info supplied (rest defaulted to varchar)") {
+  test("Subset of column type info supplied - rest defaulted to varchar)") {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ? and age = ?"
@@ -101,4 +102,17 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     actualPrime.get should equal(PreparedPrime(List(CqlVarchar, CqlVarchar), prime = Prime(rows, columnTypes = expectedColumnTypes)))
   }
 
+  test("Specifying result other than success") {
+    //given
+    val underTest = new PrimePreparedStore
+    val query: String = "select * from people"
+    val when = WhenPreparedSingle(query)
+    val then = ThenPreparedSingle(None, result = Some(ReadTimeout))
+    val prime = PrimePreparedSingle(when, then)
+    //when
+    underTest.record(prime)
+    val actualPrime = underTest.findPrime(PrimeMatch(query))
+    //then
+    actualPrime.get should equal(PreparedPrime(List(), Prime(result = ReadTimeout)))
+  }
 }

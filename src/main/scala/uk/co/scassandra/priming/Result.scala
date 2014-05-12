@@ -17,6 +17,7 @@ object Result {
       case Unavailable.string => Unavailable
       case WriteTimeout.string => WriteTimeout
       case Success.string => Success
+      case _ => Success
     }
   }
 }

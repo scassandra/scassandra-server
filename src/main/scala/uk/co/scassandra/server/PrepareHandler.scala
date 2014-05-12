@@ -7,6 +7,7 @@ import uk.co.scassandra.cqlmessages.response.{CqlMessageFactory}
 import uk.co.scassandra.cqlmessages.{ColumnType, CqlVarchar, CqlProtocolHelper}
 import uk.co.scassandra.priming.prepared.PrimePreparedStore
 import uk.co.scassandra.priming.query.PrimeMatch
+import uk.co.scassandra.priming.{Success, Unavailable, WriteTimeout, ReadTimeout}
 
 class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with Logging {
 
@@ -49,7 +50,15 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
         val prime = primePreparedStore.findPrime(PrimeMatch(query.get))
         logger.debug(s"Prime for prepared statement query: $query prime: $prime")
         prime match {
-          case Some(preparedPrime) => connection ! msgFactory.createRowsMessage(preparedPrime.prime, stream)
+          case Some(preparedPrime) => {
+           preparedPrime.prime.result match {
+             case Success => connection ! msgFactory.createRowsMessage(preparedPrime.prime, stream)
+             case ReadTimeout => connection ! msgFactory.createReadTimeoutMessage(stream)
+             case WriteTimeout => connection ! msgFactory.createWriteTimeoutMessage(stream)
+             case Unavailable => connection ! msgFactory.createUnavailableMessage(stream)
+           }
+
+          }
           case None => connection ! msgFactory.createVoidMessage(stream)
         }
       } else {

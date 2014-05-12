@@ -23,6 +23,7 @@ import uk.co.scassandra.cqlmessages.request.PrepareRequest
 import uk.co.scassandra.priming.prepared.PreparedPrime
 import uk.co.scassandra.priming.query.PrimeMatch
 import uk.co.scassandra.cqlmessages.response.Rows
+import uk.co.scassandra.priming.{Unavailable, WriteTimeout, ReadTimeout, Success}
 
 class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with BeforeAndAfter with MockitoSugar {
   implicit lazy val system = ActorSystem()
@@ -34,7 +35,6 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
   implicit val impProtocolVersion = VersionTwo
   val primePreparedStore = mock[PrimePreparedStore]
   val stream: Byte = 0x3
-
 
   before {
     reset(primePreparedStore)
@@ -126,6 +126,42 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     underTest ! PrepareHandlerMessages.Execute(executeBody, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
 
     testProbeForTcpConnection.expectMsg(Rows("" ,"" ,stream, Map[String, ColumnType](), List()))
+  }
+
+  test("Execute with read time out") {
+    val query = "select * from something where name = ?"
+    val preparedStatementId = sendPrepareAndCaptureId(stream, query)
+    val primeMatch = Some(PreparedPrime(prime = Prime(result = ReadTimeout)))
+    when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
+
+    val executeBody: ByteString = ExecuteRequest(protocolVersion, stream, preparedStatementId).serialize().drop(8);
+    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
+
+    testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream))
+  }
+
+  test("Execute with write time out") {
+    val query = "select * from something where name = ?"
+    val preparedStatementId = sendPrepareAndCaptureId(stream, query)
+    val primeMatch = Some(PreparedPrime(prime = Prime(result = WriteTimeout)))
+    when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
+
+    val executeBody: ByteString = ExecuteRequest(protocolVersion, stream, preparedStatementId).serialize().drop(8);
+    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
+
+    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream))
+  }
+
+  test("Execute with unavailable") {
+    val query = "select * from something where name = ?"
+    val preparedStatementId = sendPrepareAndCaptureId(stream, query)
+    val primeMatch = Some(PreparedPrime(prime = Prime(result = Unavailable)))
+    when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
+
+    val executeBody: ByteString = ExecuteRequest(protocolVersion, stream, preparedStatementId).serialize().drop(8);
+    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
+
+    testProbeForTcpConnection.expectMsg(UnavailableException(stream))
   }
 
   private def sendPrepareAndCaptureId(stream: Byte, query: String) : Int = {

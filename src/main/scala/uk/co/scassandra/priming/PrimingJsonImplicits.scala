@@ -34,6 +34,15 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
     }
   }
 
+  implicit object ResultJsonFormat extends RootJsonFormat[Result] {
+    def write(result: Result) = JsString(result.string)
+
+    def read(value: JsValue) = value match {
+      case JsString(string) => Result.fromString(string)
+      case _ => throw new IllegalArgumentException("Expected Result as JsString")
+    }
+  }
+
   implicit object AnyJsonFormat extends JsonFormat[Any] {
     def write(x: Any) = x match {
       case n: Int => JsNumber(n)
@@ -67,6 +76,6 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impTypeMismatch = jsonFormat3(TypeMismatch)
   implicit val impTypeMismatches = jsonFormat1(TypeMismatches)
   implicit val impWhenPreparedSingle = jsonFormat1(WhenPreparedSingle)
-  implicit val impThenPreparedSingle = jsonFormat3(ThenPreparedSingle)
+  implicit val impThenPreparedSingle = jsonFormat4(ThenPreparedSingle)
   implicit val impPrimePreparedSingle = jsonFormat2(PrimePreparedSingle)
 }
