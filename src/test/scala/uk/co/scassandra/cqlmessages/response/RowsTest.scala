@@ -86,6 +86,31 @@ class RowsTest extends FunSuite with Matchers {
     rowValue should equal(18)
   }
 
+  test("Serialization of Int column type where value is a Scala Long") {
+    val columnNames: Map[String, ColumnType] = Map("age" -> CqlInt)
+    val rows: List[Row] = List(Row(Map("age" -> 18l)))
+    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+
+    dropHeaderAndLength(rowsBytes)
+
+    val numberOfColumns = rowsBytes.getInt
+    numberOfColumns should equal(1)
+
+    dropKeyspaceAndTableName(rowsBytes)
+
+    val rowName = CqlProtocolHelper.readString(rowsBytes)
+    rowName should equal("age")
+
+    val rowType = rowsBytes.getShort
+    rowType should equal(CqlInt.code)
+
+    val numberOfRows = rowsBytes.getInt
+    numberOfRows should equal(1)
+
+    val rowValue = CqlProtocolHelper.readIntValue(rowsBytes)
+    rowValue should equal(18)
+  }
+
   test("Serialization of Int column type where value is a Scala String") {
     val columnNames: Map[String, ColumnType] = Map("age" -> CqlInt)
     val rows: List[Row] = List(Row(Map("age" -> "18")))

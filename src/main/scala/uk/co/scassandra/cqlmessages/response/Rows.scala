@@ -5,8 +5,9 @@ import akka.util.ByteString
 import java.math.BigDecimal
 import java.util.UUID
 import java.net.InetAddress
+import com.typesafe.scalalogging.slf4j.Logging
 
-case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTypes : Map[String, ColumnType], rows : List[Row] = List[Row]())(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Rows, stream, protocolVersion.serverCode) {
+case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTypes : Map[String, ColumnType], rows : List[Row] = List[Row]())(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Rows, stream, protocolVersion.serverCode) with Logging {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
@@ -41,8 +42,15 @@ case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTy
           case CqlVarchar | CqlAscii | CqlText => bodyBuilder.putBytes(CqlProtocolHelper.serializeLongString(value.toString))
           case CqlInt => {
             bodyBuilder.putInt(4)
-            val valueAsInt = if (value.isInstanceOf[String]) value.toString.toInt else value.asInstanceOf[Int]
-            bodyBuilder.putInt(valueAsInt)
+            val valueAsInt = if (value.isInstanceOf[String]) {
+              value.toString.toInt
+            } else if (value.isInstanceOf[Int]) {
+              value.asInstanceOf[Int]
+            } else {
+              logger.warn(s"Possible truncation of value $value")
+              value.asInstanceOf[Long]
+            }
+            bodyBuilder.putInt(valueAsInt.toInt)
           }
           case CqlBoolean => bodyBuilder.putBytes(CqlProtocolHelper.serializeBooleanValue(value.toString.toBoolean))
           case CqlBigint | CqlCounter => bodyBuilder.putBytes(CqlProtocolHelper.serializeBigIntValue(value.toString.toLong))

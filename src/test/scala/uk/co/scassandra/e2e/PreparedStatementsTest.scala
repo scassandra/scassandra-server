@@ -219,7 +219,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
     val uuid : UUID = UUID.randomUUID()
     val varchar : String = "varchar"
     val timeuuid : UUID = UUIDs.timeBased()
-    val inet : InetAddress = InetAddress.getLocalHost
+    val inet : InetAddress = InetAddress.getByName("127.0.0.1")
 
     val primedRow = Map(
       "ascii" -> ascii.toString,

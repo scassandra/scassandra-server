@@ -72,7 +72,9 @@ class PrimeValidator {
       case CqlVarchar | CqlAscii | CqlText =>
         value.asInstanceOf[String]
       case CqlInt =>
-        if (value.isInstanceOf[String]) value.toString.toInt else value.asInstanceOf[Int]
+        if (value.isInstanceOf[String]) {
+          value.toString.toInt
+        } else value.asInstanceOf[Long]
       case CqlBoolean =>
         value.toString.toBoolean
       case CqlBigint | CqlCounter =>

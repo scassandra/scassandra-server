@@ -227,6 +227,21 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
 
     }
 
+    it("when column value CqlInt as Long") {
+      // given
+      val prime = Prime(
+        List(
+          Map("hasLongAsInt" -> 5l)
+        ),
+        columnTypes = Map("hasLongAsInt" -> CqlInt)
+      )
+
+      // when and then
+      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
+      validationResult should equal(PrimeAddSuccess)
+
+    }
+
     it("when column value not CqlBoolean") {
       // given
       val prime = Prime(
