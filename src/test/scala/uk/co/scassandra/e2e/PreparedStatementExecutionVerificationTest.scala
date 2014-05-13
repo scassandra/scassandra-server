@@ -12,19 +12,21 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
 
   import PrimingJsonImplicits._
 
+  val primePreparedSinglePath = "http://localhost:8043/prepared-statement-execution"
+
   before {
-//    val svc = url("http://localhost:8043/prime-prepared-single").DELETE
-//    val response = Http(svc OK as.String)
-//    response()
+    val svc = url(primePreparedSinglePath).DELETE
+    val response = Http(svc OK as.String)
+    response()
   }
 
   test("Test clearing of prepared statement executions") {
     ActivityLog.clearPreparedStatementExecutions()
-    val queryString: String = "select * from people where name = ?"
+    val queryString = "select * from people where name = ?"
     val preparedStatement = session.prepare(queryString);
     val boundStatement = preparedStatement.bind("Chris")
     session.execute(boundStatement)
-    val svc: Req = url("http://localhost:8043/prepared-statement-execution")
+    val svc: Req = url(primePreparedSinglePath)
     val delete = svc.DELETE
     val deleteResponse = Http(delete OK as.String)
     deleteResponse()
@@ -42,7 +44,7 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
     val boundStatement = preparedStatement.bind("Chris")
     session.execute(boundStatement)
 
-    val svc: Req = url("http://localhost:8043/prepared-statement-execution")
+    val svc: Req = url(primePreparedSinglePath)
     val response = Http(svc OK as.String)
 
     whenReady(response) { result =>

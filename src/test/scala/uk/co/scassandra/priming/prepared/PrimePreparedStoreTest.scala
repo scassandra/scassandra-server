@@ -115,4 +115,17 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     //then
     actualPrime.get should equal(PreparedPrime(List(), Prime(result = ReadTimeout)))
   }
+
+  test("Clearing all the primes") {
+    //given
+    val underTest = new PrimePreparedStore
+    val when = WhenPreparedSingle("")
+    val then = ThenPreparedSingle(None)
+    val prime = PrimePreparedSingle(when, then)
+    underTest.record(prime)
+    //when
+    underTest.clear()
+    //then
+    underTest.state.size should equal(0)
+  }
 }

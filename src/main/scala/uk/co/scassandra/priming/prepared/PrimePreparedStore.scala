@@ -34,4 +34,8 @@ class PrimePreparedStore extends Logging {
   def findPrime(primeMatch : PrimeMatch) : Option[PreparedPrime] = {
     state.get(primeMatch.query)
   }
+
+  def clear() = {
+    state = Map()
+  }
 }
