@@ -42,6 +42,6 @@ object ColumnType {
   )
 
   def fromString(string: String) : Option[ColumnType] = {
-    ColumnTypeMapping.get(string.toLowerCase( ))
+    ColumnTypeMapping.get(string.toLowerCase())
   }
 }

@@ -10,6 +10,8 @@ class PrimePreparedStore extends Logging {
 
   var state: Map[String, PreparedPrime] = Map()
 
+  def retrievePrimes() = state.values
+
   def record(prime: PrimePreparedSingle) = {
     val rows = prime.then.rows.getOrElse(List())
     val query = prime.when.query
