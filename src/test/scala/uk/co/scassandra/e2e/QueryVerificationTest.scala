@@ -6,6 +6,7 @@ import uk.co.scassandra.priming.{Query, ActivityLog, PrimingJsonImplicits}
 import spray.json._
 import uk.co.scassandra.AbstractIntegrationTest
 import com.datastax.driver.core.{ConsistencyLevel, SimpleStatement}
+import uk.co.scassandra.cqlmessages.TWO
 
 class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -44,7 +45,7 @@ class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
     whenReady(response) { result =>
       val queryList = JsonParser(result).convertTo[List[Query]]
       println(queryList)
-      queryList.exists(query => query.query.equals(queryString) && query.consistency == "TWO")
+      queryList.exists(_ == Query(queryString, TWO))
     }
   }
 }
