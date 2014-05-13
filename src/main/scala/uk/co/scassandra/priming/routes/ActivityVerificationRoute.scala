@@ -38,5 +38,20 @@ trait ActivityVerificationRoute extends HttpService with Logging {
             StatusCodes.OK
           }
         }
+    } ~
+    path("prepared-statement-execution") {
+      get {
+        complete {
+          logger.debug("Request for record prepared statement executions")
+          ActivityLog.retrievePreparedStatementExecutions()
+        }
+      } ~
+      delete {
+        complete {
+          logger.debug("Deleting all recorded prepared statement executions")
+          ActivityLog.clearPreparedStatementExecutions()
+          StatusCodes.OK
+        }
+      }
     }
 }

@@ -165,7 +165,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     val recordedQueries = ActivityLog.retrieveQueries()
     recordedQueries.size should equal(1)
     val recordedQuery: Query = recordedQueries(0)
-    recordedQuery should equal(Query(query, consistency.string))
+    recordedQuery should equal(Query(query, consistency))
   }
 
   test("Should return keyspace name when set in PrimedResults") {
