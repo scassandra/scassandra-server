@@ -17,7 +17,6 @@ trait PrimingPreparedRoute extends HttpService with Logging {
       post {
         entity(as[PrimePreparedSingle]) { prime =>
           complete {
-            logger.info(s"Prepared store $primePreparedStore")
             primePreparedStore.record(prime)
             StatusCodes.OK
           }

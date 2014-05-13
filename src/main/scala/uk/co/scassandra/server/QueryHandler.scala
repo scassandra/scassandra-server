@@ -52,7 +52,7 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
             }
           }
           case None => {
-            logger.info("Sending void result")
+            logger.debug("Sending void result")
             tcpConnection ! Write(msgFactory.createVoidMessage(stream).serialize())
           }
           case msg@_ => {

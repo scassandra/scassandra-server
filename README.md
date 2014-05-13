@@ -20,7 +20,8 @@ Please read the list of Gotchas:
 
 In addition to a binary port Scassandra opens an admin port for priming and verifying queries. Information on how to prime is here:
 
-* [Priming](https://github.com/scassandra/scassandra-server/wiki/Priming)
+* [Priming Queries](https://github.com/scassandra/scassandra-server/wiki/Priming-Queries)
+* [Priming Prepared Statements](https://github.com/scassandra/scassandra-server/wiki/Priming-Prepared-Statements)
 * [Activity Verification](https://github.com/scassandra/scassandra-server/wiki/Activity-Verification)
 * [Using Scassandra from Java Gradle] (https://github.com/scassandra/scassandra-server/wiki/Using-Scassandra-from-Java-Gradle)
 
