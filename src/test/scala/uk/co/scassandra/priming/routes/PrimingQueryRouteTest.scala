@@ -294,7 +294,6 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       }
     }
 
-
     it("Should return keyspace passed into prime") {
       val query = "select * from users"
       val whenQuery = When(query, keyspace = Some("myKeyspace"))
@@ -311,6 +310,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         response(0) should equal(expectedPrimePayloadWithDefaults)
       }
     }
+
     it("Should return table passed into prime") {
       val query = "select * from users"
       val whenQuery = When(query, table = Some("tablename"))
@@ -343,7 +343,6 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         response(0) should equal(expectedPrimePayloadWithDefaults)
       }
     }
-
 
   }
 

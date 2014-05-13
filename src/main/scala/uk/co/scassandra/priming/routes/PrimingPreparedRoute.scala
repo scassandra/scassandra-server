@@ -27,6 +27,11 @@ trait PrimingPreparedRoute extends HttpService with Logging {
           primePreparedStore.clear()
           StatusCodes.OK
         }
+      } ~
+      get {
+        complete {
+          primePreparedStore.retrievePrimes()
+        }
       }
     }
 }

@@ -1,6 +1,6 @@
 package uk.co.scassandra.priming.routes
 
-import org.scalatest.{FunSpec, Matchers, FunSuite}
+import org.scalatest.{FunSpec, Matchers}
 import spray.testkit.ScalatestRouteTest
 import uk.co.scassandra.priming.{PrimingJsonImplicits}
 import spray.http.StatusCodes
@@ -19,7 +19,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
   describe("Priming") {
     it("Should take in query") {
       val when: WhenPreparedSingle = WhenPreparedSingle("select * from people where name = ?")
-      val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()));
+      val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
       val prime = PrimePreparedSingle(when, then)
       Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.OK)
@@ -31,6 +31,19 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       Delete(primePreparedSinglePath) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.OK)
         verify(primePreparedStore).clear()
+      }
+    }
+  }
+
+  describe("Retrieving of primes") {
+    it("should return it in the original format") {
+      val when: WhenPreparedSingle = WhenPreparedSingle("select * from people where name = ?")
+      val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()));
+      val prime = PrimePreparedSingle(when, then)
+      Post("/prime-prepared-single", prime) ~> routeForPreparedPriming
+
+      Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
+          responseAs[PrimePreparedSingle] should equal(prime)
       }
     }
   }
