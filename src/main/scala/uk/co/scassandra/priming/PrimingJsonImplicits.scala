@@ -6,13 +6,11 @@ import uk.co.scassandra.cqlmessages.ColumnType
 import uk.co.scassandra.cqlmessages.Consistency
 import uk.co.scassandra.priming.query._
 import uk.co.scassandra.priming.query.PrimeCriteria
-import uk.co.scassandra.priming.prepared.ThenPreparedSingle
-import uk.co.scassandra.priming.prepared.WhenPreparedSingle
+import uk.co.scassandra.priming.prepared.{PreparedPrime, ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
 import uk.co.scassandra.priming.query.PrimeQuerySingle
 import uk.co.scassandra.priming.query.TypeMismatch
 import uk.co.scassandra.priming.query.When
 import uk.co.scassandra.priming.query.Then
-import uk.co.scassandra.priming.prepared.PrimePreparedSingle
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
 

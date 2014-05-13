@@ -4,7 +4,8 @@ import spray.routing.HttpService
 import com.typesafe.scalalogging.slf4j.Logging
 import spray.http.StatusCodes
 import uk.co.scassandra.priming.{PrimingJsonImplicits}
-import uk.co.scassandra.priming.prepared.{PrimePreparedStore, PrimePreparedSingle}
+import uk.co.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedStore, PrimePreparedSingle}
+import scala.collection.immutable.Iterable
 
 trait PrimingPreparedRoute extends HttpService with Logging {
 
@@ -30,7 +31,18 @@ trait PrimingPreparedRoute extends HttpService with Logging {
       } ~
       get {
         complete {
-          primePreparedStore.retrievePrimes()
+          val preparedPrimes: Iterable[PrimePreparedSingle] = primePreparedStore.retrievePrimes().map({case (query, preparedPrime) =>
+            PrimePreparedSingle(
+              WhenPreparedSingle(query),
+              ThenPreparedSingle(
+                Some(preparedPrime.prime.rows),
+                Some(preparedPrime.variableTypes),
+                Some(preparedPrime.prime.columnTypes),
+                Some(preparedPrime.prime.result)
+              )
+            )
+          })
+          preparedPrimes
         }
       }
     }
