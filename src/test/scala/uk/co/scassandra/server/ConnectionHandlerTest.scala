@@ -8,7 +8,6 @@ import org.scalatest._
 import uk.co.scassandra.server.QueryHandlerMessages.Query
 import uk.co.scassandra.cqlmessages._
 import uk.co.scassandra.cqlmessages.response.{QueryBeforeReadyMessage, Ready}
-import uk.co.scassandra.cqlmessages.response.{CqlMessageFactory, VersionTwoMessageFactory, VersionOneMessageFactory}
 import uk.co.scassandra.cqlmessages.response.QueryBeforeReadyMessage
 import akka.io.Tcp.Received
 import uk.co.scassandra.cqlmessages.response.Ready

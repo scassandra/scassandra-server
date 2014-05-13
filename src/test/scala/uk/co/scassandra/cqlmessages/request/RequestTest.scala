@@ -52,29 +52,5 @@ class RequestTest extends FunSuite with Matchers {
       )
     )
   }
-  
-  test("Seralisation of a execute") {
-    val stream : Byte = 0x01
-    val protocolVersion : Byte = 0x1
-    val consistency = TWO
-    val id : Byte = 5
-    val executeRequest = new ExecuteRequest(protocolVersion, stream, id, consistency)
-    val serialisation = executeRequest.serialize().iterator
 
-    serialisation.getByte should equal(protocolVersion)
-    serialisation.getByte // ignore the flags
-    serialisation.getByte should equal(stream)
-    serialisation.getByte should equal(OpCodes.Execute)
-
-    serialisation.drop(4) // length
-
-    CqlProtocolHelper.readShortBytes(serialisation) should equal(Array[Byte](0,0,0,id))
-    serialisation.getShort should equal(consistency.code)
-    serialisation.getByte should equal(0) // flags
-
-    val numberOfOptions = serialisation.getShort
-    numberOfOptions should equal(0)
-    
-    serialisation.isEmpty should equal(true)
-  }
 }

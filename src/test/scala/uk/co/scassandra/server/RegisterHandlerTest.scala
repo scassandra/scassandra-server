@@ -7,7 +7,7 @@ import akka.util.ByteString
 import org.scalatest.FunSuiteLike
 import org.scalatest.matchers.ShouldMatchers
 import uk.co.scassandra.cqlmessages.response.{ResponseHeader, Ready}
-import uk.co.scassandra.cqlmessages.response.VersionTwoMessageFactory
+import uk.co.scassandra.cqlmessages.VersionTwoMessageFactory
 
 class RegisterHandlerTest extends TestKit(ActorSystem("TestSystem")) with FunSuiteLike with ShouldMatchers {
   test("Should send Ready message on any Register message") {

@@ -5,9 +5,9 @@ import akka.io.{IO, Tcp}
 import com.typesafe.scalalogging.slf4j.Logging
 import java.net.InetSocketAddress
 import uk.co.scassandra.priming.{ActivityLog}
-import uk.co.scassandra.cqlmessages.response.{CqlMessageFactory}
 import uk.co.scassandra.priming.query.PrimeQueryStore
 import uk.co.scassandra.priming.prepared.PrimePreparedStore
+import uk.co.scassandra.cqlmessages.CqlMessageFactory
 
 class TcpServer(port: Int, primedResults: PrimeQueryStore, primePrepareStore: PrimePreparedStore) extends Actor with Logging {
 
@@ -21,7 +21,7 @@ class TcpServer(port: Int, primedResults: PrimeQueryStore, primePrepareStore: Pr
 
   def receive = {
     case b @ Bound(localAddress) =>
-      logger.info(s"Server bound to port $port")
+      logger.info(s"Port $port ready for Cassandra binary connections.")
 
     case CommandFailed(_: Bind) =>
       context stop self

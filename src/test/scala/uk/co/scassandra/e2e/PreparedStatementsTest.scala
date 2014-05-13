@@ -1,12 +1,10 @@
 package uk.co.scassandra.e2e
 
 import uk.co.scassandra.{PrimingHelper, AbstractIntegrationTest}
-import uk.co.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle}
 import uk.co.scassandra.cqlmessages._
 import uk.co.scassandra.priming.prepared.ThenPreparedSingle
 import uk.co.scassandra.priming.prepared.WhenPreparedSingle
 import scala.Some
-import java.math.BigInteger
 import java.nio.ByteBuffer
 import akka.util.ByteString
 import java.util.{UUID, Date}
@@ -14,7 +12,6 @@ import com.datastax.driver.core.utils.UUIDs
 import java.net.InetAddress
 import java.util
 import com.datastax.driver.core.Row
-import uk.co.scassandra.cqlmessages.response.ReadRequestTimeout
 import uk.co.scassandra.priming.{Unavailable, WriteTimeout, ReadTimeout}
 import com.datastax.driver.core.exceptions.{UnavailableException, WriteTimeoutException, ReadTimeoutException}
 
@@ -147,7 +144,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
   test("Prepared statement - priming numeric parameters") {
     //given
     val preparedStatementText = "insert into people(bigint, counter, decimal, double, float, int, varint) = (?, ?,?,?,?,?,?)"
-    val resultColumnTypes = Map("bigint" -> CqlBigint,
+    val resultColumnTypes = Map[String, ColumnType[_]]("bigint" -> CqlBigint,
       "counter" -> CqlCounter,
       "decimal" -> CqlDecimal,
       "double" -> CqlDouble,
@@ -176,7 +173,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(preparedStatementText),
       ThenPreparedSingle(Some(rows),
-        Some(List(CqlBigint, CqlCounter, CqlDecimal, CqlDouble, CqlFloat, CqlInt, CqlVarint)),
+        Some(List[ColumnType[_]](CqlBigint, CqlCounter, CqlDecimal, CqlDouble, CqlFloat, CqlInt, CqlVarint)),
         Some(resultColumnTypes))
     )
 
@@ -201,7 +198,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
   test("Prepared statement - priming non-numeric parameters") {
     //given
     val preparedStatementText = "insert into people(ascii, blob, boolean, timestamp, uuid, varchar, timeuuid, inet) = (?,?,?,?,?,?,?,?)"
-    val resultColumnTypes = Map(
+    val resultColumnTypes: Map[String, ColumnType[_]] = Map[String, ColumnType[_]](
       "ascii" -> CqlAscii,
       "blob" -> CqlBlob,
       "boolean" -> CqlBoolean,
@@ -235,7 +232,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(preparedStatementText),
       ThenPreparedSingle(Some(List(primedRow)),
-        Some(List(CqlAscii, CqlBlob, CqlBoolean, CqlTimestamp, CqlUUID, CqlVarchar, CqlTimeUUID, CqlInet)),
+        Some(List[ColumnType[_]](CqlAscii, CqlBlob, CqlBoolean, CqlTimestamp, CqlUUID, CqlVarchar, CqlTimeUUID, CqlInet)),
         column_types = Some(resultColumnTypes))
     )
 

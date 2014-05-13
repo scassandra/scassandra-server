@@ -3,7 +3,6 @@ package uk.co.scassandra.server
 import com.typesafe.scalalogging.slf4j.{Logging}
 import akka.actor.{ActorRef, Actor}
 import akka.util.{ByteIterator, ByteString}
-import uk.co.scassandra.cqlmessages.response.{CqlMessageFactory}
 import uk.co.scassandra.cqlmessages._
 import uk.co.scassandra.priming.prepared.PrimePreparedStore
 import uk.co.scassandra.priming.query.PrimeMatch
@@ -15,6 +14,7 @@ import scala.Some
 import java.math.BigDecimal
 import java.util.UUID
 import java.net.InetAddress
+import uk.co.scassandra.cqlmessages.request.ExecuteRequest
 
 class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with Logging {
 
@@ -26,7 +26,7 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
   def receive: Actor.Receive = {
     case PrepareHandlerMessages.Prepare(body, stream, msgFactory, connection) => {
       logger.debug(s"Received prepare message $body")
-      val query = CqlProtocolHelper.readLongString(body.iterator)
+      val query = readLongString(body.iterator)
       logger.debug(s"Prepare for query $query")
 
       val preparedPrime = primePreparedStore.findPrime(PrimeMatch(query))
@@ -46,32 +46,22 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
       connection ! preparedResult
     }
     case PrepareHandlerMessages.Execute(body, stream, msgFactory, connection) => {
-      logger.debug(s"Received execute message $body")
-      val bodyIterator: ByteIterator = body.iterator
-      // length of the id - this is a short
-      bodyIterator.drop(2)
-      val preparedStatementId = bodyIterator.getInt
-      val consistency = Consistency.fromCode(bodyIterator.getShort)
-
-      val flags = bodyIterator.getByte
-      val numberOfVariables = bodyIterator.getShort
-
-
-
-      val preparedStatement = preparedStatementsToId.get(preparedStatementId)
+      logger.debug(s"Received execute bytes $body")
+      val executeRequest = msgFactory.parseExecuteRequestWithoutVariables(stream, body)
+      logger.debug(s"Received execute message $executeRequest")
+      val preparedStatement = preparedStatementsToId.get(executeRequest.id)
 
       if (preparedStatement.isDefined) {        
         val prime = primePreparedStore.findPrime(PrimeMatch(preparedStatement.get))
         logger.debug(s"Prime for prepared statement query: $preparedStatement prime: $prime")
         prime match {
           case Some(preparedPrime) => {
-
-            if (numberOfVariables == preparedPrime.variableTypes.size) {
-              val variableValues = preparedPrime.variableTypes.map (varType => varType.readValue(bodyIterator).toString )
-              ActivityLog.recordPrimedStatementExecution(preparedStatement.get, consistency, variableValues)
+            if (executeRequest.numberOfVariables == preparedPrime.variableTypes.size) {
+              val variablesAsStrings = msgFactory.parseExecuteRequestWithVariables(stream, body, preparedPrime.variableTypes).variables.map(_.toString)
+              ActivityLog.recordPrimedStatementExecution(preparedStatement.get, executeRequest.consistency, variablesAsStrings)
            } else {
-             ActivityLog.recordPrimedStatementExecution(preparedStatement.get, consistency, List())
-             logger.warn(s"Execution of prepared statement has a different number of variables to the prime. Variables won't be recorded. $prime")
+             ActivityLog.recordPrimedStatementExecution(preparedStatement.get, executeRequest.consistency, List())
+             logger.warn(s"Execution of prepared statement has a different number of variables to the prime. Number of variables in message ${executeRequest.numberOfVariables}. Variables won't be recorded. $preparedPrime")
            }
             
            preparedPrime.prime.result match {
@@ -84,7 +74,7 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
           }
           case None => {
             logger.info("Received execution of prepared statemet that hasn't been primed so can't record variables.")
-            ActivityLog.recordPrimedStatementExecution(preparedStatement.get, consistency, List())
+            ActivityLog.recordPrimedStatementExecution(preparedStatement.get, executeRequest.consistency, List())
             connection ! msgFactory.createVoidMessage(stream)
           }
         }
@@ -106,7 +96,8 @@ object PrepareHandlerMessages {
 
 /*
 Example execute message body
-ByteString(0, 4, // length of the prepared statement id
+ByteString(
+0, 4, // length of the prepared statement id
 0, 0, 0, 1, // prepared statement id
 0, 1, // consistency
 5, // flags
@@ -122,7 +113,8 @@ ByteString(0, 4, // length of the prepared statement id
 0, 0, 19, -120) // serial consistency?? not sure
 
 
-ByteString(0, 4,
+ByteString(
+0, 4,
  0, 0, 0, 1,
  0, 1,
  5,
@@ -138,4 +130,13 @@ ByteString(0, 4,
  0, 0, 0, 4,   127, 0, 0, 1,
 
  -1, -1, -1, -1, 0, 0, 19, -120)
+
+ execute from v1 driver
+
+ ByteString(
+ 0, 4,
+ 0, 0, 0, 1,
+ 0, 1,  // number of
+ 0,  0, 0, 5,   67, 104, 114, 105, 115,
+ 0, 1)
  */

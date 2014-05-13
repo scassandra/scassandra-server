@@ -10,7 +10,6 @@ import org.scalatest.mock.MockitoSugar
 import uk.co.scassandra.priming._
 import org.mockito.Mockito._
 import uk.co.scassandra.cqlmessages._
-import uk.co.scassandra.cqlmessages.response.VersionTwoMessageFactory
 import uk.co.scassandra.cqlmessages.response.ReadRequestTimeout
 import uk.co.scassandra.cqlmessages.response.VoidResult
 import scala.Some
