@@ -4,10 +4,14 @@ import com.typesafe.scalalogging.slf4j.{Logging}
 import akka.actor.{ActorRef, Actor}
 import akka.util.{ByteIterator, ByteString}
 import uk.co.scassandra.cqlmessages.response.{CqlMessageFactory}
-import uk.co.scassandra.cqlmessages.{ColumnType, CqlVarchar, CqlProtocolHelper}
+import uk.co.scassandra.cqlmessages._
 import uk.co.scassandra.priming.prepared.PrimePreparedStore
 import uk.co.scassandra.priming.query.PrimeMatch
-import uk.co.scassandra.priming.{Success, Unavailable, WriteTimeout, ReadTimeout}
+import uk.co.scassandra.priming._
+import uk.co.scassandra.priming.query.PrimeMatch
+import scala.Some
+import uk.co.scassandra.priming.query.PrimeMatch
+import scala.Some
 
 class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with Logging {
 
@@ -44,11 +48,13 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
       // length of the id - this is a short
       bodyIterator.drop(2)
       val preparedStatementId = bodyIterator.getInt
+      val consistency = Consistency.fromCode(bodyIterator.getShort)
+      val preparedStatement = preparedStatementsToId.get(preparedStatementId)
 
-      val query = preparedStatementsToId.get(preparedStatementId)
-      if (query.isDefined) {
-        val prime = primePreparedStore.findPrime(PrimeMatch(query.get))
-        logger.debug(s"Prime for prepared statement query: $query prime: $prime")
+      if (preparedStatement.isDefined) {
+        ActivityLog.recordPrimedStatementExecution(preparedStatement.get, consistency, List())
+        val prime = primePreparedStore.findPrime(PrimeMatch(preparedStatement.get))
+        logger.debug(s"Prime for prepared statement query: $preparedStatement prime: $prime")
         prime match {
           case Some(preparedPrime) => {
            preparedPrime.prime.result match {

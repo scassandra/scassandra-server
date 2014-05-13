@@ -23,7 +23,19 @@ import uk.co.scassandra.cqlmessages.request.PrepareRequest
 import uk.co.scassandra.priming.prepared.PreparedPrime
 import uk.co.scassandra.priming.query.PrimeMatch
 import uk.co.scassandra.cqlmessages.response.Rows
-import uk.co.scassandra.priming.{Unavailable, WriteTimeout, ReadTimeout, Success}
+import uk.co.scassandra.priming._
+import uk.co.scassandra.cqlmessages.response.ReadRequestTimeout
+import uk.co.scassandra.cqlmessages.response.VoidResult
+import uk.co.scassandra.cqlmessages.response.PreparedResultV2
+import uk.co.scassandra.cqlmessages.request.ExecuteRequest
+import scala.Some
+import uk.co.scassandra.cqlmessages.request.PrepareRequest
+import uk.co.scassandra.priming.prepared.PreparedPrime
+import uk.co.scassandra.cqlmessages.response.WriteRequestTimeout
+import uk.co.scassandra.priming.query.PrimeMatch
+import uk.co.scassandra.cqlmessages.response.UnavailableException
+import uk.co.scassandra.cqlmessages.response.Rows
+import uk.co.scassandra.priming.query.Prime
 
 class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with BeforeAndAfter with MockitoSugar {
   implicit lazy val system = ActorSystem()
@@ -163,6 +175,23 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
 
     testProbeForTcpConnection.expectMsg(UnavailableException(stream))
   }
+
+  test("Should record execution in activity log") {
+    ActivityLog.clearPreparedStatementExecutions()
+    val stream: Byte = 0x02
+    val query = "select * from something where name = ?"
+    val preparedStatementId = sendPrepareAndCaptureId(stream, query)
+    val consistency = TWO
+    val primeMatch = Some(PreparedPrime())
+    when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
+
+    val executeBody: ByteString = ExecuteRequest(protocolVersion, stream, preparedStatementId, consistency).serialize().drop(8);
+    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
+
+    ActivityLog.retrievePreparedStatementExecutions().size should equal(1)
+    ActivityLog.retrievePreparedStatementExecutions()(0) should equal(PreparedStatementExecution(query, consistency, List()))
+  }
+
 
   private def sendPrepareAndCaptureId(stream: Byte, query: String) : Int = {
     val prepareBodyOne: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)

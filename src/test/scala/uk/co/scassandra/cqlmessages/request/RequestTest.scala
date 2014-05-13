@@ -1,7 +1,7 @@
 package uk.co.scassandra.cqlmessages.request
 
 import org.scalatest._
-import uk.co.scassandra.cqlmessages.{CqlProtocolHelper, VersionOne, OpCodes, ProtocolVersion}
+import uk.co.scassandra.cqlmessages._
 
 class RequestTest extends FunSuite with Matchers {
 
@@ -56,7 +56,7 @@ class RequestTest extends FunSuite with Matchers {
   test("Seralisation of a execute") {
     val stream : Byte = 0x01
     val protocolVersion : Byte = 0x1
-    val consistency : Short = 2
+    val consistency = TWO
     val id : Byte = 5
     val executeRequest = new ExecuteRequest(protocolVersion, stream, id, consistency)
     val serialisation = executeRequest.serialize().iterator
@@ -69,7 +69,7 @@ class RequestTest extends FunSuite with Matchers {
     serialisation.drop(4) // length
 
     CqlProtocolHelper.readShortBytes(serialisation) should equal(Array[Byte](0,0,0,id))
-    serialisation.getShort should equal(consistency)
+    serialisation.getShort should equal(consistency.code)
     serialisation.getByte should equal(0)
     
     serialisation.isEmpty should equal(true)

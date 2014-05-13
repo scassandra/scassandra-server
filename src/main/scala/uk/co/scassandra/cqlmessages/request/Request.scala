@@ -43,7 +43,7 @@ case class PrepareRequest(protocolVersion: Byte, stream: Byte, query: String) ex
   }
 }
 
-case class ExecuteRequest(protocolVersion: Byte, stream: Byte, id: Int, val consistency : Short = 0x0001, val flags : Byte = 0x00) extends Request(new Header(protocolVersion, OpCodes.Execute, stream)) {
+case class ExecuteRequest(protocolVersion: Byte, stream: Byte, id: Int, val consistency : Consistency = ONE, val flags : Byte = 0x00) extends Request(new Header(protocolVersion, OpCodes.Execute, stream)) {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
@@ -54,7 +54,7 @@ case class ExecuteRequest(protocolVersion: Byte, stream: Byte, id: Int, val cons
     bs.putShort(4)
     bs.putInt(id)
 
-    bs.putShort(consistency)
+    bs.putShort(consistency.code)
     bs.putByte(flags)
 
 
