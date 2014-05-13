@@ -30,7 +30,7 @@ object PrimeQueryResultExtractor extends Logging {
     val result = then.result.map(Result.fromString).getOrElse(Success)
     logger.trace("Column types " + primeRequest.then.column_types)
    
-    val columnTypes: Map[String, ColumnType] = convertStringColumnTypes(primeRequest.then.column_types, resultsAsList)
+    val columnTypes: Map[String, ColumnType[_]] = convertStringColumnTypes(primeRequest.then.column_types, resultsAsList)
 
     logger.trace("Incoming when {}", primeRequest.when)
 
@@ -41,13 +41,13 @@ object PrimeQueryResultExtractor extends Logging {
     Prime(resultsAsList, result, columnTypes, keyspace, table)
   }
   
-  def convertStringColumnTypes(columnTypes : Option[Map[String, ColumnType]], resultsAsList: List[Map[String, Any]]) = {
-    val colTypes =  columnTypes.getOrElse(Map[String, ColumnType]())
+  def convertStringColumnTypes(columnTypes : Option[Map[String, ColumnType[_]]], resultsAsList: List[Map[String, Any]]) = {
+    val colTypes =  columnTypes.getOrElse(Map[String, ColumnType[_]]())
 
     // check that all the columns in the rows have a type
     val columnNamesInAllRows = resultsAsList.flatMap(row => row.keys).distinct
 
-    val colTypesWithDefaults : Map[String, ColumnType] = columnNamesInAllRows.map(columnName => colTypes.get(columnName) match {
+    val colTypesWithDefaults : Map[String, ColumnType[_]] = columnNamesInAllRows.map(columnName => colTypes.get(columnName) match {
       case Some(columnType) => (columnName, columnType)
       case None => (columnName, CqlVarchar)
     }).toMap

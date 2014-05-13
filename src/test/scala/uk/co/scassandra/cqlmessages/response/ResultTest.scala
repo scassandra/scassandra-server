@@ -242,7 +242,7 @@ class ResultTest extends FunSuite with Matchers {
 
   }
 
-  private def createRowsWithColumnType(columnType: ColumnType) = {
+  private def createRowsWithColumnType(columnType: ColumnType[_]) = {
     var msgWithoutRows = ByteString(-126, 0, 0, 8,
       0, 0, 0, 81, // length
       0, 0, 0, 2, // Result type

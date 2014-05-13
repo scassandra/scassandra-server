@@ -120,7 +120,7 @@ class CqlProtocolHelperTest extends FunSuite with Matchers {
     0, 3, 111, 110, 101, // one
     0, 3, 116, 119, 111) // two
 
-    val set = CqlProtocolHelper.readVarcharSet(ByteString(serialisedSet).iterator)
+    val set = CqlProtocolHelper.readVarcharSetValue(ByteString(serialisedSet).iterator)
 
     set should equal(Set("one", "two"))
   }

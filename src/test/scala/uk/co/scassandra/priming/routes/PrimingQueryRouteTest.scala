@@ -70,7 +70,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
             "age" -> "12"
           )
         )
-      val defaultedColumnTypes = Map[String, ColumnType]("name" -> CqlVarchar, "age" -> CqlVarchar)
+      val defaultedColumnTypes = Map("name" -> CqlVarchar, "age" -> CqlVarchar)
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults)))) ~> queryRoute ~> check {
         primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenResults, Success, defaultedColumnTypes))
@@ -353,7 +353,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
                                                  table : String = "",
                                                  thenRows : Option[List[Map[String, String]]] = None,
                                                  result : String = "success",
-                                                 columnTypes : Option[Map[String, ColumnType]] = None,
+                                                 columnTypes : Option[Map[String, ColumnType[_]]] = None,
                                                  consistencies : Option[List[String]] = None) = {
 
 

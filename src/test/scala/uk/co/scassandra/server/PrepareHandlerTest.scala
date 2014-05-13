@@ -63,7 +63,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
 
     underTest ! PrepareHandlerMessages.Prepare(prepareBody, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
 
-    testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", List[ColumnType]()))
+    testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", List()))
   }
 
   test("Should return empty result message for execute - no params") {
@@ -83,7 +83,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
 
     underTest ! PrepareHandlerMessages.Prepare(prepareBody, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
 
-    testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", List[ColumnType](CqlVarchar)))
+    testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", List(CqlVarchar)))
   }
 
   test("Priming variable types - Should use types from PreparedPrime") {
@@ -105,7 +105,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val queryOne = "select * from something where name = ?"
     val prepareBodyOne: ByteString = PrepareRequest(protocolVersion, stream, queryOne).serialize().drop(8)
     underTest ! PrepareHandlerMessages.Prepare(prepareBodyOne, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
-    testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", List[ColumnType](CqlVarchar)))
+    testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", List(CqlVarchar)))
 
     emptyTestProbe
 
@@ -137,7 +137,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val executeBody: ByteString = ExecuteRequest(protocolVersion, stream, preparedStatementId).serialize().drop(8);
     underTest ! PrepareHandlerMessages.Execute(executeBody, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
 
-    testProbeForTcpConnection.expectMsg(Rows("" ,"" ,stream, Map[String, ColumnType](), List()))
+    testProbeForTcpConnection.expectMsg(Rows("" ,"" ,stream, Map(), List()))
   }
 
   test("Execute with read time out") {

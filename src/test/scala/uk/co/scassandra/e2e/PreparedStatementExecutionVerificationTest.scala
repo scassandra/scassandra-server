@@ -6,6 +6,7 @@ import uk.co.scassandra.priming.{PreparedStatementExecution, Query, ActivityLog,
 import spray.json._
 import uk.co.scassandra.AbstractIntegrationTest
 import com.datastax.driver.core.{ConsistencyLevel, SimpleStatement}
+import uk.co.scassandra.cqlmessages.ONE
 
 class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -18,7 +19,7 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
   }
 
   test("Test clearing of prepared statement executions") {
-    ActivityLog.clearQueries()
+    ActivityLog.clearPreparedStatementExecutions()
     val queryString: String = "select * from people where name = ?"
     val preparedStatement = session.prepare(queryString);
     val boundStatement = preparedStatement.bind("Chris")
@@ -35,7 +36,7 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
   }
 
   test("Test verification of a single prepared statement executions") {
-    ActivityLog.clearQueries()
+    ActivityLog.clearPreparedStatementExecutions()
     val queryString: String = "select * from people where name = ?"
     val preparedStatement = session.prepare(queryString);
     val boundStatement = preparedStatement.bind("Chris")
@@ -48,6 +49,7 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
       println(result)
       val preparedStatementExecutions = JsonParser(result).convertTo[List[PreparedStatementExecution]]
       preparedStatementExecutions.size should equal(1)
+      preparedStatementExecutions(0) should equal(PreparedStatementExecution(queryString, ONE, List()))
     }
   }
 }

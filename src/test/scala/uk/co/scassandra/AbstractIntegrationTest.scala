@@ -16,7 +16,7 @@ object PrimingHelper {
 
   import uk.co.scassandra.priming.PrimingJsonImplicits._
 
-  def primeQuery(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, ColumnType] = Map()) = {
+  def primeQuery(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, ColumnType[_]] = Map()) = {
     val prime = PrimeQuerySingle(query, Then(Some(rows), Some(result), Some(columnTypes))).toJson
     println("Sending JSON: " + prime.toString)
     val svc = url("http://localhost:8043/prime-query-single") <<
@@ -45,7 +45,7 @@ abstract class AbstractIntegrationTest(clusterConnect : Boolean = true) extends 
   var cluster: Cluster = _
   var session: Session = _
 
-  def prime(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, ColumnType] = Map()) = {
+  def prime(query: When, rows: List[Map[String, Any]], result: String = "success", columnTypes: Map[String, ColumnType[_]] = Map()) = {
     PrimingHelper.primeQuery(query, rows, result, columnTypes)
   }
 

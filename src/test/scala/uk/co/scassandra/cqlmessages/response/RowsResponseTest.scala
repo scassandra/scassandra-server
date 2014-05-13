@@ -10,7 +10,7 @@ class RowsResponseTest extends FunSuite with Matchers {
 
   val defaultStreamId : Byte = 1
   implicit val protocolVersion  = VersionOne
-  val defaultColumnNames = Map[String, ColumnType]()
+  val defaultColumnNames = Map[String, ColumnType[_]]()
 
   test("Rows message should have Result opcode") {
     val rows = Rows("","", defaultStreamId, defaultColumnNames)

@@ -70,7 +70,10 @@ class RequestTest extends FunSuite with Matchers {
 
     CqlProtocolHelper.readShortBytes(serialisation) should equal(Array[Byte](0,0,0,id))
     serialisation.getShort should equal(consistency.code)
-    serialisation.getByte should equal(0)
+    serialisation.getByte should equal(0) // flags
+
+    val numberOfOptions = serialisation.getShort
+    numberOfOptions should equal(0)
     
     serialisation.isEmpty should equal(true)
   }

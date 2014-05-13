@@ -200,7 +200,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
 
   test("Prepared statement - priming non-numeric parameters") {
     //given
-    val preparedStatementText = "insert into people(ascii, blob, boolean, timestamp, uuid, varchar, timeuuid, inet) = (?,?,?,?,?,?,?,?,?)"
+    val preparedStatementText = "insert into people(ascii, blob, boolean, timestamp, uuid, varchar, timeuuid, inet) = (?,?,?,?,?,?,?,?)"
     val resultColumnTypes = Map(
       "ascii" -> CqlAscii,
       "blob" -> CqlBlob,

@@ -12,7 +12,7 @@ class RowsTest extends FunSuite with Matchers {
   implicit val protocolVersion = VersionTwo
 
   test("Serialization of Varchar column type") {
-    val columnNames: Map[String, ColumnType] = Map("age" -> CqlVarchar)
+    val columnNames = Map("age" -> CqlVarchar)
     val rows: List[Row] = List(Row(Map("age" -> "18")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -37,7 +37,7 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialization of Text column type") {
-    val columnNames: Map[String, ColumnType] = Map("age" -> CqlText)
+    val columnNames = Map("age" -> CqlText)
     val rows: List[Row] = List(Row(Map("age" -> "18")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -62,7 +62,7 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialization of Int column type where value is a Scala Int") {
-    val columnNames: Map[String, ColumnType] = Map("age" -> CqlInt)
+    val columnNames = Map("age" -> CqlInt)
     val rows: List[Row] = List(Row(Map("age" -> 18)))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -87,7 +87,7 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialization of Int column type where value is a Scala Long") {
-    val columnNames: Map[String, ColumnType] = Map("age" -> CqlInt)
+    val columnNames = Map("age" -> CqlInt)
     val rows: List[Row] = List(Row(Map("age" -> 18l)))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -112,7 +112,7 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialization of Int column type where value is a Scala String") {
-    val columnNames: Map[String, ColumnType] = Map("age" -> CqlInt)
+    val columnNames = Map("age" -> CqlInt)
     val rows: List[Row] = List(Row(Map("age" -> "18")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -137,7 +137,7 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialization of Boolean column type where value is false") {
-    val columnNames: Map[String, ColumnType] = Map("booleanValue" -> CqlBoolean)
+    val columnNames = Map("booleanValue" -> CqlBoolean)
     val rows: List[Row] = List(Row(Map("booleanValue" -> "false")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -162,7 +162,7 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialization of Ascii column type") {
-    val columnNames: Map[String, ColumnType] = Map("name" -> CqlAscii)
+    val columnNames = Map("name" -> CqlAscii)
     val rows: List[Row] = List(Row(Map("name" -> "Chris Batey")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -187,7 +187,7 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialization of BigInt column type when value is a String") {
-    val columnNames: Map[String, ColumnType] = Map("field" -> CqlBigint)
+    val columnNames = Map("field" -> CqlBigint)
     val rows: List[Row] = List(Row(Map("field" -> "1234")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -212,7 +212,7 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialization of BigInt column type when value is a Long") {
-    val columnNames: Map[String, ColumnType] = Map("field" -> CqlBigint)
+    val columnNames = Map("field" -> CqlBigint)
     val rows: List[Row] = List(Row(Map("field" -> 1234)))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -237,7 +237,7 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialization of Counter column type when value is a String") {
-    val columnNames: Map[String, ColumnType] = Map("field" -> CqlCounter)
+    val columnNames = Map("field" -> CqlCounter)
     val rows: List[Row] = List(Row(Map("field" -> "1234")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -262,7 +262,7 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialization of Blob column type") {
-    val columnNames: Map[String, ColumnType] = Map("field" -> CqlBlob)
+    val columnNames = Map("field" -> CqlBlob)
     val rows: List[Row] = List(Row(Map("field" -> "0x48656c6c6f")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -287,7 +287,7 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialization of Decimal column type") {
-    val columnNames: Map[String, ColumnType] = Map("field" -> CqlDecimal)
+    val columnNames = Map("field" -> CqlDecimal)
     val rows: List[Row] = List(Row(Map("field" -> "5.5456")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -312,7 +312,7 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialization of Double column type") {
-    val columnNames: Map[String, ColumnType] = Map("field" -> CqlDouble)
+    val columnNames = Map("field" -> CqlDouble)
     val rows: List[Row] = List(Row(Map("field" -> "5.5456")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -337,7 +337,7 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialization of Float column type") {
-    val columnNames: Map[String, ColumnType] = Map("field" -> CqlFloat)
+    val columnNames = Map("field" -> CqlFloat)
     val rows: List[Row] = List(Row(Map("field" -> "5.5456")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -362,7 +362,7 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialization of Timestamp column type") {
-    val columnNames: Map[String, ColumnType] = Map("field" -> CqlTimestamp)
+    val columnNames = Map("field" -> CqlTimestamp)
     val rows: List[Row] = List(Row(Map("field" -> "1368438171000")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -388,7 +388,7 @@ class RowsTest extends FunSuite with Matchers {
 
   test("Serialization of UUID column type") {
     val uuid = UUID.randomUUID()
-    val columnNames: Map[String, ColumnType] = Map("field" -> CqlUUID)
+    val columnNames = Map("field" -> CqlUUID)
     val rows: List[Row] = List(Row(Map("field" -> uuid.toString)))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -414,7 +414,7 @@ class RowsTest extends FunSuite with Matchers {
 
   test("Serialization of TimeUUID column type") {
     val uuid = UUID.fromString("2c530380-b9f9-11e3-850e-338bb2a2e74f")
-    val columnNames: Map[String, ColumnType] = Map("field" -> CqlTimeUUID)
+    val columnNames = Map("field" -> CqlTimeUUID)
     val rows: List[Row] = List(Row(Map("field" -> uuid.toString)))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -440,7 +440,7 @@ class RowsTest extends FunSuite with Matchers {
 
   test("Serialization of Inet column type") {
     val inet = InetAddress.getByAddress(Array[Byte](127,0,0,1))
-    val columnNames: Map[String, ColumnType] = Map("field" -> CqlInet)
+    val columnNames = Map("field" -> CqlInet)
     val rows: List[Row] = List(Row(Map("field" -> "127.0.0.1")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -466,7 +466,7 @@ class RowsTest extends FunSuite with Matchers {
 
   test("Serialization of Varint column type") {
     val varint = BigInt("1234")
-    val columnNames: Map[String, ColumnType] = Map("field" -> CqlVarint)
+    val columnNames = Map("field" -> CqlVarint)
     val rows: List[Row] = List(Row(Map("field" -> "1234")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
@@ -491,7 +491,7 @@ class RowsTest extends FunSuite with Matchers {
   }
  test("Serialization of Set of varchars column type") {
     val varcharSet = Set("one","two")
-    val columnNames: Map[String, ColumnType] = Map("field" -> CqlSet)
+    val columnNames = Map("field" -> CqlSet)
     val rows: List[Row] = List(Row(Map("field" -> varcharSet)))
     val rowsBytes = Rows("keyspaceName", "tableName", 1, columnNames, rows).serialize().iterator
 
@@ -514,7 +514,7 @@ class RowsTest extends FunSuite with Matchers {
     val numberOfRows = rowsBytes.getInt
     numberOfRows should equal(1)
 
-    val rowValue = CqlProtocolHelper.readVarcharSet(rowsBytes)
+    val rowValue = CqlProtocolHelper.readVarcharSetValue(rowsBytes)
     rowValue should equal(varcharSet)
   }
 

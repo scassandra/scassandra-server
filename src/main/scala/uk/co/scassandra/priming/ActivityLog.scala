@@ -1,8 +1,9 @@
 package uk.co.scassandra.priming
 
 import uk.co.scassandra.cqlmessages.{ONE, Consistency}
+import com.typesafe.scalalogging.slf4j.Logging
 
-object ActivityLog {
+object ActivityLog extends Logging {
   var connections : List[Connection] = List()
   var queries : List[Query] = List()
   var preparedStatementExecutions : List[PreparedStatementExecution] = List()
@@ -30,7 +31,9 @@ object ActivityLog {
   def retrievePreparedStatementExecutions(): List[PreparedStatementExecution] = preparedStatementExecutions
 
   def recordPrimedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[String] ) = {
-    preparedStatementExecutions = preparedStatementExecutions ::: PreparedStatementExecution(preparedStatementText, consistency, variables) :: Nil
+    val execution: PreparedStatementExecution = PreparedStatementExecution(preparedStatementText, consistency, variables)
+    logger.info("Recording " + execution)
+    preparedStatementExecutions = preparedStatementExecutions ::: execution :: Nil
   }
 
   def clearPreparedStatementExecutions() = {

@@ -199,7 +199,7 @@ object CqlProtocolHelper {
     bytes
   }
 
-  def readVarcharSet(iterator: ByteIterator)  = {
+  def readVarcharSetValue(iterator: ByteIterator)  = {
     val setLength = iterator.getInt
     val setSize = iterator.getShort
       (0 until setSize).map(it => {

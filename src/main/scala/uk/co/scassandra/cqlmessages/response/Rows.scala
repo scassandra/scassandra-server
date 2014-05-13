@@ -7,7 +7,7 @@ import java.util.UUID
 import java.net.InetAddress
 import com.typesafe.scalalogging.slf4j.Logging
 
-case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTypes : Map[String, ColumnType], rows : List[Row] = List[Row]())(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Rows, stream, protocolVersion.serverCode) with Logging {
+case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTypes : Map[String, ColumnType[_]], rows : List[Row] = List[Row]())(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Rows, stream, protocolVersion.serverCode) with Logging {
 
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 

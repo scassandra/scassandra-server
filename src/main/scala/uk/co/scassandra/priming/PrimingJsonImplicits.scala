@@ -25,8 +25,8 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
     }
   }
 
-  implicit object ColumnTypeJsonFormat extends RootJsonFormat[ColumnType] {
-    def write(c: ColumnType) = JsString(c.stringRep)
+  implicit object ColumnTypeJsonFormat extends RootJsonFormat[ColumnType[_]] {
+    def write(c: ColumnType[_]) = JsString(c.stringRep)
 
     def read(value: JsValue) = value match {
       case JsString(string) => ColumnType.fromString(string).get

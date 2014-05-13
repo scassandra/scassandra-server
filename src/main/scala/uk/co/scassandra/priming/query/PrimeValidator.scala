@@ -52,7 +52,7 @@ class PrimeValidator {
     }
   }
 
-  private def isTypeMismatch(value: Any, columnType: ColumnType): Boolean = {
+  private def isTypeMismatch(value: Any, columnType: ColumnType[_]): Boolean = {
     try {
       convertValue(value, columnType)
       false
@@ -67,7 +67,7 @@ class PrimeValidator {
     }
   }
 
-  private def convertValue(value: Any, columnType: ColumnType): Any = {
+  private def convertValue(value: Any, columnType: ColumnType[_]): Any = {
     columnType match {
       case CqlVarchar | CqlAscii | CqlText =>
         value.asInstanceOf[String]

@@ -1,27 +1,103 @@
 package uk.co.scassandra.cqlmessages
 
-abstract class ColumnType(val code : Short, val stringRep: String)
+import akka.util.ByteIterator
+import java.util.UUID
+import java.net.InetAddress
 
-case object CqlAscii extends ColumnType(0x0001, "ascii")
-case object CqlBigint extends ColumnType(0x0002, "bigint")
-case object CqlBlob extends ColumnType(0x0003, "blob")
-case object CqlBoolean extends ColumnType(0x0004, "boolean")
-case object CqlCounter extends ColumnType(0x0005, "counter")
-case object CqlDecimal extends ColumnType(0x0006, "decimal")
-case object CqlDouble extends ColumnType(0x0007, "double")
-case object CqlFloat extends ColumnType(0x0008, "float")
-case object CqlInt extends ColumnType(0x0009, "int")
-case object CqlText extends ColumnType(0x000A, "text")
-case object CqlTimestamp extends ColumnType(0x000B, "timestamp")
-case object CqlUUID extends ColumnType(0x000C, "uuid")
-case object CqlVarchar extends ColumnType(0x000D, "varchar")
-case object CqlVarint extends ColumnType(0x000E, "varint")
-case object CqlTimeUUID extends ColumnType(0x000F, "timeuuid")
-case object CqlInet extends ColumnType(0x0010, "inet")
-case object CqlSet extends ColumnType(0x0022, "set")
+abstract class ColumnType[T](val code : Short, val stringRep: String) {
+  def readValue(byteIterator : ByteIterator) : T
+}
+
+case object CqlAscii extends ColumnType[String](0x0001, "ascii") {
+  override def readValue(byteBuffer : ByteIterator): String = {
+    CqlProtocolHelper.readLongString(byteBuffer)  
+  }
+}
+case object CqlBigint extends ColumnType[Long](0x0002, "bigint") {
+  override def readValue(byteIterator: ByteIterator): Long = {
+    CqlProtocolHelper.readBigIntValue(byteIterator)
+  }
+} 
+case object CqlBlob extends ColumnType[Array[Byte]](0x0003, "blob") {
+  override def readValue(byteIterator: ByteIterator): Array[Byte] = {
+    CqlProtocolHelper.readBlobValue(byteIterator)
+  }
+}
+case object CqlBoolean extends ColumnType[Boolean](0x0004, "boolean") {
+  override def readValue(byteIterator: ByteIterator): Boolean = {
+    CqlProtocolHelper.readBooleanValue(byteIterator)
+  }
+}
+case object CqlCounter extends ColumnType[Long](0x0005, "counter") {
+  override def readValue(byteIterator: ByteIterator): Long = {
+    CqlProtocolHelper.readBigIntValue(byteIterator)
+  }
+}
+case object CqlDecimal extends ColumnType[BigDecimal](0x0006, "decimal") {
+  override def readValue(byteIterator: ByteIterator): BigDecimal = {
+    CqlProtocolHelper.readDecimalValue(byteIterator)
+  }
+}
+case object CqlDouble extends ColumnType[Double](0x0007, "double") {
+  override def readValue(byteIterator: ByteIterator): Double = {
+    CqlProtocolHelper.readDoubleValue(byteIterator)
+  }
+}
+case object CqlFloat extends ColumnType[Float](0x0008, "float") {
+  override def readValue(byteIterator: ByteIterator): Float = {
+    CqlProtocolHelper.readFloatValue(byteIterator)
+  }
+}
+case object CqlInt extends ColumnType[Int](0x0009, "int") {
+  override def readValue(byteIterator: ByteIterator): Int = {
+    CqlProtocolHelper.readIntValue(byteIterator)
+  }
+}
+case object CqlText extends ColumnType[String](0x000A, "text") {
+  override def readValue(byteIterator: ByteIterator): String = {
+    CqlProtocolHelper.readLongString(byteIterator)
+  }
+}
+case object CqlTimestamp extends ColumnType[Long](0x000B, "timestamp") {
+  override def readValue(byteIterator: ByteIterator): Long = {
+    CqlProtocolHelper.readTimestampValue(byteIterator)
+  }
+}
+case object CqlUUID extends ColumnType[UUID](0x000C, "uuid") {
+  override def readValue(byteIterator: ByteIterator): UUID = {
+    CqlProtocolHelper.readUUIDValue(byteIterator)
+  }
+
+}
+case object CqlVarchar extends ColumnType[String](0x000D, "varchar") {
+  override def readValue(byteIterator: ByteIterator): String = {
+    CqlProtocolHelper.readLongString(byteIterator)
+  }
+}
+case object CqlVarint extends ColumnType[BigInt](0x000E, "varint") {
+  override def readValue(byteIterator: ByteIterator): BigInt = {
+    CqlProtocolHelper.readVarintValue(byteIterator)
+  }
+}
+case object CqlTimeUUID extends ColumnType[UUID](0x000F, "timeuuid") {
+  override def readValue(byteIterator: ByteIterator): UUID = {
+    CqlProtocolHelper.readUUIDValue(byteIterator)
+  }
+}
+case object CqlInet extends ColumnType[InetAddress](0x0010, "inet") {
+  override def readValue(byteIterator: ByteIterator): InetAddress = {
+    CqlProtocolHelper.readInetValue(byteIterator)
+  }
+}
+// only supports strings for now.
+case object CqlSet extends ColumnType[Set[String]](0x0022, "set") {
+  override def readValue(byteIterator: ByteIterator): Set[String] = {
+    CqlProtocolHelper.readVarcharSetValue(byteIterator)
+  }
+}
 
 object ColumnType {
-  val ColumnTypeMapping = Map[String, ColumnType](
+  val ColumnTypeMapping = Map[String, ColumnType[_]](
     CqlInt.stringRep -> CqlInt,
     CqlBoolean.stringRep -> CqlBoolean,
     CqlAscii.stringRep -> CqlAscii,
@@ -41,7 +117,7 @@ object ColumnType {
     CqlVarchar.stringRep -> CqlVarchar
   )
 
-  def fromString(string: String) : Option[ColumnType] = {
+  def fromString(string: String) : Option[ColumnType[_]] = {
     ColumnTypeMapping.get(string.toLowerCase( ))
   }
 }
