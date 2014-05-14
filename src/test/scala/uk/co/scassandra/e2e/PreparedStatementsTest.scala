@@ -11,7 +11,7 @@ import java.util.{UUID, Date}
 import com.datastax.driver.core.utils.UUIDs
 import java.net.InetAddress
 import java.util
-import com.datastax.driver.core.Row
+import com.datastax.driver.core.{ConsistencyLevel, Row}
 import uk.co.scassandra.priming.{Unavailable, WriteTimeout, ReadTimeout}
 import com.datastax.driver.core.exceptions.{UnavailableException, WriteTimeoutException, ReadTimeoutException}
 
@@ -137,6 +137,26 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
     val results = result.all()
     results.size() should equal(1)
     results.get(0).getString("name") should equal("Chris")
+  }
+
+  test("Prime for a specific consistency. Expecting no results for a different consistency.") {
+    //given
+    val preparedStatementText: String = "select * from people where name = ?"
+    val consistencyToPrime = List(TWO)
+    PrimingHelper.primePreparedStatement(
+      WhenPreparedSingle(preparedStatementText, Some(consistencyToPrime)),
+      ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))
+    )
+    val preparedStatement = session.prepare(preparedStatementText)
+    preparedStatement.setConsistencyLevel(ConsistencyLevel.ONE)
+    val boundStatement = preparedStatement.bind("Chris")
+
+    //when
+    val result = session.execute(boundStatement)
+
+    //then
+    val results = result.all()
+    results.size() should equal(0)
   }
 
   ignore("Type mis-match exceptions") {}

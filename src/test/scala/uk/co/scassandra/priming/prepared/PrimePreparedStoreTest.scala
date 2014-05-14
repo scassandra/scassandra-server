@@ -2,8 +2,11 @@ package uk.co.scassandra.priming.prepared
 
 import org.scalatest.{Matchers, FunSuite}
 import uk.co.scassandra.priming.query.{Prime, PrimeMatch}
-import uk.co.scassandra.cqlmessages.{CqlInet, CqlVarchar}
+import uk.co.scassandra.cqlmessages._
 import uk.co.scassandra.priming.ReadTimeout
+import uk.co.scassandra.priming.query.PrimeMatch
+import scala.Some
+import uk.co.scassandra.priming.query.Prime
 
 class PrimePreparedStoreTest extends FunSuite with Matchers {
 
@@ -127,5 +130,24 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     underTest.clear()
     //then
     underTest.state.size should equal(0)
+  }
+
+  test("Priming consistency. Should match on consistency.") {
+    val underTest = new PrimePreparedStore
+    val query: String = "select * from people where name = ?"
+    val consistencies = List(ONE, TWO)
+    val when = WhenPreparedSingle(query, Some(consistencies))
+    val then = ThenPreparedSingle(Some(List()))
+    val prime = PrimePreparedSingle(when, then)
+    underTest.record(prime)
+    //when
+    val primeForOne = underTest.findPrime(PrimeMatch(query, ONE))
+    val primeForTwo = underTest.findPrime(PrimeMatch(query, TWO))
+    val primeForAll = underTest.findPrime(PrimeMatch(query, ALL))
+    //then
+    primeForOne.isDefined should equal(true)
+    primeForTwo.isDefined should equal(true)
+    primeForAll.isDefined should equal(false)
+
   }
 }
