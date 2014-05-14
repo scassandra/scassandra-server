@@ -14,8 +14,16 @@ import java.util
 import com.datastax.driver.core.{ConsistencyLevel, Row}
 import uk.co.scassandra.priming.{Unavailable, WriteTimeout, ReadTimeout}
 import com.datastax.driver.core.exceptions.{UnavailableException, WriteTimeoutException, ReadTimeoutException}
+import org.scalatest.BeforeAndAfter
+import dispatch._, Defaults._
 
-class PreparedStatementsTest extends AbstractIntegrationTest {
+class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter {
+
+  before {
+    val svc = url("http://localhost:8043/prime-prepared-single").DELETE
+    val response = Http(svc OK as.String)
+    response()
+  }
   test("Prepared statement without priming - no params") {
     //given
     val preparedStatement = session.prepare("select * from people")
@@ -158,6 +166,10 @@ class PreparedStatementsTest extends AbstractIntegrationTest {
     val results = result.all()
     results.size() should equal(0)
   }
+
+  ignore("prime for all consistencies") {}
+
+  ignore("prime for a specific consistency. Get results back.") {}
 
   ignore("Type mis-match exceptions") {}
 
