@@ -40,14 +40,17 @@ class PrimePreparedStore extends Logging {
     val primeCriteria = PrimeCriteria(query, consistencies)
 
 
-    logger.info(s"Storing Prime for Prepared Statement $primeToStore")
 
     validator.validate(primeCriteria, primeToStore.prime, state.map( existingPrime => (existingPrime._1, existingPrime._2.prime)  ) ) match {
       case PrimeAddSuccess => {
+        logger.info(s"Storing prime for prepared statement $primeToStore")
         state += (primeCriteria -> primeToStore)
         PrimeAddSuccess
       }
-      case notSuccess: PrimeAddResult => notSuccess
+      case notSuccess: PrimeAddResult => {
+        logger.info(s"Storing prime for prepared statement $primeToStore failed due to $notSuccess")
+        notSuccess
+      }
     }
   }
 
