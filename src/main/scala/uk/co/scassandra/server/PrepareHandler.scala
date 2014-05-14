@@ -52,7 +52,7 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
       val preparedStatement = preparedStatementsToId.get(executeRequest.id)
 
       if (preparedStatement.isDefined) {        
-        val prime = primePreparedStore.findPrime(PrimeMatch(preparedStatement.get))
+        val prime = primePreparedStore.findPrime(PrimeMatch(preparedStatement.get, executeRequest.consistency))
         logger.debug(s"Prime for prepared statement query: $preparedStatement prime: $prime")
         prime match {
           case Some(preparedPrime) => {

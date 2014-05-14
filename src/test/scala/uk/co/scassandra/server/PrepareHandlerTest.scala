@@ -116,15 +116,16 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
 
   }
 
-  test("Should look up prepared prime in store") {
+  test("Should look up prepared prime in store with consistency & query") {
     val stream: Byte = 0x02
     val query = "select * from something where name = ?"
     val preparedStatementId = sendPrepareAndCaptureId(stream, query)
+    val consistency = THREE
 
-    val executeBody: ByteString = ExecuteRequest(protocolVersion, stream, preparedStatementId).serialize().drop(8);
+    val executeBody: ByteString = ExecuteRequest(protocolVersion, stream, preparedStatementId, consistency).serialize().drop(8);
     underTest ! PrepareHandlerMessages.Execute(executeBody, stream, cqlMessageFactory, testProbeForTcpConnection.ref)
 
-    verify(primePreparedStore).findPrime(PrimeMatch(query))
+    verify(primePreparedStore).findPrime(PrimeMatch(query, consistency))
   }
 
   test("Should create rows message if prime matches") {

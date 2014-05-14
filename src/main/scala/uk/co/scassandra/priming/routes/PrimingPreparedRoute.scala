@@ -31,9 +31,9 @@ trait PrimingPreparedRoute extends HttpService with Logging {
       } ~
       get {
         complete {
-          val preparedPrimes: Iterable[PrimePreparedSingle] = primePreparedStore.retrievePrimes().map({case (query, preparedPrime) =>
+          val preparedPrimes: Iterable[PrimePreparedSingle] = primePreparedStore.retrievePrimes().map({case (primeCriteria, preparedPrime) =>
             PrimePreparedSingle(
-              WhenPreparedSingle(query),
+              WhenPreparedSingle(primeCriteria.query),
               ThenPreparedSingle(
                 Some(preparedPrime.prime.rows),
                 Some(preparedPrime.variableTypes),

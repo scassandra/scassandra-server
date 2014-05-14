@@ -12,7 +12,7 @@ import uk.co.scassandra.priming.prepared.WhenPreparedSingle
 import scala.Some
 import uk.co.scassandra.priming.prepared.PrimePreparedSingle
 import uk.co.scassandra.cqlmessages.{CqlVarchar, CqlInt}
-import uk.co.scassandra.priming.query.Prime
+import uk.co.scassandra.priming.query.{PrimeCriteria, Prime}
 
 class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRouteTest with PrimingPreparedRoute with MockitoSugar {
 
@@ -43,7 +43,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
 
   describe("Retrieving of primes") {
     it("should return empty list when there are no primes") {
-      val existingPrimes : Map[String, PreparedPrime] = Map()
+      val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map()
       when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
 
       Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
@@ -54,8 +54,8 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     it("should convert variable types in original Json Format") {
       val query: String = "select * from people where name = ?"
       val variableTypes = List(CqlVarchar, CqlInt)
-      val existingPrimes : Map[String, PreparedPrime] = Map(
-        query -> PreparedPrime(variableTypes, Prime())
+      val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map(
+        PrimeCriteria(query, List()) -> PreparedPrime(variableTypes, Prime())
       )
       when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
 
@@ -68,8 +68,8 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
 
     it("should put query in original Json Format") {
       val query: String = "select * from people where name = ?"
-      val existingPrimes : Map[String, PreparedPrime] = Map(
-        query -> PreparedPrime(List(), Prime())
+      val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map(
+        PrimeCriteria(query, List()) -> PreparedPrime(List(), Prime())
       )
       when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
 
@@ -83,8 +83,8 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     it("should convert rows to the original Json Format") {
       val query: String = "select * from people where name = ?"
       val rows = List(Map("name" -> "Chris"))
-      val existingPrimes : Map[String, PreparedPrime] = Map(
-        query -> PreparedPrime(List(), Prime(rows))
+      val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map(
+        PrimeCriteria(query, List()) -> PreparedPrime(List(), Prime(rows))
       )
       when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
 
@@ -98,8 +98,8 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     it("should convert column types to the original Json Format") {
       val query: String = "select * from people where name = ?"
       val columnTypes = Map("name" -> CqlVarchar)
-      val existingPrimes : Map[String, PreparedPrime] = Map(
-        query -> PreparedPrime(List(), Prime(columnTypes = columnTypes))
+      val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map(
+        PrimeCriteria(query, List()) -> PreparedPrime(List(), Prime(columnTypes = columnTypes))
       )
       when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
 
@@ -112,8 +112,8 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
 
     it("should convert result to the original Json Format") {
       val query: String = "select * from people where name = ?"
-      val existingPrimes : Map[String, PreparedPrime] = Map(
-        query -> PreparedPrime(List(), Prime(result = ReadTimeout))
+      val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map(
+        PrimeCriteria(query, List()) -> PreparedPrime(List(), Prime(result = ReadTimeout))
       )
       when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
 
@@ -124,5 +124,8 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       }
     }
 
+    it("should convert consistencies to the original Json Format") {
+      1 should equal(2)
+    }
   }
 }

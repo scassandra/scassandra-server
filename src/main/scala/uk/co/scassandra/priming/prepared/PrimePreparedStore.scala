@@ -1,14 +1,14 @@
 package uk.co.scassandra.priming.prepared
 
-import uk.co.scassandra.priming.query.{Prime, PrimeMatch}
+import uk.co.scassandra.priming.query.{PrimeCriteria, Prime, PrimeMatch}
 import uk.co.scassandra.priming.routes.PrimeQueryResultExtractor
-import uk.co.scassandra.cqlmessages.{CqlVarchar, ColumnType}
+import uk.co.scassandra.cqlmessages.{Consistency, CqlVarchar, ColumnType}
 import uk.co.scassandra.priming.Success
 import com.typesafe.scalalogging.slf4j.Logging
 
 class PrimePreparedStore extends Logging {
 
-  var state: Map[String, PreparedPrime] = Map()
+  var state: Map[PrimeCriteria, PreparedPrime] = Map()
 
   def retrievePrimes() = state
 
@@ -29,12 +29,19 @@ class PrimePreparedStore extends Logging {
     val providedColTypes = prime.then.column_types
     val colTypes = PrimeQueryResultExtractor.convertStringColumnTypes(providedColTypes, rows)
     val primeToStore: PreparedPrime = PreparedPrime(variableTypes, prime = Prime(rows, columnTypes = colTypes, result = result))
+
+    val consistencies = prime.when.consistency.getOrElse(Consistency.all)
+    val primeCriteria = PrimeCriteria(query, consistencies)
     logger.info(s"Storing Prime for Prepared Statement $primeToStore")
-    state += (query -> primeToStore)
+    state += (primeCriteria -> primeToStore)
   }
 
   def findPrime(primeMatch : PrimeMatch) : Option[PreparedPrime] = {
-    state.get(primeMatch.query)
+    def findPrime: ((PrimeCriteria, PreparedPrime)) => Boolean = {
+      entry => entry._1.query == primeMatch.query &&
+        entry._1.consistency.contains(primeMatch.consistency)
+    }
+    state.find(findPrime).map(_._2)
   }
 
   def clear() = {

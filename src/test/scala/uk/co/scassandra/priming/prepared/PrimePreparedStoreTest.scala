@@ -148,6 +148,24 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     primeForOne.isDefined should equal(true)
     primeForTwo.isDefined should equal(true)
     primeForAll.isDefined should equal(false)
+  }
 
+  test("Priming Consistency. Should default to all consistencies") {
+    val underTest = new PrimePreparedStore
+    val query: String = "select * from people where name = ?"
+    val when = WhenPreparedSingle(query, None)
+    val then = ThenPreparedSingle(Some(List()))
+    val prime = PrimePreparedSingle(when, then)
+    underTest.record(prime)
+    //when
+    val primeForOne = underTest.findPrime(PrimeMatch(query, ONE))
+    val primeForTwo = underTest.findPrime(PrimeMatch(query, TWO))
+    val primeForAll = underTest.findPrime(PrimeMatch(query, ALL))
+    val primeForLocalOne = underTest.findPrime(PrimeMatch(query, LOCAL_ONE))
+    //then
+    primeForOne.isDefined should equal(true)
+    primeForTwo.isDefined should equal(true)
+    primeForAll.isDefined should equal(true)
+    primeForLocalOne.isDefined should equal(true)
   }
 }
