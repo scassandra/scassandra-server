@@ -2,9 +2,7 @@ package uk.co.scassandra
 
 import java.net.{Socket, ConnectException}
 import org.scalatest.{Matchers, BeforeAndAfterAll, BeforeAndAfter, FunSuite}
-import uk.co.scassandra.server.ServerStubAsThread
-import com.datastax.driver.core.{ConsistencyLevel, Session, Cluster}
-import uk.co.scassandra.priming._
+import com.datastax.driver.core.{Session, Cluster}
 import dispatch._, Defaults._
 import spray.json._
 import scala.Some
@@ -40,7 +38,7 @@ object PrimingHelper {
 }
 
 abstract class AbstractIntegrationTest(clusterConnect : Boolean = true) extends FunSuite with Matchers with BeforeAndAfter with BeforeAndAfterAll {
-  var serverThread: ServerStubAsThread = null
+  var serverThread: ServerStubRunner = null
 
   var cluster: Cluster = _
   var session: Session = _
@@ -50,7 +48,7 @@ abstract class AbstractIntegrationTest(clusterConnect : Boolean = true) extends 
   }
 
   def startServerStub() = {
-    serverThread = ServerStubAsThread()
+    serverThread = new ServerStubRunner()
     serverThread.start()
     Thread.sleep(3000)
   }
@@ -61,7 +59,7 @@ abstract class AbstractIntegrationTest(clusterConnect : Boolean = true) extends 
   }
 
   def priming() = {
-    serverThread.serverStub.primedResults
+    serverThread.primedResults
   }
 
   override def beforeAll() {

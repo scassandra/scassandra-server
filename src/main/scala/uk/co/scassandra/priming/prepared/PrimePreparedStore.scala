@@ -2,14 +2,12 @@ package uk.co.scassandra.priming.prepared
 
 import uk.co.scassandra.priming.query._
 import uk.co.scassandra.priming.routes.PrimeQueryResultExtractor
-import uk.co.scassandra.cqlmessages.{Consistency, CqlVarchar, ColumnType}
+import uk.co.scassandra.cqlmessages.{Consistency, CqlVarchar}
 import uk.co.scassandra.priming.Success
 import com.typesafe.scalalogging.slf4j.Logging
-import uk.co.scassandra.priming.prepared.PreparedPrime
 import uk.co.scassandra.priming.query.PrimeCriteria
 import uk.co.scassandra.priming.query.PrimeMatch
 import scala.Some
-import uk.co.scassandra.priming.prepared.PrimePreparedSingle
 import uk.co.scassandra.priming.query.Prime
 
 class PrimePreparedStore extends Logging {

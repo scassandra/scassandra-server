@@ -18,7 +18,9 @@ object ServerStubRunner extends Logging {
       binaryPortNumber = binaryPort.toInt
       adminPortNumber = adminPort.toInt
     }
-    new ServerStubRunner(binaryPortNumber, adminPortNumber).start()
+    val ss = new ServerStubRunner(binaryPortNumber, adminPortNumber)
+    ss.start()
+    ss.awaitTermination()
   }
 }
 
@@ -33,11 +35,10 @@ class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber : I
     system = ActorSystem("CassandraServerStub")
     system.actorOf(Props(classOf[TcpServer], serverPortNumber, primedResults, primePreparedStore))
     system.actorOf(Props(classOf[PrimingServer], adminPortNumber, primedResults, primePreparedStore))
-    system.awaitTermination()
   }
 
-  def awaitStart() = {
-
+  def awaitTermination() = {
+    system.awaitTermination()
   }
 
   def shutdown() = {
