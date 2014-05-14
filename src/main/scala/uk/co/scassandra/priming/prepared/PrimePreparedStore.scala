@@ -1,23 +1,31 @@
 package uk.co.scassandra.priming.prepared
 
-import uk.co.scassandra.priming.query.{PrimeCriteria, Prime, PrimeMatch}
+import uk.co.scassandra.priming.query._
 import uk.co.scassandra.priming.routes.PrimeQueryResultExtractor
 import uk.co.scassandra.cqlmessages.{Consistency, CqlVarchar, ColumnType}
 import uk.co.scassandra.priming.Success
 import com.typesafe.scalalogging.slf4j.Logging
+import uk.co.scassandra.priming.prepared.PreparedPrime
+import uk.co.scassandra.priming.query.PrimeCriteria
+import uk.co.scassandra.priming.query.PrimeMatch
+import scala.Some
+import uk.co.scassandra.priming.prepared.PrimePreparedSingle
+import uk.co.scassandra.priming.query.Prime
 
 class PrimePreparedStore extends Logging {
+
+  val validator: PrimeValidator = PrimeValidator()
 
   var state: Map[PrimeCriteria, PreparedPrime] = Map()
 
   def retrievePrimes() = state
 
-  def record(prime: PrimePreparedSingle) = {
+  def record(prime: PrimePreparedSingle) : PrimeAddResult= {
     val rows = prime.then.rows.getOrElse(List())
     val query = prime.when.query
     val result = prime.then.result.getOrElse(Success)
     val numberOfParameters = query.toCharArray.filter(_ == '?').size
-    val variableTypes = prime.then.variable_types match {
+    val variableTypesDefaultedToVarchar = prime.then.variable_types match {
       case Some(varTypes) => {
         val defaults = (0 until numberOfParameters).map(num => CqlVarchar).toList
         varTypes ++ (defaults drop varTypes.size)
@@ -28,12 +36,21 @@ class PrimePreparedStore extends Logging {
     }
     val providedColTypes = prime.then.column_types
     val colTypes = PrimeQueryResultExtractor.convertStringColumnTypes(providedColTypes, rows)
-    val primeToStore: PreparedPrime = PreparedPrime(variableTypes, prime = Prime(rows, columnTypes = colTypes, result = result))
+    val primeToStore: PreparedPrime = PreparedPrime(variableTypesDefaultedToVarchar, prime = Prime(rows, columnTypes = colTypes, result = result))
 
     val consistencies = prime.when.consistency.getOrElse(Consistency.all)
     val primeCriteria = PrimeCriteria(query, consistencies)
+
+
     logger.info(s"Storing Prime for Prepared Statement $primeToStore")
-    state += (primeCriteria -> primeToStore)
+
+    validator.validate(primeCriteria, primeToStore.prime, state.map( existingPrime => (existingPrime._1, existingPrime._2.prime)  ) ) match {
+      case PrimeAddSuccess => {
+        state += (primeCriteria -> primeToStore)
+        PrimeAddSuccess
+      }
+      case notSuccess: PrimeAddResult => notSuccess
+    }
   }
 
   def findPrime(primeMatch : PrimeMatch) : Option[PreparedPrime] = {

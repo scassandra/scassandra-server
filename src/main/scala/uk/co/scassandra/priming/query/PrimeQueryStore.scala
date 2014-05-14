@@ -17,9 +17,10 @@ class PrimeQueryStore extends Logging {
     logger.info(s"Adding prime with criteria $criteria and prime result $prime")
 
     validator.validate(criteria, prime, queryToResults) match {
-      case PrimeAddSuccess =>
+      case PrimeAddSuccess => {
         queryToResults += (criteria -> prime)
         PrimeAddSuccess
+      }
       case notSuccess: PrimeAddResult => notSuccess
     }
   }

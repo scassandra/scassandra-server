@@ -195,11 +195,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     results.size() should equal(1)
     results.get(0).getString("name") should equal("Chris")
   }
-
-  ignore("Type mis-match exceptions") {
-
-  }
-
+  
   test("Conflicting primes") {
     //given
     val preparedStatementText = "select * from people where name = ?"
@@ -217,15 +213,12 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
       prime.toString <:<
       Map("Content-Type" -> "application/json")
 
-    val response: Either[Throwable, String] = Http(svc > as.String).either()
+    val response = Http(svc > as.String)
 
-    response match {
-      case Left(exception) => {
-        println(exception);
-      }
-      case Right(success) => {
-        fail("Expected a 400 due to conflicting primes.")
-      }
+    whenReady(response) {
+      result =>
+        val conflictingPrime = JsonParser(result).convertTo[ConflictingPrimes]
+        conflictingPrime.existingPrimes.size should equal(1)
     }
   }
 

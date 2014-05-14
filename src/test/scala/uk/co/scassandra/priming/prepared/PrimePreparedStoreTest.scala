@@ -1,7 +1,7 @@
 package uk.co.scassandra.priming.prepared
 
 import org.scalatest.{Matchers, FunSuite}
-import uk.co.scassandra.priming.query.{Prime, PrimeMatch}
+import uk.co.scassandra.priming.query._
 import uk.co.scassandra.cqlmessages._
 import uk.co.scassandra.priming.ReadTimeout
 import uk.co.scassandra.priming.query.PrimeMatch
@@ -78,13 +78,14 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     val query: String = "select * from people where name = ? and age = ?"
     val when = WhenPreparedSingle(query)
     val rows: List[Map[String, Any]] = List(Map("one"->"two"))
-    val columnTypes = Map("one"->CqlInet)
-    val then = ThenPreparedSingle(Some(rows), column_types = Some(columnTypes))
+    val columnTypes = Map("one"->CqlText)
+    val then: ThenPreparedSingle = ThenPreparedSingle(Some(rows), column_types = Some(columnTypes))
     val prime = PrimePreparedSingle(when, then)
     //when
-    underTest.record(prime)
+    val result = underTest.record(prime)
     val actualPrime = underTest.findPrime(PrimeMatch(query))
     //then
+    result should equal(PrimeAddSuccess)
     actualPrime.get should equal(PreparedPrime(List(CqlVarchar, CqlVarchar), prime = Prime(rows, columnTypes = columnTypes)))
   }
 
@@ -94,14 +95,14 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     val query: String = "select * from people where name = ? and age = ?"
     val when = WhenPreparedSingle(query)
     val rows: List[Map[String, Any]] = List(Map("column_type_specified" -> "two","column_type_not_specified"->"three"))
-    val columnTypes = Map("column_type_specified" -> CqlInet)
+    val columnTypes = Map("column_type_specified" -> CqlText)
     val then = ThenPreparedSingle(Some(rows), column_types = Some(columnTypes))
     val prime = PrimePreparedSingle(when, then)
     //when
     underTest.record(prime)
     val actualPrime = underTest.findPrime(PrimeMatch(query))
     //then
-    val expectedColumnTypes = Map("column_type_specified" -> CqlInet, "column_type_not_specified" -> CqlVarchar)
+    val expectedColumnTypes = Map("column_type_specified" -> CqlText, "column_type_not_specified" -> CqlVarchar)
     actualPrime.get should equal(PreparedPrime(List(CqlVarchar, CqlVarchar), prime = Prime(rows, columnTypes = expectedColumnTypes)))
   }
 
@@ -167,5 +168,18 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     primeForTwo.isDefined should equal(true)
     primeForAll.isDefined should equal(true)
     primeForLocalOne.isDefined should equal(true)
+  }
+  
+  test("Conflicting primes") {
+    val underTest = new PrimePreparedStore
+    val query: String = "select * from people where name = ?"
+    val then = ThenPreparedSingle(Some(List()))
+    val primeForOneAndTwo = PrimePreparedSingle(WhenPreparedSingle(query, Some(List(ONE, TWO))), then)
+    val primeForTwoAndThree = PrimePreparedSingle(WhenPreparedSingle(query, Some(List(TWO, THREE))), then)
+    //when
+    underTest.record(primeForOneAndTwo)
+    val result = underTest.record(primeForTwoAndThree)
+    //then
+    result.isInstanceOf[ConflictingPrimes] should equal(true)
   }
 }

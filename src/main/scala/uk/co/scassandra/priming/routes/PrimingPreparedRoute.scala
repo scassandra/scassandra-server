@@ -6,6 +6,7 @@ import spray.http.StatusCodes
 import uk.co.scassandra.priming.{PrimingJsonImplicits}
 import uk.co.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedStore, PrimePreparedSingle}
 import scala.collection.immutable.Iterable
+import uk.co.scassandra.priming.query.{TypeMismatches, ConflictingPrimes}
 
 trait PrimingPreparedRoute extends HttpService with Logging {
 
@@ -18,8 +19,11 @@ trait PrimingPreparedRoute extends HttpService with Logging {
       post {
         entity(as[PrimePreparedSingle]) { prime =>
           complete {
-            primePreparedStore.record(prime)
-            StatusCodes.OK
+            primePreparedStore.record(prime) match {
+              case cp: ConflictingPrimes => StatusCodes.BadRequest -> cp
+              case tm: TypeMismatches => StatusCodes.BadRequest -> tm
+              case _ => StatusCodes.OK
+            }
           }
         }
       } ~
@@ -33,7 +37,7 @@ trait PrimingPreparedRoute extends HttpService with Logging {
         complete {
           val preparedPrimes: Iterable[PrimePreparedSingle] = primePreparedStore.retrievePrimes().map({case (primeCriteria, preparedPrime) =>
             PrimePreparedSingle(
-              WhenPreparedSingle(primeCriteria.query),
+              WhenPreparedSingle(primeCriteria.query, Some(primeCriteria.consistency)),
               ThenPreparedSingle(
                 Some(preparedPrime.prime.rows),
                 Some(preparedPrime.variableTypes),
