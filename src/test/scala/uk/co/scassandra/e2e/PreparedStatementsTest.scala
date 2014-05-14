@@ -1,9 +1,9 @@
 package uk.co.scassandra.e2e
 
+import org.scalatest.concurrent.ScalaFutures
 import uk.co.scassandra.{PrimingHelper, AbstractIntegrationTest}
 import uk.co.scassandra.cqlmessages._
-import uk.co.scassandra.priming.prepared.ThenPreparedSingle
-import uk.co.scassandra.priming.prepared.WhenPreparedSingle
+import uk.co.scassandra.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
 import scala.Some
 import java.nio.ByteBuffer
 import akka.util.ByteString
@@ -12,12 +12,20 @@ import com.datastax.driver.core.utils.UUIDs
 import java.net.InetAddress
 import java.util
 import com.datastax.driver.core.{ConsistencyLevel, Row}
-import uk.co.scassandra.priming.{Unavailable, WriteTimeout, ReadTimeout}
+import uk.co.scassandra.priming.{Connection, Unavailable, WriteTimeout, ReadTimeout}
 import com.datastax.driver.core.exceptions.{UnavailableException, WriteTimeoutException, ReadTimeoutException}
 import org.scalatest.BeforeAndAfter
 import dispatch._, Defaults._
+import spray.json._
+import uk.co.scassandra.priming.prepared.ThenPreparedSingle
+import uk.co.scassandra.priming.prepared.WhenPreparedSingle
+import scala.Some
+import uk.co.scassandra.priming.prepared.PrimePreparedSingle
+import uk.co.scassandra.priming.query.ConflictingPrimes
 
-class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter {
+class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
+
+  import uk.co.scassandra.priming.PrimingJsonImplicits._
 
   before {
     val svc = url("http://localhost:8043/prime-prepared-single").DELETE
@@ -167,11 +175,59 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     results.size() should equal(0)
   }
 
-  ignore("prime for all consistencies") {}
+  test("prime for a specific consistency. Get results back.") {
+    //given
+    val preparedStatementText: String = "select * from people where name = ?"
+    val consistencyToPrime = List(QUORUM)
+    PrimingHelper.primePreparedStatement(
+      WhenPreparedSingle(preparedStatementText, Some(consistencyToPrime)),
+      ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))
+    )
+    val preparedStatement = session.prepare(preparedStatementText)
+    preparedStatement.setConsistencyLevel(ConsistencyLevel.QUORUM)
+    val boundStatement = preparedStatement.bind("Chris")
 
-  ignore("prime for a specific consistency. Get results back.") {}
+    //when
+    val result = session.execute(boundStatement)
 
-  ignore("Type mis-match exceptions") {}
+    //then
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getString("name") should equal("Chris")
+  }
+
+  ignore("Type mis-match exceptions") {
+
+  }
+
+  test("Conflicting primes") {
+    //given
+    val preparedStatementText = "select * from people where name = ?"
+    val consistencyOneAndTwo = List(ONE, TWO)
+    PrimingHelper.primePreparedStatement(
+      WhenPreparedSingle(preparedStatementText, Some(consistencyOneAndTwo)),
+      ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))
+    )
+
+    //when
+    val consistencyTwoAndThree = List(TWO, THREE)
+    val prime = PrimePreparedSingle(WhenPreparedSingle(preparedStatementText, Some(consistencyTwoAndThree)),
+      ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))).toJson
+    val svc = url("http://localhost:8043/prime-prepared-single") <<
+      prime.toString <:<
+      Map("Content-Type" -> "application/json")
+
+    val response: Either[Throwable, String] = Http(svc > as.String).either()
+
+    response match {
+      case Left(exception) => {
+        println(exception);
+      }
+      case Right(success) => {
+        fail("Expected a 400 due to conflicting primes.")
+      }
+    }
+  }
 
   test("Prepared statement - priming numeric parameters") {
     //given
