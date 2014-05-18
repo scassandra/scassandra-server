@@ -52,8 +52,8 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
             }
           }
           case None => {
-            logger.debug("Sending void result")
-            tcpConnection ! Write(msgFactory.createVoidMessage(stream).serialize())
+            logger.debug("Sending empty results")
+            tcpConnection ! Write(msgFactory.createEmptyRowsMessage(stream).serialize())
           }
           case msg@_ => {
             logger.info(s"Received unexpected result back from primed results: $msg")

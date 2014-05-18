@@ -35,6 +35,9 @@ object VersionOneMessageFactory extends CqlMessageFactory {
   def createRowsMessage(prime: Prime, stream: Byte): Rows = {
     Rows(prime.keyspace, prime.table, stream, prime.columnTypes, prime.rows.map(row => Row(row)))
   }
+  def createEmptyRowsMessage(stream: Byte): Rows = {
+    Rows("","",stream,Map[String, ColumnType[_]](), List())
+  }
 
   def createReadTimeoutMessage(stream: Byte): ReadRequestTimeout = {
     ReadRequestTimeout(stream)

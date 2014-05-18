@@ -35,6 +35,10 @@ object VersionTwoMessageFactory extends CqlMessageFactory {
     Rows(prime.keyspace, prime.table, stream, prime.columnTypes, prime.rows.map(row => Row(row)))
   }
 
+  def createEmptyRowsMessage(stream: Byte): Rows = {
+    Rows("","",stream,Map[String, ColumnType[_]](), List())
+  }
+
   def createReadTimeoutMessage(stream: Byte): ReadRequestTimeout = {
     ReadRequestTimeout(stream)
   }
@@ -62,4 +66,6 @@ object VersionTwoMessageFactory extends CqlMessageFactory {
   def parseExecuteRequestWithVariables(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): ExecuteRequest = {
     ExecuteRequest.versionTwoWithTypes(stream, byteString, variableTypes)
   }
+
+
 }

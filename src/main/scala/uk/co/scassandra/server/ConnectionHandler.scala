@@ -92,7 +92,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
       case OpCodes.Register => {
         logger.debug("Received register message. Sending to RegisterHandler")
         val registerHandler = registerHandlerFactory(context, sender, cqlMessageFactory)
-        registerHandler ! RegisterHandlerMessages.Register(messageBody)
+        registerHandler ! RegisterHandlerMessages.Register(messageBody, stream)
       }
       case OpCodes.Prepare => {
         logger.debug("Received prepare message. Sending to PrepareHandler")

@@ -18,6 +18,7 @@ trait CqlMessageFactory {
   def createQueryBeforeErrorMessage() : QueryBeforeReadyMessage
   def createSetKeyspaceMessage(keyspaceName: String, stream: Byte): SetKeyspace
   def createRowsMessage(prime: Prime, stream: Byte): Rows
+  def createEmptyRowsMessage(stream: Byte): Rows
   def createReadTimeoutMessage(stream: Byte): ReadRequestTimeout
   def createWriteTimeoutMessage(stream: Byte): WriteRequestTimeout
   def createUnavailableMessage(stream: Byte): UnavailableException

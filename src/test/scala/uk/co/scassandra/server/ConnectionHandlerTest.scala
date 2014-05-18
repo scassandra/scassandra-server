@@ -170,23 +170,25 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
   test("Should forward register message to RegisterHandler - version two protocol") {
     sendStartupMessage()
+    val stream : Byte = 1
 
-    val registerMessage = MessageHelper.createRegisterMessage(ProtocolVersion.ClientProtocolVersionTwo)
+    val registerMessage = MessageHelper.createRegisterMessage(ProtocolVersion.ClientProtocolVersionTwo, stream)
 
     testActorRef ! Received(ByteString(registerMessage.toArray))
 
-    registerHandlerTestProbe.expectMsg(RegisterHandlerMessages.Register(ByteString(MessageHelper.dropHeaderAndLength(registerMessage.toArray))))
+    registerHandlerTestProbe.expectMsg(RegisterHandlerMessages.Register(ByteString(MessageHelper.dropHeaderAndLength(registerMessage.toArray)), stream))
     lastMsgFactoryUsedForRegister should equal(VersionTwoMessageFactory)
   }
 
   test("Should forward register message to RegisterHandler - version one protocol") {
     sendStartupMessage()
+    val stream : Byte = 1
 
-    val registerMessage = MessageHelper.createRegisterMessage(ProtocolVersion.ClientProtocolVersionOne)
+    val registerMessage = MessageHelper.createRegisterMessage(ProtocolVersion.ClientProtocolVersionOne, stream)
 
     testActorRef ! Received(ByteString(registerMessage.toArray))
 
-    registerHandlerTestProbe.expectMsg(RegisterHandlerMessages.Register(ByteString(MessageHelper.dropHeaderAndLength(registerMessage.toArray))))
+    registerHandlerTestProbe.expectMsg(RegisterHandlerMessages.Register(ByteString(MessageHelper.dropHeaderAndLength(registerMessage.toArray)), stream))
     lastMsgFactoryUsedForRegister should equal(VersionOneMessageFactory)
   }
 

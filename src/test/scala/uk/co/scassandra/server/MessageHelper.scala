@@ -39,11 +39,11 @@ object MessageHelper {
     bytes
   }
 
-  def createRegisterMessage(protocolVersion : Byte = ProtocolVersion.ClientProtocolVersionTwo) : List[Byte] = {
+  def createRegisterMessage(protocolVersion : Byte = ProtocolVersion.ClientProtocolVersionTwo, stream : Byte = 0) : List[Byte] = {
     val header = List[Byte](
       protocolVersion,
       0x0,
-      0x0,
+      stream,
       OpCodes.Register
     )
     // TOPOLOGY_CHANGE, STATUS_CHANGE, SCHEMA_CHANGE

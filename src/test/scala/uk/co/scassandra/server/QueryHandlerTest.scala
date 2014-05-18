@@ -49,14 +49,14 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
     testProbeForTcpConnection.expectMsg(Write(SetKeyspace("keyspace", stream).serialize()))
   }
 
-  test("Should return void result when PrimedResults returns None") {
+  test("Should return empty result when PrimedResults returns None") {
     val stream: Byte = 0x05
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
     when(mockPrimedResults.get(someCqlStatement)).thenReturn(None)
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(VoidResult(stream).serialize()))
+    testProbeForTcpConnection.expectMsg(Write(Rows("","",stream, Map()).serialize()))
   }
 
   test("Should return empty rows result when PrimedResults returns empty list") {
