@@ -1,4 +1,8 @@
-organization := "scassandra-server"
+import SonatypeKeys._
+
+sonatypeSettings
+
+organization := "org.scassandra"
 
 name := "scassandra-server"
 
@@ -31,9 +35,11 @@ resolvers ++= Seq(
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 
-publishTo := Some(Resolver.file("file",  new File( "../scassandra-repo/snapshots" )) )
+publishArtifact in Test := false
 
-pomExtra :=
+//publishTo := Some(Resolver.file("file",  new File( "../scassandra-repo/snapshots" )) )
+
+pomExtra := {
 <licenses>
   <license>
     <name>Apache 2</name>
@@ -41,6 +47,26 @@ pomExtra :=
     <distribution>repo</distribution>
   </license>
 </licenses>
+  <scm>
+    <connection>scm:git:github.com/scassandra/scassandra-server</connection>
+    <developerConnection>scm:git:git@github.com:scassandra/scassandra-server</developerConnection>
+    <url>github.com/scassandra/scassandra-server</url>
+  </scm>
+<developers>
+  <developer>
+    <email>christopher.batey@gmail.com</email>
+    <name>Christopher Batey</name>
+    <url>https://github.com/chbatey</url>
+    <id>chbatey</id>
+  </developer>
+  <developer>
+    <email>tepafoo@gmail.com</email>
+    <name>Dogan Narinc</name>
+    <url>https://github.com/tepafoo</url>
+    <id>tepafoo</id>
+  </developer>
+</developers>
+}
 
 /*
  *
