@@ -28,16 +28,14 @@ libraryDependencies ++= Seq(
 // http://etorreborre.github.io/specs2/guide/org.specs2.guide.Runners.html#Dependencies
 
 resolvers ++= Seq(
-  "snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
-  "releases" at "http://oss.sonatype.org/content/repositories/releases",
+  "snapshots oss" at "http://oss.sonatype.org/content/repositories/snapshots",
+  "releases oss" at "http://oss.sonatype.org/content/repositories/releases",
   "spray repo" at "http://repo.spray.io"
 )
 
 net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 publishArtifact in Test := false
-
-//publishTo := Some(Resolver.file("file",  new File( "../scassandra-repo/snapshots" )) )
 
 pomExtra := {
 <licenses>

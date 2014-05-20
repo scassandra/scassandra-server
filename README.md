@@ -11,8 +11,8 @@ It is especially aimed edge case testing such as read and write timeouts.
 It acts as a real Cassandra instance and can be primed to respond with results or with exceptions like read timeouts. It does this by implementing the server side of the CQL binary protocol.
 
 Scassandra is written in Scala but we also have a Java wrapper for use with Java unit and integration tests. Simply add the following maven repo and dependency to your pom or gradle build file.
-* Maven repo: https://raw.githubusercontent.com/scassandra/scassandra-repo/master/snapshots
-* Deppendency: 'org.scassandra:java-client:0.0-SNAPSHOT'
+* Maven repo: https://oss.sonatype.org/content/repositories/snapshots
+* Deppendency: 'org.scassandra:java-client:0.1-SNAPSHOT'
 
 Please read the list of Gotchas:
 * [Gotcahas](https://github.com/scassandra/scassandra-server/wiki/Gotchas)
