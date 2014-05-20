@@ -14,24 +14,25 @@ Scassandra is written in Scala but we also have a Java wrapper for use with Java
 * Maven repo: https://oss.sonatype.org/content/repositories/snapshots
 * Deppendency: 'org.scassandra:java-client:0.1-SNAPSHOT'
 
+See:
+* [Using Scassandra from Java Gradle] (https://github.com/scassandra/scassandra-server/wiki/Using-Scassandra-from-Java-Gradle)
+
+
 Please read the list of Gotchas:
 * [Gotcahas](https://github.com/scassandra/scassandra-server/wiki/Gotchas)
 
-
-In addition to a binary port Scassandra opens an admin port for priming and verifying queries. Information on how to prime is here:
+The Java client provides two classes for all Priming and retrieving Activity. Here are the REST APIs that the Java client uses:
 
 * [Priming Queries](https://github.com/scassandra/scassandra-server/wiki/Priming-Queries)
 * [Priming Prepared Statements](https://github.com/scassandra/scassandra-server/wiki/Priming-Prepared-Statements)
 * [Activity Verification](https://github.com/scassandra/scassandra-server/wiki/Activity-Verification)
-* [Using Scassandra from Java Gradle] (https://github.com/scassandra/scassandra-server/wiki/Using-Scassandra-from-Java-Gradle)
 
 We plan to release a standalone executable (we haven't yet). You can checkout Scassandra and build an executable jar for now:
-* [Getting started](https://github.com/scassandra/scassandra-server/wiki/Getting-Started)
+* [Getting started without maven or gradle](https://github.com/scassandra/scassandra-server/wiki/Getting-started-without-maven-or-gradle)
 
 
 Current limitations:
-* Only tested with Java Datastax driver version 2 and above. Support for version 1 will come later. Other drivers will be tested and supported soon. 
-* No support for applications that use Prepared statements. Support is on its way.
+* Only tested with Java Datastax driver version 2 and above. Support for version 1 will come later. Other drivers will be tested and supported soon.
 * Collections aren't supported.
 * Custom types aren't supported.
 * Binary protocol only. No planned support for thrift.

@@ -6,18 +6,14 @@ import uk.co.scassandra.priming.{PrimingServer}
 import uk.co.scassandra.server.TcpServer
 import uk.co.scassandra.priming.query.PrimeQueryStore
 import uk.co.scassandra.priming.prepared.PrimePreparedStore
+import com.typesafe.config.{Config, ConfigFactory}
 
 object ServerStubRunner extends Logging {
   def main(args: Array[String]) {
-    var binaryPortNumber = 8042
-    var adminPortNumber = 8043
-    if (args.length == 2) {
-      val binaryPort = args(0)
-      val adminPort = args(1)
-      logger.info(s"Overriding binary port to ${binaryPort} and admin port to $adminPort")
-      binaryPortNumber = binaryPort.toInt
-      adminPortNumber = adminPort.toInt
-    }
+    val conf = ConfigFactory.load
+    val binaryPortNumber = conf.getInt("scassandra.binary.port")
+    val adminPortNumber = conf.getInt("scassandra.admin.port")
+    logger.info(s"Using binary port to $binaryPortNumber and admin port to $adminPortNumber")
     val ss = new ServerStubRunner(binaryPortNumber, adminPortNumber)
     ss.start()
     ss.awaitTermination()
