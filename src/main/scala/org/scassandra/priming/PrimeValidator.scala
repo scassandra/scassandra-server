@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.priming.query
+package org.scassandra.priming
 
 import org.scassandra.cqlmessages._
 import java.math.BigDecimal
 import java.util.UUID
 import java.net.{UnknownHostException, InetAddress}
 import scala.collection.immutable.Map
+import org.scassandra.priming.query.{Prime, PrimeCriteria}
 
 class PrimeValidator {
 
@@ -83,37 +84,7 @@ class PrimeValidator {
   }
 
   private def convertValue(value: Any, columnType: ColumnType[_]): Any = {
-    columnType match {
-      case CqlVarchar | CqlAscii | CqlText =>
-        value.asInstanceOf[String]
-      case CqlInt =>
-        if (value.isInstanceOf[String]) {
-          value.toString.toInt
-        } else value.asInstanceOf[Long]
-      case CqlBoolean =>
-        value.toString.toBoolean
-      case CqlBigint | CqlCounter =>
-        value.toString.toLong
-      case CqlBlob =>
-        hex2Bytes(value.toString)
-      case CqlDecimal =>
-        new BigDecimal(value.toString)
-      case CqlDouble =>
-        value.toString.toDouble
-      case CqlFloat =>
-        value.toString.toFloat
-      case CqlTimestamp =>
-        value.toString.toLong
-      case CqlUUID | CqlTimeUUID =>
-        UUID.fromString(value.toString)
-      case CqlInet =>
-        InetAddress.getByName(value.toString)
-      case CqlVarint =>
-        BigInt(value.toString)
-      // TODO - type mismatch of cqlset
-      case CqlSet =>
-        value.asInstanceOf[Iterable[String]]
-    }
+    columnType.writeValue(value)
   }
 
   private def hex2Bytes(hex: String): Array[Byte] = {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.e2e
+package org.scassandra.e2e.query
 
 import org.scassandra.AbstractIntegrationTest
 import org.scalatest.concurrent.ScalaFutures

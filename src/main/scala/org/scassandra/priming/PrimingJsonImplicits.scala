@@ -19,11 +19,9 @@ import spray.json._
 import spray.httpx.SprayJsonSupport
 import org.scassandra.cqlmessages.ColumnType
 import org.scassandra.cqlmessages.Consistency
-import org.scassandra.priming.query._
 import org.scassandra.priming.query.PrimeCriteria
-import org.scassandra.priming.prepared.{PreparedPrime, ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
+import org.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
 import org.scassandra.priming.query.PrimeQuerySingle
-import org.scassandra.priming.query.TypeMismatch
 import org.scassandra.priming.query.When
 import org.scassandra.priming.query.Then
 

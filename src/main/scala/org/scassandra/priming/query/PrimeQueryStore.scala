@@ -17,7 +17,7 @@ package org.scassandra.priming.query
 
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.cqlmessages._
-import org.scassandra.priming.{Success, Result}
+import org.scassandra.priming._
 import scala.collection.immutable.Map
 
 class PrimeQueryStore extends Logging {

@@ -15,67 +15,134 @@
  */
 package org.scassandra.cqlmessages
 
-import akka.util.ByteIterator
+import akka.util.{ByteString, ByteStringBuilder, ByteIterator}
 import java.util.UUID
 import java.net.InetAddress
+import CqlProtocolHelper._
+import com.typesafe.scalalogging.slf4j.{Logging}
 
-abstract class ColumnType[T](val code : Short, val stringRep: String) {
+abstract class ColumnType[T](val code : Short, val stringRep: String) extends Logging {
   def readValue(byteIterator : ByteIterator) : T
+  def writeValue(value : Any) : Array[Byte]
 }
 
 case object CqlAscii extends ColumnType[String](0x0001, "ascii") {
   override def readValue(byteBuffer : ByteIterator): String = {
-    CqlProtocolHelper.readLongString(byteBuffer)  
+    readLongString(byteBuffer)  
+  }
+
+  def writeValue( value : Any) = {
+    CqlProtocolHelper.serializeLongString(value.toString)
   }
 }
 case object CqlBigint extends ColumnType[Long](0x0002, "bigint") {
   override def readValue(byteIterator: ByteIterator): Long = {
     CqlProtocolHelper.readBigIntValue(byteIterator)
   }
+
+  override def writeValue(value: Any) = {
+    CqlProtocolHelper.serializeBigIntValue(value.toString.toLong)
+  }
 } 
 case object CqlBlob extends ColumnType[Array[Byte]](0x0003, "blob") {
   override def readValue(byteIterator: ByteIterator): Array[Byte] = {
     CqlProtocolHelper.readBlobValue(byteIterator)
+  }
+
+  override def writeValue(value: Any) = {
+    val bs = ByteString.newBuilder
+    val array = hex2Bytes(value.toString)
+    bs.putInt(array.length)
+    bs.putBytes(array)
+    bs.result().toArray
+  }
+
+  private def hex2Bytes(hex: String): Array[Byte] = {
+    (for {i <- 0 to hex.length - 1 by 2 if i > 0 || !hex.startsWith("0x")}
+    yield hex.substring(i, i + 2))
+      .map(hexValue => Integer.parseInt(hexValue, 16).toByte).toArray
   }
 }
 case object CqlBoolean extends ColumnType[Boolean](0x0004, "boolean") {
   override def readValue(byteIterator: ByteIterator): Boolean = {
     CqlProtocolHelper.readBooleanValue(byteIterator)
   }
+
+  def writeValue(value: Any) = {
+    CqlProtocolHelper.serializeBooleanValue(value.toString.toBoolean)
+  }
 }
 case object CqlCounter extends ColumnType[Long](0x0005, "counter") {
   override def readValue(byteIterator: ByteIterator): Long = {
     CqlProtocolHelper.readBigIntValue(byteIterator)
+  }
+
+  def writeValue(value: Any) = {
+    CqlProtocolHelper.serializeBigIntValue(value.toString.toLong)
   }
 }
 case object CqlDecimal extends ColumnType[BigDecimal](0x0006, "decimal") {
   override def readValue(byteIterator: ByteIterator): BigDecimal = {
     CqlProtocolHelper.readDecimalValue(byteIterator)
   }
+
+  def writeValue(value: Any) = {
+    CqlProtocolHelper.serializeDecimalValue(new java.math.BigDecimal(value.toString))
+  }
 }
 case object CqlDouble extends ColumnType[Double](0x0007, "double") {
   override def readValue(byteIterator: ByteIterator): Double = {
     CqlProtocolHelper.readDoubleValue(byteIterator)
+  }
+
+  def writeValue( value: Any) = {
+    CqlProtocolHelper.serializeDoubleValue(value.toString.toDouble)
   }
 }
 case object CqlFloat extends ColumnType[Float](0x0008, "float") {
   override def readValue(byteIterator: ByteIterator): Float = {
     CqlProtocolHelper.readFloatValue(byteIterator)
   }
+
+  def writeValue( value: Any) = {
+    CqlProtocolHelper.serializeFloatValue(value.toString.toFloat)
+  }
 }
 case object CqlInt extends ColumnType[Int](0x0009, "int") {
   override def readValue(byteIterator: ByteIterator): Int = {
     CqlProtocolHelper.readIntValue(byteIterator)
+  }
+
+  def writeValue(value: Any) = {
+    val bs = ByteString.newBuilder
+    bs.putInt(4)
+    val valueAsInt = if (value.isInstanceOf[String]) {
+      value.toString.toInt
+    } else if (value.isInstanceOf[Int]) {
+      value.asInstanceOf[Int]
+    } else {
+      logger.warn(s"Possible truncation of value $value")
+      value.asInstanceOf[Long]
+    }
+    bs.putInt(valueAsInt.toInt)
+    bs.result().toArray
   }
 }
 case object CqlText extends ColumnType[String](0x000A, "text") {
   override def readValue(byteIterator: ByteIterator): String = {
     CqlProtocolHelper.readLongString(byteIterator)
   }
+  override def writeValue(value : Any) = {
+    CqlProtocolHelper.serializeLongString(value.toString)
+  }
 }
 case object CqlTimestamp extends ColumnType[Long](0x000B, "timestamp") {
   override def readValue(byteIterator: ByteIterator): Long = {
     CqlProtocolHelper.readTimestampValue(byteIterator)
+  }
+
+  def writeValue( value: Any) = {
+    CqlProtocolHelper.serializeTimestampValue(value.toString.toLong)
   }
 }
 case object CqlUUID extends ColumnType[UUID](0x000C, "uuid") {
@@ -83,31 +150,53 @@ case object CqlUUID extends ColumnType[UUID](0x000C, "uuid") {
     CqlProtocolHelper.readUUIDValue(byteIterator)
   }
 
+  def writeValue( value: Any) = {
+    CqlProtocolHelper.serializeUUIDValue(UUID.fromString(value.toString))
+  }
 }
 case object CqlVarchar extends ColumnType[String](0x000D, "varchar") {
   override def readValue(byteIterator: ByteIterator): String = {
     CqlProtocolHelper.readLongString(byteIterator)
+  }
+  override def writeValue(value : Any) = {
+    CqlProtocolHelper.serializeLongString(value.toString)
   }
 }
 case object CqlVarint extends ColumnType[BigInt](0x000E, "varint") {
   override def readValue(byteIterator: ByteIterator): BigInt = {
     CqlProtocolHelper.readVarintValue(byteIterator)
   }
+
+  def writeValue( value: Any) = {
+    CqlProtocolHelper.serializeVarintValue(BigInt(value.toString))
+  }
 }
 case object CqlTimeUUID extends ColumnType[UUID](0x000F, "timeuuid") {
   override def readValue(byteIterator: ByteIterator): UUID = {
     CqlProtocolHelper.readUUIDValue(byteIterator)
+  }
+
+  def writeValue( value: Any) = {
+    CqlProtocolHelper.serializeUUIDValue(UUID.fromString(value.toString))
   }
 }
 case object CqlInet extends ColumnType[InetAddress](0x0010, "inet") {
   override def readValue(byteIterator: ByteIterator): InetAddress = {
     CqlProtocolHelper.readInetValue(byteIterator)
   }
+
+  def writeValue( value: Any) = {
+    CqlProtocolHelper.serializeInetValue(InetAddress.getByName(value.toString))
+  }
 }
 // only supports strings for now.
 case object CqlSet extends ColumnType[Set[String]](0x0022, "set") {
   override def readValue(byteIterator: ByteIterator): Set[String] = {
     CqlProtocolHelper.readVarcharSetValue(byteIterator)
+  }
+
+  def writeValue( value: Any) = {
+    CqlProtocolHelper.serializeVarcharSetValue(value.asInstanceOf[Iterable[String]])
   }
 }
 
@@ -135,4 +224,8 @@ object ColumnType {
   def fromString(string: String) : Option[ColumnType[_]] = {
     ColumnTypeMapping.get(string.toLowerCase())
   }
+
+
 }
+
+

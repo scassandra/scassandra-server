@@ -18,10 +18,9 @@ package org.scassandra.priming.routes
 import spray.routing.HttpService
 import com.typesafe.scalalogging.slf4j.Logging
 import spray.http.StatusCodes
-import org.scassandra.priming.{PrimingJsonImplicits}
+import org.scassandra.priming.{ConflictingPrimes, TypeMismatches, PrimingJsonImplicits}
 import org.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedStore, PrimePreparedSingle}
 import scala.collection.immutable.Iterable
-import org.scassandra.priming.query.{TypeMismatches, ConflictingPrimes}
 
 trait PrimingPreparedRoute extends HttpService with Logging {
 

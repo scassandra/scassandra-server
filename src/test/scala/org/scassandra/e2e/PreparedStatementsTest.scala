@@ -27,7 +27,7 @@ import com.datastax.driver.core.utils.UUIDs
 import java.net.InetAddress
 import java.util
 import com.datastax.driver.core.{ConsistencyLevel, Row}
-import org.scassandra.priming.{Connection, Unavailable, WriteTimeout, ReadTimeout}
+import org.scassandra.priming._
 import com.datastax.driver.core.exceptions.{UnavailableException, WriteTimeoutException, ReadTimeoutException}
 import org.scalatest.BeforeAndAfter
 import dispatch._, Defaults._
@@ -36,7 +36,10 @@ import org.scassandra.priming.prepared.ThenPreparedSingle
 import org.scassandra.priming.prepared.WhenPreparedSingle
 import scala.Some
 import org.scassandra.priming.prepared.PrimePreparedSingle
-import org.scassandra.priming.query.ConflictingPrimes
+import org.scassandra.priming.prepared.ThenPreparedSingle
+import org.scassandra.priming.prepared.WhenPreparedSingle
+import scala.Some
+import org.scassandra.priming.prepared.PrimePreparedSingle
 
 class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
 

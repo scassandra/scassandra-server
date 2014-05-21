@@ -17,7 +17,7 @@ package org.scassandra.priming.routes
 
 import org.scalatest.{FunSpec, Matchers}
 import spray.testkit.ScalatestRouteTest
-import org.scassandra.priming.{ReadTimeout, PrimingJsonImplicits}
+import org.scassandra.priming.{ConflictingPrimes, TypeMismatches, ReadTimeout, PrimingJsonImplicits}
 import spray.http.StatusCodes
 import org.scassandra.priming.prepared._
 import org.scalatest.mock.MockitoSugar
@@ -28,7 +28,7 @@ import org.scassandra.priming.prepared.WhenPreparedSingle
 import scala.Some
 import org.scassandra.priming.prepared.PrimePreparedSingle
 import org.scassandra.cqlmessages.{ONE, TWO, CqlVarchar, CqlInt}
-import org.scassandra.priming.query.{TypeMismatches, ConflictingPrimes, PrimeCriteria, Prime}
+import org.scassandra.priming.query.{PrimeCriteria, Prime}
 
 class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRouteTest with PrimingPreparedRoute with MockitoSugar {
 

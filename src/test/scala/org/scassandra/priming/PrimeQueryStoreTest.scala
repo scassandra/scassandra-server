@@ -20,8 +20,6 @@ import org.scassandra.cqlmessages._
 import java.util.UUID
 import org.scassandra.priming.query._
 import org.scassandra.priming.query.PrimeCriteria
-import org.scassandra.priming.query.TypeMismatches
-import org.scassandra.priming.query.TypeMismatch
 import org.scassandra.priming.query.PrimeMatch
 import org.scassandra.priming.query.Prime
 
@@ -211,21 +209,6 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
 
   describe("add() with type mismatch should return validation errors") {
 
-    it("when column value not CqlVarchar") {
-      // given
-      val prime = Prime(
-        List(
-          Map("name" -> "totoro", "hasInvalidValue" -> "some varchar"),
-          Map("name" -> "catbus", "hasInvalidValue" -> false) // incorrect entry, should trigger exception
-        ),
-        columnTypes = Map("name" -> CqlVarchar, "hasInvalidValue" -> CqlVarchar)
-      )
-
-      // when and then
-      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlVarchar.stringRep))))
-    }
-
     it("when column value not CqlInt") {
       // given
       val prime = Prime(
@@ -271,21 +254,6 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A BOOLEAN!", "hasInvalidValue", CqlBoolean.stringRep))))
 
-    }
-
-    it("when column value not CqlAscii") {
-      // given
-      val prime = Prime(
-        List(
-          Map("name" -> "totoro", "hasInvalidValue" -> "some ascii value"),
-          Map("name" -> "catbus", "hasInvalidValue" -> false) // incorrect entry, should trigger exception
-        ),
-        columnTypes = Map("name" -> CqlVarchar, "hasInvalidValue" -> CqlAscii)
-      )
-
-      // when and then
-      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlAscii.stringRep))))
     }
 
     it("when column value not CqlBigint") {
@@ -376,21 +344,6 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       // when and then
       val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlFloat.stringRep))))
-    }
-
-    it("when column value not CqlText") {
-      // given
-      val prime = Prime(
-        List(
-          Map("name" -> "totoro", "hasInvalidValue" -> "undecided"),
-          Map("name" -> "catbus", "hasInvalidValue" -> 998) // incorrect entry, should trigger exception
-        ),
-        columnTypes = Map("name" -> CqlVarchar, "hasInvalidValue" -> CqlText)
-      )
-
-      // when and then
-      val validationResult = PrimeQueryStore().add(PrimeCriteria("", List()), prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch(998, "hasInvalidValue", CqlText.stringRep))))
     }
 
     it("when column value not CqlTimestamp") {

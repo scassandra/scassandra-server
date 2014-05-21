@@ -222,6 +222,13 @@ object CqlProtocolHelper {
         new String(bytes)
       }).toSet
   }
+
+  def readNullValue(iterator: ByteIterator) : Boolean = {
+    val bytes = new Array[Byte](4)
+    iterator.getBytes(bytes)
+    bytes.deep == Array[Byte](-1,-1,-1,-1).deep
+  }
+
 }
 
 // example sets

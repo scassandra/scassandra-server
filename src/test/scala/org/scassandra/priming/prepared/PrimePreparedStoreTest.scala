@@ -18,7 +18,7 @@ package org.scassandra.priming.prepared
 import org.scalatest.{Matchers, FunSuite}
 import org.scassandra.priming.query._
 import org.scassandra.cqlmessages._
-import org.scassandra.priming.ReadTimeout
+import org.scassandra.priming.{ConflictingPrimes, PrimeAddSuccess, ReadTimeout}
 import org.scassandra.priming.query.PrimeMatch
 import scala.Some
 import org.scassandra.priming.query.Prime

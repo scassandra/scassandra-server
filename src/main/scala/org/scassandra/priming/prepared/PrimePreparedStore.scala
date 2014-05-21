@@ -18,7 +18,7 @@ package org.scassandra.priming.prepared
 import org.scassandra.priming.query._
 import org.scassandra.priming.routes.PrimeQueryResultExtractor
 import org.scassandra.cqlmessages.{Consistency, CqlVarchar}
-import org.scassandra.priming.Success
+import org.scassandra.priming.{PrimeAddSuccess, PrimeAddResult, PrimeValidator, Success}
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.priming.query.PrimeCriteria
 import org.scassandra.priming.query.PrimeMatch
