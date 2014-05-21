@@ -57,12 +57,13 @@ object PrimeQueryResultExtractor extends Logging {
   }
   
   def convertStringColumnTypes(columnTypes : Option[Map[String, ColumnType[_]]], resultsAsList: List[Map[String, Any]]) = {
-    val colTypes =  columnTypes.getOrElse(Map[String, ColumnType[_]]())
+    val colTypes: Map[String, ColumnType[_]] =  columnTypes.getOrElse(Map[String, ColumnType[_]]())
 
     // check that all the columns in the rows have a type
-    val columnNamesInAllRows = resultsAsList.flatMap(row => row.keys).distinct
+    val columnNamesInAllRows: List[String] = resultsAsList.flatMap(row => row.keys).distinct
+    val colNamesWithOnesNotInRows = (columnNamesInAllRows ++ colTypes.keys).distinct
 
-    val colTypesWithDefaults : Map[String, ColumnType[_]] = columnNamesInAllRows.map(columnName => colTypes.get(columnName) match {
+    val colTypesWithDefaults : Map[String, ColumnType[_]] = colNamesWithOnesNotInRows.map(columnName => colTypes.get(columnName) match {
       case Some(columnType) => (columnName, columnType)
       case None => (columnName, CqlVarchar)
     }).toMap

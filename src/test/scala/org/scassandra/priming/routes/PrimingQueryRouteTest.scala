@@ -273,6 +273,26 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = thenColumnTypes))
       }
     }
+
+    it("Should pass column types to store even if there are no rows that contain them") {
+      val query = "select * from users"
+      val whenQuery = When(query)
+      val thenRows =
+        List(
+          Map(
+            "age" -> "99"
+          ),
+          Map(
+            "age" -> "12"
+          )
+        )
+      val thenColumnTypes = Map("age" -> CqlInt, "abigD" -> CqlDecimal)
+      val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
+
+      Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = thenColumnTypes))
+      }
+    }
   }
 
   describe("Retrieving of primes") {
