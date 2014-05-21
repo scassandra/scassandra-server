@@ -1,4 +1,4 @@
-/*
+def copyrightNotice = """/*
  * Copyright (C) 2014 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.cqlmessages
+"""
 
-import org.scalatest.{Matchers, FunSuite}
-
-class ProtocolVersionsTest extends FunSuite with Matchers {
-  test("Mapping client protocol version to server - version 1") {
-    ProtocolVersion.protocol(ProtocolVersion.ClientProtocolVersionOne) should equal(VersionOne)
-  }
-
-  test("Mapping client protocol version to server - version 2") {
-    ProtocolVersion.protocol(ProtocolVersion.ClientProtocolVersionTwo) should equal(VersionTwo)
-  }
-}
+    def srcDir = new File('src')
+    srcDir.eachFileRecurse { file ->
+        if (file.name.endsWith(".scala") && !file.text.contains(copyrightNotice)) {
+            println "Adding copyright header to $file.path"
+            def newFileText = copyrightNotice + file.text;
+            file.text = newFileText;
+        }
+    }
