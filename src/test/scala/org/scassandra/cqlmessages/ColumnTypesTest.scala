@@ -122,7 +122,6 @@ class ColumnTypesTest extends FunSuite with Matchers {
     }
   }
 
-
   test("Serialisation of CqlCounter") {
     CqlCounter.writeValue(BigDecimal("123000000000")) should equal(Array(0, 0, 0, 8, 0, 0, 0, 28, -93, 95, 14, 0))
     CqlCounter.writeValue("123") should equal(Array[Byte](0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 123))
@@ -147,4 +146,81 @@ class ColumnTypesTest extends FunSuite with Matchers {
     }
   }
 
+  test("Serialisation of CqlTimeUUID") {
+    CqlTimeUUID.writeValue("59ad61d0-c540-11e2-881e-b9e6057626c4") should equal(Array(0, 0, 0, 16, 89, -83, 97, -48, -59, 64, 17, -30, -120, 30, -71, -26, 5, 118, 38, -60))
+
+    intercept[IllegalArgumentException] {
+      CqlTimeUUID.writeValue("123")
+    }
+    intercept[IllegalArgumentException] {
+      CqlTimeUUID.writeValue(BigDecimal("123.67"))
+    }
+    intercept[IllegalArgumentException] {
+      CqlTimeUUID.writeValue("hello")
+    }
+    intercept[IllegalArgumentException] {
+      CqlTimeUUID.writeValue(true)
+    }
+    intercept[IllegalArgumentException] {
+      CqlTimeUUID.writeValue(false)
+    }
+    intercept[IllegalArgumentException] {
+      CqlTimeUUID.writeValue(List())
+    }
+    intercept[IllegalArgumentException] {
+      CqlTimeUUID.writeValue(Map)
+    }
+  }
+
+
+  test("Serialisation of CqlUUID") {
+    CqlUUID.writeValue("59ad61d0-c540-11e2-881e-b9e6057626c4") should equal(Array(0, 0, 0, 16, 89, -83, 97, -48, -59, 64, 17, -30, -120, 30, -71, -26, 5, 118, 38, -60))
+
+    intercept[IllegalArgumentException] {
+      CqlUUID.writeValue("123")
+    }
+    intercept[IllegalArgumentException] {
+      CqlUUID.writeValue(BigDecimal("123.67"))
+    }
+    intercept[IllegalArgumentException] {
+      CqlUUID.writeValue("hello")
+    }
+    intercept[IllegalArgumentException] {
+      CqlUUID.writeValue(true)
+    }
+    intercept[IllegalArgumentException] {
+      CqlUUID.writeValue(false)
+    }
+    intercept[IllegalArgumentException] {
+      CqlUUID.writeValue(List())
+    }
+    intercept[IllegalArgumentException] {
+      CqlUUID.writeValue(Map)
+    }
+  }
+
+  test("Serialisation of CqlBoolean") {
+    CqlBoolean.writeValue("true") should equal(Array(0, 0, 0, 1, 1))
+    CqlBoolean.writeValue("false") should equal(Array(0, 0, 0, 1, 0))
+    CqlBoolean.writeValue("TRUE") should equal(Array(0, 0, 0, 1, 1))
+    CqlBoolean.writeValue("FALSE") should equal(Array(0, 0, 0, 1, 0))
+    CqlBoolean.writeValue(true) should equal(Array(0, 0, 0, 1, 1))
+    CqlBoolean.writeValue(false) should equal(Array(0, 0, 0, 1, 0))
+
+    intercept[IllegalArgumentException] {
+      CqlBoolean.writeValue("123")
+    }
+    intercept[IllegalArgumentException] {
+      CqlBoolean.writeValue(BigDecimal("123.67"))
+    }
+    intercept[IllegalArgumentException] {
+      CqlBoolean.writeValue("hello")
+    }
+    intercept[IllegalArgumentException] {
+      CqlBoolean.writeValue(List())
+    }
+    intercept[IllegalArgumentException] {
+      CqlUUID.writeValue(Map)
+    }
+  }
 }
