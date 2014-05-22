@@ -42,7 +42,7 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
     case PrepareHandlerMessages.Prepare(body, stream, msgFactory, connection) => {
       logger.debug(s"Received prepare message $body")
       val query = readLongString(body.iterator)
-      logger.debug(s"Prepare for query $query")
+
 
       val preparedPrime = primePreparedStore.findPrime(PrimeMatch(query))
       val preparedResult = if (preparedPrime.isDefined) {
@@ -58,6 +58,7 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
       preparedStatementId = preparedStatementId + 1
 
       logger.debug(s"Sending back prepared result ${preparedResult}")
+      logger.info(s"Prepared Statement has been prepared: ${query}. Prepared result is: ${preparedResult}")
       connection ! preparedResult
     }
     case PrepareHandlerMessages.Execute(body, stream, msgFactory, connection) => {
@@ -66,19 +67,20 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
       logger.debug(s"Received execute message $executeRequest")
       val preparedStatement = preparedStatementsToId.get(executeRequest.id)
 
-      if (preparedStatement.isDefined) {        
+      if (preparedStatement.isDefined) {
         val prime = primePreparedStore.findPrime(PrimeMatch(preparedStatement.get, executeRequest.consistency))
         logger.debug(s"Prime for prepared statement query: $preparedStatement prime: $prime")
         prime match {
           case Some(preparedPrime) => {
             if (executeRequest.numberOfVariables == preparedPrime.variableTypes.size) {
-              val variablesAsStrings = msgFactory.parseExecuteRequestWithVariables(stream, body, preparedPrime.variableTypes).variables.map(_.toString)
-              ActivityLog.recordPrimedStatementExecution(preparedStatement.get, executeRequest.consistency, variablesAsStrings)
+              val executeRequestParsedWithVariables = msgFactory.parseExecuteRequestWithVariables(stream, body, preparedPrime.variableTypes)
+              val variablesAsStrings = executeRequestParsedWithVariables.variables.map(_.toString)
+              ActivityLog.recordPrimedStatementExecution(preparedStatement.get, executeRequestParsedWithVariables.consistency, variablesAsStrings)
            } else {
              ActivityLog.recordPrimedStatementExecution(preparedStatement.get, executeRequest.consistency, List())
              logger.warn(s"Execution of prepared statement has a different number of variables to the prime. Number of variables in message ${executeRequest.numberOfVariables}. Variables won't be recorded. $preparedPrime")
            }
-            
+
            preparedPrime.prime.result match {
              case Success => connection ! msgFactory.createRowsMessage(preparedPrime.prime, stream)
              case ReadTimeout => connection ! msgFactory.createReadTimeoutMessage(stream)
