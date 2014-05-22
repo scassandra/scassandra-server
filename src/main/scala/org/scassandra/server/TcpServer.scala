@@ -31,7 +31,7 @@ class TcpServer(port: Int, primedResults: PrimeQueryStore, primePrepareStore: Pr
 
   val manager = IO(Tcp)
 
-  IO(Tcp) ! Bind(self, new InetSocketAddress("localhost", port))
+  IO(Tcp) ! Bind(self, new InetSocketAddress("0.0.0.0", port))
   val preparedHandler = context.actorOf(Props(classOf[PrepareHandler], primePrepareStore))
 
   def receive = {
