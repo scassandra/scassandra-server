@@ -12,7 +12,7 @@ scalaVersion := "2.10.3"
 
 val sprayVersion = "1.2.0"
 
-val akkaVersion = "2.2.+"
+val akkaVersion = "2.2.4"
 
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.0.13",
