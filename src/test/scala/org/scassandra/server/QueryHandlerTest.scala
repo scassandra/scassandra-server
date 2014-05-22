@@ -19,14 +19,12 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.io.Tcp.Write
 import akka.testkit._
 import akka.util.ByteString
-import org.scalatest.{BeforeAndAfter, FunSuite}
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.{Matchers, BeforeAndAfter, FunSuite}
 import org.scalatest.mock.MockitoSugar
 import org.scassandra.priming._
 import org.mockito.Mockito._
 import org.scassandra.cqlmessages._
 import org.scassandra.cqlmessages.response.ReadRequestTimeout
-import org.scassandra.cqlmessages.response.VoidResult
 import scala.Some
 import org.scassandra.cqlmessages.response.WriteRequestTimeout
 import org.scassandra.cqlmessages.response.Row
@@ -36,7 +34,7 @@ import org.scassandra.cqlmessages.response.Rows
 import org.scassandra.priming.Query
 import org.scassandra.priming.query.{PrimeQueryStore, Prime, PrimeMatch}
 
-class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter with TestKitBase with MockitoSugar {
+class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with TestKitBase with MockitoSugar {
   implicit lazy val system = ActorSystem()
 
   var underTest: ActorRef = null
@@ -86,11 +84,17 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
 
   test("Should return rows result when PrimedResults returns a list of rows") {
     val stream: Byte = 0x05
+    val rows: List[Row] = List(
+      Row(Map(
+        "name" -> "Mickey",
+        "age" -> "99"
+      ))
+    )
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
     when(mockPrimedResults.get(PrimeMatch(someCqlStatement.query, ONE))).thenReturn(Some(Prime(List[Map[String, Any]](
       Map(
         "name" -> "Mickey",
-        "age" -> 99
+        "age" -> "99"
       )
     ),
       Success,
@@ -101,12 +105,7 @@ class QueryHandlerTest extends FunSuite with ShouldMatchers with BeforeAndAfter 
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, Map("name" -> CqlVarchar, "age" -> CqlInt), List(
-      Row(Map(
-        "name" -> "Mickey",
-        "age" -> 99
-      ))
-    )).serialize()))
+    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, Map("name" -> CqlVarchar, "age" -> CqlInt), rows).serialize()))
   }
 
   test("Should return ReadRequestTimeout if result is ReadTimeout") {

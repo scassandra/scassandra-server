@@ -58,16 +58,18 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
     def write(x: Any) = x match {
       case n: Int => JsNumber(n)
       case n: Long => JsNumber(n)
+      case bd: BigDecimal => JsNumber(bd)
       case s: String => JsString(s)
       case seq: Seq[_] => seqFormat[Any].write(seq)
       case m: Map[String, _] => mapFormat[String, Any].write(m)
       case b: Boolean if b => JsTrue
       case b: Boolean if !b => JsFalse
       case set: Set[Any] => setFormat[Any].write(set)
+      case double: Double => JsNumber(double)
       case other => serializationError("Do not understand object of type " + other.getClass.getName)
     }
     def read(value: JsValue) = value match {
-      case JsNumber(n) => n.longValue()
+      case jsNumber : JsNumber => jsNumber.value
       case JsString(s) => s
       case a: JsArray => listFormat[Any].read(value)
       case o: JsObject => mapFormat[String, Any].read(value)

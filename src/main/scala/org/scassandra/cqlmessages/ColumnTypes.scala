@@ -116,15 +116,18 @@ case object CqlInt extends ColumnType[Int](0x0009, "int") {
   def writeValue(value: Any) = {
     val bs = ByteString.newBuilder
     bs.putInt(4)
-    val valueAsInt = if (value.isInstanceOf[String]) {
-      value.toString.toInt
-    } else if (value.isInstanceOf[Int]) {
-      value.asInstanceOf[Int]
-    } else {
-      logger.warn(s"Possible truncation of value $value")
-      value.asInstanceOf[Long]
+    val valueAsInt = value match {
+      case bd : BigDecimal => {
+          if (bd.isValidInt) {
+            bd.toInt
+          } else {
+            throw new IllegalArgumentException
+          }
+      }
+      case asString : String => asString.toInt
+      case unknownType @ _ => throw new IllegalArgumentException(s"Can't serialise ${value} with type ${value.getClass} as Int")
     }
-    bs.putInt(valueAsInt.toInt)
+    bs.putInt(valueAsInt)
     bs.result().toArray
   }
 }

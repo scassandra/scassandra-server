@@ -293,6 +293,32 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = thenColumnTypes))
       }
     }
+
+    it("Should handle floats as JSON numbers") {
+      val query = "select * from users"
+      val whenQuery = When(query)
+      val thenRows = List(Map("age" -> 7.7))
+      val thenRowsStorageFormat = List(Map("age" -> BigDecimal("7.7")))
+      val thenColumnTypes = Map("age" -> CqlFloat)
+      val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
+
+      Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
+        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRowsStorageFormat, Success, columnTypes = thenColumnTypes))
+      }
+    }
+
+    it("Should handle floats as JSON strings") {
+        val query = "select * from users"
+        val whenQuery = When(query)
+        val thenRows = List(Map("age" -> "7.7"))
+        val thenColumnTypes = Map("age" -> CqlDouble)
+        val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
+
+        Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
+          primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)).get should equal(Prime(thenRows, Success, columnTypes = thenColumnTypes))
+        }
+    }
+
   }
 
   describe("Retrieving of primes") {

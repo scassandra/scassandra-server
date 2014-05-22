@@ -76,9 +76,9 @@ class RowsTest extends FunSuite with Matchers {
     rowValue should equal("18")
   }
 
-  test("Serialization of Int column type where value is a Scala Int") {
+  test("Serialization of Int column type where value is a BigDecimal") {
     val columnNames = Map("age" -> CqlInt)
-    val rows: List[Row] = List(Row(Map("age" -> 18)))
+    val rows: List[Row] = List(Row(Map("age" -> BigDecimal(18))))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
@@ -101,9 +101,9 @@ class RowsTest extends FunSuite with Matchers {
     rowValue should equal(18)
   }
 
-  test("Serialization of Int column type where value is a Scala Long") {
+  test("Serialization of Int column type where value is a Scala string") {
     val columnNames = Map("age" -> CqlInt)
-    val rows: List[Row] = List(Row(Map("age" -> 18l)))
+    val rows: List[Row] = List(Row(Map("age" -> "18")))
     val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
@@ -541,10 +541,10 @@ class RowsTest extends FunSuite with Matchers {
       "col_two" -> CqlInt,
       "col_three" -> CqlTimeUUID)
     val rows: List[Row] = List(
-      Row(Map("id" -> 1, "col_one" -> "hello", "col_three" -> "f535e350-e111-11e3-baa7-070c076eda0a", "col_two" -> 2)),
-      Row(Map("id" -> 2, "col_three" -> "1bd8f0b0-e112-11e3-baa7-070c076eda0a")),
-      Row(Map("id" -> 3, "col_two" -> "2")),
-      Row(Map("id" -> 4, "col_blob" -> "0x12"))
+      Row(Map("id" -> "1", "col_one" -> "hello", "col_three" -> "f535e350-e111-11e3-baa7-070c076eda0a", "col_two" -> BigDecimal(2))),
+      Row(Map("id" -> "2", "col_three" -> "1bd8f0b0-e112-11e3-baa7-070c076eda0a")),
+      Row(Map("id" -> "3", "col_two" -> "2")),
+      Row(Map("id" -> "4", "col_blob" -> "0x12"))
     )
     val rowsBytes = Rows("people", "various_columns", 0, columnNames, rows).serialize().iterator
 

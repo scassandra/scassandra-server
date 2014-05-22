@@ -225,11 +225,11 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
 
     }
 
-    it("when column value CqlInt as Long") {
+    it("when column value CqlInt as BigDecimal") {
       // given
       val prime = Prime(
         List(
-          Map("hasLongAsInt" -> 5l)
+          Map("hasLongAsInt" -> BigDecimal("5"))
         ),
         columnTypes = Map("hasLongAsInt" -> CqlInt)
       )
