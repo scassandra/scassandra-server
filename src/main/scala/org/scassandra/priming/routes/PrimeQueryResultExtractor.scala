@@ -32,7 +32,7 @@ import org.scassandra.priming.query.Prime
 object PrimeQueryResultExtractor extends Logging {
   def extractPrimeCriteria(primeQueryRequest : PrimeQuerySingle) : PrimeCriteria = {
     val primeConsistencies = primeQueryRequest.when.consistency match {
-      case Some(list) => list.map(Consistency.fromString)
+      case Some(list) => list
       case None => Consistency.all
     }
     PrimeCriteria(primeQueryRequest.when.query, primeConsistencies)
@@ -42,7 +42,7 @@ object PrimeQueryResultExtractor extends Logging {
     // add the deserialized JSON request to the map of prime requests
     val resultsAsList = primeRequest.then.rows.getOrElse(List())
     val then = primeRequest.then
-    val result = then.result.map(Result.fromString).getOrElse(Success)
+    val result = then.result.getOrElse(Success)
     logger.trace("Column types " + primeRequest.then.column_types)
    
     val columnTypes: Map[String, ColumnType[_]] = convertStringColumnTypes(primeRequest.then.column_types, resultsAsList)
@@ -73,13 +73,8 @@ object PrimeQueryResultExtractor extends Logging {
 
   def convertBackToPrimeQueryResult(allPrimes: Map[PrimeCriteria, Prime]) ={
     allPrimes.map({ case (primeCriteria, prime) => {
-      val consistencies = primeCriteria.consistency.map(_.string)
-      val when = When(primeCriteria.query, keyspace = Some(prime.keyspace), table = Some(prime.table), consistency = Some(consistencies))
-      val rowsValuesAsString = prime.rows.map(eachRow => eachRow.map({
-        case(key, valueAsAny) => (key, valueAsAny.toString)
-      }))
-      val result = prime.result.string
-      val then = Then(Some(rowsValuesAsString), result = Some(result), column_types = Some(prime.columnTypes))
+      val when = When(primeCriteria.query, keyspace = Some(prime.keyspace), table = Some(prime.table), consistency = Some(primeCriteria.consistency))
+      val then = Then(Some(prime.rows), result = Some(prime.result), column_types = Some(prime.columnTypes))
 
       PrimeQuerySingle(when, then)
     }})

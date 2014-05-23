@@ -62,9 +62,10 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
       case s: String => JsString(s)
       case seq: Seq[_] => seqFormat[Any].write(seq)
       case m: Map[String, _] => mapFormat[String, Any].write(m)
+      case set: Set[Any] => setFormat[Any].write(set)
+      case list: List[Any] => listFormat[Any].write(list)
       case b: Boolean if b => JsTrue
       case b: Boolean if !b => JsFalse
-      case set: Set[Any] => setFormat[Any].write(set)
       case double: Double => JsNumber(double)
       case other => serializationError("Do not understand object of type " + other.getClass.getName)
     }

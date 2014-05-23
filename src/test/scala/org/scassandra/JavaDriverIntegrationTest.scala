@@ -19,6 +19,7 @@ import org.scalatest.concurrent.ScalaFutures
 import dispatch._, Defaults._
 import com.datastax.driver.core.exceptions.{WriteTimeoutException, UnavailableException, ReadTimeoutException}
 import org.scassandra.priming.query.When
+import org.scassandra.priming._
 
 class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -61,7 +62,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test read timeout on query") {
     // priming
     val whenQuery = "read timeout query"
-    prime(When(whenQuery), List(), "read_request_timeout")
+    prime(When(whenQuery), List(), ReadTimeout)
 
     intercept[ReadTimeoutException] {
       session.execute(whenQuery)
@@ -71,7 +72,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test unavailable exception on query") {
     // priming
     val whenQuery = "unavailable exception query"
-    prime(When(whenQuery), List(), "unavailable")
+    prime(When(whenQuery), List(), Unavailable)
 
     intercept[UnavailableException] {
       session.execute(whenQuery)
@@ -81,7 +82,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test write timeout on query") {
     // priming
     val whenQuery = "some write query"
-    prime(When(whenQuery), List(), "write_request_timeout")
+    prime(When(whenQuery), List(), WriteTimeout)
 
     intercept[WriteTimeoutException] {
       session.execute(whenQuery)

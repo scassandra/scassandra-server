@@ -118,7 +118,7 @@ object Consistency {
     }
   }
 
-  val all = List(ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM, EACH_QUORUM, SERIAL, LOCAL_SERIAL, LOCAL_ONE)
+  val all : List[Consistency] = List(ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM, EACH_QUORUM, SERIAL, LOCAL_SERIAL, LOCAL_ONE)
 }
 
 
