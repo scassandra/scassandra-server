@@ -416,6 +416,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
                                                  consistencies : Option[List[Consistency]] = None) = {
 
 
+
     val consistenciesDefaultingToAll = consistencies.getOrElse(Consistency.all)
 
     val colTypesDefaultingToVarchar = if (columnTypes.isDefined) {

@@ -35,13 +35,17 @@ class TcpServer(port: Int, primedResults: PrimeQueryStore, primePrepareStore: Pr
   val preparedHandler = context.actorOf(Props(classOf[PrepareHandler], primePrepareStore))
 
   def receive = {
-    case b @ Bound(localAddress) =>
+    case b @ Bound(localAddress) => {
       logger.info(s"Port $port ready for Cassandra binary connections.")
+    }
 
-    case CommandFailed(_: Bind) =>
+    case CommandFailed(_: Bind) => {
+      logger.error(s"Unable to bind to port $port for Cassandra binary connections. Is it in use?")
       context stop self
+      context.system.shutdown()
+    }
 
-    case c @ Connected(remote, local) =>
+    case c @ Connected(remote, local) => {
       logger.debug(s"Incoming connection, creating a connection handler! $remote $local")
       ActivityLog.recordConnection()
       val handler = context.actorOf(Props(classOf[ConnectionHandler],
@@ -52,5 +56,6 @@ class TcpServer(port: Int, primedResults: PrimeQueryStore, primePrepareStore: Pr
       )
       logger.debug(s"Sending register with connection handler $handler")
       sender ! Register(handler)
+    }
   }
 }

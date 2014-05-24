@@ -15,13 +15,13 @@
  */
 package org.scassandra.priming
 
-import akka.io.IO
+import akka.io.{IO, Tcp}
 import spray.can.Http
-import spray.routing._
+import spray.routing.{RejectionHandler, ExceptionHandler, RoutingSettings, HttpService}
 import spray.util.LoggingContext
 import akka.event.Logging
 import com.typesafe.scalalogging.slf4j.Logging
-import akka.actor.Actor
+import akka.actor.{Props, Actor}
 import org.scassandra.priming.routes.{ActivityVerificationRoute, PrimingQueryRoute, PrimingPreparedRoute}
 import org.scassandra.priming.query.PrimeQueryStore
 import org.scassandra.priming.prepared.PrimePreparedStore
@@ -31,14 +31,39 @@ trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryR
   val allRoutes = routeForPreparedPriming ~ queryRoute ~ activityVerificationRoute
 }
 
-class PrimingServer(port: Int, implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore : PrimePreparedStore) extends Actor with AllRoutes with Logging {
+class PrimingServer(port: Int, implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore : PrimePreparedStore) extends Actor with Logging {
 
+  import Tcp._
   implicit def actorRefFactory = context.system
 
   logger.info(s"Opening port $port for priming")
 
+  //val connectionChecker = context.actorOf(Props(classOf[ConnectionChecker], self))
+  val routing =  context.actorOf(Props(classOf[PrimingServerHttpService], primeQueryStore, primePreparedStore))
+
   IO(Http) ! Http.Bind(self, "localhost", port)
 
+  def receive = {
+    case Connected(_, _) => {
+      sender ! Tcp.Register(routing)
+    }
+    case b @ Bound(_) => {
+      logger.info(s"Priming server bound to admin port $port")
+    }
+    case CommandFailed(_) => {
+      logger.error(s"Unable to bind to admin port $port. Is it in use?")
+      context stop self
+      context.system.shutdown()
+    }
+    case msg @ _ => logger.info(s"Received unknown message $msg")
+  }
+
+
+}
+
+class PrimingServerHttpService(implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore : PrimePreparedStore) extends Actor with AllRoutes with Logging {
+
+  implicit def actorRefFactory = context.system
   // some default spray initialisation
   val routingSettings = RoutingSettings default context
 
@@ -47,6 +72,4 @@ class PrimingServer(port: Int, implicit val primeQueryStore: PrimeQueryStore, im
   val exceptionHandler = ExceptionHandler default(routingSettings, loggingContext)
 
   def receive = runRoute(allRoutes)(exceptionHandler, RejectionHandler.Default, context, routingSettings, loggingContext)
-
-  logger.info(s"Server bound to port $port")
 }
