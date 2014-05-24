@@ -1,0 +1,10 @@
+# Site settings
+title: Scassandra Server
+email: chrisopher.batey@gmail.com
+description: "Scassandra server"
+baseurl: ""
+url: "http://www.scassandra.org/server-stub"
+
+# Build settings
+markdown: kramdown
+permalink: pretty
