@@ -9,7 +9,6 @@ Endpoint for priming queries:
 POST on http://[host]:[admin-port]/prime-query-single
 ```
 
-
 #### Successful response
 
 ```json
@@ -102,9 +101,9 @@ Priming via Java API:
 
 When priming for the same query with different consistencies be sure that two different primes do not overlap. E.g One prime for query X for consistencies ONE and TWO and another for the same query X with consistency TWO. This will result in the following error message and a HTTP 405.
 
-```json
+~~~ json
 { "errorMessage":"Conflicting Primes", "existingPrimes": ...}
-```
+~~~
 
 #### Seeing your existing primes
 

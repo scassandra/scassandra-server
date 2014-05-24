@@ -29,6 +29,7 @@ The default ports are:
 * Admin/Priming Port: 8043
 
 To override the ports / log level use the following java properties:
+
 ```
 -Dscassandra.binary.port=1234
 -Dscassandra.binary.port=4566
@@ -36,6 +37,7 @@ To override the ports / log level use the following java properties:
 ```
 
 E.g
+
 ```
 java -jar  -Dscassandra.binary.port=1234 -Dscassandra.binary.port=4566 -Dscassandra.log.level=DEBUG cassandra_server_stub.jar
 ```
