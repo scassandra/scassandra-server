@@ -25,9 +25,8 @@ import org.scassandra.priming.PrimingServer
 
 object ServerStubRunner extends Logging {
   def main(args: Array[String]) {
-    val conf = ConfigFactory.load
-    val binaryPortNumber = conf.getInt("scassandra.binary.port")
-    val adminPortNumber = conf.getInt("scassandra.admin.port")
+    val binaryPortNumber = ScassandraConfig.binaryPort
+    val adminPortNumber = ScassandraConfig.adminPort
     logger.info(s"Using binary port to $binaryPortNumber and admin port to $adminPortNumber")
     val ss = new ServerStubRunner(binaryPortNumber, adminPortNumber)
     ss.start()

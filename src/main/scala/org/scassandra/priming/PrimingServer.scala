@@ -25,6 +25,7 @@ import akka.actor.{Props, Actor}
 import org.scassandra.priming.routes.{ActivityVerificationRoute, PrimingQueryRoute, PrimingPreparedRoute}
 import org.scassandra.priming.query.PrimeQueryStore
 import org.scassandra.priming.prepared.PrimePreparedStore
+import org.scassandra.ScassandraConfig
 
 trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryRoute with ActivityVerificationRoute with Logging {
 
@@ -38,10 +39,9 @@ class PrimingServer(port: Int, implicit val primeQueryStore: PrimeQueryStore, im
 
   logger.info(s"Opening port $port for priming")
 
-  //val connectionChecker = context.actorOf(Props(classOf[ConnectionChecker], self))
   val routing =  context.actorOf(Props(classOf[PrimingServerHttpService], primeQueryStore, primePreparedStore))
 
-  IO(Http) ! Http.Bind(self, "localhost", port)
+  IO(Http) ! Http.Bind(self, ScassandraConfig.adminListenAddress, port)
 
   def receive = {
     case Connected(_, _) => {
@@ -57,8 +57,6 @@ class PrimingServer(port: Int, implicit val primeQueryStore: PrimeQueryStore, im
     }
     case msg @ _ => logger.info(s"Received unknown message $msg")
   }
-
-
 }
 
 class PrimingServerHttpService(implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore : PrimePreparedStore) extends Actor with AllRoutes with Logging {

@@ -23,6 +23,7 @@ import org.scassandra.priming.{ActivityLog}
 import org.scassandra.priming.query.PrimeQueryStore
 import org.scassandra.priming.prepared.PrimePreparedStore
 import org.scassandra.cqlmessages.CqlMessageFactory
+import org.scassandra.ScassandraConfig
 
 class TcpServer(port: Int, primedResults: PrimeQueryStore, primePrepareStore: PrimePreparedStore) extends Actor with Logging {
 
@@ -31,7 +32,7 @@ class TcpServer(port: Int, primedResults: PrimeQueryStore, primePrepareStore: Pr
 
   val manager = IO(Tcp)
 
-  IO(Tcp) ! Bind(self, new InetSocketAddress("0.0.0.0", port))
+  IO(Tcp) ! Bind(self, new InetSocketAddress(ScassandraConfig.binaryListenAddress, port))
   val preparedHandler = context.actorOf(Props(classOf[PrepareHandler], primePrepareStore))
 
   def receive = {
