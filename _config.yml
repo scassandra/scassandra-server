@@ -6,5 +6,5 @@ baseurl: "/scassandra-server"
 url: "http://www.scassandra.org/server-stub"
 
 # Build settings
-markdown: kramdown
+markdown: redcarpet
 permalink: pretty
