@@ -39,18 +39,18 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
       iterator.getBytes(bodyAsBytes)
       val queryText = new String(bodyAsBytes)
       val consistency = iterator.getShort
-      logger.debug(s"Handling {{ query }} with {{ consistency }} {{ $queryText }} {{ $consistency }}")
+      logger.info(s"Incoming query: $queryText at consistency: $consistency }}")
       ActivityLog.recordQuery(queryText, Consistency.fromCode(consistency))
       if (queryText.startsWith("use ")) {
         val keyspaceName: String = queryText.substring(4, queryLength)
-        logger.debug(s"Handling {{ use statement }} for {{ keyspacename }} {{ $queryText }} {{ $keyspaceName }}")
+        logger.debug(s"Use keyspace $keyspaceName")
         tcpConnection ! Write(msgFactory.createSetKeyspaceMessage(keyspaceName, stream).serialize())
       } else {
         primeQueryStore.get(PrimeMatch(queryText, Consistency.fromCode(consistency))) match {
           case Some(prime) => {
             prime.result match {
               case Success => {
-                logger.debug(s"Handling {{ query }} with {{ rows }} {{ $queryText }} {{ $prime }}")
+                logger.info(s"Found matching prime $prime for query $queryText")
                 val message = msgFactory.createRowsMessage(prime, stream)
                 logger.debug(s"Sending message: $message")
                 tcpConnection ! Write(message.serialize())
@@ -67,17 +67,17 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
             }
           }
           case None => {
-            logger.debug("Sending empty results")
+            logger.info(s"No prime found for $queryText")
             tcpConnection ! Write(msgFactory.createEmptyRowsMessage(stream).serialize())
           }
-          case msg@_ => {
-            logger.info(s"Received unexpected result back from primed results: $msg")
+          case msg @ _ => {
+            logger.debug(s"Received unexpected result back from primed results: $msg")
           }
         }
       }
 
-    case message@_ =>
-      logger.info(s"Received message: $message")
+    case message @ _ =>
+      logger.debug(s"Received unknown message: $message")
 
   }
 }

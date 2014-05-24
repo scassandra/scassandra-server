@@ -57,7 +57,6 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
 
       preparedStatementId = preparedStatementId + 1
 
-      logger.debug(s"Sending back prepared result ${preparedResult}")
       logger.info(s"Prepared Statement has been prepared: ${query}. Prepared result is: ${preparedResult}")
       connection ! preparedResult
     }
@@ -69,15 +68,16 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
 
       if (preparedStatement.isDefined) {
         val prime = primePreparedStore.findPrime(PrimeMatch(preparedStatement.get, executeRequest.consistency))
-        logger.debug(s"Prime for prepared statement query: $preparedStatement prime: $prime")
         prime match {
           case Some(preparedPrime) => {
+            val preparedStatementText = preparedStatement.get
+            logger.info(s"Received execution of prepared statement $preparedStatementText")
             if (executeRequest.numberOfVariables == preparedPrime.variableTypes.size) {
               val executeRequestParsedWithVariables = msgFactory.parseExecuteRequestWithVariables(stream, body, preparedPrime.variableTypes)
               val variablesAsStrings = executeRequestParsedWithVariables.variables.map(_.toString)
-              ActivityLog.recordPrimedStatementExecution(preparedStatement.get, executeRequestParsedWithVariables.consistency, variablesAsStrings)
+              ActivityLog.recordPrimedStatementExecution(preparedStatementText, executeRequestParsedWithVariables.consistency, variablesAsStrings)
            } else {
-             ActivityLog.recordPrimedStatementExecution(preparedStatement.get, executeRequest.consistency, List())
+             ActivityLog.recordPrimedStatementExecution(preparedStatementText, executeRequest.consistency, List())
              logger.warn(s"Execution of prepared statement has a different number of variables to the prime. Number of variables in message ${executeRequest.numberOfVariables}. Variables won't be recorded. $preparedPrime")
            }
 
@@ -90,13 +90,13 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
 
           }
           case None => {
-            logger.info("Received execution of prepared statemet that hasn't been primed so can't record variables.")
+            logger.info("Received execution of prepared statement that hasn't been primed so can't record variables.")
             ActivityLog.recordPrimedStatementExecution(preparedStatement.get, executeRequest.consistency, List())
             connection ! msgFactory.createVoidMessage(stream)
           }
         }
       } else {
-        logger.warn(s"Didn't find prepared statement. Has scassandra been restarted since your application prepared the statement?")
+        logger.warn(s"Received execution of an unknown prepared statement. Have you restarted Scassandra since your application prepared the statement?")
         connection ! msgFactory.createVoidMessage(stream)
       }
     }
