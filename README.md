@@ -17,6 +17,18 @@ Scassandra is written in Scala but we also have a Java wrapper for use with Java
 To get started please see the wiki:
 * [Wiki](https://github.com/scassandra/scassandra-server/wiki)
 
+Features v0.1:
+* Priming of queries with columns of all the primitive types (no suport for collections/custom tyes).
+* Priming of prepared statements. The variable (?s) types and response types can be any of the primitive types.
+* Retrieval of a list of all recorded queries.
+* Retrieval of a list of all the recorded executed prepared statements. If the prepared statement has been primed then the variable values are also visible.
+
+
+Feature backlog:
+* Retrieval of a list of all prepared statements even if they haven't been executed.
+* Priming of tables rather than queries. Currently Scassandra does not parse the query and compares an executed query with all the primes query field. This would be very useful for priming the system keyspace as certain drivers expect the same thing to be in system.local but do slightly different queries to retireve it.
+
+
 Current limitations:
 * Only tested with Java Datastax driver version 2 and above. Support for version 1 will come later. Other drivers will be tested and supported soon.
 * Collections aren't supported.
