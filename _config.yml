@@ -1,8 +1,8 @@
 # Site settings
 title: Scassandra Server
 email: chrisopher.batey@gmail.com
-description: "Scassandra server"
-baseurl: ""
+description: "making testing cassandra applications easy"
+baseurl: "/scassandra-server"
 url: "http://www.scassandra.org/server-stub"
 
 # Build settings
