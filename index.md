@@ -5,7 +5,7 @@ layout: default
 ###Overview
 
 Scassandra server is written in Scala but we also have a Java wrapper for use with Java unit and integration tests.
-If you're looking to test your Cassandra application from Java then go to the [Java Client](www.scassandra.org/java-lcient).
+If you're looking to test your Cassandra application from Java then go to the [Java Client](http://www.scassandra.org/java-cient).
 
 Version 0.1 of Scassandra is primarily aimed at Java developers. The next version will have more focus on the standalone version of Scassandra.
 
