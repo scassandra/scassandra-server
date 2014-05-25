@@ -1,3 +1,5 @@
-_siteproject
-target
 _site
+.idea/
+project/
+src/
+target/

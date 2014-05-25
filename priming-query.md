@@ -3,7 +3,7 @@ layout: default
 ---
 ## Priming Queries
 
-Endpoint for priming queries:
+The endpoint for priming queries is:
 
 ```
 POST on http://[host]:[admin-port]/prime-query-single
