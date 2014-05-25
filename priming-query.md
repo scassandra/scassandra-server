@@ -341,7 +341,7 @@ The following types can be primed via the Java API
 
 #### Errors when priming
 
-See the [priming errors page]({% post_url priming-errors %})
+See the [priming errors page](http://www.scassandra.org/scassandra-server/priming-query)
 
 #### Seeing your existing primes
 
