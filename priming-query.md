@@ -319,26 +319,6 @@ Varchars can be primed in two ways.
  }
 ```
 
-#### Priming via Java API:
-
-The following types can be primed via the Java API
-
-* ascii
-* bigint
-* blob
-* boolean
-* counter
-* decimal
-* double
-* float
-* int
-* timestamp
-* uuid
-* varchar
-* varint
-* timeuuid
-* inet
-
 #### Errors when priming
 
 See the [priming errors page](http://www.scassandra.org/scassandra-server/priming-errors)
