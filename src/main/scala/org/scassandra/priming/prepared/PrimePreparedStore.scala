@@ -58,7 +58,7 @@ class PrimePreparedStore extends Logging {
 
     validator.validate(primeCriteria, primeToStore.prime, state.map( existingPrime => (existingPrime._1, existingPrime._2.prime)  ) ) match {
       case PrimeAddSuccess => {
-        logger.info(s"Storing prime for prepared statement $primeToStore")
+        logger.info(s"Storing prime for prepared statement ${primeToStore} with prime criteria ${primeCriteria}")
         state += (primeCriteria -> primeToStore)
         PrimeAddSuccess
       }

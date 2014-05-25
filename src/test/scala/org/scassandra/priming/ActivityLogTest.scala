@@ -60,7 +60,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
     val variables = List("Chris")
     val consistency = ONE
     
-    ActivityLog.recordPrimedStatementExecution(preparedStatementText, consistency, variables)
+    ActivityLog.recordPreparedStatementExecution(preparedStatementText, consistency, variables)
     val preparedStatementRecord = ActivityLog.retrievePreparedStatementExecutions()
 
     preparedStatementRecord.size should equal(1)
@@ -68,7 +68,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Clear prepared statement activity log") {
-    ActivityLog.recordPrimedStatementExecution("anything", TWO, List())
+    ActivityLog.recordPreparedStatementExecution("anything", TWO, List())
     ActivityLog.clearPreparedStatementExecutions()
     ActivityLog.retrievePreparedStatementExecutions().size should equal(0)
   }

@@ -45,7 +45,7 @@ object ActivityLog extends Logging {
   
   def retrievePreparedStatementExecutions(): List[PreparedStatementExecution] = preparedStatementExecutions
 
-  def recordPrimedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[String] ) = {
+  def recordPreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any] ) = {
     val execution: PreparedStatementExecution = PreparedStatementExecution(preparedStatementText, consistency, variables)
     logger.info("Recording " + execution)
     preparedStatementExecutions = preparedStatementExecutions ::: execution :: Nil
@@ -58,4 +58,4 @@ object ActivityLog extends Logging {
 
 case class Query(query: String, consistency: Consistency)
 case class Connection(result: String = "success")
-case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[String] )
+case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any] )
