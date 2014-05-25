@@ -17,19 +17,12 @@ package org.scassandra.server
 
 import com.typesafe.scalalogging.slf4j.{Logging}
 import akka.actor.{ActorRef, Actor}
-import akka.util.{ByteIterator, ByteString}
+import akka.util.{ByteString}
 import org.scassandra.cqlmessages._
 import org.scassandra.priming.prepared.PrimePreparedStore
-import org.scassandra.priming.query.PrimeMatch
 import org.scassandra.priming._
 import org.scassandra.priming.query.PrimeMatch
 import scala.Some
-import org.scassandra.priming.query.PrimeMatch
-import scala.Some
-import java.math.BigDecimal
-import java.util.UUID
-import java.net.InetAddress
-import org.scassandra.cqlmessages.request.ExecuteRequest
 
 class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with Logging {
 

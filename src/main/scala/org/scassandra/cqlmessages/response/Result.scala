@@ -179,7 +179,7 @@ case class PreparedResultV1(stream: Byte, preparedStatementId: Int, keyspaceName
 
 case class PreparedResultV2(stream: Byte, preparedStatementId: Int, keyspaceName: String, tableName: String, variableTypes: List[ColumnType[_]])(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Prepared, stream, protocolVersion.serverCode) {
 
-    implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+    import CqlProtocolHelper._
 
     def serialize(): ByteString = {
       val bs = ByteString.newBuilder

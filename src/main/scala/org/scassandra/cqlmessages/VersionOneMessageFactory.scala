@@ -28,7 +28,7 @@ import org.scassandra.cqlmessages.response.Row
 import org.scassandra.cqlmessages.response.SetKeyspace
 import org.scassandra.cqlmessages.response.PreparedResultV1
 import akka.util.ByteString
-import org.scassandra.cqlmessages.request.ExecuteRequest
+import org.scassandra.cqlmessages.request.{ExecuteRequest}
 
 object VersionOneMessageFactory extends CqlMessageFactory {
 
