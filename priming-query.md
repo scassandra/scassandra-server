@@ -341,11 +341,7 @@ The following types can be primed via the Java API
 
 #### Errors when priming
 
-When priming for the same query with different consistencies be sure that two different primes do not overlap. E.g One prime for query X for consistencies ONE and TWO and another for the same query X with consistency TWO. This will result in the following error message and a HTTP 405.
-
-```json
-{ "errorMessage":"Conflicting Primes", "existingPrimes": ...}
-```
+See the [priming errors page]({% post_url priming-errors %})
 
 #### Seeing your existing primes
 
