@@ -34,6 +34,9 @@ object ServerStubRunner extends Logging {
   }
 }
 
+/**
+ * Constructor used by the Java Client so if you change it update the Java Client as well.
+ */
 class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber : Int = 8043) extends Logging {
 
   var system : ActorSystem = _

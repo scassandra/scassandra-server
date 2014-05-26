@@ -15,11 +15,11 @@ def copyrightNotice = """/*
  */
 """
 
-    def srcDir = new File('src')
+def srcDir = new File('src')
     srcDir.eachFileRecurse { file ->
-        if (file.name.endsWith(".scala") && !file.text.contains(copyrightNotice)) {
-            println "Adding copyright header to $file.path"
-            def newFileText = copyrightNotice + file.text;
-            file.text = newFileText;
-        }
+    if (file.name.endsWith(".scala") && !file.text.contains(copyrightNotice)) {
+        println "Adding copyright header to $file.path"
+        def newFileText = copyrightNotice + file.text;
+        file.text = newFileText;
     }
+}

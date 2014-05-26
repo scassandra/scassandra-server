@@ -60,8 +60,6 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
       val messageLength = currentData.length
       logger.trace(s"Whole message length so far is $messageLength")
 
-      // TODO - [DN] is this code blocking?
-      // [CB] How so? It works until there is nothing else to do. There are no sleeps.
       while (currentData.length >= HeaderLength && takeMessage()) {}
 
       if (currentData.length > 0) {
@@ -81,7 +79,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
   private def processMessage(opCode: Byte, stream: Byte, messageBody: ByteString, protocolVersion: Byte) = {
     logger.trace(s"Whole body $messageBody with length ${messageBody.length}")
 
-    val cqlMessageFactory = if (protocolVersion == ProtocolVersion.ClientProtocolVersionOne) {
+    val cqlMessageFactory: CqlMessageFactory = if (protocolVersion == ProtocolVersion.ClientProtocolVersionOne) {
       logger.debug("Received protocol one message")
       VersionOneMessageFactory
     } else {
@@ -100,6 +98,8 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
           logger.info("Received query before startup message, sending error")
           sender ! Write(cqlMessageFactory.createQueryBeforeErrorMessage().serialize())
         } else {
+          //TODO: This should not create a query handler per request as they don't shut them selves down.
+          // Unless we can make the query handler shut its self down.
           val queryHandler = queryHandlerFactory(context, sender, cqlMessageFactory)
           queryHandler ! QueryHandlerMessages.Query(messageBody, stream)
         }
