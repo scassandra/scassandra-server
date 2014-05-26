@@ -15,7 +15,7 @@
  */
 package org.scassandra.e2e
 
-import org.scassandra.{PrimingHelper, ConnectionToServerStub, AbstractIntegrationTest}
+import org.scassandra.{ScassandraConfig, PrimingHelper, AbstractIntegrationTest}
 import com.datastax.driver.core.Cluster
 import org.scassandra.priming.query.When
 import org.scassandra.cqlmessages.CqlSet
@@ -25,7 +25,7 @@ class MetaDataTest extends AbstractIntegrationTest(false) {
 
   test("Cluster name") {
     val when = When("SELECT * FROM system.local WHERE key='local'")
-    val clusterName = "ACCluster"
+    val clusterName = "SomeMetaCluster"
     val columnTypes = Map("tokens" -> CqlSet)
     val rows = List(Map("cluster_name" -> clusterName,
       "partitioner" -> "org.apache.cassandra.dht.Murmur3Partitioner",
@@ -36,8 +36,8 @@ class MetaDataTest extends AbstractIntegrationTest(false) {
     PrimingHelper.primeQuery(when, rows, columnTypes = columnTypes)
 
     cluster = Cluster.builder()
-      .addContactPoint(ConnectionToServerStub.ServerHost)
-      .withPort(ConnectionToServerStub.ServerPort)
+      .addContactPoint(ScassandraConfig.binaryListenAddress)
+      .withPort(ScassandraConfig.binaryPort)
       .build()
     session = cluster.connect()
 

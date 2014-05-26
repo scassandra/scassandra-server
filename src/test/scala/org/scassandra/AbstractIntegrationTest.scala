@@ -85,10 +85,10 @@ abstract class AbstractIntegrationTest(clusterConnect : Boolean = true) extends 
 
     try {
       ConnectionToServerStub()
-      println(s"Succesfully connected to ${ConnectionToServerStub.ServerHost}:${ConnectionToServerStub.ServerPort}. There must be something running.")
+      println(s"Succesfully connected to ${ScassandraConfig.binaryListenAddress}:${ScassandraConfig.binaryPort}. There must be something running.")
     } catch {
       case ce: ConnectException =>
-        println(s"No open connection found on ${ConnectionToServerStub.ServerHost}:${ConnectionToServerStub.ServerPort}. Starting the server.")
+        println(s"No open connection found on ${ScassandraConfig.binaryListenAddress}:${ScassandraConfig.binaryPort}. Starting the server.")
         somethingAlreadyRunning = false
 
     }
@@ -101,7 +101,7 @@ abstract class AbstractIntegrationTest(clusterConnect : Boolean = true) extends 
     startServerStub()
 
     if (clusterConnect) {
-      cluster = Cluster.builder().addContactPoint(ConnectionToServerStub.ServerHost).withPort(ConnectionToServerStub.ServerPort).build()
+      cluster = Cluster.builder().addContactPoint(ScassandraConfig.binaryListenAddress).withPort(ScassandraConfig.binaryPort).build()
       session = cluster.connect("mykeyspace")
     }
   }
@@ -114,11 +114,8 @@ abstract class AbstractIntegrationTest(clusterConnect : Boolean = true) extends 
 }
 
 object ConnectionToServerStub {
-  val ServerHost = "localhost"
-  val ServerPort = 8042
-
   def apply() = {
-    val socket = new Socket(ServerHost, ServerPort)
+    val socket = new Socket(ScassandraConfig.binaryListenAddress, ScassandraConfig.binaryPort)
     socket.setSoTimeout(1000)
     socket
   }

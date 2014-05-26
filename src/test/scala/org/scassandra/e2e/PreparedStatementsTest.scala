@@ -32,14 +32,6 @@ import com.datastax.driver.core.exceptions.{UnavailableException, WriteTimeoutEx
 import org.scalatest.BeforeAndAfter
 import dispatch._, Defaults._
 import spray.json._
-import org.scassandra.priming.prepared.ThenPreparedSingle
-import org.scassandra.priming.prepared.WhenPreparedSingle
-import scala.Some
-import org.scassandra.priming.prepared.PrimePreparedSingle
-import org.scassandra.priming.prepared.ThenPreparedSingle
-import org.scassandra.priming.prepared.WhenPreparedSingle
-import scala.Some
-import org.scassandra.priming.prepared.PrimePreparedSingle
 
 class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
 
@@ -79,7 +71,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
   test("Prepared statement for schema change") {
     //given
     val preparedStatement = session.prepare("CREATE KEYSPACE ? WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': ?, 'dc2': ?};")
-    val boundStatement = preparedStatement.bind("keyspaceName","3","1")
+    val boundStatement = preparedStatement.bind("keyspaceName", "3", "1")
 
     //when
     val result = session.execute(boundStatement)
@@ -213,7 +205,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     results.size() should equal(1)
     results.get(0).getString("name") should equal("Chris")
   }
-  
+
   test("Conflicting primes") {
     //given
     val preparedStatementText = "select * from people where name = ?"
@@ -250,13 +242,13 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
       "float" -> CqlFloat,
       "int" -> CqlInt,
       "varint" -> CqlVarint)
-    val bigInt : java.lang.Long = 1234
-    val counter : java.lang.Long = 2345
-    val decimal : java.math.BigDecimal = new java.math.BigDecimal("1")
-    val double : java.lang.Double = 1.5
-    val float : java.lang.Float = 2.5f
-    val int : java.lang.Integer = 3456
-    val varint : java.math.BigInteger = new java.math.BigInteger("123")
+    val bigInt: java.lang.Long = 1234
+    val counter: java.lang.Long = 2345
+    val decimal: java.math.BigDecimal = new java.math.BigDecimal("1")
+    val double: java.lang.Double = 1.5
+    val float: java.lang.Float = 2.5f
+    val int: java.lang.Integer = 3456
+    val varint: java.math.BigInteger = new java.math.BigInteger("123")
 
     val rows: List[Map[String, Any]] = List(
       Map(
@@ -308,14 +300,14 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
       "inet" -> CqlInet
     )
 
-    val ascii : String = "ascii"
-    val blob : ByteBuffer = ByteString().toByteBuffer
-    val boolean : java.lang.Boolean = true
-    val timestamp : java.util.Date = new Date();
-    val uuid : UUID = UUID.randomUUID()
-    val varchar : String = "varchar"
-    val timeuuid : UUID = UUIDs.timeBased()
-    val inet : InetAddress = InetAddress.getByName("127.0.0.1")
+    val ascii: String = "ascii"
+    val blob: ByteBuffer = ByteString().toByteBuffer
+    val boolean: java.lang.Boolean = true
+    val timestamp: java.util.Date = new Date();
+    val uuid: UUID = UUID.randomUUID()
+    val varchar: String = "varchar"
+    val timeuuid: UUID = UUIDs.timeBased()
+    val inet: InetAddress = InetAddress.getByName("127.0.0.1")
 
     val primedRow = Map(
       "ascii" -> ascii.toString,

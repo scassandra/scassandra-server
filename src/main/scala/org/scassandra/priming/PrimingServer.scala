@@ -32,36 +32,38 @@ trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryR
   val allRoutes = routeForPreparedPriming ~ queryRoute ~ activityVerificationRoute
 }
 
-class PrimingServer(port: Int, implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore : PrimePreparedStore) extends Actor with Logging {
+class PrimingServer(implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore: PrimePreparedStore) extends Actor with Logging {
 
   import Tcp._
+
   implicit def actorRefFactory = context.system
 
-  logger.info(s"Opening port $port for priming")
+  logger.info(s"Opening port ${ScassandraConfig.adminPort} for priming")
 
-  val routing =  context.actorOf(Props(classOf[PrimingServerHttpService], primeQueryStore, primePreparedStore))
+  val routing = context.actorOf(Props(classOf[PrimingServerHttpService], primeQueryStore, primePreparedStore))
 
-  IO(Http) ! Http.Bind(self, ScassandraConfig.adminListenAddress, port)
+  IO(Http) ! Http.Bind(self, ScassandraConfig.adminListenAddress, ScassandraConfig.adminPort)
 
   def receive = {
     case Connected(_, _) => {
       sender ! Tcp.Register(routing)
     }
-    case b @ Bound(_) => {
-      logger.info(s"Priming server bound to admin port $port")
+    case b@Bound(_) => {
+      logger.info(s"Priming server bound to port ${ScassandraConfig.adminPort}")
     }
     case CommandFailed(_) => {
-      logger.error(s"Unable to bind to admin port $port. Is it in use?")
+      logger.error(s"Unable to bind priming server to port ${ScassandraConfig.adminPort}. Is it in use?")
       context stop self
       context.system.shutdown()
     }
-    case msg @ _ => logger.info(s"Received unknown message $msg")
+    case msg@_ => logger.info(s"Received unknown message $msg")
   }
 }
 
-class PrimingServerHttpService(implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore : PrimePreparedStore) extends Actor with AllRoutes with Logging {
+class PrimingServerHttpService(implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore: PrimePreparedStore) extends Actor with AllRoutes with Logging {
 
   implicit def actorRefFactory = context.system
+
   // some default spray initialisation
   val routingSettings = RoutingSettings default context
 
