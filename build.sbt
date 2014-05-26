@@ -38,6 +38,7 @@ net.virtualvoid.sbt.graph.Plugin.graphSettings
 publishArtifact in Test := false
 
 pomExtra := {
+<url>http://www.scassandra.org</url>
 <licenses>
   <license>
     <name>Apache 2</name>
