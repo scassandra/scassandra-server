@@ -15,35 +15,24 @@
  */
 package org.scassandra.server
 
-import org.scassandra.priming.ActivityLog
+import org.scassandra.priming.{ActivityLog}
 import org.scalatest.{BeforeAndAfter, FunSuiteLike, Matchers}
 import akka.testkit.{TestActorRef, ImplicitSender, TestKit}
 import akka.actor.ActorSystem
 import akka.io.Tcp.Connected
 import org.scassandra.priming.query.PrimeQueryStore
 import org.scassandra.priming.prepared.PrimePreparedStore
-import com.typesafe.config.ConfigFactory
 
 /**
  * Unfortunately this test actually binds to the port. Not found a way to
  * stub out the akka IO manager.
  */
-class TcpServerTest extends TestKit(ActorSystem("TcpServerTest")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
+class TcpServerTest extends TestKit(ActorSystem("Test")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
 
-  before {
-    System.setProperty("scassandra.config.resource", "tcpservertest.conf")
-    ConfigFactory.invalidateCaches()
-  }
-
-  after {
-    System.clearProperty("scassandra.config.resource")
-    ConfigFactory.invalidateCaches()
-  }
-
-  ignore("Should record a connection with the ActivityLog") {
+  test("Should record a connection with the ActivityLog") {
     //given
     ActivityLog.clearConnections()
-    val underTest = TestActorRef(new TcpServer(new PrimeQueryStore, new PrimePreparedStore))
+    val underTest = TestActorRef(new TcpServer(8044, new PrimeQueryStore, new PrimePreparedStore))
     //when
     underTest ! Connected(null, null)
     //then

@@ -15,7 +15,7 @@
  */
 package org.scassandra.e2e
 
-import org.scassandra.{ScassandraConfig, ConnectionToServerStub, AbstractIntegrationTest}
+import org.scassandra.{ConnectionToServerStub, AbstractIntegrationTest}
 import org.scalatest.concurrent.ScalaFutures
 import org.scassandra.priming.{PrimingJsonImplicits, Connection, ActivityLog}
 import dispatch._, Defaults._
@@ -40,7 +40,7 @@ class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutur
     poolingOptions.setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
     poolingOptions.setCoreConnectionsPerHost(HostDistance.REMOTE, 0)
 
-    val cluster = Cluster.builder().withPoolingOptions(poolingOptions).addContactPoint(ScassandraConfig.binaryListenAddress).withPort(ScassandraConfig.binaryPort).build()
+    val cluster = Cluster.builder().withPoolingOptions(poolingOptions).addContactPoint(ConnectionToServerStub.ServerHost).withPort(ConnectionToServerStub.ServerPort).build()
     cluster.connect()
     val svc: Req = url("http://localhost:8043/connection")
     val response = Http(svc OK as.String)
