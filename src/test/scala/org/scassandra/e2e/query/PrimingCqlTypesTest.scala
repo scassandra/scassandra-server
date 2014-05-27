@@ -318,7 +318,8 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val set = Set("one", "two", "three")
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet)
+    val setOfVarchar = CqlSet(CqlVarchar)
+    val columnTypes  = Map("field" -> setOfVarchar)
     prime(When(whenQuery), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)

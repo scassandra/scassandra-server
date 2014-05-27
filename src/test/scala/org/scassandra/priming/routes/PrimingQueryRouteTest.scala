@@ -325,7 +325,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val whenQuery = When(query)
       val thenRows = Some(List(Map("field" -> "2c530380-b9f9-11e3-850e-338bb2a2e74f",
         "set_field" -> List("one", "two"))))
-      val thenColumnTypes = Some(Map("field" -> CqlTimeUUID, "set_field" -> CqlSet))
+      val thenColumnTypes = Some(Map("field" -> CqlTimeUUID, "set_field" -> CqlSet(CqlVarchar)))
       val primePayload = PrimeQuerySingle(whenQuery, Then(thenRows, column_types = thenColumnTypes))
       val expectedPrimePayloadWithDefaults = createPrimeQueryResultWithDefaults(query, thenRows = thenRows, columnTypes = thenColumnTypes)
 
