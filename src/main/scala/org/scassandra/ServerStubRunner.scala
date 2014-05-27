@@ -45,9 +45,9 @@ class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber : I
   val primePreparedStore = new PrimePreparedStore
 
   def start() = {
-    system = ActorSystem("CassandraServerStub")
-    system.actorOf(Props(classOf[TcpServer], serverPortNumber, primedResults, primePreparedStore))
-    system.actorOf(Props(classOf[PrimingServer], adminPortNumber, primedResults, primePreparedStore))
+    system = ActorSystem(s"CassandraServerStub-${serverPortNumber}-${adminPortNumber}")
+    system.actorOf(Props(classOf[TcpServer], serverPortNumber, primedResults, primePreparedStore), "BinaryTcpListener")
+    system.actorOf(Props(classOf[PrimingServer], adminPortNumber, primedResults, primePreparedStore), "PrimingServer")
   }
 
   def awaitTermination() = {
