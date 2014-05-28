@@ -53,7 +53,7 @@ object PrimingHelper {
   }
 }
 
-abstract class AbstractIntegrationTest(clusterConnect : Boolean = true) extends FunSuite with Matchers with BeforeAndAfter with BeforeAndAfterAll {
+abstract class AbstractIntegrationTest(clusterConnect: Boolean = true) extends FunSuite with Matchers with BeforeAndAfter with BeforeAndAfterAll {
   var serverThread: ServerStubRunner = null
 
   var cluster: Cluster = _
@@ -66,7 +66,7 @@ abstract class AbstractIntegrationTest(clusterConnect : Boolean = true) extends 
   def startServerStub() = {
     serverThread = new ServerStubRunner()
     serverThread.start()
-    Thread.sleep(3000)
+    serverThread.awaitStartup()
   }
 
   def stopServerStub() = {

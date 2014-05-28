@@ -19,13 +19,13 @@ import akka.actor.{ActorRef, ActorRefFactory, Props, Actor}
 import akka.io.{IO, Tcp}
 import com.typesafe.scalalogging.slf4j.Logging
 import java.net.InetSocketAddress
-import org.scassandra.priming.{ActivityLog}
+import org.scassandra.priming.ActivityLog
 import org.scassandra.priming.query.PrimeQueryStore
 import org.scassandra.priming.prepared.PrimePreparedStore
 import org.scassandra.cqlmessages.CqlMessageFactory
-import org.scassandra.ScassandraConfig
+import org.scassandra.{ServerReady, ScassandraConfig}
 
-class TcpServer(port: Int, primedResults: PrimeQueryStore, primePrepareStore: PrimePreparedStore) extends Actor with Logging {
+class TcpServer(port: Int, primedResults: PrimeQueryStore, primePrepareStore: PrimePreparedStore, serverReadyListener: ActorRef) extends Actor with Logging {
 
   import Tcp._
   import context.system
@@ -38,6 +38,7 @@ class TcpServer(port: Int, primedResults: PrimeQueryStore, primePrepareStore: Pr
   def receive = {
     case b @ Bound(localAddress) => {
       logger.info(s"Port $port ready for Cassandra binary connections.")
+      serverReadyListener ! ServerReady
     }
 
     case CommandFailed(_: Bind) => {

@@ -15,13 +15,16 @@
  */
 package org.scassandra
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor._
 import com.typesafe.scalalogging.slf4j.Logging
-import com.typesafe.config.{Config, ConfigFactory}
 import org.scassandra.priming.query.PrimeQueryStore
 import org.scassandra.priming.prepared.PrimePreparedStore
 import org.scassandra.server.TcpServer
 import org.scassandra.priming.PrimingServer
+import scala.concurrent.{ExecutionContext, Await}
+import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.duration._
 
 object ServerStubRunner extends Logging {
   def main(args: Array[String]) {
@@ -39,15 +42,25 @@ object ServerStubRunner extends Logging {
  */
 class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber : Int = 8043) extends Logging {
 
-  var system : ActorSystem = _
+  import ExecutionContext.Implicits.global
+
+  // awaitStartup() : timeout used implicitly by the ask pattern and explicitly with Await.result()
+  implicit val timeout = Timeout(5 seconds)
+
+  var system: ActorSystem = _
 
   val primedResults = PrimeQueryStore()
   val primePreparedStore = new PrimePreparedStore
 
+  var primingReadyListener: ActorRef = _
+  var tcpReadyListener: ActorRef = _
+
   def start() = {
     system = ActorSystem(s"CassandraServerStub-${serverPortNumber}-${adminPortNumber}")
-    system.actorOf(Props(classOf[TcpServer], serverPortNumber, primedResults, primePreparedStore), "BinaryTcpListener")
-    system.actorOf(Props(classOf[PrimingServer], adminPortNumber, primedResults, primePreparedStore), "PrimingServer")
+    primingReadyListener = system.actorOf(Props(classOf[ServerReadyListener]), "PrimingReadyListener")
+    tcpReadyListener = system.actorOf(Props(classOf[ServerReadyListener]), "TcpReadyListener")
+    system.actorOf(Props(classOf[TcpServer], serverPortNumber, primedResults, primePreparedStore, tcpReadyListener), "BinaryTcpListener")
+    system.actorOf(Props(classOf[PrimingServer], adminPortNumber, primedResults, primePreparedStore, primingReadyListener), "PrimingServer")
   }
 
   def awaitTermination() = {
@@ -60,5 +73,16 @@ class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber : I
     logger.info("Server is shut down")
   }
 
+  def awaitStartup() = {
+    val primingReady = primingReadyListener ? OnServerReady
+    val tcpReady = tcpReadyListener ? OnServerReady
+
+    val allReady = for {
+      _ <- primingReady
+      _ <- tcpReady
+    } yield ServerReady // just need to yield something
+
+    Await.result(allReady, timeout.duration)
+  }
 }
 

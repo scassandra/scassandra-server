@@ -15,7 +15,6 @@
  */
 package org.scassandra.priming.prepared
 
-import org.scassandra.priming.query._
 import org.scassandra.priming.routes.PrimeQueryResultExtractor
 import org.scassandra.cqlmessages.{Consistency, CqlVarchar}
 import org.scassandra.priming.{PrimeAddSuccess, PrimeAddResult, PrimeValidator, Success}
@@ -79,5 +78,11 @@ class PrimePreparedStore extends Logging {
 
   def clear() = {
     state = Map()
+  }
+}
+
+object PrimePreparedStore {
+  def apply() = {
+    new PrimePreparedStore()
   }
 }
