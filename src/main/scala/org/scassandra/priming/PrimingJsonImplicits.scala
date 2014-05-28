@@ -24,6 +24,8 @@ import org.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, 
 import org.scassandra.priming.query.PrimeQuerySingle
 import org.scassandra.priming.query.When
 import org.scassandra.priming.query.Then
+import java.util.UUID
+import java.net.InetAddress
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
 
@@ -67,6 +69,13 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
       case b: Boolean if b => JsTrue
       case b: Boolean if !b => JsFalse
       case double: Double => JsNumber(double)
+      case float: Float => JsNumber(float)
+      case uuid: UUID => JsString(uuid.toString)
+      case bigInt: BigInt => JsNumber(bigInt)
+      case bigD: BigDecimal => JsNumber(bigD)
+      case bigD: java.math.BigDecimal => JsNumber(bigD)
+      case inet: InetAddress => JsString(inet.getHostAddress)
+      case bytes: Array[Byte] => JsString("0x" + bytes2hex(bytes))
       case other => serializationError("Do not understand object of type " + other.getClass.getName)
     }
     def read(value: JsValue) = value match {
@@ -77,6 +86,9 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
       case JsTrue => true
       case JsFalse => false
       case x => deserializationError("Do not understand how to deserialize " + x)
+    }
+    def bytes2hex(bytes: Array[Byte]): String = {
+       bytes.map("%02x".format(_)).mkString
     }
   }
 

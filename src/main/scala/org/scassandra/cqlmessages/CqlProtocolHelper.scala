@@ -117,12 +117,11 @@ object CqlProtocolHelper {
     frameBuilder.result().toArray
   }
 
-  def serializeVarcharSetValue(set : Iterable[String]) : Array[Byte] = {
+  def serializeSet(set : Iterable[Any], setType: ColumnType[_]) : Array[Byte] = {
     val frameBuilder = ByteString.newBuilder
     frameBuilder.putShort(set.size)
     for (valueToSerialise <- set) {
-      frameBuilder.putShort(valueToSerialise.size)
-      frameBuilder.putBytes(valueToSerialise.getBytes())
+      frameBuilder.putBytes(setType.writeValueInCollection(valueToSerialise))
     }
     val serialisedSet = frameBuilder.result().toArray
     serializeInt(serialisedSet.length) ++ serialisedSet

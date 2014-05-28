@@ -45,7 +45,7 @@ object PrimeQueryResultExtractor extends Logging {
     val result = then.result.getOrElse(Success)
     logger.trace("Column types " + primeRequest.then.column_types)
    
-    val columnTypes: Map[String, ColumnType[_]] = convertStringColumnTypes(primeRequest.then.column_types, resultsAsList)
+    val columnTypes: Map[String, ColumnType[_]] = defaultColumnTypesToVarchar(primeRequest.then.column_types, resultsAsList)
 
     logger.trace("Incoming when {}", primeRequest.when)
 
@@ -56,7 +56,7 @@ object PrimeQueryResultExtractor extends Logging {
     Prime(resultsAsList, result, columnTypes, keyspace, table)
   }
   
-  def convertStringColumnTypes(columnTypes : Option[Map[String, ColumnType[_]]], resultsAsList: List[Map[String, Any]]) = {
+  def defaultColumnTypesToVarchar(columnTypes : Option[Map[String, ColumnType[_]]], resultsAsList: List[Map[String, Any]]) = {
     val colTypes: Map[String, ColumnType[_]] =  columnTypes.getOrElse(Map[String, ColumnType[_]]())
 
     // check that all the columns in the rows have a type

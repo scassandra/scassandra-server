@@ -34,7 +34,7 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
       val iterator = queryBody.iterator
       // the first 4 bytes are an int which is the length of the query
       val queryLength = iterator.getInt
-      logger.trace(s"Query length is $queryLength")
+      logger.trace(s"Query length is ${queryLength}")
       val bodyAsBytes = new Array[Byte](queryLength)
       iterator.getBytes(bodyAsBytes)
       val queryText = new String(bodyAsBytes)

@@ -41,7 +41,8 @@ case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTy
       bodyBuilder.putBytes(CqlProtocolHelper.serializeString(colName).toArray)
       bodyBuilder.putShort(colType.code)
       colType match {
-        case CqlSet => bodyBuilder.putShort(CqlVarchar.code)
+        case CqlSet(setType) => bodyBuilder.putShort(setType.code)
+        case CqlList(listType) => bodyBuilder.putShort(listType.code)
         case _ => // do nothing
       }
     }})

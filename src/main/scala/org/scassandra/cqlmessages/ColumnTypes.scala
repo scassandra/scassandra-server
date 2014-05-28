@@ -24,6 +24,7 @@ import com.typesafe.scalalogging.slf4j.{Logging}
 abstract class ColumnType[T](val code : Short, val stringRep: String) extends Logging {
   def readValue(byteIterator : ByteIterator) : T
   def writeValue(value : Any) : Array[Byte]
+  def writeValueInCollection(value: Any) : Array[Byte] = ???
 }
 
 case object CqlAscii extends ColumnType[String](0x0001, "ascii") {
@@ -169,6 +170,9 @@ case object CqlVarchar extends ColumnType[String](0x000D, "varchar") {
   override def writeValue(value : Any) = {
     CqlProtocolHelper.serializeLongString(value.toString)
   }
+  override def writeValueInCollection(value : Any) = {
+    CqlProtocolHelper.serializeString(value.toString)
+  }
 }
 case object CqlVarint extends ColumnType[BigInt](0x000E, "varint") {
   override def readValue(byteIterator: ByteIterator): BigInt = {
@@ -198,13 +202,30 @@ case object CqlInet extends ColumnType[InetAddress](0x0010, "inet") {
   }
 }
 // only supports strings for now.
-case object CqlSet extends ColumnType[Set[String]](0x0022, "set") {
+case class CqlSet(setType : ColumnType[_]) extends ColumnType[Set[_]](0x0022, "set") {
   override def readValue(byteIterator: ByteIterator): Set[String] = {
     CqlProtocolHelper.readVarcharSetValue(byteIterator)
   }
 
-  def writeValue( value: Any) = {
-    CqlProtocolHelper.serializeVarcharSetValue(value.asInstanceOf[Iterable[String]])
+  def writeValue(value: Any) = {
+    if (value.isInstanceOf[Iterable[_]]) {
+      CqlProtocolHelper.serializeSet(value.asInstanceOf[Iterable[setType.type]], setType)
+    } else {
+      throw new IllegalArgumentException(s"Can't serialise ${value} as Set of ${setType}")
+    }
+  }
+}
+case class CqlList(setType : ColumnType[_]) extends ColumnType[Iterable[_]](0x0020, "list") {
+  override def readValue(byteIterator: ByteIterator): Iterable[String] = {
+    CqlProtocolHelper.readVarcharSetValue(byteIterator)
+  }
+
+  def writeValue(value: Any) = {
+    if (value.isInstanceOf[Iterable[_]]) {
+      CqlProtocolHelper.serializeSet(value.asInstanceOf[Iterable[setType.type]], setType)
+    } else {
+      throw new IllegalArgumentException(s"Can't serialise ${value} as List of ${setType}")
+    }
   }
 }
 
@@ -225,8 +246,15 @@ object ColumnType {
     CqlInet.stringRep -> CqlInet,
     CqlVarint.stringRep -> CqlVarint,
     CqlTimeUUID.stringRep -> CqlTimeUUID,
-    CqlSet.stringRep -> CqlSet,
-    CqlVarchar.stringRep -> CqlVarchar
+    CqlVarchar.stringRep -> CqlVarchar,
+    "set" -> CqlSet(CqlVarchar),
+    "set<varchar>" -> CqlSet(CqlVarchar),
+    "set<ascii>" -> CqlSet(CqlAscii),
+    "set<text>" -> CqlSet(CqlText),
+    "list" -> CqlList(CqlVarchar),
+    "list<varchar>" -> CqlList(CqlVarchar),
+    "list<ascii>" -> CqlList(CqlAscii),
+    "list<text>" -> CqlList(CqlText)
   )
 
   def fromString(string: String) : Option[ColumnType[_]] = {

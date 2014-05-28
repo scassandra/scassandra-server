@@ -37,7 +37,7 @@ class PrimingServer(port: Int, implicit val primeQueryStore: PrimeQueryStore, im
   import Tcp._
   implicit def actorRefFactory = context.system
 
-  logger.info(s"Opening port $port for priming")
+  logger.info(s"Opening port ${port} for priming")
 
   val routing =  context.actorOf(Props(classOf[PrimingServerHttpService], primeQueryStore, primePreparedStore))
 

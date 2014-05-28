@@ -48,7 +48,7 @@ class PrimePreparedStore extends Logging {
       }
     }
     val providedColTypes = prime.then.column_types
-    val colTypes = PrimeQueryResultExtractor.convertStringColumnTypes(providedColTypes, rows)
+    val colTypes = PrimeQueryResultExtractor.defaultColumnTypesToVarchar(providedColTypes, rows)
     val primeToStore: PreparedPrime = PreparedPrime(variableTypesDefaultedToVarchar, prime = Prime(rows, columnTypes = colTypes, result = result))
 
     val consistencies = prime.when.consistency.getOrElse(Consistency.all)

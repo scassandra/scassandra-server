@@ -34,6 +34,9 @@ object ServerStubRunner extends Logging {
   }
 }
 
+/**
+ * Constructor used by the Java Client so if you change it update the Java Client as well.
+ */
 class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber : Int = 8043) extends Logging {
 
   var system : ActorSystem = _
@@ -42,9 +45,9 @@ class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber : I
   val primePreparedStore = new PrimePreparedStore
 
   def start() = {
-    system = ActorSystem("CassandraServerStub")
-    system.actorOf(Props(classOf[TcpServer], serverPortNumber, primedResults, primePreparedStore))
-    system.actorOf(Props(classOf[PrimingServer], adminPortNumber, primedResults, primePreparedStore))
+    system = ActorSystem(s"CassandraServerStub-${serverPortNumber}-${adminPortNumber}")
+    system.actorOf(Props(classOf[TcpServer], serverPortNumber, primedResults, primePreparedStore), "BinaryTcpListener")
+    system.actorOf(Props(classOf[PrimingServer], adminPortNumber, primedResults, primePreparedStore), "PrimingServer")
   }
 
   def awaitTermination() = {
