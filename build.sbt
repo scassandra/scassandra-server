@@ -6,7 +6,7 @@ organization := "org.scassandra"
 
 name := "scassandra-server"
 
-version := "0.1"
+version := "0.1.1-SNAPSHOT"
 
 scalaVersion := "2.10.3"
 
