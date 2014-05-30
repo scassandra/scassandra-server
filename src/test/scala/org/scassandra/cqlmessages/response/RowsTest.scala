@@ -17,32 +17,47 @@ package org.scassandra.cqlmessages.response
 
 import org.scalatest.{Matchers, FunSuite}
 import akka.util.ByteIterator
-import org.scassandra.cqlmessages._
 import java.util.UUID
 import java.net.InetAddress
-import org.scassandra.cqlmessages.{CqlVarchar, VersionTwo}
+import org.scassandra.cqlmessages._
 
 class RowsTest extends FunSuite with Matchers {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
   implicit val protocolVersion = VersionTwo
-
-  test("Serialization of Varchar column type") {
-    val columnNames = Map("age" -> CqlVarchar)
-    val rows: List[Row] = List(Row(Map("age" -> "18")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+  val stream : Byte = 1
+  
+  test("Serialisation of number of columns") {
+    val columnTypes = Map("age" -> CqlVarchar, "name" -> CqlVarchar)
+    val rowWithTwoColumns: List[Row] = List(Row(Map("age" -> "18", "name" -> "Chris")))
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnTypes, rowWithTwoColumns).serialize().iterator
 
     dropHeaderAndLength(rowsBytes)
 
     val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
+    numberOfColumns should equal(2)
+  }
 
-    dropKeyspaceAndTableName(rowsBytes)
+  test("Serialisation of number of keyspace and tablename") {
+    val columnTypes = Map("age" -> CqlVarchar, "name" -> CqlVarchar)
+    val rowWithTwoColumns: List[Row] = List(Row(Map("age" -> "18", "name" -> "Chris")))
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnTypes, rowWithTwoColumns).serialize().iterator
 
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("age")
+    dropHeaderAndLengthAndColumnCount(rowsBytes)
 
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlVarchar.code)
+    // keyspace name
+    CqlProtocolHelper.readString(rowsBytes) should equal("keyspaceName")
+    // table name
+    CqlProtocolHelper.readString(rowsBytes) should equal("tableName")
+  }
+
+  test("Serialization of Varchar column type") {
+    val columnNames = Map("age" -> CqlVarchar)
+    val rows: List[Row] = List(Row(Map("age" -> "18")))
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
+
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "age", CqlVarchar)
 
     val numberOfRows = rowsBytes.getInt
     numberOfRows should equal(1)
@@ -51,26 +66,20 @@ class RowsTest extends FunSuite with Matchers {
     rowValue should equal("18")
   }
 
+  private def dropNumberOfRows(iterator: ByteIterator) = {
+    iterator.drop(4)
+  }
+
   test("Serialization of Text column type") {
     val columnNames = Map("age" -> CqlText)
     val rows: List[Row] = List(Row(Map("age" -> "18")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
 
-    dropHeaderAndLength(rowsBytes)
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "age", CqlText)
 
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("age")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlText.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readLongString(rowsBytes)
     rowValue should equal("18")
@@ -79,23 +88,12 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Int column type where value is a BigDecimal") {
     val columnNames = Map("age" -> CqlInt)
     val rows: List[Row] = List(Row(Map("age" -> BigDecimal(18))))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "age", CqlInt)
 
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("age")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlInt.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readIntValue(rowsBytes)
     rowValue should equal(18)
@@ -104,23 +102,12 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Int column type where value is a Scala string") {
     val columnNames = Map("age" -> CqlInt)
     val rows: List[Row] = List(Row(Map("age" -> "18")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "age", CqlInt)
 
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("age")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlInt.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readIntValue(rowsBytes)
     rowValue should equal(18)
@@ -129,23 +116,12 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Int column type where value is a Scala String") {
     val columnNames = Map("age" -> CqlInt)
     val rows: List[Row] = List(Row(Map("age" -> "18")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "age", CqlInt)
 
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("age")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlInt.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readIntValue(rowsBytes)
     rowValue should equal(18)
@@ -154,23 +130,11 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Boolean column type where value is false") {
     val columnNames = Map("booleanValue" -> CqlBoolean)
     val rows: List[Row] = List(Row(Map("booleanValue" -> "false")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("booleanValue")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlBoolean.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "booleanValue", CqlBoolean)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readBooleanValue(rowsBytes)
     rowValue should equal(false)
@@ -179,23 +143,11 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Ascii column type") {
     val columnNames = Map("name" -> CqlAscii)
     val rows: List[Row] = List(Row(Map("name" -> "Chris Batey")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("name")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlAscii.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "name", CqlAscii)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readLongString(rowsBytes)
     rowValue should equal("Chris Batey")
@@ -204,23 +156,11 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of BigInt column type when value is a String") {
     val columnNames = Map("field" -> CqlBigint)
     val rows: List[Row] = List(Row(Map("field" -> "1234")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("field")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlBigint.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlBigint)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readBigIntValue(rowsBytes)
     rowValue should equal(1234)
@@ -229,23 +169,11 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of BigInt column type when value is a Long") {
     val columnNames = Map("field" -> CqlBigint)
     val rows: List[Row] = List(Row(Map("field" -> 1234)))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("field")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlBigint.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlBigint)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readBigIntValue(rowsBytes)
     rowValue should equal(1234)
@@ -254,23 +182,11 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Counter column type when value is a String") {
     val columnNames = Map("field" -> CqlCounter)
     val rows: List[Row] = List(Row(Map("field" -> "1234")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("field")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlCounter.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlCounter)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readBigIntValue(rowsBytes)
     rowValue should equal(1234)
@@ -279,23 +195,11 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Blob column type") {
     val columnNames = Map("field" -> CqlBlob)
     val rows: List[Row] = List(Row(Map("field" -> "0x48656c6c6f")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("field")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlBlob.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlBlob)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readBlobValue(rowsBytes)
     rowValue should equal(Array[Byte](0x48, 0x65, 0x6c, 0x6c, 0x6f))
@@ -304,23 +208,11 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Decimal column type") {
     val columnNames = Map("field" -> CqlDecimal)
     val rows: List[Row] = List(Row(Map("field" -> "5.5456")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("field")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlDecimal.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlDecimal)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readDecimalValue(rowsBytes)
     rowValue should equal(BigDecimal("5.5456"))
@@ -329,23 +221,11 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Double column type") {
     val columnNames = Map("field" -> CqlDouble)
     val rows: List[Row] = List(Row(Map("field" -> "5.5456")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("field")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlDouble.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlDouble)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readDoubleValue(rowsBytes)
     rowValue should equal(5.5456)
@@ -354,23 +234,11 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Float column type") {
     val columnNames = Map("field" -> CqlFloat)
     val rows: List[Row] = List(Row(Map("field" -> "5.5456")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("field")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlFloat.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlFloat)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readFloatValue(rowsBytes)
     rowValue should equal(5.5456f)
@@ -379,23 +247,11 @@ class RowsTest extends FunSuite with Matchers {
   test("Serialization of Timestamp column type") {
     val columnNames = Map("field" -> CqlTimestamp)
     val rows: List[Row] = List(Row(Map("field" -> "1368438171000")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("field")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlTimestamp.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlTimestamp)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readTimestampValue(rowsBytes)
     rowValue should equal(1368438171000l)
@@ -405,23 +261,11 @@ class RowsTest extends FunSuite with Matchers {
     val uuid = UUID.randomUUID()
     val columnNames = Map("field" -> CqlUUID)
     val rows: List[Row] = List(Row(Map("field" -> uuid.toString)))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("field")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlUUID.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlUUID)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readUUIDValue(rowsBytes)
     rowValue should equal(uuid)
@@ -431,23 +275,11 @@ class RowsTest extends FunSuite with Matchers {
     val uuid = UUID.fromString("2c530380-b9f9-11e3-850e-338bb2a2e74f")
     val columnNames = Map("field" -> CqlTimeUUID)
     val rows: List[Row] = List(Row(Map("field" -> uuid.toString)))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("field")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlTimeUUID.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlTimeUUID)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readUUIDValue(rowsBytes)
     rowValue should equal(uuid)
@@ -457,23 +289,11 @@ class RowsTest extends FunSuite with Matchers {
     val inet = InetAddress.getByAddress(Array[Byte](127,0,0,1))
     val columnNames = Map("field" -> CqlInet)
     val rows: List[Row] = List(Row(Map("field" -> "127.0.0.1")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("field")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlInet.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlInet)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readInetValue(rowsBytes)
     rowValue should equal(inet)
@@ -483,23 +303,11 @@ class RowsTest extends FunSuite with Matchers {
     val varint = BigInt("1234")
     val columnNames = Map("field" -> CqlVarint)
     val rows: List[Row] = List(Row(Map("field" -> "1234")))
-    val rowsBytes = Rows("keyspaceName","tableName", 1, columnNames, rows).serialize().iterator
+    val rowsBytes = Rows("keyspaceName","tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
-
-    val rowName = CqlProtocolHelper.readString(rowsBytes)
-    rowName should equal("field")
-
-    val rowType = rowsBytes.getShort
-    rowType should equal(CqlVarint.code)
-
-    val numberOfRows = rowsBytes.getInt
-    numberOfRows should equal(1)
+    verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlVarint)
+    dropNumberOfRows(rowsBytes)
 
     val rowValue = CqlProtocolHelper.readVarintValue(rowsBytes)
     rowValue should equal(varint)
@@ -510,14 +318,8 @@ class RowsTest extends FunSuite with Matchers {
     val setOfVarcharType: CqlSet = CqlSet(CqlVarchar)
     val columnNames = Map("field" -> setOfVarcharType)
     val rows: List[Row] = List(Row(Map("field" -> varcharSet)))
-    val rowsBytes = Rows("keyspaceName", "tableName", 1, columnNames, rows).serialize().iterator
-
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
+    val rowsBytes = Rows("keyspaceName", "tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
     val rowName = CqlProtocolHelper.readString(rowsBytes)
     rowName should equal("field")
@@ -540,14 +342,8 @@ class RowsTest extends FunSuite with Matchers {
     val listOfVarcharType = CqlList(CqlVarchar)
     val columnNames = Map("field" -> listOfVarcharType)
     val rows: List[Row] = List(Row(Map("field" -> varcharSet)))
-    val rowsBytes = Rows("keyspaceName", "tableName", 1, columnNames, rows).serialize().iterator
-
-    dropHeaderAndLength(rowsBytes)
-
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(1)
-
-    dropKeyspaceAndTableName(rowsBytes)
+    val rowsBytes = Rows("keyspaceName", "tableName", stream, columnNames, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
     val rowName = CqlProtocolHelper.readString(rowsBytes)
     rowName should equal("field")
@@ -566,24 +362,21 @@ class RowsTest extends FunSuite with Matchers {
   }
 
   test("Serialisation of multiple rows where some columns are null") {
-    val columnNames = Map(
+    val columnTypes = Map[String, ColumnType[_]](
       "id" -> CqlInt,
       "col_blob" -> CqlBlob,
       "col_one" -> CqlVarchar,
       "col_two" -> CqlInt,
       "col_three" -> CqlTimeUUID)
+
     val rows: List[Row] = List(
       Row(Map("id" -> "1", "col_one" -> "hello", "col_three" -> "f535e350-e111-11e3-baa7-070c076eda0a", "col_two" -> BigDecimal(2))),
       Row(Map("id" -> "2", "col_three" -> "1bd8f0b0-e112-11e3-baa7-070c076eda0a")),
       Row(Map("id" -> "3", "col_two" -> "2")),
       Row(Map("id" -> "4", "col_blob" -> "0x12"))
     )
-    val rowsBytes = Rows("people", "various_columns", 0, columnNames, rows).serialize().iterator
-
-    dropHeaderAndLength(rowsBytes)
-    val numberOfColumns = rowsBytes.getInt
-    numberOfColumns should equal(5)
-    dropKeyspaceAndTableName(rowsBytes)
+    val rowsBytes = Rows("people", "various_columns", stream, columnTypes, rows).serialize().iterator
+    dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
     var rowName = CqlProtocolHelper.readString(rowsBytes)
     rowName should equal("col_one")
@@ -633,6 +426,16 @@ class RowsTest extends FunSuite with Matchers {
     // table name
     CqlProtocolHelper.readString(rowsBytes)
   }
+  
+  def dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes: ByteIterator) {
+    dropHeaderAndLengthAndColumnCount(rowsBytes)
+    dropKeyspaceAndTableName(rowsBytes)
+  }
+
+  def dropHeaderAndLengthAndColumnCount(rowsBytes : ByteIterator) {
+    dropHeaderAndLength(rowsBytes)
+    rowsBytes.drop(4) // col count
+  }
 
   def dropHeaderAndLength(rowsBytes: ByteIterator) {
     // drop header
@@ -643,6 +446,15 @@ class RowsTest extends FunSuite with Matchers {
     rowsBytes.drop(4)
     //flags
     rowsBytes.drop(4)
+  }
+
+
+  private def verifyPrimitiveRowTypeMetadata(rowBytes: ByteIterator, name: String, columnType: ColumnType[_]) {
+    val rowName = CqlProtocolHelper.readString(rowBytes)
+    rowName should equal(name)
+
+    val rowType = rowBytes.getShort
+    rowType should equal(columnType.code)
   }
 }
 
