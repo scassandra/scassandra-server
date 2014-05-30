@@ -33,7 +33,7 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
 
   def receive: Actor.Receive = {
     case PrepareHandlerMessages.Prepare(body, stream, msgFactory, connection) => {
-      logger.debug(s"Received prepare message $body")
+      logger.debug(s"Received prepare message ${body}")
       val query = readLongString(body.iterator)
 
 
