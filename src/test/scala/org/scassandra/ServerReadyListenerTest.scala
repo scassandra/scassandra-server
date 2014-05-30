@@ -46,6 +46,17 @@ class ServerReadyListenerTest extends TestKit(ActorSystem("TestSystem")) with Fu
       }
     }
 
+    it("should send ServerReady if the server had already said it is Ready") {
+      val underTest = TestActorRef(new ServerReadyListener())
+      val serverReadyReceiver = TestProbe()
+
+      underTest ! ServerReady
+      serverReadyReceiver.send(underTest, OnServerReady)
+
+      // then
+      serverReadyReceiver.expectMsg(ServerReady)
+    }
+
     ignore("should log if unknown message sent") {
       val underTest = TestActorRef(new ServerReadyListener())
 
