@@ -59,7 +59,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(SetKeyspace("keyspace", stream).serialize()))
+    testProbeForTcpConnection.expectMsg(SetKeyspace("keyspace", stream))
   }
 
   test("Should return empty result when PrimedResults returns None") {
@@ -69,7 +69,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(Rows("","",stream, Map()).serialize()))
+    testProbeForTcpConnection.expectMsg(Rows("","",stream, Map()))
   }
 
   test("Should return empty rows result when PrimedResults returns empty list") {
@@ -79,7 +79,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, Map()).serialize()))
+    testProbeForTcpConnection.expectMsg(Rows("", "", stream, Map()))
   }
 
   test("Should return rows result when PrimedResults returns a list of rows") {
@@ -105,7 +105,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, Map("name" -> CqlVarchar, "age" -> CqlInt), rows).serialize()))
+    testProbeForTcpConnection.expectMsg(Rows("", "", stream, Map("name" -> CqlVarchar, "age" -> CqlInt), rows))
   }
 
   test("Should return ReadRequestTimeout if result is ReadTimeout") {
@@ -115,7 +115,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(ReadRequestTimeout(stream).serialize()))
+    testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream))
   }
 
   test("Should return WriteRequestTimeout if result is WriteTimeout") {
@@ -125,7 +125,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(WriteRequestTimeout(stream).serialize()))
+    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream))
   }
 
   test("Should return Unavailable Exception if result is UnavailableException") {
@@ -135,7 +135,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(UnavailableException(stream).serialize()))
+    testProbeForTcpConnection.expectMsg(UnavailableException(stream))
   }
 
   test("Test multiple rows") {
@@ -159,8 +159,8 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(Write(Rows("", "", stream, Map("name" -> CqlVarchar, "age" -> CqlVarchar),
-      rows.map(row => Row(row))).serialize()))
+    testProbeForTcpConnection.expectMsg(Rows("", "", stream, Map("name" -> CqlVarchar, "age" -> CqlVarchar),
+      rows.map(row => Row(row))))
   }
 
   test("Should store query in the ActivityLog") {
@@ -193,7 +193,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     underTest ! QueryHandlerMessages.Query(someQuery, stream)
 
     // then
-    testProbeForTcpConnection.expectMsg(Write(Rows(expectedKeyspace, "", stream, Map()).serialize()))
+    testProbeForTcpConnection.expectMsg(Rows(expectedKeyspace, "", stream, Map()))
   }
 
   test("Should return table name when set in PrimedResults") {
@@ -208,7 +208,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     underTest ! QueryHandlerMessages.Query(someQuery, stream)
 
     // then
-    testProbeForTcpConnection.expectMsg(Write(Rows("", expectedTable, stream, Map()).serialize()))
+    testProbeForTcpConnection.expectMsg(Rows("", expectedTable, stream, Map()))
   }
 
 }

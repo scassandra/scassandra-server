@@ -89,7 +89,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
     testActorRef ! Received(readyMessage)
 
-    expectMsg(Write(Ready(0x0.toByte).serialize()))
+    tcpWrapperTestProbe.expectMsg(Ready(0x0.toByte))
   }
 
   test("Should send ready message when startup message sent - version two") {
@@ -103,7 +103,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
     testActorRef ! Received(readyMessage)
 
-    expectMsg(Write(Ready(0x0.toByte).serialize()))
+    tcpWrapperTestProbe.expectMsg(Ready(0x0.toByte))
   }
 
   test("Should send back error if query before ready message") {

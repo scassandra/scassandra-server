@@ -88,9 +88,10 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
       case OpCodes.Startup => {
         logger.debug("Sending ready message")
         initialiseMessageFactory(protocolVersion)
-        queryHandler = queryHandlerFactory(context, sender, messageFactory)
-        registerHandler = registerHandlerFactory(context, sender, messageFactory)
-        sender ! Write(messageFactory.createReadyMessage(stream).serialize())
+        val wrappedSender = connectionWrapperFactory(context, sender)
+        queryHandler = queryHandlerFactory(context, wrappedSender, messageFactory)
+        registerHandler = registerHandlerFactory(context, wrappedSender, messageFactory)
+        wrappedSender ! messageFactory.createReadyMessage(stream)
         ready = true
       }
       case OpCodes.Query => {
@@ -117,8 +118,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
         prepareHandler ! PrepareHandlerMessages.Execute(messageBody, stream, messageFactory, wrappedSender)
       }
       case opCode @ _ =>
-        logger.warn(s"Received unknown opcode $opCode this probably means this feature is yet to be implemented the message body is $messageBody")
-
+        logger.warn(s"Received unknown opcode ${opCode} this probably means this feature is yet to be implemented the message body is ${messageBody}")
     }
   }
 
@@ -140,9 +140,9 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
     val opCode: Byte = currentData(3)
 
     val bodyLengthArray = currentData.take(HeaderLength).drop(4)
-    logger.debug(s"Body length array $bodyLengthArray")
+    logger.debug(s"Body length array ${bodyLengthArray}")
     val bodyLength = bodyLengthArray.asByteBuffer.getInt
-    logger.debug(s"Body length $bodyLength")
+    logger.debug(s"Body length ${bodyLength}")
 
     if (currentData.length == bodyLength + HeaderLength) {
       logger.debug("Received exactly the whole message")

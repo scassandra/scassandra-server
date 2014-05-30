@@ -39,12 +39,12 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
       iterator.getBytes(bodyAsBytes)
       val queryText = new String(bodyAsBytes)
       val consistency = iterator.getShort
-      logger.info(s"Incoming query: $queryText at consistency: ${consistency}")
+      logger.info(s"Incoming query: ${queryText} at consistency: ${consistency}")
       ActivityLog.recordQuery(queryText, Consistency.fromCode(consistency))
       if (queryText.startsWith("use ")) {
         val keyspaceName: String = queryText.substring(4, queryLength)
         logger.debug(s"Use keyspace $keyspaceName")
-        tcpConnection ! Write(msgFactory.createSetKeyspaceMessage(keyspaceName, stream).serialize())
+        tcpConnection ! msgFactory.createSetKeyspaceMessage(keyspaceName, stream)
       } else {
         primeQueryStore.get(PrimeMatch(queryText, Consistency.fromCode(consistency))) match {
           case Some(prime) => {
@@ -53,32 +53,30 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
                 logger.info(s"Found matching prime $prime for query $queryText")
                 val message = msgFactory.createRowsMessage(prime, stream)
                 logger.debug(s"Sending message: $message")
-                tcpConnection ! Write(message.serialize())
+                tcpConnection ! message
               }
               case ReadTimeout => {
-                tcpConnection ! Write(msgFactory.createReadTimeoutMessage(stream).serialize())
+                tcpConnection ! msgFactory.createReadTimeoutMessage(stream)
               }
               case Unavailable => {
-                tcpConnection ! Write(msgFactory.createUnavailableMessage(stream).serialize())
+                tcpConnection ! msgFactory.createUnavailableMessage(stream)
               }
               case WriteTimeout => {
-                tcpConnection ! Write(msgFactory.createWriteTimeoutMessage(stream).serialize())
+                tcpConnection ! msgFactory.createWriteTimeoutMessage(stream)
               }
             }
           }
           case None => {
             logger.info(s"No prime found for $queryText")
-            tcpConnection ! Write(msgFactory.createEmptyRowsMessage(stream).serialize())
+            tcpConnection ! msgFactory.createEmptyRowsMessage(stream)
           }
           case msg @ _ => {
             logger.debug(s"Received unexpected result back from primed results: $msg")
           }
         }
       }
-
     case message @ _ =>
       logger.debug(s"Received unknown message: $message")
-
   }
 }
 

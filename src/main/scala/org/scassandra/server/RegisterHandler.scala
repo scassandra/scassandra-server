@@ -25,7 +25,7 @@ class RegisterHandler(connection: ActorRef, msgFactory: CqlMessageFactory) exten
   def receive = {
     case registerMsg @ RegisterHandlerMessages.Register(_, stream) => {
       logger.debug(s"Received register message $registerMsg")
-      connection ! Write(msgFactory.createReadyMessage(stream).serialize())
+      connection ! msgFactory.createReadyMessage(stream)
     }
     case msg @ _ => {
       logger.info(s"Received unknown message $msg")

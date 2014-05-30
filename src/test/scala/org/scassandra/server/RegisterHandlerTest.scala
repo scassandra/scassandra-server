@@ -34,6 +34,6 @@ class RegisterHandlerTest extends TestKit(ActorSystem("TestSystem")) with FunSui
 
     underTest ! RegisterHandlerMessages.Register(ByteString(registerBody.toArray), stream)
 
-    senderTestProbe.expectMsg(Write(expectedReadyMessage.serialize()))
+    senderTestProbe.expectMsg(expectedReadyMessage)
   }
 }
