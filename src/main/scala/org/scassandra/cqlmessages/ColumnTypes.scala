@@ -15,7 +15,7 @@
  */
 package org.scassandra.cqlmessages
 
-import akka.util.{ByteString, ByteStringBuilder, ByteIterator}
+import akka.util.{ByteString, ByteIterator}
 import java.util.UUID
 import java.net.InetAddress
 import CqlProtocolHelper._
@@ -29,11 +29,14 @@ abstract class ColumnType[T](val code : Short, val stringRep: String) extends Lo
 
 case object CqlAscii extends ColumnType[String](0x0001, "ascii") {
   override def readValue(byteBuffer : ByteIterator): String = {
-    readLongString(byteBuffer)  
+    CqlVarchar.readValue(byteBuffer)
   }
 
-  def writeValue( value : Any) = {
-    CqlProtocolHelper.serializeLongString(value.toString)
+  def writeValue(value : Any) = {
+    CqlVarchar.writeValue(value)
+  }
+  override def writeValueInCollection(value: Any) : Array[Byte] = {
+    CqlVarchar.writeValueInCollection(value)
   }
 }
 case object CqlBigint extends ColumnType[Long](0x0002, "bigint") {
@@ -139,10 +142,13 @@ case object CqlInt extends ColumnType[Int](0x0009, "int") {
 }
 case object CqlText extends ColumnType[String](0x000A, "text") {
   override def readValue(byteIterator: ByteIterator): String = {
-    CqlProtocolHelper.readLongString(byteIterator)
+    CqlVarchar.readValue(byteIterator)
   }
   override def writeValue(value : Any) = {
-    CqlProtocolHelper.serializeLongString(value.toString)
+    CqlVarchar.writeValue(value)
+  }
+  override def writeValueInCollection(value : Any) = {
+    CqlVarchar.writeValueInCollection(value)
   }
 }
 case object CqlTimestamp extends ColumnType[Long](0x000B, "timestamp") {
@@ -168,6 +174,7 @@ case object CqlVarchar extends ColumnType[String](0x000D, "varchar") {
     CqlProtocolHelper.readLongString(byteIterator)
   }
   override def writeValue(value : Any) = {
+    if (value.isInstanceOf[Iterable[_]] || value.isInstanceOf[Map[_,_]]) throw new IllegalArgumentException(s"Can't serialise ${value} as String")
     CqlProtocolHelper.serializeLongString(value.toString)
   }
   override def writeValueInCollection(value : Any) = {
@@ -202,29 +209,29 @@ case object CqlInet extends ColumnType[InetAddress](0x0010, "inet") {
   }
 }
 // only supports strings for now.
-case class CqlSet(setType : ColumnType[_]) extends ColumnType[Set[_]](0x0022, "set") {
+case class CqlSet(setType : ColumnType[_]) extends ColumnType[Set[_]](0x0022, s"set<${setType.stringRep}>") {
   override def readValue(byteIterator: ByteIterator): Set[String] = {
     CqlProtocolHelper.readVarcharSetValue(byteIterator)
   }
 
   def writeValue(value: Any) = {
-    if (value.isInstanceOf[Iterable[_]]) {
+    if (value.isInstanceOf[Set[_]] || value.isInstanceOf[Seq[_]]) {
       CqlProtocolHelper.serializeSet(value.asInstanceOf[Iterable[setType.type]], setType)
     } else {
       throw new IllegalArgumentException(s"Can't serialise ${value} as Set of ${setType}")
     }
   }
 }
-case class CqlList(setType : ColumnType[_]) extends ColumnType[Iterable[_]](0x0020, "list") {
+case class CqlList(listType : ColumnType[_]) extends ColumnType[Iterable[_]](0x0020, s"list<${listType.stringRep}>") {
   override def readValue(byteIterator: ByteIterator): Iterable[String] = {
     CqlProtocolHelper.readVarcharSetValue(byteIterator)
   }
 
   def writeValue(value: Any) = {
-    if (value.isInstanceOf[Iterable[_]]) {
-      CqlProtocolHelper.serializeSet(value.asInstanceOf[Iterable[setType.type]], setType)
+    if (value.isInstanceOf[Set[_]] || value.isInstanceOf[Seq[_]]) {
+      CqlProtocolHelper.serializeSet(value.asInstanceOf[Iterable[listType.type]], listType)
     } else {
-      throw new IllegalArgumentException(s"Can't serialise ${value} as List of ${setType}")
+      throw new IllegalArgumentException(s"Can't serialise ${value} as List of ${listType}")
     }
   }
 }

@@ -3,6 +3,66 @@ package org.scassandra.cqlmessages
 import org.scalatest.{Matchers, FunSuite}
 
 class ColumnTypesTest extends FunSuite with Matchers {
+  test("Serialisation of CqlVarchar") {
+    CqlVarchar.writeValue("hello") should equal(Array[Byte](0, 0, 0, 5, 104, 101, 108, 108, 111))
+    CqlVarchar.writeValueInCollection("hello") should equal(Array[Byte](0, 5, 104, 101, 108, 108, 111))
+    CqlVarchar.writeValue("") should equal(Array[Byte](0, 0, 0, 0))
+    CqlVarchar.writeValueInCollection("") should equal(Array[Byte](0, 0))
+    CqlVarchar.writeValue(BigDecimal("123.67")) should equal(Array[Byte](0, 0, 0, 6, 49, 50, 51, 46, 54, 55))
+    CqlVarchar.writeValueInCollection(BigDecimal("123.67")) should equal(Array[Byte](0, 6, 49, 50, 51, 46, 54, 55))
+    CqlVarchar.writeValue(true) should equal(Array[Byte](0, 0, 0, 4, 116, 114, 117, 101))
+    CqlVarchar.writeValueInCollection(true) should equal(Array[Byte](0, 4, 116, 114, 117, 101))
+
+    intercept[IllegalArgumentException] {
+      CqlVarchar.writeValue(List())
+      CqlVarchar.writeValueInCollection(List())
+    }
+    intercept[IllegalArgumentException] {
+      CqlVarchar.writeValue(Map())
+      CqlVarchar.writeValueInCollection(Map())
+    }
+  }
+
+  test("Serialisation of CqlText") {
+    CqlText.writeValue("hello") should equal(Array[Byte](0, 0, 0, 5, 104, 101, 108, 108, 111))
+    CqlText.writeValueInCollection("hello") should equal(Array[Byte](0, 5, 104, 101, 108, 108, 111))
+    CqlText.writeValue("") should equal(Array[Byte](0, 0, 0, 0))
+    CqlText.writeValueInCollection("") should equal(Array[Byte](0, 0))
+    CqlText.writeValue(BigDecimal("123.67")) should equal(Array[Byte](0, 0, 0, 6, 49, 50, 51, 46, 54, 55))
+    CqlText.writeValueInCollection(BigDecimal("123.67")) should equal(Array[Byte](0, 6, 49, 50, 51, 46, 54, 55))
+    CqlText.writeValue(true) should equal(Array[Byte](0, 0, 0, 4, 116, 114, 117, 101))
+    CqlText.writeValueInCollection(true) should equal(Array[Byte](0, 4, 116, 114, 117, 101))
+
+    intercept[IllegalArgumentException] {
+      CqlText.writeValue(List())
+      CqlText.writeValueInCollection(List())
+    }
+    intercept[IllegalArgumentException] {
+      CqlText.writeValue(Map())
+      CqlText.writeValueInCollection(Map())
+    }
+  }
+
+  test("Serialisation of CqlAscii") {
+    CqlAscii.writeValue("hello") should equal(Array[Byte](0, 0, 0, 5, 104, 101, 108, 108, 111))
+    CqlAscii.writeValueInCollection("hello") should equal(Array[Byte](0, 5, 104, 101, 108, 108, 111))
+    CqlAscii.writeValue("") should equal(Array[Byte](0, 0, 0, 0))
+    CqlAscii.writeValueInCollection("") should equal(Array[Byte](0, 0))
+    CqlAscii.writeValue(BigDecimal("123.67")) should equal(Array[Byte](0, 0, 0, 6, 49, 50, 51, 46, 54, 55))
+    CqlAscii.writeValueInCollection(BigDecimal("123.67")) should equal(Array[Byte](0, 6, 49, 50, 51, 46, 54, 55))
+    CqlAscii.writeValue(true) should equal(Array[Byte](0, 0, 0, 4, 116, 114, 117, 101))
+    CqlAscii.writeValueInCollection(true) should equal(Array[Byte](0, 4, 116, 114, 117, 101))
+
+    intercept[IllegalArgumentException] {
+      CqlAscii.writeValue(List())
+      CqlAscii.writeValueInCollection(List())
+    }
+    intercept[IllegalArgumentException] {
+      CqlAscii.writeValue(Map())
+      CqlAscii.writeValueInCollection(Map())
+    }
+  }
+
   test("Serialisation of CqlInt") {
     CqlInt.writeValue(BigDecimal("123")) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
     CqlInt.writeValue("123") should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
@@ -14,19 +74,19 @@ class ColumnTypesTest extends FunSuite with Matchers {
       CqlInt.writeValue(BigDecimal("12345678910"))
     }
     intercept[IllegalArgumentException] {
-      CqlInt.writeValue("hello") should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
+      CqlInt.writeValue("hello")
     }
     intercept[IllegalArgumentException] {
-      CqlInt.writeValue(true) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
+      CqlInt.writeValue(true)
     }
     intercept[IllegalArgumentException] {
-      CqlInt.writeValue(false) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
+      CqlInt.writeValue(false)
     }
     intercept[IllegalArgumentException] {
-      CqlInt.writeValue(List()) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
+      CqlInt.writeValue(List())
     }
     intercept[IllegalArgumentException] {
-      CqlInt.writeValue(Map) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
+      CqlInt.writeValue(Map())
     }
   }
 
@@ -50,7 +110,7 @@ class ColumnTypesTest extends FunSuite with Matchers {
       CqlBigint.writeValue(List()) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
     }
     intercept[IllegalArgumentException] {
-      CqlBigint.writeValue(Map) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
+      CqlBigint.writeValue(Map()) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
     }
   }
 
@@ -74,7 +134,7 @@ class ColumnTypesTest extends FunSuite with Matchers {
       CqlVarint.writeValue(List())
     }
     intercept[IllegalArgumentException] {
-      CqlVarint.writeValue(Map)
+      CqlVarint.writeValue(Map())
     }
   }
 
@@ -96,7 +156,7 @@ class ColumnTypesTest extends FunSuite with Matchers {
       CqlDouble.writeValue(List())
     }
     intercept[IllegalArgumentException] {
-      CqlDouble.writeValue(Map)
+      CqlDouble.writeValue(Map())
     }
   }
 
@@ -118,7 +178,7 @@ class ColumnTypesTest extends FunSuite with Matchers {
       CqlFloat.writeValue(List())
     }
     intercept[IllegalArgumentException] {
-      CqlFloat.writeValue(Map)
+      CqlFloat.writeValue(Map())
     }
   }
 
@@ -142,7 +202,7 @@ class ColumnTypesTest extends FunSuite with Matchers {
       CqlCounter.writeValue(List())
     }
     intercept[IllegalArgumentException] {
-      CqlCounter.writeValue(Map)
+      CqlCounter.writeValue(Map())
     }
   }
 
@@ -168,7 +228,7 @@ class ColumnTypesTest extends FunSuite with Matchers {
       CqlTimeUUID.writeValue(List())
     }
     intercept[IllegalArgumentException] {
-      CqlTimeUUID.writeValue(Map)
+      CqlTimeUUID.writeValue(Map())
     }
   }
 
@@ -195,7 +255,7 @@ class ColumnTypesTest extends FunSuite with Matchers {
       CqlUUID.writeValue(List())
     }
     intercept[IllegalArgumentException] {
-      CqlUUID.writeValue(Map)
+      CqlUUID.writeValue(Map())
     }
   }
 
@@ -219,7 +279,7 @@ class ColumnTypesTest extends FunSuite with Matchers {
       CqlBlob.writeValue(List())
     }
     intercept[IllegalArgumentException] {
-      CqlBlob.writeValue(Map)
+      CqlBlob.writeValue(Map())
     }
   }
 
@@ -244,7 +304,7 @@ class ColumnTypesTest extends FunSuite with Matchers {
       CqlBoolean.writeValue(List())
     }
     intercept[IllegalArgumentException] {
-      CqlUUID.writeValue(Map)
+      CqlUUID.writeValue(Map())
     }
   }
 
@@ -280,7 +340,7 @@ class ColumnTypesTest extends FunSuite with Matchers {
       underTest.writeValue(false)
     }
     intercept[IllegalArgumentException] {
-      underTest.writeValue(Map)
+      underTest.writeValue(Map())
     }
   }
 
@@ -315,7 +375,7 @@ class ColumnTypesTest extends FunSuite with Matchers {
       underTest.writeValue(false)
     }
     intercept[IllegalArgumentException] {
-      underTest.writeValue(Map)
+      underTest.writeValue(Map())
     }
   }
 }
