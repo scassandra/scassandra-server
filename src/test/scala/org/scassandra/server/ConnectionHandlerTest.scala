@@ -149,8 +149,9 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
     lastMsgFactoryUsedForQuery should equal(VersionTwoMessageFactory)
   }
+
   test("Should forward query to a new QueryHandler - version one of protocol") {
-    sendStartupMessage()
+    sendStartupMessage(VersionOne)
     val stream : Byte = 0x04
     val query = "select * from people"
     val queryLength = Array[Byte](0x0, 0x0, 0x0, query.length.toByte)
@@ -196,7 +197,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
   }
 
   test("Should forward register message to RegisterHandler - version one protocol") {
-    sendStartupMessage()
+    sendStartupMessage(VersionOne)
     val stream : Byte = 1
 
     val registerMessage = MessageHelper.createRegisterMessage(ProtocolVersion.ClientProtocolVersionOne, stream)
@@ -249,8 +250,8 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     prepareHandlerTestProbe.expectMsg(PrepareHandlerMessages.Execute(ByteString(messageBody), streamId, VersionTwoMessageFactory, tcpWrapperTestProbe.ref))
   }
 
-  private def sendStartupMessage() = {
-    val startupMessage = MessageHelper.createStartupMessage()
+  private def sendStartupMessage(protocolVersion: ProtocolVersion = VersionTwo) = {
+    val startupMessage = MessageHelper.createStartupMessage(protocolVersion)
     testActorRef ! Received(ByteString(startupMessage.toArray))
   }
 

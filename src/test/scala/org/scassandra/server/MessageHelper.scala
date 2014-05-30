@@ -16,7 +16,7 @@
 package org.scassandra.server
 
 import akka.util.ByteString
-import org.scassandra.cqlmessages.{Consistency, ONE, ProtocolVersion, OpCodes}
+import org.scassandra.cqlmessages._
 import org.scassandra.cqlmessages.response.ResponseHeader
 
 object MessageHelper {
@@ -40,14 +40,14 @@ object MessageHelper {
     header ::: body
   }
 
-  def createStartupMessage() : List[Byte] = {
+  def createStartupMessage(protocolVersion: ProtocolVersion = VersionTwo) : List[Byte] = {
     val messageBody = List[Byte](0x0, 0x1 , // number of start up options
     0x0, "CQL_VERSION".length.toByte)  :::
     "CQL_VERSION".getBytes.toList :::
       List[Byte](0x0, "3.0.0".length.toByte) :::
       "3.0.0".getBytes.toList
 
-    val bytes : List[Byte] = List[Byte](ProtocolVersion.ClientProtocolVersionTwo, 0x0, 0x0, OpCodes.Startup) :::
+    val bytes : List[Byte] = List[Byte](protocolVersion.clientCode, 0x0, 0x0, OpCodes.Startup) :::
       List[Byte](0x0, 0x0, 0x0, messageBody.length.toByte) :::
       messageBody
 

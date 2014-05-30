@@ -44,12 +44,15 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
   var partialMessage = false
   var dataFromPreviousMessage: ByteString = _
   var currentData: ByteString = _
+  var messageFactory: CqlMessageFactory = _
+  var registerHandler: ActorRef = _
+  var queryHandler: ActorRef = _
 
   val HeaderLength = 8
 
   def receive = {
 
-    case Received(data: ByteString) =>
+    case Received(data: ByteString) => {
       logger.trace(s"Received a message of length ${data.length} data:: $data")
 
       currentData = data
@@ -68,10 +71,12 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
         dataFromPreviousMessage = currentData
         currentData = ByteString()
       }
-
-
-    case PeerClosed => context stop self
-    case unknown@_ =>
+    }
+    case PeerClosed => {
+      logger.info("Client disconnected.")
+      context stop self
+    }
+    case unknown @ _ =>
       logger.warn(s"Unknown message $unknown")
 
   }
@@ -79,51 +84,51 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
   private def processMessage(opCode: Byte, stream: Byte, messageBody: ByteString, protocolVersion: Byte) = {
     logger.trace(s"Whole body $messageBody with length ${messageBody.length}")
 
-    val cqlMessageFactory: CqlMessageFactory = if (protocolVersion == ProtocolVersion.ClientProtocolVersionOne) {
-      logger.debug("Received protocol one message")
-      VersionOneMessageFactory
-    } else {
-      logger.debug("Received protocol two message")
-      VersionTwoMessageFactory
-    }
-
     opCode match {
       case OpCodes.Startup => {
         logger.debug("Sending ready message")
-        sender ! Write(cqlMessageFactory.createReadyMessage(stream).serialize())
+        initialiseMessageFactory(protocolVersion)
+        queryHandler = queryHandlerFactory(context, sender, messageFactory)
+        registerHandler = registerHandlerFactory(context, sender, messageFactory)
+        sender ! Write(messageFactory.createReadyMessage(stream).serialize())
         ready = true
       }
       case OpCodes.Query => {
         if (!ready) {
+          initialiseMessageFactory(protocolVersion)
           logger.info("Received query before startup message, sending error")
-          sender ! Write(cqlMessageFactory.createQueryBeforeErrorMessage().serialize())
+          sender ! Write(messageFactory.createQueryBeforeErrorMessage().serialize())
         } else {
-          //TODO: This should not create a query handler per request as they don't shut them selves down.
-          // Unless we can make the query handler shut its self down.
-          val queryHandler = queryHandlerFactory(context, sender, cqlMessageFactory)
           queryHandler ! QueryHandlerMessages.Query(messageBody, stream)
         }
       }
       case OpCodes.Register => {
         logger.debug("Received register message. Sending to RegisterHandler")
-        val registerHandler = registerHandlerFactory(context, sender, cqlMessageFactory)
         registerHandler ! RegisterHandlerMessages.Register(messageBody, stream)
       }
       case OpCodes.Prepare => {
         logger.debug("Received prepare message. Sending to PrepareHandler")
-//        val wrappedSender = context.actorOf(Props(classOf[TcpConnectionWrapper], sender))
         val wrappedSender = connectionWrapperFactory(context, sender)
-        prepareHandler ! PrepareHandlerMessages.Prepare(messageBody, stream, cqlMessageFactory, wrappedSender)
+        prepareHandler ! PrepareHandlerMessages.Prepare(messageBody, stream, messageFactory, wrappedSender)
       }
       case OpCodes.Execute => {
         logger.debug("Received execute message. Sending to ExecuteHandler")
-        //val wrappedSender = context.actorOf(Props(classOf[TcpConnectionWrapper], sender))
         val wrappedSender = connectionWrapperFactory(context, sender)
-        prepareHandler ! PrepareHandlerMessages.Execute(messageBody, stream, cqlMessageFactory, wrappedSender)
+        prepareHandler ! PrepareHandlerMessages.Execute(messageBody, stream, messageFactory, wrappedSender)
       }
       case opCode @ _ =>
         logger.warn(s"Received unknown opcode $opCode this probably means this feature is yet to be implemented the message body is $messageBody")
 
+    }
+  }
+
+  def initialiseMessageFactory(protocolVersion: Byte) = {
+    messageFactory = if (protocolVersion == ProtocolVersion.ClientProtocolVersionOne) {
+      logger.debug("Connection is for protocol version one")
+      VersionOneMessageFactory
+    } else {
+      logger.debug("Connection is for protocol version two")
+      VersionTwoMessageFactory
     }
   }
 
