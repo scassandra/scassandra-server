@@ -21,10 +21,6 @@ import org.scassandra.priming.query.PrimeQueryStore
 import org.scassandra.priming.prepared.PrimePreparedStore
 import org.scassandra.server.TcpServer
 import org.scassandra.priming.PrimingServer
-import scala.concurrent.{ExecutionContext, Await}
-import akka.pattern.ask
-import akka.util.Timeout
-import scala.concurrent.duration._
 
 object ServerStubRunner extends Logging {
   def main(args: Array[String]) {
@@ -40,12 +36,7 @@ object ServerStubRunner extends Logging {
 /**
  * Constructor used by the Java Client so if you change it update the Java Client as well.
  */
-class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber : Int = 8043) extends Logging {
-
-  import ExecutionContext.Implicits.global
-
-  // awaitStartup() : timeout used implicitly by the ask pattern and explicitly with Await.result()
-  implicit val timeout = Timeout(5 seconds)
+class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber: Int = 8043) extends Logging {
 
   var system: ActorSystem = _
 
@@ -74,15 +65,7 @@ class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber : I
   }
 
   def awaitStartup() = {
-    val primingReady = primingReadyListener ? OnServerReady
-    val tcpReady = tcpReadyListener ? OnServerReady
-
-    val allReady = for {
-      _ <- primingReady
-      _ <- tcpReady
-    } yield ServerReady // just need to yield something
-
-    Await.result(allReady, timeout.duration)
+    ServerReadyAwaiter.run(primingReadyListener, tcpReadyListener)
   }
 }
 
