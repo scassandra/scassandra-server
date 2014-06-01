@@ -41,6 +41,7 @@ import org.scassandra.cqlmessages.response.UnavailableException
 import org.scassandra.cqlmessages.response.Rows
 import org.scassandra.cqlmessages.request.ExecuteRequestV2
 import org.scassandra.priming.query.Prime
+import org.scassandra.cqlmessages.types.{CqlVarchar, CqlInt}
 
 class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with BeforeAndAfter with MockitoSugar {
   implicit lazy val system = ActorSystem()

@@ -18,6 +18,7 @@ package org.scassandra.cqlmessages
 import org.scassandra.cqlmessages.response.PreparedResultV1
 import akka.util.ByteString
 import org.scassandra.cqlmessages.request.{ExecuteRequest}
+import org.scassandra.cqlmessages.types.ColumnType
 
 object VersionOneMessageFactory extends AbstractMessageFactory {
 

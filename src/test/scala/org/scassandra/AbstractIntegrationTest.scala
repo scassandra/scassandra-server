@@ -23,8 +23,8 @@ import spray.json._
 import scala.Some
 import org.scassandra.priming.query.{When, Then, PrimeQuerySingle}
 import org.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
-import org.scassandra.cqlmessages.ColumnType
 import org.scassandra.priming.{Result, Success}
+import org.scassandra.cqlmessages.types.ColumnType
 
 object PrimingHelper {
 

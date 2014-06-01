@@ -40,6 +40,12 @@ import org.scassandra.priming.prepared.ThenPreparedSingle
 import org.scassandra.priming.prepared.WhenPreparedSingle
 import scala.Some
 import org.scassandra.priming.prepared.PrimePreparedSingle
+import org.scassandra.cqlmessages.types._
+import org.scassandra.priming.ConflictingPrimes
+import org.scassandra.priming.prepared.ThenPreparedSingle
+import org.scassandra.priming.prepared.WhenPreparedSingle
+import scala.Some
+import org.scassandra.priming.prepared.PrimePreparedSingle
 
 class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
 

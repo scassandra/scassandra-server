@@ -4,7 +4,8 @@ import org.scalatest.{FunSuite, Matchers}
 import org.scassandra.priming.PrimingJsonImplicits.ColumnTypeJsonFormat
 import spray.json.JsString
 import org.scassandra.cqlmessages._
-import org.scassandra.cqlmessages.CqlSet
+import org.scassandra.cqlmessages.types._
+import org.scassandra.cqlmessages.types.CqlSet
 
 class ColumnTypeJsonFormatTest extends FunSuite with Matchers {
   test("Primitive types parsing") {

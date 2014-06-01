@@ -19,9 +19,11 @@ import akka.util.{ByteIterator, ByteString}
 import java.util.UUID
 import java.net.InetAddress
 import scala.collection.immutable.IndexedSeq
+import org.scassandra.cqlmessages.types.ColumnType
 
 object CqlProtocolHelper {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+  val NullValue: Array[Byte] = Array[Byte](-1, -1, -1, -1)
 
   def serializeString(string: String) : Array[Byte] = {
     val bs = ByteString.newBuilder
@@ -134,76 +136,91 @@ object CqlProtocolHelper {
     new String(stringBytes)
   }
 
-  def readLongString(iterator: ByteIterator) : String = {
+  def readLongString(iterator: ByteIterator) : Option[String] = {
     val stringLength = iterator.getInt
+    if (stringLength == -1) return None
     val stringBytes = new Array[Byte](stringLength)
     iterator.getBytes(stringBytes)
-    new String(stringBytes)
+    Some(new String(stringBytes))
   }
 
-  def readIntValue(iterator: ByteIterator) : Int = {
+  def readIntValue(iterator: ByteIterator) : Option[Int] = {
     val intLength = iterator.getInt
-    iterator.getInt
+    if (intLength == -1) return None
+    Some(iterator.getInt)
   }
 
-  def readBigIntValue(iterator: ByteIterator) : Long = {
+  def readBigIntValue(iterator: ByteIterator) : Option[Long] = {
     val intLength = iterator.getInt
-    iterator.getLong
+    if (intLength == -1) return None
+    Some(iterator.getLong)
   }
 
-  def readBooleanValue(iterator: ByteIterator) : Boolean = {
+  def readBooleanValue(iterator: ByteIterator) : Option[Boolean] = {
     val booleanLength = iterator.getInt
+    if (booleanLength == -1) return None
     val boolAsByte = iterator.getByte
-    if (boolAsByte == 0) false else if (boolAsByte == 1) true else throw new IllegalArgumentException
+    if (boolAsByte == 0) Some(false)
+    else if (boolAsByte == 1) Some(true)
+    else throw new IllegalArgumentException
   }
 
-  def readBlobValue(iterator: ByteIterator) : Array[Byte] = {
+  def readBlobValue(iterator: ByteIterator) : Option[Array[Byte]] = {
     val length = iterator.getInt
+    if (length == -1) return None
     val bytes = new Array[Byte](length)
     iterator.getBytes(bytes)
-    bytes
+    Some(bytes)
   }
 
-  def readDecimalValue(iterator: ByteIterator) : BigDecimal = {
+  def readDecimalValue(iterator: ByteIterator) : Option[BigDecimal] = {
     val length = iterator.getInt
+    if (length == -1) return None
     val scale = iterator.getInt
     val bytes = new Array[Byte](length - 4)
     iterator.getBytes(bytes)
     val unscaledValue = BigInt(bytes)
-    BigDecimal(unscaledValue, scale)
+    Some(BigDecimal(unscaledValue, scale))
   }
 
-  def readDoubleValue(iterator: ByteIterator) : Double = {
-    iterator.getInt
-    iterator.getDouble
+  def readDoubleValue(iterator: ByteIterator) : Option[Double] = {
+    val size = iterator.getInt
+    if (size == -1) return None
+    else Some(iterator.getDouble)
   }
 
-  def readFloatValue(iterator: ByteIterator) : Float = {
-    iterator.getInt
-    iterator.getFloat
+  def readFloatValue(iterator: ByteIterator) : Option[Float] = {
+    val size = iterator.getInt
+    if (size == -1) return None
+    Some(iterator.getFloat)
   }
 
-  def readTimestampValue(iterator: ByteIterator) : Long = {
-    iterator.getInt
-    iterator.getLong
+  def readTimestampValue(iterator: ByteIterator) : Option[Long] = {
+    val size = iterator.getInt
+    if (size == -1) return None
+    Some(iterator.getLong)
   }
-  def readUUIDValue(iterator: ByteIterator) : UUID = {
-    iterator.getInt
+  def readUUIDValue(iterator: ByteIterator) : Option[UUID] = {
+    val size = iterator.getInt
+    if (size == -1) return None
     val mostSignificantBytes = iterator.getLong
     val leastSignificantBytes = iterator.getLong
-    new UUID(mostSignificantBytes, leastSignificantBytes)
+    Some(new UUID(mostSignificantBytes, leastSignificantBytes))
   }
-  def readInetValue(iterator: ByteIterator) : InetAddress = {
+
+  def readInetValue(iterator: ByteIterator) : Option[InetAddress] = {
     val length = iterator.getInt
+    if (length == -1) return None
     val bytes = new Array[Byte](length)
     iterator.getBytes(bytes)
-    InetAddress.getByAddress(bytes)
+    Some(InetAddress.getByAddress(bytes))
   }
-  def readVarintValue(iterator: ByteIterator) : BigInt = {
+  def readVarintValue(iterator: ByteIterator) : Option[BigInt] = {
     val length = iterator.getInt
+    if (length == -1) return None
     val bytes = new Array[Byte](length)
     iterator.getBytes(bytes)
-    BigInt(bytes)
+    Some(BigInt(bytes))
   }
 
   def readShortBytes(iterator: ByteIterator) : Array[Byte] = {
@@ -213,13 +230,14 @@ object CqlProtocolHelper {
     bytes
   }
 
-  def readVarcharSetValue(iterator: ByteIterator)  = {
+  def readVarcharSetValue(iterator: ByteIterator) : Option[Set[String]] = {
     val setLength = iterator.getInt
+    if (setLength == -1) return None
     val setSize = iterator.getShort
-      (0 until setSize).map(it => {
+      Some((0 until setSize).map(it => {
         val bytes = readShortBytes(iterator)
         new String(bytes)
-      }).toSet
+      }).toSet)
   }
 
   def readNullValue(iterator: ByteIterator) : Boolean = {
@@ -235,7 +253,7 @@ object CqlProtocolHelper {
 [-126, 0, 0, 8, // header
 0, 0, 0, 92, // length
 0, 0, 0, 2, // rows
-0, 0, 0, 1, // flagz
+0, 0, 0, 1, // flags
 0, 0, 0, 3, // col count
 0, 6, // keyspace length
 112, 101, 111, 112, 108, 101,

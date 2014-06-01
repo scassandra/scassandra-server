@@ -21,6 +21,7 @@ import java.util.UUID
 import java.net.{UnknownHostException, InetAddress}
 import scala.collection.immutable.Map
 import org.scassandra.priming.query.{Prime, PrimeCriteria}
+import org.scassandra.cqlmessages.types.ColumnType
 
 class PrimeValidator {
 

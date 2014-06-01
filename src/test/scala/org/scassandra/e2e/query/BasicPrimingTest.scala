@@ -1,8 +1,8 @@
 package org.scassandra.e2e.query
 
 import org.scassandra.AbstractIntegrationTest
-import org.scassandra.cqlmessages.{CqlInt, CqlVarchar}
 import org.scassandra.priming.query.{Then, When}
+import org.scassandra.cqlmessages.types.{CqlVarchar, CqlInt}
 
 class BasicPrimingTest extends AbstractIntegrationTest {
   test("Priming Rows With Different Columns") {

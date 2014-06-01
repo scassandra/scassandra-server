@@ -18,7 +18,7 @@ package org.scassandra.e2e
 import org.scassandra.{PrimingHelper, ConnectionToServerStub, AbstractIntegrationTest}
 import com.datastax.driver.core.Cluster
 import org.scassandra.priming.query.When
-import org.scassandra.cqlmessages.{CqlVarchar, CqlSet}
+import org.scassandra.cqlmessages.types.{CqlSet, CqlVarchar}
 
 class MetaDataTest extends AbstractIntegrationTest(false) {
 

@@ -11,6 +11,7 @@ import org.scassandra.cqlmessages.response.Ready
 import org.scassandra.priming.query.Prime
 import org.scassandra.cqlmessages.response.Row
 import org.scassandra.cqlmessages.response.SetKeyspace
+import org.scassandra.cqlmessages.types.ColumnType
 
 /**
  * Contains all the common messages between version 1

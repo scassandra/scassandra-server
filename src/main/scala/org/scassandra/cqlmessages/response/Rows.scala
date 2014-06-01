@@ -19,6 +19,7 @@ import org.scassandra.cqlmessages._
 import akka.util.{ByteStringBuilder, ByteIterator, ByteString}
 import com.typesafe.scalalogging.slf4j.Logging
 import scala._
+import org.scassandra.cqlmessages.types.{CqlList, CqlSet, ColumnType}
 
 
 object ResultHelper {
@@ -39,7 +40,6 @@ object ResultHelper {
 case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTypes : Map[String, ColumnType[_]], rows : List[Row] = List[Row]())(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Rows, stream, protocolVersion.serverCode) with Logging {
 
   import CqlProtocolHelper._
-  val NullValue: Array[Byte] = Array[Byte](-1, -1, -1, -1)
 
   override def serialize() : ByteString = {
     val bodyBuilder = ByteString.newBuilder

@@ -15,7 +15,7 @@
  */
 package org.scassandra.priming.routes
 
-import org.scassandra.cqlmessages.{CqlVarchar, ColumnType, Consistency}
+import org.scassandra.cqlmessages.{Consistency}
 import com.typesafe.scalalogging.slf4j.Logging
 import scala.Predef._
 import scala.Some
@@ -28,6 +28,7 @@ import org.scassandra.priming.query.When
 import org.scassandra.priming.query.Then
 import scala.Some
 import org.scassandra.priming.query.Prime
+import org.scassandra.cqlmessages.types.{CqlVarchar, ColumnType}
 
 object PrimeQueryResultExtractor extends Logging {
   def extractPrimeCriteria(primeQueryRequest : PrimeQuerySingle) : PrimeCriteria = {

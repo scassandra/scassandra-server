@@ -27,6 +27,7 @@ import org.scassandra.priming.query.Prime
 import org.scassandra.cqlmessages.response.SetKeyspace
 import akka.util.ByteString
 import org.scassandra.cqlmessages.request.{ExecuteRequest, ExecuteRequestV2}
+import org.scassandra.cqlmessages.types.ColumnType
 
 trait CqlMessageFactory {
   def createReadyMessage(stream : Byte) : Ready

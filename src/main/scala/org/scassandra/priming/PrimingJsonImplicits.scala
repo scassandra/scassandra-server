@@ -17,7 +17,6 @@ package org.scassandra.priming
 
 import spray.json._
 import spray.httpx.SprayJsonSupport
-import org.scassandra.cqlmessages.ColumnType
 import org.scassandra.cqlmessages.Consistency
 import org.scassandra.priming.query.PrimeCriteria
 import org.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
@@ -26,6 +25,7 @@ import org.scassandra.priming.query.When
 import org.scassandra.priming.query.Then
 import java.util.UUID
 import java.net.InetAddress
+import org.scassandra.cqlmessages.types.ColumnType
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
 
@@ -76,6 +76,8 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
       case bigD: java.math.BigDecimal => JsNumber(bigD)
       case inet: InetAddress => JsString(inet.getHostAddress)
       case bytes: Array[Byte] => JsString("0x" + bytes2hex(bytes))
+      case None => JsString("null")
+      case Some(s) => AnyJsonFormat.write(s)
       case other => serializationError("Do not understand object of type " + other.getClass.getName)
     }
     def read(value: JsValue) = value match {

@@ -27,6 +27,8 @@ import java.util
 import org.scassandra.priming.query.When
 import org.scassandra.cqlmessages._
 import org.scassandra.priming.Success
+import org.scassandra.cqlmessages.types._
+import org.scassandra.priming.query.When
 
 class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
 

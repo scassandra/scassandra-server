@@ -2,6 +2,7 @@ package org.scassandra.cqlmessages.response
 
 import org.scassandra.cqlmessages._
 import akka.util.ByteString
+import org.scassandra.cqlmessages.types.ColumnType
 
 case class PreparedResultV1(stream: Byte, preparedStatementId: Int, keyspaceName: String, tableName: String, variableTypes : List[ColumnType[_]])(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Prepared, stream, protocolVersion.serverCode) {
 

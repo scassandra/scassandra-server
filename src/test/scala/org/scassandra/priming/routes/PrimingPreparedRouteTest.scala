@@ -27,8 +27,9 @@ import org.scassandra.priming.prepared.ThenPreparedSingle
 import org.scassandra.priming.prepared.WhenPreparedSingle
 import scala.Some
 import org.scassandra.priming.prepared.PrimePreparedSingle
-import org.scassandra.cqlmessages.{ONE, TWO, CqlVarchar, CqlInt}
+import org.scassandra.cqlmessages.{ONE, TWO}
 import org.scassandra.priming.query.{PrimeCriteria, Prime}
+import org.scassandra.cqlmessages.types.{CqlVarchar, CqlInt}
 
 class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRouteTest with PrimingPreparedRoute with MockitoSugar {
 

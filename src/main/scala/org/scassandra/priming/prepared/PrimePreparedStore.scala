@@ -16,13 +16,14 @@
 package org.scassandra.priming.prepared
 
 import org.scassandra.priming.routes.PrimeQueryResultExtractor
-import org.scassandra.cqlmessages.{Consistency, CqlVarchar}
+import org.scassandra.cqlmessages.{Consistency}
 import org.scassandra.priming.{PrimeAddSuccess, PrimeAddResult, PrimeValidator, Success}
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.priming.query.PrimeCriteria
 import org.scassandra.priming.query.PrimeMatch
 import scala.Some
 import org.scassandra.priming.query.Prime
+import org.scassandra.cqlmessages.types.CqlVarchar
 
 class PrimePreparedStore extends Logging {
 

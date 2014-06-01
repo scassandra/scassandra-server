@@ -18,8 +18,8 @@ package org.scassandra.e2e.query
 import org.scassandra.AbstractIntegrationTest
 import org.scalatest.concurrent.ScalaFutures
 import org.scassandra.priming.query.When
-import org.scassandra.cqlmessages.CqlVarchar
 import org.scassandra.priming.Success
+import org.scassandra.cqlmessages.types.CqlVarchar
 
 class PrimingOptionalFieldsTest extends AbstractIntegrationTest with ScalaFutures {
 

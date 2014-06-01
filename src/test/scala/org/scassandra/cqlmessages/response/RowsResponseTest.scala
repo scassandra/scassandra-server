@@ -20,6 +20,7 @@ import org.scalatest.Matchers
 import akka.util.ByteString
 import org.scassandra.cqlmessages._
 import org.scassandra.cqlmessages.VersionOne
+import org.scassandra.cqlmessages.types.{CqlVarchar, ColumnType}
 
 class RowsResponseTest extends FunSuite with Matchers {
 

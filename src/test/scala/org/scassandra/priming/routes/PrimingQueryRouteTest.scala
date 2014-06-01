@@ -26,6 +26,17 @@ import org.scassandra.priming.query.PrimeCriteria
 import scala.Some
 import org.scassandra.priming.query.PrimeMatch
 import org.scassandra.priming.query.Prime
+import org.scassandra.cqlmessages.types._
+import org.scassandra.priming.query.PrimeCriteria
+import org.scassandra.priming.ConflictingPrimes
+import org.scassandra.priming.TypeMismatches
+import scala.Some
+import org.scassandra.priming.query.PrimeQuerySingle
+import org.scassandra.priming.TypeMismatch
+import org.scassandra.priming.query.When
+import org.scassandra.priming.query.PrimeMatch
+import org.scassandra.priming.query.Then
+import org.scassandra.priming.query.Prime
 
 
 class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with PrimingQueryRoute {

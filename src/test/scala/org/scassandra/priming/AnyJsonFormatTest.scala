@@ -7,6 +7,15 @@ import spray.json.{JsNumber, JsString}
 import java.net.InetAddress
 
 class AnyJsonFormatTest extends FunSuite with Matchers {
+  test("Write None") {
+    AnyJsonFormat.write(None) should equal(JsString("null"))
+  }
+
+  test("Write Some") {
+    val uuidToSerialise = UUID.randomUUID()
+    AnyJsonFormat.write(Some(uuidToSerialise)) should equal(JsString(uuidToSerialise.toString))
+  }
+
   test("Write UUID") {
     val uuidToSerialise = UUID.randomUUID()
     AnyJsonFormat.write(uuidToSerialise) should equal(JsString(uuidToSerialise.toString))

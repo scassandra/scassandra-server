@@ -38,12 +38,12 @@ class CqlProtocolHelperTest extends FunSuite with Matchers {
   test("Reading decimal value - 5.5456") {
     val decimalAsBytes = Array[Byte](0, 0, 0, 7, 0, 0, 0, 4, 0, -40, -96)
     val decimal = CqlProtocolHelper.readDecimalValue(ByteString(decimalAsBytes).iterator)
-    decimal should equal(BigDecimal("5.5456"))
+    decimal should equal(Some(BigDecimal("5.5456")))
   }
   test("Reading decimal value - 5") {
     val decimalAsBytes = Array[Byte](0, 0, 0, 5, 0, 0, 0, 0, 5)
     val decimal = CqlProtocolHelper.readDecimalValue(ByteString(decimalAsBytes).iterator)
-    decimal should equal(BigDecimal("5"))
+    decimal.get should equal(BigDecimal("5"))
   }
 
   test("Serializing decimal value - 5.5456") {
@@ -65,7 +65,7 @@ class CqlProtocolHelperTest extends FunSuite with Matchers {
   test("Reading double value - 6.6") {
     val doubleAsBytes = Array[Byte](0, 0, 0, 8, 64, 26, 102, 102, 102, 102, 102, 102)
     val double = CqlProtocolHelper.readDoubleValue(ByteString(doubleAsBytes).iterator)
-    double should equal(6.6)
+    double.get should equal(6.6)
   }
 
   test("Serializing float value - 7.7") {
@@ -73,16 +73,17 @@ class CqlProtocolHelperTest extends FunSuite with Matchers {
     val doubleAsBytes = CqlProtocolHelper.serializeFloatValue(float)
     doubleAsBytes should equal(Array[Byte](0, 0, 0, 4,   64, -10, 102, 102))
   }
+
   test("Reading float value - 7.7") {
     val floatAsBytes = Array[Byte](0, 0, 0, 4,   64, -10, 102, 102)
     val float = CqlProtocolHelper.readFloatValue(ByteString(floatAsBytes).iterator)
-    float should equal(7.7f)
+    float.get should equal(7.7f)
   }
 
   test("Reading timestamp value - 1368438171000") {
     val timestampAsBytes = Array[Byte](0, 0, 0, 8, 0, 0, 1, 62, -99, 69, 101, 120)
     val timestamp = CqlProtocolHelper.readTimestampValue(ByteString(timestampAsBytes).iterator)
-    timestamp should equal(1368438171000l)
+    timestamp.get should equal(1368438171000l)
   }
   test("Serializing timestamp value - 1368438171000") {
     val timestamp : Long = 1368438171000l
@@ -93,7 +94,7 @@ class CqlProtocolHelperTest extends FunSuite with Matchers {
   test("Reading uuid value - 550e8400-e29b-41d4-a716-446655440000") {
     val uuidAsBytes = Array[Byte](0, 0, 0, 16,  85, 14, -124, 0, -30, -101, 65, -44, -89, 22, 68, 102, 85, 68, 0, 0)
     val uuid = CqlProtocolHelper.readUUIDValue(ByteString(uuidAsBytes).iterator)
-    uuid should equal(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"))
+    uuid.get should equal(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"))
   }
   test("Serializing uuid value - 550e8400-e29b-41d4-a716-446655440000") {
     val uuid : UUID = UUID.fromString("550e8400-e29b-41d4-a716-446655440000")
@@ -104,13 +105,13 @@ class CqlProtocolHelperTest extends FunSuite with Matchers {
   test("Reading inet value - 127.0.0.1") {
     val uuidAsBytes = Array[Byte](0, 0, 0, 4, 127, 0, 0, 1)
     val inet = CqlProtocolHelper.readInetValue(ByteString(uuidAsBytes).iterator)
-    inet should equal(InetAddress.getByAddress(Array[Byte](127,0,0,1)))
+    inet.get should equal(InetAddress.getByAddress(Array[Byte](127,0,0,1)))
   }
 
   test("Reading inet value - 2001:db8:85a3:42:1000:8a2e:370:7334") {
     val uuidAsBytes = Array[Byte](0, 0, 0, 16,  32, 1, 13, -72, -123, -93, 0, 66, 16, 0, -118, 46, 3, 112, 115, 52)
     val inet = CqlProtocolHelper.readInetValue(ByteString(uuidAsBytes).iterator)
-    inet should equal(InetAddress.getByAddress(Array[Byte](32, 1, 13, -72, -123, -93, 0, 66, 16, 0, -118, 46, 3, 112, 115, 52)))
+    inet.get should equal(InetAddress.getByAddress(Array[Byte](32, 1, 13, -72, -123, -93, 0, 66, 16, 0, -118, 46, 3, 112, 115, 52)))
   }
 
   test("Serializing inet value - 2001:db8:85a3:42:1000:8a2e:370:7334") {
@@ -127,7 +128,7 @@ class CqlProtocolHelperTest extends FunSuite with Matchers {
   test("Reading varint value - 123456789101112131415") {
     val varintAsBytes = Array[Byte](0, 0, 0, 9, 6, -79, 78, -97, -107, -38, 26, -1, 87)
     val varint = CqlProtocolHelper.readVarintValue(ByteString(varintAsBytes).iterator)
-    varint should equal(BigInt("123456789101112131415"))
+    varint.get should equal(BigInt("123456789101112131415"))
   }
   test("Reading a set of strings") {
     val serialisedSet = Array[Byte](0, 0, 0, 12, // set length
@@ -137,6 +138,6 @@ class CqlProtocolHelperTest extends FunSuite with Matchers {
 
     val set = CqlProtocolHelper.readVarcharSetValue(ByteString(serialisedSet).iterator)
 
-    set should equal(Set("one", "two"))
+    set.get should equal(Set("one", "two"))
   }
 }

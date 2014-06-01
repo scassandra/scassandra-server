@@ -20,6 +20,7 @@ import java.util.UUID
 import com.typesafe.scalalogging.slf4j.Logging
 import java.nio.ByteOrder
 import org.scassandra.cqlmessages._
+import org.scassandra.cqlmessages.types._
 
 abstract class Result(val resultKind: Int, val streamId: Byte, protocolVersion : Byte) extends Response(new Header(protocolVersion, OpCodes.Result, streamId))
 

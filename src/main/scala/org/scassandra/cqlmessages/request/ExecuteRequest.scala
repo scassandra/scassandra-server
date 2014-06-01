@@ -17,6 +17,7 @@ package org.scassandra.cqlmessages.request
 
 import org.scassandra.cqlmessages._
 import akka.util.{ByteIterator, ByteString}
+import org.scassandra.cqlmessages.types.ColumnType
 
 object ExecuteRequest {
 

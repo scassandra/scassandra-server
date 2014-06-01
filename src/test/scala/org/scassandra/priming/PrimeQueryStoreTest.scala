@@ -19,6 +19,7 @@ import org.scalatest.{Matchers, FunSpec}
 import org.scassandra.cqlmessages._
 import java.util.UUID
 import org.scassandra.priming.query._
+import org.scassandra.cqlmessages.types._
 import org.scassandra.priming.query.PrimeCriteria
 import org.scassandra.priming.query.PrimeMatch
 import org.scassandra.priming.query.Prime

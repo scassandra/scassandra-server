@@ -18,6 +18,7 @@ package org.scassandra.cqlmessages.request
 import org.scalatest.{Matchers, FunSuite}
 import org.scassandra.cqlmessages._
 import akka.util.ByteString
+import org.scassandra.cqlmessages.types._
 
 class ExecuteRequestTest extends FunSuite with Matchers {
 
@@ -101,7 +102,7 @@ class ExecuteRequestTest extends FunSuite with Matchers {
     response.numberOfVariables should equal(7)
     response.variables.size should equal(7)
     response.variables should equal(
-      List(1234l, 2345l, BigDecimal("1"), 1.5d, 2.5f, 3456, BigInt("123"))
+      List(Some(1234l), Some(2345l), Some(BigDecimal("1")), Some(1.5d), Some(2.5f), Some(3456), Some(BigInt("123")))
     )
   }
 

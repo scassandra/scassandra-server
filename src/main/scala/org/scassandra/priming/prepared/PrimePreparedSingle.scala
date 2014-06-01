@@ -15,8 +15,9 @@
  */
 package org.scassandra.priming.prepared
 
-import org.scassandra.cqlmessages.{Consistency, ColumnType}
+import org.scassandra.cqlmessages.{Consistency}
 import org.scassandra.priming.{Success, Result}
+import org.scassandra.cqlmessages.types.ColumnType
 
 case class PrimePreparedSingle(when: WhenPreparedSingle, then: ThenPreparedSingle)
 

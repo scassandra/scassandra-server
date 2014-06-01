@@ -23,6 +23,7 @@ import org.scassandra.priming.prepared.PrimePreparedStore
 import org.scassandra.priming._
 import org.scassandra.priming.query.PrimeMatch
 import scala.Some
+import org.scassandra.cqlmessages.types.{CqlVarchar, ColumnType}
 
 class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with Logging {
 
@@ -34,7 +35,7 @@ class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with 
   def receive: Actor.Receive = {
     case PrepareHandlerMessages.Prepare(body, stream, msgFactory, connection) => {
       logger.debug(s"Received prepare message ${body}")
-      val query = readLongString(body.iterator)
+      val query = readLongString(body.iterator).get
 
 
       val preparedPrime = primePreparedStore.findPrime(PrimeMatch(query))

@@ -15,8 +15,8 @@
  */
 package org.scassandra.priming.prepared
 
-import org.scassandra.cqlmessages.ColumnType
 import org.scassandra.priming.query.Prime
+import org.scassandra.cqlmessages.types.ColumnType
 
 case class PreparedPrime(
                   variableTypes: List[ColumnType[_]] = List(),

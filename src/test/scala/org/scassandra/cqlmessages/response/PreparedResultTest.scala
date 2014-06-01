@@ -1,7 +1,8 @@
 package org.scassandra.cqlmessages.response
 
-import org.scassandra.cqlmessages.{VersionTwo, CqlProtocolHelper, OpCodes, CqlVarint}
+import org.scassandra.cqlmessages.{VersionTwo, CqlProtocolHelper, OpCodes}
 import org.scalatest.{Matchers, FunSuite}
+import org.scassandra.cqlmessages.types.CqlVarint
 
 class PreparedResultTest extends FunSuite with Matchers {
 

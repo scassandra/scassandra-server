@@ -19,6 +19,7 @@ import org.scalatest.{Matchers, FunSuite}
 import akka.util.ByteString
 import org.scassandra.cqlmessages._
 import scala.Array
+import org.scassandra.cqlmessages.types._
 
 class ResultTest extends FunSuite with Matchers {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN

@@ -15,8 +15,9 @@
  */
 package org.scassandra.priming.query
 
-import org.scassandra.cqlmessages.{Consistency, ColumnType}
+import org.scassandra.cqlmessages.{Consistency}
 import org.scassandra.priming.Result
+import org.scassandra.cqlmessages.types.ColumnType
 
 case class PrimeQuerySingle(when: When, then: Then)
 

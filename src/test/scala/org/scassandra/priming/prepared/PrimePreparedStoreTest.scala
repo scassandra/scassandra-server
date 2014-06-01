@@ -22,6 +22,7 @@ import org.scassandra.priming.{ConflictingPrimes, PrimeAddSuccess, ReadTimeout}
 import org.scassandra.priming.query.PrimeMatch
 import scala.Some
 import org.scassandra.priming.query.Prime
+import org.scassandra.cqlmessages.types.{CqlInet, CqlVarchar, CqlText}
 
 class PrimePreparedStoreTest extends FunSuite with Matchers {
 
