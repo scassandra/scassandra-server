@@ -31,7 +31,7 @@ class TcpServerReadyTest extends TestKit(ActorSystem("TestSystem")) with FunSpec
       val tcpReadyListener = TestProbe()
 
       // when
-      TestActorRef(new TcpServer(8046, PrimeQueryStore(), PrimePreparedStore(), tcpReadyListener.ref))
+      TestActorRef(new TcpServer("localhost", 8046, PrimeQueryStore(), PrimePreparedStore(), tcpReadyListener.ref))
 
       // then
       tcpReadyListener.expectMsg(ServerReady)

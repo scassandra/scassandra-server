@@ -24,10 +24,12 @@ import org.scassandra.priming.PrimingServer
 
 object ServerStubRunner extends Logging {
   def main(args: Array[String]) {
+    val binaryListenAddress = ScassandraConfig.binaryListenAddress
     val binaryPortNumber = ScassandraConfig.binaryPort
+    val adminListenAddress = ScassandraConfig.adminListenAddress
     val adminPortNumber = ScassandraConfig.adminPort
     logger.info(s"Using binary port to $binaryPortNumber and admin port to $adminPortNumber")
-    val ss = new ServerStubRunner(binaryPortNumber, adminPortNumber)
+    val ss = new ServerStubRunner(binaryListenAddress, binaryPortNumber, adminListenAddress, adminPortNumber)
     ss.start()
     ss.awaitTermination()
   }
@@ -36,7 +38,10 @@ object ServerStubRunner extends Logging {
 /**
  * Constructor used by the Java Client so if you change it update the Java Client as well.
  */
-class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber: Int = 8043) extends Logging {
+class ServerStubRunner( val binaryListenAddress: String = "localhost",
+                        val binaryPortNumber: Int = 8042,
+                        val adminListenAddress: String = "localhost",
+                        val adminPortNumber: Int = 8043) extends Logging {
 
   var system: ActorSystem = _
 
@@ -47,11 +52,11 @@ class ServerStubRunner(val serverPortNumber: Int = 8042, val adminPortNumber: In
   var tcpReadyListener: ActorRef = _
 
   def start() = {
-    system = ActorSystem(s"CassandraServerStub-${serverPortNumber}-${adminPortNumber}")
+    system = ActorSystem(s"CassandraServerStub-${binaryPortNumber}-${adminPortNumber}")
     primingReadyListener = system.actorOf(Props(classOf[ServerReadyListener]), "PrimingReadyListener")
     tcpReadyListener = system.actorOf(Props(classOf[ServerReadyListener]), "TcpReadyListener")
-    system.actorOf(Props(classOf[TcpServer], serverPortNumber, primedResults, primePreparedStore, tcpReadyListener), "BinaryTcpListener")
-    system.actorOf(Props(classOf[PrimingServer], adminPortNumber, primedResults, primePreparedStore, primingReadyListener), "PrimingServer")
+    system.actorOf(Props(classOf[TcpServer], binaryListenAddress, binaryPortNumber, primedResults, primePreparedStore, tcpReadyListener), "BinaryTcpListener")
+    system.actorOf(Props(classOf[PrimingServer], adminListenAddress, adminPortNumber, primedResults, primePreparedStore, primingReadyListener), "PrimingServer")
   }
 
   def awaitTermination() = {

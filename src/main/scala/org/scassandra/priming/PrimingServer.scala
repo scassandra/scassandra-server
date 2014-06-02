@@ -32,7 +32,7 @@ trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryR
   val allRoutes = routeForPreparedPriming ~ queryRoute ~ activityVerificationRoute
 }
 
-class PrimingServer(port: Int, implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore: PrimePreparedStore, serverReadyListener: ActorRef) extends Actor with Logging {
+class PrimingServer(listenAddress: String, port: Int, implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore: PrimePreparedStore, serverReadyListener: ActorRef) extends Actor with Logging {
 
   import Tcp._
 
@@ -42,7 +42,7 @@ class PrimingServer(port: Int, implicit val primeQueryStore: PrimeQueryStore, im
 
   val routing = context.actorOf(Props(classOf[PrimingServerHttpService], primeQueryStore, primePreparedStore))
 
-  IO(Http) ! Http.Bind(self, ScassandraConfig.adminListenAddress, port)
+  IO(Http) ! Http.Bind(self, listenAddress, port)
 
   def receive = {
     case Connected(_, _) => {
