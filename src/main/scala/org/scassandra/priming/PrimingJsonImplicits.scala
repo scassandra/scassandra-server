@@ -26,6 +26,7 @@ import org.scassandra.priming.query.Then
 import java.util.UUID
 import java.net.InetAddress
 import org.scassandra.cqlmessages.types.ColumnType
+import org.scassandra.priming.routes.Version
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
 
@@ -107,4 +108,5 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impThenPreparedSingle = jsonFormat4(ThenPreparedSingle)
   implicit val impPrimePreparedSingle = jsonFormat2(PrimePreparedSingle)
   implicit val impPreparedStatementExecution = jsonFormat3(PreparedStatementExecution)
+  implicit val impVersion = jsonFormat1(Version)
 }

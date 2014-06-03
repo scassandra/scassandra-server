@@ -22,14 +22,14 @@ import spray.util.LoggingContext
 import akka.event.Logging
 import com.typesafe.scalalogging.slf4j.Logging
 import akka.actor.{ActorRef, Props, Actor}
-import org.scassandra.priming.routes.{ActivityVerificationRoute, PrimingQueryRoute, PrimingPreparedRoute}
+import org.scassandra.priming.routes.{VersionRoute, ActivityVerificationRoute, PrimingQueryRoute, PrimingPreparedRoute}
 import org.scassandra.priming.query.PrimeQueryStore
 import org.scassandra.priming.prepared.PrimePreparedStore
 import org.scassandra.{ServerReady, ScassandraConfig}
 
-trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryRoute with ActivityVerificationRoute with Logging {
+trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryRoute with ActivityVerificationRoute with VersionRoute with Logging {
 
-  val allRoutes = routeForPreparedPriming ~ queryRoute ~ activityVerificationRoute
+  val allRoutes = routeForPreparedPriming ~ queryRoute ~ activityVerificationRoute ~ versionRoute
 }
 
 class PrimingServer(listenAddress: String, port: Int, implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore: PrimePreparedStore, serverReadyListener: ActorRef) extends Actor with Logging {
