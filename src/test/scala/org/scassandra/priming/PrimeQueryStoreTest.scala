@@ -383,6 +383,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       val prime = Prime(
         List(
           Map("name" -> "totoro", "hasInvalidValue" -> "127.0.0.1"),
+          Map("name" -> "validIpv6", "hasInvalidValue" -> "::1"),
           Map("name" -> "catbus", "hasInvalidValue" -> "NOT AN INET!") // incorrect entry, should trigger exception
         ),
         columnTypes = Map("name" -> CqlVarchar, "hasInvalidValue" -> CqlInet)
