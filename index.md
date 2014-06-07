@@ -11,16 +11,9 @@ Version 0.2.0 of Scassandra is primarily aimed at Java developers. The next vers
 
 However if you want to use Scassandra from a language/system other than Java, and you don't want to wait for version 1.0 then you are in the right place.
 
-Currently there is no binary release of Scassandra. To run as a standalone server you need to checkout the project and run:
+You can download the latest jar [here](https://github.com/scassandra/scassandra-server/raw/release/scassandra-server-all_2.10-0.2.0.jar)
 
-```
-sbt assembly
-```
-
-Once you've assembled the project the server is an executable jar file and can be started with the following command:
-
-```
-java -jar cassandra_server_stub.jar
+Then start it with java -jar scassandra-server-all_2.10-0.2.0.jar
 ```
 
 The default ports are:
