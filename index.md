@@ -34,7 +34,7 @@ To override the ports / log level use the following java properties:
 E.g
 
 ```
-java -jar scassandra-server-all_2.10-0.2.0.jar -Dscassandra.binary.port=1234 -Dscassandra.binary.port=4566 -Dscassandra.log.level=DEBUG cassandra_server_stub.jar
+java -jar -Dscassandra.binary.port=1234 -Dscassandra.binary.port=4566 -Dscassandra.log.level=INFO scassandra-server-all_2.10-0.2.0.jar
 ```
 
 Once you have the server up and running see all the pages in the menu for how to prime/verify activity.
