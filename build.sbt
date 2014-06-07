@@ -23,7 +23,8 @@ libraryDependencies ++= Seq(
   "io.spray" %% "spray-json" % "1.2.5",
   "io.spray" % "spray-can" % sprayVersion,
   "io.spray" % "spray-routing" % sprayVersion,
-  "com.typesafe" %% "scalalogging-slf4j" % "1.0.1"
+  "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
+  "com.google.guava" % "guava" % "17.0"
 )
 
 // Read here for optional dependencies:
@@ -80,8 +81,7 @@ libraryDependencies ++= Seq(
   "com.datastax.cassandra" % "cassandra-driver-core" % "2+" % "test" exclude("com.google.guava", "guava"),
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test",
   "org.scalatest" %% "scalatest" % "2.0" % "test",
-  "org.mockito" % "mockito-core" % "1.9.5" % "test",
-  "com.google.guava" % "guava" % "16.0.1" % "test" force()
+  "org.mockito" % "mockito-core" % "1.9.5" % "test"
 )
 
 scalacOptions in Test ++= Seq("-Yrangepos")
