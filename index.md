@@ -13,7 +13,9 @@ However if you want to use Scassandra from a language/system other than Java, an
 
 You can download the latest jar [here](https://github.com/scassandra/scassandra-server/raw/release/scassandra-server-all_2.10-0.2.0.jar)
 
-Then start it with java -jar scassandra-server-all_2.10-0.2.0.jar
+Then start it with:
+```
+java -jar scassandra-server-all_2.10-0.2.0.jar
 ```
 
 The default ports are:
@@ -32,7 +34,7 @@ To override the ports / log level use the following java properties:
 E.g
 
 ```
-java -jar  -Dscassandra.binary.port=1234 -Dscassandra.binary.port=4566 -Dscassandra.log.level=DEBUG cassandra_server_stub.jar
+java -jar scassandra-server-all_2.10-0.2.0.jar -Dscassandra.binary.port=1234 -Dscassandra.binary.port=4566 -Dscassandra.log.level=DEBUG cassandra_server_stub.jar
 ```
 
 Once you have the server up and running see all the pages in the menu for how to prime/verify activity.
