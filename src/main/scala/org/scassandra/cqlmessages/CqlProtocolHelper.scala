@@ -15,7 +15,7 @@
  */
 package org.scassandra.cqlmessages
 
-import akka.util.{ByteIterator, ByteString}
+import akka.util.{ByteString, ByteIterator}
 import java.util.UUID
 import java.net.InetAddress
 import scala.collection.immutable.IndexedSeq
@@ -244,6 +244,10 @@ object CqlProtocolHelper {
     val bytes = new Array[Byte](4)
     iterator.getBytes(bytes)
     bytes.deep == Array[Byte](-1,-1,-1,-1).deep
+  }
+
+  def combineHeaderAndLength(header: Array[Byte], body: Array[Byte]) : ByteString = {
+    ByteString(header ++ serializeInt(body.length) ++ body)
   }
 
 }

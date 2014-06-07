@@ -21,7 +21,8 @@ import org.scassandra.cqlmessages.VersionTwo
 
 class ErrorTest extends FunSuite with Matchers {
 
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+  import CqlProtocolHelper._
+
   implicit val protocolVersion = VersionTwo
   val defaultStream : Byte = 0x1
 
@@ -60,26 +61,7 @@ class ErrorTest extends FunSuite with Matchers {
     readTimeout.errorCode should equal(ErrorCodes.ReadTimeout)
     readTimeout.errorMessage should equal("Read Request Timeout")
   }
-/*
-Read_timeout: Timeout exception during a read request. The rest
-              of the ERROR message body will be
-                <cl><received><blockfor><data_present>
-              where:
-                <cl> is the [consistency] level of the query having triggered
-                     the exception.
-                <received> is an [int] representing the number of nodes having
-                           answered the request.
-                <blockfor> is the number of replica whose response is
-                           required to achieve <cl>. Please note that it is
-                           possible to have <received> >= <blockfor> if
-                           <data_present> is false. And also in the (unlikely)
-                           case were <cl> is achieved but the coordinator node
-                           timeout while waiting for read-repair
-                           acknowledgement.
-                <data_present> is a single byte. If its value is 0, it means
-                               the replica that was asked for data has not
-                               responded. Otherwise, the value is != 0.
- */
+
   test("Serialization of Read Request Timeout - hard coded data for now") {
     val readTimeoutBytes = ReadRequestTimeout(defaultStream).serialize().iterator
     val header = readTimeoutBytes.drop(4)
@@ -130,7 +112,8 @@ Read_timeout: Timeout exception during a read request. The rest
   }
 
   test("Serialization of Unavailable Exception - hard coded data for now") {
-    val unavailableException = UnavailableException(0x1).serialize().iterator
+    val stream: Byte = 0x1
+    val unavailableException = UnavailableException(stream).serialize().iterator
     // header
     val header = unavailableException.drop(4)
     // length

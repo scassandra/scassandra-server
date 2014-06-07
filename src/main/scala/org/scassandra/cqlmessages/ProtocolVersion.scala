@@ -31,6 +31,7 @@ object ProtocolVersion {
 }
 
 abstract class ProtocolVersion(val clientCode : Byte, val serverCode: Byte)
+
 case object VersionTwo extends ProtocolVersion(
   ProtocolVersion.ClientProtocolVersionTwo,
   ProtocolVersion.ServerProtocolVersionTwo)

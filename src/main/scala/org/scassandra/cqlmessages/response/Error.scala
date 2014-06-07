@@ -27,19 +27,18 @@ object ErrorCodes {
 
 class Error(protocolVersion: ProtocolVersion, val errorCode : Int, val errorMessage : String, stream: Byte) extends Response(new Header(protocolVersion.serverCode, opCode = OpCodes.Error, streamId = stream)) {
 
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+  import CqlProtocolHelper._
 
   override def serialize() : ByteString = {
-    val bs = ByteString.newBuilder
-    bs.putBytes(header.serialize())
+    val serialisedHeader: Array[Byte] = header.serialize()
 
-    bs.putInt(4 + 2 + errorMessage.length)
-
-    bs.putInt(errorCode)
+    val bodyBuilder = ByteString.newBuilder
+    bodyBuilder.putInt(errorCode)
     val errorMessageBytes = CqlProtocolHelper.serializeString(errorMessage)
-    bs.putBytes(errorMessageBytes.toArray)
-
-    bs.result()
+    bodyBuilder.putBytes(errorMessageBytes.toArray)
+    val bodyBytes = bodyBuilder.result()
+    
+    combineHeaderAndLength(serialisedHeader, bodyBytes.toArray)
   }
 }
 
@@ -52,9 +51,9 @@ case class ReadRequestTimeout(stream : Byte)(implicit protocolVersion: ProtocolV
   val blockFor : Int = 1
   val dataPresent : Byte = 0
 
-  override def serialize() : ByteString = {
-    val bs = ByteString.newBuilder
+  import CqlProtocolHelper._
 
+  override def serialize() : ByteString = {
     val bodyBs = ByteString.newBuilder
     bodyBs.putInt(errorCode)
     val errorMessageBytes = CqlProtocolHelper.serializeString(errorMessage)
@@ -63,23 +62,20 @@ case class ReadRequestTimeout(stream : Byte)(implicit protocolVersion: ProtocolV
     bodyBs.putInt(receivedResponses)
     bodyBs.putInt(blockFor)
     bodyBs.putByte(dataPresent)
-    val body = bodyBs.result()
 
-    bs.putBytes(header.serialize())
-    bs.putInt(body.length)
-    bs.putBytes(body.toArray)
-    bs.result()
+    combineHeaderAndLength(header.serialize(), bodyBs.result().toArray)
   }
 }
 
 case class UnavailableException(stream: Byte)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.UnavailableException, "Unavailable Exception", stream) {
+
+  import CqlProtocolHelper._
+
   val consistency : Short = ONE.code
   val required : Int = 1
   val alive : Int = 0
 
   override def serialize() : ByteString = {
-    val bs = ByteString.newBuilder
-
     val bodyBs = ByteString.newBuilder
     bodyBs.putInt(errorCode)
     val errorMessageBytes = CqlProtocolHelper.serializeString(errorMessage)
@@ -87,25 +83,21 @@ case class UnavailableException(stream: Byte)(implicit protocolVersion: Protocol
     bodyBs.putShort(consistency)
     bodyBs.putInt(required)
     bodyBs.putInt(alive)
-    val body = bodyBs.result()
 
-    bs.putBytes(header.serialize())
-    bs.putInt(body.length)
-    bs.putBytes(body.toArray)
-    bs.result()
+    combineHeaderAndLength(header.serialize(), bodyBs.result().toArray)
   }
 }
 
 case class WriteRequestTimeout(stream: Byte)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.WriteTimeout, "Write Request Timeout", stream) {
-  //<cl><received><blockfor><writeType>
+
+  import CqlProtocolHelper._
+
   val consistency : Short = ONE.code
   val receivedResponses : Int = 0
   val blockFor : Int = 1
   val writeType : String = "SIMPLE"
 
   override def serialize() : ByteString = {
-    val bs = ByteString.newBuilder
-
     val bodyBs = ByteString.newBuilder
     bodyBs.putInt(errorCode)
     val errorMessageBytes = CqlProtocolHelper.serializeString(errorMessage)
@@ -114,11 +106,7 @@ case class WriteRequestTimeout(stream: Byte)(implicit protocolVersion: ProtocolV
     bodyBs.putInt(receivedResponses)
     bodyBs.putInt(blockFor)
     bodyBs.putBytes(CqlProtocolHelper.serializeString(writeType).toArray)
-    val body = bodyBs.result()
 
-    bs.putBytes(header.serialize())
-    bs.putInt(body.length)
-    bs.putBytes(body.toArray)
-    bs.result()
+    combineHeaderAndLength(header.serialize(), bodyBs.result().toArray)
   }
 }
