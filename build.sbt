@@ -16,6 +16,8 @@ val sprayVersion = "1.2.1"
 
 val akkaVersion = "2.2.4"
 
+addArtifact(Artifact("scassandra-server", "assembly"), sbtassembly.Plugin.AssemblyKeys.assembly)
+
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.0.13",
   "com.typesafe.akka" % "akka-actor_2.10" % akkaVersion,
