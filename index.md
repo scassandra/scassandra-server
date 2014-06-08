@@ -11,7 +11,7 @@ Version 0.2.0 of Scassandra is primarily aimed at Java developers. The next vers
 
 However if you want to use Scassandra from a language/system other than Java, and you don't want to wait for version 1.0 then you are in the right place.
 
-You can download the latest jar [here](https://github.com/scassandra/scassandra-server-executeable-jar/raw/master/scassandra-server-all_2.10-0.2.0.jar)
+You can download the latest jar [here](https://github.com/scassandra/scassandra-server-executable-jar/raw/master/scassandra-server-all_2.10-0.2.0.jar)
 
 Then start it with:
 ```
