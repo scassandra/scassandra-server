@@ -43,7 +43,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "select * from people"
     val rows: List[Map[String, String]] = List(Map("name" -> "Chris", "age" -> "19"))
     val columnTypes = Map("name" -> CqlVarchar)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -58,7 +58,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "select * from people"
     val rows: List[Map[String, String]] = List(Map("name" -> "Chris"))
     val columnTypes = Map("name" -> CqlText)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -74,7 +74,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime and query with a cql int"
     val rows: List[Map[String, String]] = List(Map("age" -> "29"))
     val columnTypes  = Map("age" -> CqlInt)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -89,7 +89,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime with cql boolean"
     val rows: List[Map[String, String]] = List(Map("booleanTrue" -> "true", "booleanFalse" -> "false"))
     val columnTypes  = Map("booleanTrue" -> CqlBoolean, "booleanFalse" -> CqlBoolean)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -104,7 +104,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime with cql ascii"
     val rows: List[Map[String, String]] = List(Map("asciiField" -> "Hello There"))
     val columnTypes  = Map("asciiField" -> CqlAscii)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -119,7 +119,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime with cql bigint"
     val rows: List[Map[String, String]] = List(Map("bigIntField" -> "1234"))
     val columnTypes  = Map("bigIntField" -> CqlBigint)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -134,7 +134,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime with cql bigint"
     val rows: List[Map[String, String]] = List(Map("field" -> "1234"))
     val columnTypes  = Map("field" -> CqlCounter)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -149,7 +149,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime with cql blob"
     val rows: List[Map[String, String]] = List(Map("field" -> "0x48656c6c6f"))
     val columnTypes  = Map("field" -> CqlBlob)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -167,7 +167,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime with cql decimal"
     val rows: List[Map[String, String]] = List(Map("field" -> "4.3456"))
     val columnTypes  = Map("field" -> CqlDecimal)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -183,7 +183,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime with cql double"
     val rows: List[Map[String, String]] = List(Map("field" -> "4.3456"))
     val columnTypes  = Map("field" -> CqlDouble)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -199,7 +199,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime with cql double"
     val rows: List[Map[String, String]] = List(Map("field" -> "4.3456"))
     val columnTypes  = Map("field" -> CqlFloat)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -216,7 +216,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime with cql timestamp"
     val rows: List[Map[String, String]] = List(Map("field" -> s"${date.getTime}"))
     val columnTypes  = Map("field" -> CqlTimestamp)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -234,7 +234,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime with cql timestamp"
     val rows: List[Map[String, Any]] = List(Map("atimestamp" -> long))
     val columnTypes  = Map("atimestamp" -> CqlTimestamp)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -251,7 +251,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime with cql uuid"
     val rows: List[Map[String, String]] = List(Map("field" -> s"${uuid.toString}"))
     val columnTypes  = Map("field" -> CqlUUID)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -268,7 +268,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime with cql timeuuid"
     val rows: List[Map[String, String]] = List(Map("field" -> s"${uuid.toString}"))
     val columnTypes  = Map("field" -> CqlTimeUUID)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -287,7 +287,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime with cql uuid"
     val rows: List[Map[String, String]] = List(Map("field" -> "127.0.0.1"))
     val columnTypes  = Map("field" -> CqlInet)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -304,7 +304,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val whenQuery = "Test prime with cql varint"
     val rows: List[Map[String, String]] = List(Map("field" -> varint.toString()))
     val columnTypes  = Map("field" -> CqlVarint)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 
@@ -322,7 +322,7 @@ class PrimingCqlTypesTest extends AbstractIntegrationTest with ScalaFutures {
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
     val setOfVarchar = CqlSet(CqlVarchar)
     val columnTypes  = Map("field" -> setOfVarchar)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
 

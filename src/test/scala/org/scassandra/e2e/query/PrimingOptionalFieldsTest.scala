@@ -35,7 +35,7 @@ class PrimingOptionalFieldsTest extends AbstractIntegrationTest with ScalaFuture
     val whenQuery = "select * from people"
     val rows: List[Map[String, String]] = List(Map("name" -> "Chris", "age" -> "19"))
     val columnTypes  = Map("name" -> CqlVarchar)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     // when
     val result = session.execute(whenQuery)
@@ -52,7 +52,7 @@ class PrimingOptionalFieldsTest extends AbstractIntegrationTest with ScalaFuture
     val expectedKeyspace = "myKeyspace"
     val rows: List[Map[String, String]] = List(Map("name" -> "Chris", "age" -> "19"))
     val columnTypes  = Map("name" -> CqlVarchar)
-    prime(When(whenQuery, keyspace = Some(expectedKeyspace)), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery), keyspace = Some(expectedKeyspace)), rows, Success, columnTypes)
 
     // when
     val result = session.execute(whenQuery)
@@ -75,7 +75,7 @@ class PrimingOptionalFieldsTest extends AbstractIntegrationTest with ScalaFuture
     val whenQuery = "select * from people"
     val rows: List[Map[String, String]] = List(Map("name" -> "Chris", "age" -> "19"))
     val columnTypes  = Map("name" -> CqlVarchar)
-    prime(When(whenQuery), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     // when
     val result = session.execute(whenQuery)
@@ -92,7 +92,7 @@ class PrimingOptionalFieldsTest extends AbstractIntegrationTest with ScalaFuture
     val expectedTable = "mytable"
     val rows: List[Map[String, String]] = List(Map("name" -> "Chris", "age" -> "19"))
     val columnTypes  = Map("name" -> CqlVarchar)
-    prime(When(whenQuery, table = Some(expectedTable)), rows, Success, columnTypes)
+    prime(When(query = Some(whenQuery), table = Some(expectedTable)), rows, Success, columnTypes)
 
     // when
     val result = session.execute(whenQuery)

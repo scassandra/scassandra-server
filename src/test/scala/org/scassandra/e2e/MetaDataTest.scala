@@ -24,7 +24,7 @@ class MetaDataTest extends AbstractIntegrationTest(false) {
 
 
   test("Cluster name") {
-    val when = When("SELECT * FROM system.local WHERE key='local'")
+    val when = When(query = Some("SELECT * FROM system.local WHERE key='local'"))
     val clusterName = "ACCluster"
     val columnTypes = Map("tokens" -> CqlSet(CqlVarchar))
     val rows = List(Map("cluster_name" -> clusterName,

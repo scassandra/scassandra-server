@@ -42,7 +42,6 @@ trait PrimingQueryRoute extends HttpService with Logging {
       path("prime-query-single") {
         get {
           complete {
-            println(primeQueryStore)
             val allPrimes: Map[PrimeCriteria, Prime] = primeQueryStore.getAllPrimes
             PrimeQueryResultExtractor.convertBackToPrimeQueryResult(allPrimes)
           }
@@ -51,8 +50,8 @@ trait PrimingQueryRoute extends HttpService with Logging {
             entity(as[PrimeQuerySingle]) {
               primeRequest => {
                 complete {
-                  val primeResult = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
                   val primeCriteria = PrimeQueryResultExtractor.extractPrimeCriteria(primeRequest)
+                  val primeResult = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
                   primeQueryStore.add(primeCriteria, primeResult) match {
                     case cp: ConflictingPrimes => StatusCodes.BadRequest -> cp
                     case tm: TypeMismatches => StatusCodes.BadRequest -> tm

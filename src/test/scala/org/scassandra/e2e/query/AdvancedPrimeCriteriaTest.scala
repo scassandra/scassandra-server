@@ -25,7 +25,7 @@ import org.scassandra.priming.Success
 
 class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFutures {
 
-  val whenQuery = "select * from people"
+  val whenQuery = Some("select * from people")
   val name = "Chris"
   val nameColumn = "name"
   val rows: List[Map[String, String]] = List(Map(nameColumn -> name))
@@ -47,7 +47,7 @@ class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFuture
 
   test("Priming for a specific consistency should only return results for that consistency") {
     // priming
-    prime(When(whenQuery, Some(List(ONE))), rows, Success)
+    prime(When(whenQuery, consistency = Some(List(ONE))), rows, Success)
 
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.ONE)
     executeQueryAndVerifyNoResultsConsistencyLevel(ConsistencyLevel.TWO)
@@ -55,7 +55,7 @@ class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFuture
 
   test("Priming for a multiple consistencies should only return results for those consistencies") {
     // priming
-    prime(When(whenQuery, Some(List(ONE, ALL))), rows, Success)
+    prime(When(whenQuery, consistency = Some(List(ONE, ALL))), rows, Success)
 
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.ONE)
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.ALL)
@@ -66,8 +66,8 @@ class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFuture
     // priming
     val anotherName: String = "anotherName"
     val someDifferentRows: List[Map[String, String]] = List(Map(nameColumn -> anotherName))
-    prime(When(whenQuery, Some(List(ONE, ALL))), rows, Success)
-    prime(When(whenQuery, Some(List(TWO, THREE))), someDifferentRows, Success)
+    prime(When(whenQuery, consistency = Some(List(ONE, ALL))), rows, Success)
+    prime(When(whenQuery, consistency = Some(List(TWO, THREE))), someDifferentRows, Success)
 
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.ONE, name)
     executeQueryAndVerifyAtConsistencyLevel(ConsistencyLevel.ALL, name)
@@ -76,7 +76,7 @@ class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFuture
   }
 
   def executeQueryAndVerifyAtConsistencyLevel(consistency: ConsistencyLevel, name : String = name) {
-    val statement = new SimpleStatement(whenQuery)
+    val statement = new SimpleStatement(whenQuery.get)
     statement.setConsistencyLevel(consistency)
     val result = session.execute(statement)
     val results = result.all()
@@ -85,7 +85,7 @@ class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFuture
   }
 
   def executeQueryAndVerifyNoResultsConsistencyLevel(consistency: ConsistencyLevel) {
-    val statement = new SimpleStatement(whenQuery)
+    val statement = new SimpleStatement(whenQuery.get)
     statement.setConsistencyLevel(consistency)
     val result = session.execute(statement)
     val results = result.all()

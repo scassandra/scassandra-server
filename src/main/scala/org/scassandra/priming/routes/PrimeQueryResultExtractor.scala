@@ -36,7 +36,7 @@ object PrimeQueryResultExtractor extends Logging {
       case Some(list) => list
       case None => Consistency.all
     }
-    PrimeCriteria(primeQueryRequest.when.query, primeConsistencies)
+    PrimeCriteria(primeQueryRequest.when.query.get, primeConsistencies)
   }
 
   def extractPrimeResult(primeRequest : PrimeQuerySingle) : Prime = {
@@ -74,7 +74,7 @@ object PrimeQueryResultExtractor extends Logging {
 
   def convertBackToPrimeQueryResult(allPrimes: Map[PrimeCriteria, Prime]) ={
     allPrimes.map({ case (primeCriteria, prime) => {
-      val when = When(primeCriteria.query, keyspace = Some(prime.keyspace), table = Some(prime.table), consistency = Some(primeCriteria.consistency))
+      val when = When(Some(primeCriteria.query), keyspace = Some(prime.keyspace), table = Some(prime.table), consistency = Some(primeCriteria.consistency))
       val then = Then(Some(prime.rows), result = Some(prime.result), column_types = Some(prime.columnTypes))
 
       PrimeQuerySingle(when, then)

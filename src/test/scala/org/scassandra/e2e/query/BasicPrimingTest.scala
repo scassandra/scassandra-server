@@ -13,7 +13,7 @@ class BasicPrimingTest extends AbstractIntegrationTest {
     val columnTypes = Map(
       "name" -> CqlVarchar,
       "age" -> CqlInt)
-    prime(When(query), rows, columnTypes = columnTypes)
+    prime(When(query = Some(query)), rows, columnTypes = columnTypes)
 
     val result = session.execute(query)
 

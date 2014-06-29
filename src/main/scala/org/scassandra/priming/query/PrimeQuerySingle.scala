@@ -19,8 +19,12 @@ import org.scassandra.cqlmessages.{Consistency}
 import org.scassandra.priming.Result
 import org.scassandra.cqlmessages.types.ColumnType
 
+/*
+  These case classes are for parsing the incoming JSON for /prime-query-single
+ */
 case class PrimeQuerySingle(when: When, then: Then)
+
+case class When(query: Option[String] = None, queryPattern: Option[String] = None, consistency: Option[List[Consistency]] = None, keyspace: Option[String] = None, table : Option[String] = None)
 
 case class Then(rows: Option[List[Map[String, Any]]], result: Option[Result] = None, column_types: Option[Map[String, ColumnType[_]]] = None)
 
-case class When(query: String, consistency: Option[List[Consistency]] = None, keyspace: Option[String] = None, table : Option[String] = None)
