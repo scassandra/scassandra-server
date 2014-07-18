@@ -6,7 +6,7 @@ import org.scassandra.priming.query.When
 class PatternMatchingTest extends AbstractIntegrationTest {
 
   ignore("WIP: Query should match using a *") {
-    val queryWithStar = "insert into blah with ttl = *"
+    val queryWithStar = "insert into blah with ttl = .*"
     val rowOne = Map("name" -> "Chris")
     prime(When(queryPattern = Some(queryWithStar)), List(rowOne))
 

@@ -41,7 +41,6 @@ object PrimeQueryResultExtractor extends Logging {
       case When(None, Some(queryPattern), _, _, _) => util.Success(PrimeCriteria(primeQueryRequest.when.queryPattern.get, primeConsistencies, true))
       case _ => Failure(new IllegalArgumentException("Can't specify query and queryPattern"))
     }
-
   }
 
   def extractPrimeResult(primeRequest : PrimeQuerySingle) : Prime = {

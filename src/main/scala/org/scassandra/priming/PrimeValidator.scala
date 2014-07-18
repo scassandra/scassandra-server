@@ -43,9 +43,9 @@ class PrimeValidator {
     val intersectingCriteria = queryToResults.filterKeys(intersectsExistingCriteria).keySet.toList
     intersectingCriteria match {
       // exactly one intersecting criteria: if the criteria is the newly passed one, this is just an override. Otherwise, conflict.
-      case list@head :: Nil if head != criteria => ConflictingPrimes(list)
+      case list @ head :: Nil if head != criteria => ConflictingPrimes(list)
       // two or more intersecting criteria: this means one or more conflicts
-      case list@head :: second :: rest => ConflictingPrimes(list)
+      case list @ head :: second :: rest => ConflictingPrimes(list)
       // all other cases: carry on
       case _ => PrimeAddSuccess
     }

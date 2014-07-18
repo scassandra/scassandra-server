@@ -45,7 +45,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
         )
 
       // when
-      primeResults add(query, Prime(expectedResult, columnTypes = Map("name" -> CqlVarchar, "age" -> CqlInt)))
+      primeResults.add(query, Prime(expectedResult, columnTypes = Map("name" -> CqlVarchar, "age" -> CqlInt)))
       val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
 
       // then
@@ -186,6 +186,44 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       primeResults.add(primeCriteriaForONE, rowsPrime)
       primeResults.add(primeCriteriaForTWO, rowsPrime)
       primeResults.add(primeCriteriaForTHREE, rowsPrime)
+    }
+  }
+
+  describe("Get PrimeCriteria for query patterns") {
+    it("should treat .* as a wild card") {
+      //given
+      val primeQueryStore = PrimeQueryStore()
+
+      //when
+      primeQueryStore.add(PrimeCriteria(".*", List(ONE), true), Prime(List()))
+      val primeResults: Option[Prime] = primeQueryStore.get(PrimeMatch("select anything"))
+
+      //then
+      primeResults.isDefined should equal(true)
+    }
+
+    it("should treat .+ as a wild card - no match") {
+      //given
+      val primeQueryStore = PrimeQueryStore()
+
+      //when
+      primeQueryStore.add(PrimeCriteria("hello .+", List(ONE), true), Prime(List()))
+      val primeResults: Option[Prime] = primeQueryStore.get(PrimeMatch("hello "))
+
+      //then
+      primeResults.isDefined should equal(false)
+    }
+
+    it("should treat .+ as a wild card - match") {
+      //given
+      val primeQueryStore = PrimeQueryStore()
+
+      //when
+      primeQueryStore.add(PrimeCriteria("hello .+", List(ONE), true), Prime(List()))
+      val primeResults: Option[Prime] = primeQueryStore.get(PrimeMatch("hello a"))
+
+      //then
+      primeResults.isDefined should equal(true)
     }
   }
 

@@ -152,7 +152,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
 
   describe("Priming with a queryPattern") {
     it("should accept a prime with a queryPattern") {
-      val query = "select * from users"
+      val query = "select \\* from users"
       val whenQuery = When(queryPattern = Some(query))
       val thenResults =
         List(

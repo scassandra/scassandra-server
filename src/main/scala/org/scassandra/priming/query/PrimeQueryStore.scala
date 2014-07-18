@@ -20,35 +20,57 @@ import org.scassandra.cqlmessages._
 import org.scassandra.priming._
 import scala.collection.immutable.Map
 import org.scassandra.cqlmessages.types.ColumnType
+import scala.util.matching.Regex
 
 class PrimeQueryStore extends Logging {
 
-  val validator: PrimeValidator = PrimeValidator()
+  val validator = PrimeValidator()
 
-  var queryPrimes: Map[PrimeCriteria, Prime] = Map()
+  var queryPrimes = Map[PrimeCriteria, Prime]()
+
+  var queryPatternPrimes: Map[PrimeCriteria, Prime] = Map()
 
   def getAllPrimes: Map[PrimeCriteria, Prime] = queryPrimes
 
   def add(criteria: PrimeCriteria, prime: Prime): PrimeAddResult = {
-    logger.info(s"Adding prime with criteria $criteria and prime result $prime")
+    logger.info(s"Adding prime with criteria ${criteria} and prime result ${prime}")
 
     validator.validate(criteria, prime, queryPrimes) match {
       case PrimeAddSuccess => {
-        queryPrimes += (criteria -> prime)
-        PrimeAddSuccess
+        if (criteria.patternMatch) {
+          queryPatternPrimes += (criteria -> prime)
+          PrimeAddSuccess
+        } else {
+          queryPrimes += (criteria -> prime)
+          PrimeAddSuccess
+        }
+
       }
-      case notSuccess: PrimeAddResult => notSuccess
+      case notSuccess: PrimeAddResult => {
+        notSuccess
+      }
     }
   }
 
   def get(primeMatch: PrimeMatch): Option[Prime] = {
     logger.debug("Current primes: " + queryPrimes)
     logger.debug(s"Query for |$primeMatch|")
+
     def findPrime: ((PrimeCriteria, Prime)) => Boolean = {
       entry => entry._1.query == primeMatch.query &&
         entry._1.consistency.contains(primeMatch.consistency)
     }
-    queryPrimes.find(findPrime).map(_._2)
+
+    def findPrimePattern: ((PrimeCriteria, Prime)) => Boolean = {
+      entry => {
+        entry._1.query.r.findFirstIn(primeMatch.query) match {
+          case Some(_) => entry._1.consistency.contains(primeMatch.consistency)
+          case None => false
+        }
+      }
+    }
+
+   queryPrimes.find(findPrime).orElse(queryPatternPrimes.find(findPrimePattern)).map(_._2)
   }
 
   def getPrimeCriteriaByQuery(query: String): List[PrimeCriteria] = {
