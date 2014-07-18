@@ -23,6 +23,7 @@ import org.scassandra.priming.query._
 import org.scassandra.priming.query.PrimeCriteria
 import org.scassandra.priming.query.PrimeQuerySingle
 import org.scassandra.priming.query.Prime
+import scala.util.{Success, Failure}
 
 trait PrimingQueryRoute extends HttpService with Logging {
 
@@ -50,12 +51,19 @@ trait PrimingQueryRoute extends HttpService with Logging {
             entity(as[PrimeQuerySingle]) {
               primeRequest => {
                 complete {
-                  val primeCriteria = PrimeQueryResultExtractor.extractPrimeCriteria(primeRequest)
-                  val primeResult = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
-                  primeQueryStore.add(primeCriteria, primeResult) match {
-                    case cp: ConflictingPrimes => StatusCodes.BadRequest -> cp
-                    case tm: TypeMismatches => StatusCodes.BadRequest -> tm
-                    case _ => StatusCodes.OK
+
+                  val primeCriteriaTry = PrimeQueryResultExtractor.extractPrimeCriteria(primeRequest)
+
+                  primeCriteriaTry match {
+                    case Success(primeCriteria) =>
+                      val primeResult = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+                      primeQueryStore.add(primeCriteria, primeResult) match {
+                        case cp: ConflictingPrimes => StatusCodes.BadRequest -> cp
+                        case tm: TypeMismatches => StatusCodes.BadRequest -> tm
+                        case _ => StatusCodes.OK
+                      }
+                    case Failure(_) =>
+                      StatusCodes.BadRequest
                   }
                 }
               }

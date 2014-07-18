@@ -18,25 +18,30 @@ package org.scassandra.priming.routes
 import org.scassandra.cqlmessages.{Consistency}
 import com.typesafe.scalalogging.slf4j.Logging
 import scala.Predef._
-import scala.Some
+import scala.{util, Some}
 import org.scassandra.priming.query._
-import scala.Some
 import org.scassandra.priming.{Success, Result}
 import org.scassandra.priming.query.PrimeCriteria
 import org.scassandra.priming.query.PrimeQuerySingle
 import org.scassandra.priming.query.When
 import org.scassandra.priming.query.Then
-import scala.Some
 import org.scassandra.priming.query.Prime
 import org.scassandra.cqlmessages.types.{CqlVarchar, ColumnType}
+import scala.util.{Failure, Try}
 
 object PrimeQueryResultExtractor extends Logging {
-  def extractPrimeCriteria(primeQueryRequest : PrimeQuerySingle) : PrimeCriteria = {
+  def extractPrimeCriteria(primeQueryRequest : PrimeQuerySingle) : Try[PrimeCriteria] = {
     val primeConsistencies = primeQueryRequest.when.consistency match {
       case Some(list) => list
       case None => Consistency.all
     }
-    PrimeCriteria(primeQueryRequest.when.query.get, primeConsistencies)
+
+    primeQueryRequest.when match {
+      case When(Some(query), None, _, _, _) => util.Success(PrimeCriteria(primeQueryRequest.when.query.get, primeConsistencies))
+      case When(None, Some(queryPattern), _, _, _) => util.Success(PrimeCriteria(primeQueryRequest.when.queryPattern.get, primeConsistencies, true))
+      case _ => Failure(new IllegalArgumentException("Can't specify query and queryPattern"))
+    }
+
   }
 
   def extractPrimeResult(primeRequest : PrimeQuerySingle) : Prime = {

@@ -100,7 +100,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val impPrimeQueryResult = jsonFormat2(PrimeQuerySingle)
   implicit val impConnection = jsonFormat1(Connection)
   implicit val impQuery = jsonFormat2(Query)
-  implicit val impPrimeCriteria = jsonFormat2(PrimeCriteria)
+  implicit val impPrimeCriteria = jsonFormat3(PrimeCriteria)
   implicit val impConflictingPrimes = jsonFormat1(ConflictingPrimes)
   implicit val impTypeMismatch = jsonFormat3(TypeMismatch)
   implicit val impTypeMismatches = jsonFormat1(TypeMismatches)

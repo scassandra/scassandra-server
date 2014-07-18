@@ -25,16 +25,16 @@ class PrimeQueryStore extends Logging {
 
   val validator: PrimeValidator = PrimeValidator()
 
-  var queryToResults: Map[PrimeCriteria, Prime] = Map()
+  var queryPrimes: Map[PrimeCriteria, Prime] = Map()
 
-  def getAllPrimes: Map[PrimeCriteria, Prime] = queryToResults
+  def getAllPrimes: Map[PrimeCriteria, Prime] = queryPrimes
 
   def add(criteria: PrimeCriteria, prime: Prime): PrimeAddResult = {
     logger.info(s"Adding prime with criteria $criteria and prime result $prime")
 
-    validator.validate(criteria, prime, queryToResults) match {
+    validator.validate(criteria, prime, queryPrimes) match {
       case PrimeAddSuccess => {
-        queryToResults += (criteria -> prime)
+        queryPrimes += (criteria -> prime)
         PrimeAddSuccess
       }
       case notSuccess: PrimeAddResult => notSuccess
@@ -42,26 +42,26 @@ class PrimeQueryStore extends Logging {
   }
 
   def get(primeMatch: PrimeMatch): Option[Prime] = {
-    logger.debug("Current primes: " + queryToResults)
+    logger.debug("Current primes: " + queryPrimes)
     logger.debug(s"Query for |$primeMatch|")
     def findPrime: ((PrimeCriteria, Prime)) => Boolean = {
       entry => entry._1.query == primeMatch.query &&
         entry._1.consistency.contains(primeMatch.consistency)
     }
-    queryToResults.find(findPrime).map(_._2)
+    queryPrimes.find(findPrime).map(_._2)
   }
 
   def getPrimeCriteriaByQuery(query: String): List[PrimeCriteria] = {
-    queryToResults.keys.filter(primeCriteria => primeCriteria.query == query).toList
+    queryPrimes.keys.filter(primeCriteria => primeCriteria.query == query).toList
   }
 
   def clear() = {
-    queryToResults = Map()
+    queryPrimes = Map()
   }
 }
 
 
-case class PrimeCriteria(query: String, consistency: List[Consistency])
+case class PrimeCriteria(query: String, consistency: List[Consistency], patternMatch : Boolean = false)
 
 case class PrimeMatch(query: String, consistency: Consistency = ONE)
 

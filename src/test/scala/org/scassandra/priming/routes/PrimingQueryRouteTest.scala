@@ -151,8 +151,32 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
   }
 
   describe("Priming with a queryPattern") {
-    it("should store a the queryPattern in the PrimeQueryStore") {
+    it("should accept a prime with a queryPattern") {
+      val query = "select * from users"
+      val whenQuery = When(queryPattern = Some(query))
+      val thenResults =
+        List(
+          Map("name" -> "Mickey", "age" -> "99")
+        )
+      val defaultedColumnTypes = Map("name" -> CqlVarchar, "age" -> CqlVarchar)
 
+      Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults)))) ~> queryRoute ~> check {
+        status should equal(OK)
+        primeQueryStore.get(PrimeMatch(query = "select * from users")) should equal(Some(Prime(thenResults, Success, columnTypes = defaultedColumnTypes)))
+      }
+    }
+
+    it("should give a bad request if both query and queryPattern specified") {
+      val query = "select * from users"
+      val whenQuery = When(query = Some(query), queryPattern = Some(query))
+      val thenResults =
+        List(
+          Map("name" -> "Mickey", "age" -> "99")
+        )
+
+      Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults)))) ~> queryRoute ~> check {
+        status should equal(BadRequest)
+      }
     }
   }
 
