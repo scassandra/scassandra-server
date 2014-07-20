@@ -21,7 +21,7 @@ import org.scassandra.cqlmessages.types.ColumnType
 
 case class PrimePreparedSingle(when: WhenPreparedSingle, then: ThenPreparedSingle)
 
-case class WhenPreparedSingle(query: String, consistency: Option[List[Consistency]] = None)
+case class WhenPreparedSingle(query: Option[String], consistency: Option[List[Consistency]] = None)
 case class ThenPreparedSingle(rows: Option[List[Map[String, Any]]],
                               variable_types: Option[List[ColumnType[_]]] = None,
                               column_types: Option[Map[String, ColumnType[_]]] = None,

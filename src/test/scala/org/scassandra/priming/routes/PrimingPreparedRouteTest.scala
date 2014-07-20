@@ -41,7 +41,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
 
   describe("Priming") {
     it("Should take in query") {
-      val when: WhenPreparedSingle = WhenPreparedSingle("select * from people where name = ?")
+      val when: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"))
       val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
       val prime = PrimePreparedSingle(when, then)
       Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
@@ -93,7 +93,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
         parsedResponse.size should equal(1)
-        parsedResponse(0).when.query should equal(query)
+        parsedResponse(0).when.query should equal(Some(query) )
       }
     }
 
@@ -160,7 +160,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     it("Should convert Conflicting Primes to Bad Request") {
       when(primePreparedStore.record(any(classOf[PrimePreparedSingle]))).thenReturn(ConflictingPrimes(List()))
 
-      val primeWhen: WhenPreparedSingle = WhenPreparedSingle("select * from people where name = ?")
+      val primeWhen: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"))
       val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
       val prime = PrimePreparedSingle(primeWhen, then)
 
@@ -172,7 +172,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     it("Should convert type mis match to Bad Request") {
       when(primePreparedStore.record(any(classOf[PrimePreparedSingle]))).thenReturn(TypeMismatches  (List()))
 
-      val primeWhen: WhenPreparedSingle = WhenPreparedSingle("select * from people where name = ?")
+      val primeWhen: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"))
       val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
       val prime = PrimePreparedSingle(primeWhen, then)
 

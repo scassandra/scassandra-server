@@ -37,7 +37,7 @@ class PrimePreparedStore extends Logging {
     val rows = prime.then.rows.getOrElse(List())
     val query = prime.when.query
     val result = prime.then.result.getOrElse(Success)
-    val numberOfParameters = query.toCharArray.filter(_ == '?').size
+    val numberOfParameters = query.get.toCharArray.filter(_ == '?').size
     val variableTypesDefaultedToVarchar = prime.then.variable_types match {
       case Some(varTypes) => {
         val defaults = (0 until numberOfParameters).map(num => CqlVarchar).toList
@@ -52,7 +52,7 @@ class PrimePreparedStore extends Logging {
     val primeToStore: PreparedPrime = PreparedPrime(variableTypesDefaultedToVarchar, prime = Prime(rows, columnTypes = colTypes, result = result))
 
     val consistencies = prime.when.consistency.getOrElse(Consistency.all)
-    val primeCriteria = PrimeCriteria(query, consistencies)
+    val primeCriteria = PrimeCriteria(query.get, consistencies)
 
 
 
