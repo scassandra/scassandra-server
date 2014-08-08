@@ -184,7 +184,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     val preparedStatementText: String = "select * from people where name = ?"
     val consistencyToPrime = List(TWO)
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText), Some(consistencyToPrime)),
+      WhenPreparedSingle(Some(preparedStatementText), consistency = Some(consistencyToPrime)),
       ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))
     )
     val preparedStatement = session.prepare(preparedStatementText)
@@ -225,13 +225,13 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     val preparedStatementText = "select * from people where name = ?"
     val consistencyOneAndTwo = List(ONE, TWO)
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText), Some(consistencyOneAndTwo)),
+      WhenPreparedSingle(Some(preparedStatementText), consistency = Some(consistencyOneAndTwo)),
       ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))
     )
 
     //when
     val consistencyTwoAndThree = List(TWO, THREE)
-    val prime = PrimePreparedSingle(WhenPreparedSingle(Some(preparedStatementText), Some(consistencyTwoAndThree)),
+    val prime = PrimePreparedSingle(WhenPreparedSingle(Some(preparedStatementText), consistency = Some(consistencyTwoAndThree)),
       ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))).toJson
     val svc = url("http://localhost:8043/prime-prepared-single") <<
       prime.toString <:<
