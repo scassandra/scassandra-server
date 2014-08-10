@@ -1,0 +1,25 @@
+Priming
+--------
+
+Route/Web layer - Takes case classes that represent the JSON & pass them to the correct store
+
+Slight difference between Queries and preapred statements:
+- Queries are extracted from the JSON case classes prior to going to the store
+- Prepared statement primes get passed directly.
+
+TODO: Pick the better and make it consistent
+
+Stores
+------
+
+Defaulting behaviour for queries is in the PrimeQueryResultExtractor
+
+PrimeQueryStore
+- Validates the prime, e.g do the values in the rows match the types?
+- Stores the PrimeCriteria in with the Prime in a map
+
+PrimePreparedStore
+- Takes in a PrimePreparedSingle, extracts all the information
+- Defaults consistencies to all
+- Defaults variable types to varcahr
+- Defaults column types to varchar

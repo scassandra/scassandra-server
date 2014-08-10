@@ -204,7 +204,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     val preparedStatementText: String = "select * from people where name = ?"
     val consistencyToPrime = List(QUORUM)
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText), Some(consistencyToPrime)),
+      WhenPreparedSingle(Some(preparedStatementText), None, Some(consistencyToPrime)),
       ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))
     )
     val preparedStatement = session.prepare(preparedStatementText)

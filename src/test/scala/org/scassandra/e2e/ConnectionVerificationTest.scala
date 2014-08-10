@@ -34,13 +34,11 @@ class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutur
 
   test("Test verification of connection for a single java driver") {
     ActivityLog.clearConnections()
-    val poolingOptions = new PoolingOptions
-    poolingOptions.setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
-    poolingOptions.setMaxConnectionsPerHost(HostDistance.REMOTE, 0)
-    poolingOptions.setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
-    poolingOptions.setCoreConnectionsPerHost(HostDistance.REMOTE, 0)
 
-    val cluster = Cluster.builder().withPoolingOptions(poolingOptions).addContactPoint(ConnectionToServerStub.ServerHost).withPort(ConnectionToServerStub.ServerPort).build()
+    val cluster = Cluster.builder()
+      .addContactPoint(ConnectionToServerStub.ServerHost)
+      .withPort(ConnectionToServerStub.ServerPort)
+      .build()
     cluster.connect()
     val svc: Req = url("http://localhost:8043/connection")
     val response = Http(svc OK as.String)
@@ -49,9 +47,9 @@ class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutur
     whenReady(response) {
       result =>
         val connectionList = JsonParser(result).convertTo[List[Connection]]
-        // What ever the pooling options are set to the java driver appears to make 2 connections
+        // What ever the pooling options are set to the java driver appears to make 3 connections
         // verified with wireshark
-        connectionList.size should equal(2)
+        connectionList.size should equal(3)
     }
   }
 

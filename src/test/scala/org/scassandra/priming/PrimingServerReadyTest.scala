@@ -19,7 +19,7 @@ import akka.actor.ActorSystem
 import akka.testkit._
 import org.scalatest.{FunSpecLike, Matchers}
 import org.scassandra.priming.query.PrimeQueryStore
-import org.scassandra.priming.prepared.PrimePreparedStore
+import org.scassandra.priming.prepared.{PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.ServerReady
 
 class PrimingServerReadyTest extends TestKit(ActorSystem("TestSystem")) with FunSpecLike with Matchers {
@@ -31,7 +31,7 @@ class PrimingServerReadyTest extends TestKit(ActorSystem("TestSystem")) with Fun
       val primingReadyListener = TestProbe()
 
       // when
-      TestActorRef(new PrimingServer("localhost", 8045, PrimeQueryStore(), PrimePreparedStore(), primingReadyListener.ref))
+      TestActorRef(new PrimingServer("localhost", 8045, PrimeQueryStore(), PrimePreparedStore(), new PrimePreparedPatternStore(), primingReadyListener.ref))
 
       // then
       primingReadyListener.expectMsg(ServerReady)

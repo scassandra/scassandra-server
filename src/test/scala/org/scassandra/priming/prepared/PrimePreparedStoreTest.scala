@@ -153,7 +153,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ?"
     val consistencies = List(ONE, TWO)
-    val when = WhenPreparedSingle(Some(query), Some(consistencies))
+    val when = WhenPreparedSingle(Some(query), None, Some(consistencies))
     val then = ThenPreparedSingle(Some(List()))
     val prime = PrimePreparedSingle(when, then)
     underTest.record(prime)
@@ -190,8 +190,8 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ?"
     val then = ThenPreparedSingle(Some(List()))
-    val primeForOneAndTwo = PrimePreparedSingle(WhenPreparedSingle(Some(query), Some(List(ONE, TWO))), then)
-    val primeForTwoAndThree = PrimePreparedSingle(WhenPreparedSingle(Some(query), Some(List(TWO, THREE))), then)
+    val primeForOneAndTwo = PrimePreparedSingle(WhenPreparedSingle(Some(query), None, Some(List(ONE, TWO))), then)
+    val primeForTwoAndThree = PrimePreparedSingle(WhenPreparedSingle(Some(query), None, Some(List(TWO, THREE))), then)
     //when
     underTest.record(primeForOneAndTwo)
     val result = underTest.record(primeForTwoAndThree)

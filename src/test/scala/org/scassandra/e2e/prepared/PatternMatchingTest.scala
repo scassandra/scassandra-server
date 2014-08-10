@@ -5,10 +5,11 @@ import org.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle}
 
 class PatternMatchingTest extends AbstractIntegrationTest {
 
-  test("Prepared statement should match using a .*") {
+  test("Prepared statement should match using a .* without specifying variable types") {
     val preparedStatementText: String = "select * from people where name = ?"
+    val preparedStatementRegex: String = "select .* from people .*"
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPreparedSingle(None, Some(preparedStatementRegex)),
       ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))
     )
 

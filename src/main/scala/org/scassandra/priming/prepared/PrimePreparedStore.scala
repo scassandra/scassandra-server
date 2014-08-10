@@ -17,38 +17,27 @@ package org.scassandra.priming.prepared
 
 import org.scassandra.priming.routes.PrimeQueryResultExtractor
 import org.scassandra.cqlmessages.{Consistency}
-import org.scassandra.priming.{PrimeAddSuccess, PrimeAddResult, PrimeValidator, Success}
+import org.scassandra.priming._
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.priming.query.PrimeCriteria
 import org.scassandra.priming.query.PrimeMatch
 import scala.Some
 import org.scassandra.priming.query.Prime
-import org.scassandra.cqlmessages.types.CqlVarchar
+import org.scassandra.cqlmessages.types.{ColumnType, CqlVarchar}
 
-class PrimePreparedStore extends Logging {
+class PrimePreparedStore extends Logging with PreparedStore with PreparedStoreLookup {
 
   val validator: PrimeValidator = PrimeValidator()
-
-  var state: Map[PrimeCriteria, PreparedPrime] = Map()
-
-  def retrievePrimes() = state
 
   def record(prime: PrimePreparedSingle) : PrimeAddResult= {
     val rows = prime.then.rows.getOrElse(List())
     val query = prime.when.query
     val result = prime.then.result.getOrElse(Success)
     val numberOfParameters = query.get.toCharArray.filter(_ == '?').size
-    val variableTypesDefaultedToVarchar = prime.then.variable_types match {
-      case Some(varTypes) => {
-        val defaults = (0 until numberOfParameters).map(num => CqlVarchar).toList
-        varTypes ++ (defaults drop varTypes.size)
-      }
-      case None => {
-        (0 until numberOfParameters).map(num => CqlVarchar).toList
-      }
-    }
-    val providedColTypes = prime.then.column_types
-    val colTypes = PrimeQueryResultExtractor.defaultColumnTypesToVarchar(providedColTypes, rows)
+
+    val variableTypesDefaultedToVarchar: List[ColumnType[_]] = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, prime.then.variable_types)
+    val colTypes = Defaulter.defaultColumnTypesToVarchar(prime.then.column_types, rows)
+
     val primeToStore: PreparedPrime = PreparedPrime(variableTypesDefaultedToVarchar, prime = Prime(rows, columnTypes = colTypes, result = result))
 
     val consistencies = prime.when.consistency.getOrElse(Consistency.all)
@@ -75,10 +64,6 @@ class PrimePreparedStore extends Logging {
         entry._1.consistency.contains(primeMatch.consistency)
     }
     state.find(findPrime).map(_._2)
-  }
-
-  def clear() = {
-    state = Map()
   }
 }
 

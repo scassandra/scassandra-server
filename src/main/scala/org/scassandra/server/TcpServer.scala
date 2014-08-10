@@ -21,11 +21,14 @@ import com.typesafe.scalalogging.slf4j.Logging
 import java.net.InetSocketAddress
 import org.scassandra.priming.ActivityLog
 import org.scassandra.priming.query.PrimeQueryStore
-import org.scassandra.priming.prepared.PrimePreparedStore
+import org.scassandra.priming.prepared.{PreparedStoreLookup, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.cqlmessages.CqlMessageFactory
 import org.scassandra.{ServerReady, ScassandraConfig}
 
-class TcpServer(listenAddress: String, port: Int, primedResults: PrimeQueryStore, primePrepareStore: PrimePreparedStore, serverReadyListener: ActorRef) extends Actor with Logging {
+class TcpServer(listenAddress: String, port: Int,
+                primedResults: PrimeQueryStore,
+                primePrepareStore: PreparedStoreLookup,
+                serverReadyListener: ActorRef) extends Actor with Logging {
 
   import Tcp._
   import context.system

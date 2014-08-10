@@ -19,7 +19,7 @@ import spray.routing.HttpService
 import com.typesafe.scalalogging.slf4j.Logging
 import spray.http.StatusCodes
 import org.scassandra.priming.{ConflictingPrimes, TypeMismatches, PrimingJsonImplicits}
-import org.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedStore, PrimePreparedSingle}
+import org.scassandra.priming.prepared._
 import scala.collection.immutable.Iterable
 
 trait PrimingPreparedRoute extends HttpService with Logging {
@@ -27,16 +27,31 @@ trait PrimingPreparedRoute extends HttpService with Logging {
   import PrimingJsonImplicits._
 
   implicit val primePreparedStore : PrimePreparedStore
+  implicit val primePreparedPatternStore : PrimePreparedPatternStore
 
   val routeForPreparedPriming =
     path("prime-prepared-single") {
       post {
         entity(as[PrimePreparedSingle]) { prime =>
           complete {
-            primePreparedStore.record(prime) match {
-              case cp: ConflictingPrimes => StatusCodes.BadRequest -> cp
-              case tm: TypeMismatches => StatusCodes.BadRequest -> tm
-              case _ => StatusCodes.OK
+
+            val storeToUse = if (prime.when.query.isDefined && !prime.when.queryPattern.isDefined) {
+              Some(primePreparedStore)
+            } else if (prime.when.queryPattern.isDefined && !prime.when.query.isDefined) {
+              Some(primePreparedPatternStore)
+            } else {
+              None
+            }
+
+            storeToUse match {
+              case Some(store) => store.record(prime) match {
+                case cp: ConflictingPrimes => StatusCodes.BadRequest -> cp
+                case tm: TypeMismatches => StatusCodes.BadRequest -> tm
+                case _ => StatusCodes.OK
+              }
+              case None => {
+                StatusCodes.BadRequest -> "Must specify either query or queryPattern, not both"
+              }
             }
           }
         }
@@ -44,6 +59,7 @@ trait PrimingPreparedRoute extends HttpService with Logging {
       delete {
         complete {
           primePreparedStore.clear()
+          primePreparedPatternStore.clear()
           StatusCodes.OK
         }
       } ~

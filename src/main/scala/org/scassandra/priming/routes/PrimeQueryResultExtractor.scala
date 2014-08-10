@@ -20,7 +20,7 @@ import com.typesafe.scalalogging.slf4j.Logging
 import scala.Predef._
 import scala.{util, Some}
 import org.scassandra.priming.query._
-import org.scassandra.priming.{Success, Result}
+import org.scassandra.priming.{Defaulter, Success, Result}
 import org.scassandra.priming.query.PrimeCriteria
 import org.scassandra.priming.query.PrimeQuerySingle
 import org.scassandra.priming.query.When
@@ -50,31 +50,17 @@ object PrimeQueryResultExtractor extends Logging {
     val result = then.result.getOrElse(Success)
     logger.trace("Column types " + primeRequest.then.column_types)
    
-    val columnTypes: Map[String, ColumnType[_]] = defaultColumnTypesToVarchar(primeRequest.then.column_types, resultsAsList)
+    val columnTypes: Map[String, ColumnType[_]] = Defaulter.defaultColumnTypesToVarchar(primeRequest.then.column_types, resultsAsList)
 
     logger.trace("Incoming when {}", primeRequest.when)
 
     val keyspace = primeRequest.when.keyspace.getOrElse("")
     val table = primeRequest.when.table.getOrElse("")
 
-
     Prime(resultsAsList, result, columnTypes, keyspace, table)
   }
   
-  def defaultColumnTypesToVarchar(columnTypes : Option[Map[String, ColumnType[_]]], resultsAsList: List[Map[String, Any]]) = {
-    val colTypes: Map[String, ColumnType[_]] =  columnTypes.getOrElse(Map[String, ColumnType[_]]())
 
-    // check that all the columns in the rows have a type
-    val columnNamesInAllRows: List[String] = resultsAsList.flatMap(row => row.keys).distinct
-    val colNamesWithOnesNotInRows = (columnNamesInAllRows ++ colTypes.keys).distinct
-
-    val colTypesWithDefaults : Map[String, ColumnType[_]] = colNamesWithOnesNotInRows.map(columnName => colTypes.get(columnName) match {
-      case Some(columnType) => (columnName, columnType)
-      case None => (columnName, CqlVarchar)
-    }).toMap
-
-    colTypesWithDefaults
-  }
 
   def convertBackToPrimeQueryResult(allPrimes: Map[PrimeCriteria, Prime]) ={
     allPrimes.map({ case (primeCriteria, prime) => {

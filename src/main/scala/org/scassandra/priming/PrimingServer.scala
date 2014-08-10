@@ -24,7 +24,7 @@ import com.typesafe.scalalogging.slf4j.Logging
 import akka.actor.{ActorRef, Props, Actor}
 import org.scassandra.priming.routes.{VersionRoute, ActivityVerificationRoute, PrimingQueryRoute, PrimingPreparedRoute}
 import org.scassandra.priming.query.PrimeQueryStore
-import org.scassandra.priming.prepared.PrimePreparedStore
+import org.scassandra.priming.prepared.{PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.{ServerReady, ScassandraConfig}
 
 trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryRoute with ActivityVerificationRoute with VersionRoute with Logging {
@@ -32,7 +32,11 @@ trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryR
   val allRoutes = routeForPreparedPriming ~ queryRoute ~ activityVerificationRoute ~ versionRoute
 }
 
-class PrimingServer(listenAddress: String, port: Int, implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore: PrimePreparedStore, serverReadyListener: ActorRef) extends Actor with Logging {
+class PrimingServer(listenAddress: String, port: Int,
+                    implicit val primeQueryStore: PrimeQueryStore,
+                    implicit val primePreparedStore: PrimePreparedStore,
+                    implicit val primePreparedPatternStore: PrimePreparedPatternStore,
+                    serverReadyListener: ActorRef) extends Actor with Logging {
 
   import Tcp._
 
@@ -40,7 +44,7 @@ class PrimingServer(listenAddress: String, port: Int, implicit val primeQuerySto
 
   logger.info(s"Opening port ${port} for priming")
 
-  val routing = context.actorOf(Props(classOf[PrimingServerHttpService], primeQueryStore, primePreparedStore))
+  val routing = context.actorOf(Props(classOf[PrimingServerHttpService], primeQueryStore, primePreparedStore, primePreparedPatternStore))
 
   IO(Http) ! Http.Bind(self, listenAddress, port)
 
@@ -61,7 +65,7 @@ class PrimingServer(listenAddress: String, port: Int, implicit val primeQuerySto
   }
 }
 
-class PrimingServerHttpService(implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore: PrimePreparedStore) extends Actor with AllRoutes with Logging {
+class PrimingServerHttpService(implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore: PrimePreparedStore, implicit val primePreparedPatternStore: PrimePreparedPatternStore) extends Actor with AllRoutes with Logging {
 
   implicit def actorRefFactory = context.system
 

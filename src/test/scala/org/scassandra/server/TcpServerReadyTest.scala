@@ -19,7 +19,7 @@ import akka.actor.ActorSystem
 import akka.testkit._
 import org.scalatest.{FunSpecLike, Matchers}
 import org.scassandra.priming.query.PrimeQueryStore
-import org.scassandra.priming.prepared.PrimePreparedStore
+import org.scassandra.priming.prepared.{PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.ServerReady
 
 class TcpServerReadyTest extends TestKit(ActorSystem("TestSystem")) with FunSpecLike with Matchers {

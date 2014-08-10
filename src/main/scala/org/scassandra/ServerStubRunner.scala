@@ -18,7 +18,7 @@ package org.scassandra
 import akka.actor._
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.priming.query.PrimeQueryStore
-import org.scassandra.priming.prepared.PrimePreparedStore
+import org.scassandra.priming.prepared.{CompositePreparedPrimeStore, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.TcpServer
 import org.scassandra.priming.PrimingServer
 
@@ -47,6 +47,8 @@ class ServerStubRunner( val binaryListenAddress: String = "localhost",
 
   val primedResults = PrimeQueryStore()
   val primePreparedStore = new PrimePreparedStore
+  val primePreparedPatternStore = new PrimePreparedPatternStore
+  val preparedLookup = new CompositePreparedPrimeStore(primePreparedStore, primePreparedPatternStore)
 
   var primingReadyListener: ActorRef = _
   var tcpReadyListener: ActorRef = _
@@ -55,8 +57,8 @@ class ServerStubRunner( val binaryListenAddress: String = "localhost",
     system = ActorSystem(s"CassandraServerStub-${binaryPortNumber}-${adminPortNumber}")
     primingReadyListener = system.actorOf(Props(classOf[ServerReadyListener]), "PrimingReadyListener")
     tcpReadyListener = system.actorOf(Props(classOf[ServerReadyListener]), "TcpReadyListener")
-    system.actorOf(Props(classOf[TcpServer], binaryListenAddress, binaryPortNumber, primedResults, primePreparedStore, tcpReadyListener), "BinaryTcpListener")
-    system.actorOf(Props(classOf[PrimingServer], adminListenAddress, adminPortNumber, primedResults, primePreparedStore, primingReadyListener), "PrimingServer")
+    system.actorOf(Props(classOf[TcpServer], binaryListenAddress, binaryPortNumber, primedResults, preparedLookup, tcpReadyListener), "BinaryTcpListener")
+    system.actorOf(Props(classOf[PrimingServer], adminListenAddress, adminPortNumber, primedResults, primePreparedStore, primePreparedPatternStore,  primingReadyListener), "PrimingServer")
   }
 
   def awaitTermination() = {

@@ -26,7 +26,7 @@ import akka.util.ByteString
 import org.scassandra.cqlmessages.request._
 import scala.concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
-import org.scassandra.priming.prepared.{PrimePreparedStore}
+import org.scassandra.priming.prepared.{PrimePreparedPatternStore, PrimePreparedStore, PreparedPrime}
 import org.scassandra.priming._
 import org.scassandra.cqlmessages.response.ReadRequestTimeout
 import org.scassandra.cqlmessages.response.VoidResult
@@ -34,7 +34,6 @@ import org.scassandra.cqlmessages.response.PreparedResultV2
 import org.scassandra.priming.PreparedStatementExecution
 import scala.Some
 import org.scassandra.cqlmessages.request.PrepareRequest
-import org.scassandra.priming.prepared.PreparedPrime
 import org.scassandra.cqlmessages.response.WriteRequestTimeout
 import org.scassandra.priming.query.PrimeMatch
 import org.scassandra.cqlmessages.response.UnavailableException

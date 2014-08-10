@@ -35,6 +35,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
 
   implicit def actorRefFactory = system
   implicit val primePreparedStore : PrimePreparedStore = mock[PrimePreparedStore]
+  implicit val primePreparedPatternStore : PrimePreparedPatternStore = mock[PrimePreparedPatternStore]
   val primePreparedSinglePath = "/prime-prepared-single"
 
   import PrimingJsonImplicits._
@@ -50,10 +51,21 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       }
     }
 
+    it("Should use the pattern store if queryPattern specified") {
+      val when: WhenPreparedSingle = WhenPreparedSingle(queryPattern = Some("select * from people where name = ?"))
+      val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
+      val prime = PrimePreparedSingle(when, then)
+      Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
+        status should equal(StatusCodes.OK)
+        verify(primePreparedPatternStore).record(prime)
+      }
+    }
+
     it("should allow primes to be deleted") {
       Delete(primePreparedSinglePath) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.OK)
         verify(primePreparedStore).clear()
+        verify(primePreparedPatternStore).clear()
       }
     }
   }
@@ -178,6 +190,28 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
 
       Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.BadRequest)
+      }
+    }
+
+    it("Should be Bad Request if both query and queryPattern specified") {
+      val primeWhen: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"), Some("Pattern as well"))
+      val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
+      val prime = PrimePreparedSingle(primeWhen, then)
+
+      Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
+        status should equal(StatusCodes.BadRequest)
+        responseAs[String] should equal("Must specify either query or queryPattern, not both")
+      }
+    }
+
+    it("Should be Bad Request if neither query and queryPattern specified") {
+      val primeWhen: WhenPreparedSingle = WhenPreparedSingle()
+      val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
+      val prime = PrimePreparedSingle(primeWhen, then)
+
+      Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
+        status should equal(StatusCodes.BadRequest)
+        responseAs[String] should equal("Must specify either query or queryPattern, not both")
       }
     }
   }

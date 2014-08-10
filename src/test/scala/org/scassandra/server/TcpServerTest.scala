@@ -21,7 +21,7 @@ import akka.testkit.{TestActorRef, ImplicitSender, TestKit}
 import akka.actor.{Props, ActorSystem}
 import akka.io.Tcp.Connected
 import org.scassandra.priming.query.PrimeQueryStore
-import org.scassandra.priming.prepared.PrimePreparedStore
+import org.scassandra.priming.prepared.{PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.ServerReadyListener
 
 /**

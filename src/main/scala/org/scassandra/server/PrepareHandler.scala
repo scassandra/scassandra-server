@@ -19,13 +19,13 @@ import com.typesafe.scalalogging.slf4j.{Logging}
 import akka.actor.{ActorRef, Actor}
 import akka.util.{ByteString}
 import org.scassandra.cqlmessages._
-import org.scassandra.priming.prepared.PrimePreparedStore
+import org.scassandra.priming.prepared.{PreparedStoreLookup, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.priming._
 import org.scassandra.priming.query.PrimeMatch
 import scala.Some
 import org.scassandra.cqlmessages.types.{CqlVarchar, ColumnType}
 
-class PrepareHandler(primePreparedStore: PrimePreparedStore) extends Actor with Logging {
+class PrepareHandler(primePreparedStore: PreparedStoreLookup) extends Actor with Logging {
 
   import CqlProtocolHelper._
 
