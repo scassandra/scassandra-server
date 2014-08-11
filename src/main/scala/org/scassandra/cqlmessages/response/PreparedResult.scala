@@ -1,5 +1,6 @@
 package org.scassandra.cqlmessages.response
 
+import org.scassandra.cqlmessages.CqlProtocolHelper._
 import org.scassandra.cqlmessages._
 import akka.util.ByteString
 import org.scassandra.cqlmessages.types.ColumnType
@@ -9,9 +10,6 @@ case class PreparedResultV1(stream: Byte, preparedStatementId: Int, keyspaceName
   import CqlProtocolHelper._
 
   def serialize(): ByteString = {
-    val bs = ByteString.newBuilder
-
-    bs.putBytes(header.serialize())
 
     val bodyBs = ByteString.newBuilder
     bodyBs.putInt(ResultKinds.Prepared)
@@ -22,18 +20,15 @@ case class PreparedResultV1(stream: Byte, preparedStatementId: Int, keyspaceName
     bodyBs.putInt(1) // flags
     bodyBs.putInt(variableTypes.size) // col count
 
-    bodyBs.putBytes(CqlProtocolHelper.serializeString(keyspaceName).toArray)
-    bodyBs.putBytes(CqlProtocolHelper.serializeString(tableName).toArray)
+    bodyBs.putBytes(serializeString(keyspaceName).toArray)
+    bodyBs.putBytes(serializeString(tableName).toArray)
 
     // column specs
     for (i <- 0 until variableTypes.length) {
       ResultHelper.serialiseTypeInfomration(i.toString, variableTypes(i), bodyBs)
     }
 
-    val bodyResult: ByteString = bodyBs.result()
-    bs.putInt(bodyResult.size)
-    bs.putBytes(bodyResult.toArray)
-    bs.result()
+    combineHeaderAndLength(header.serialize(), bodyBs.result().toArray)
   }
 }
 
@@ -42,9 +37,6 @@ case class PreparedResultV2(stream: Byte, preparedStatementId: Int, keyspaceName
   import CqlProtocolHelper._
 
   def serialize(): ByteString = {
-    val bs = ByteString.newBuilder
-
-    bs.putBytes(header.serialize())
 
     val bodyBs = ByteString.newBuilder
     bodyBs.putInt(ResultKinds.Prepared)
@@ -56,8 +48,8 @@ case class PreparedResultV2(stream: Byte, preparedStatementId: Int, keyspaceName
     bodyBs.putInt(1) // flags
     bodyBs.putInt(variableTypes.size) // col count
 
-    bodyBs.putBytes(CqlProtocolHelper.serializeString(keyspaceName).toArray)
-    bodyBs.putBytes(CqlProtocolHelper.serializeString(tableName).toArray)
+    bodyBs.putBytes(serializeString(keyspaceName).toArray)
+    bodyBs.putBytes(serializeString(tableName).toArray)
 
     // column specs
     for (i <- 0 until variableTypes.length) {
@@ -69,9 +61,6 @@ case class PreparedResultV2(stream: Byte, preparedStatementId: Int, keyspaceName
     // 0 columns
     bodyBs.putInt(0)
 
-    val bodyResult: ByteString = bodyBs.result()
-    bs.putInt(bodyResult.size)
-    bs.putBytes(bodyResult.toArray)
-    bs.result()
+    combineHeaderAndLength(header.serialize(), bodyBs.result().toArray)
   }
 }

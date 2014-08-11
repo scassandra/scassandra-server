@@ -95,7 +95,7 @@ case class WriteRequestTimeout(stream: Byte)(implicit protocolVersion: ProtocolV
   val consistency : Short = ONE.code
   val receivedResponses : Int = 0
   val blockFor : Int = 1
-  val writeType : String = "SIMPLE"
+  val writeType : String = WriteTypes.Simple
 
   override def serialize() : ByteString = {
     val bodyBs = ByteString.newBuilder
