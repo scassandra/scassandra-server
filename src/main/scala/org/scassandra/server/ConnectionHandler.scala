@@ -150,7 +150,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
       val messageBody = currentData.drop(HeaderLength)
       processMessage(opCode, stream, messageBody, protocolVersion)
       currentData = ByteString()
-      return false
+      false
     } else if (currentData.length > (bodyLength + HeaderLength)) {
       partialMessage = true
       logger.debug("Received a larger message than the length specifies - assume the rest is another message")
@@ -158,12 +158,12 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
       logger.debug(s"Message received ${messageBody.utf8String}")
       processMessage(opCode, stream, messageBody, protocolVersion)
       currentData = currentData.drop(HeaderLength + bodyLength)
-      return true
+      true
     } else {
       logger.debug(s"Not received whole message yet, currently ${currentData.length} but need ${bodyLength + 8}")
       partialMessage = true
       dataFromPreviousMessage = currentData
-      return false
+      false
     }
   }
 }
