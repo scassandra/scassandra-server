@@ -34,15 +34,13 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup) extends Actor with
 
   def receive: Actor.Receive = {
     case PrepareHandlerMessages.Prepare(body, stream, msgFactory, connection) => {
-      logger.debug(s"Received prepare message ${body}")
+      logger.trace(s"Received prepare message ${body}")
       val query = readLongString(body.iterator).get
-
-
       val preparedPrime = primePreparedStore.findPrime(PrimeMatch(query))
       val preparedResult = if (preparedPrime.isDefined) {
         msgFactory.createPreparedResult(stream, preparedStatementId, preparedPrime.get.variableTypes)
       } else {
-        val numberOfParameters = query.toCharArray.filter(_ == '?').size
+        val numberOfParameters = query.toCharArray.count(_ == '?')
         val variableTypes: List[ColumnType[_]] = (0 until numberOfParameters).map(num => CqlVarchar).toList
         msgFactory.createPreparedResult(stream, preparedStatementId, variableTypes)
       }
@@ -55,7 +53,7 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup) extends Actor with
       connection ! preparedResult
     }
     case PrepareHandlerMessages.Execute(body, stream, msgFactory, connection) => {
-      logger.debug(s"Received execute bytes $body")
+      logger.trace(s"Received execute bytes $body")
       val executeRequest = msgFactory.parseExecuteRequestWithoutVariables(stream, body)
       logger.debug(s"Received execute message $executeRequest")
       val preparedStatement = preparedStatementsToId.get(executeRequest.id)
