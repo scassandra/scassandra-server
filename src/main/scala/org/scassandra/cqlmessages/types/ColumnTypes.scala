@@ -49,7 +49,8 @@ object ColumnType {
     "list" -> CqlList(CqlVarchar),
     "list<varchar>" -> CqlList(CqlVarchar),
     "list<ascii>" -> CqlList(CqlAscii),
-    "list<text>" -> CqlList(CqlText)
+    "list<text>" -> CqlList(CqlText),
+    "map<varchar,varchar>" -> CqlMap(CqlVarchar, CqlVarchar)
   )
 
   def fromString(string: String) : Option[ColumnType[_]] = {

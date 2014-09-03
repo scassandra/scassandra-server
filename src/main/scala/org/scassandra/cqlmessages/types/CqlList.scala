@@ -18,6 +18,7 @@ package org.scassandra.cqlmessages.types
 import akka.util.ByteIterator
 import org.scassandra.cqlmessages.CqlProtocolHelper
 
+//todo change this to a types class
 case class CqlList(listType : ColumnType[_]) extends ColumnType[Option[Iterable[_]]](0x0020, s"list<${listType.stringRep}>") {
    override def readValue(byteIterator: ByteIterator): Option[Iterable[String]] = {
      CqlProtocolHelper.readVarcharSetValue(byteIterator)

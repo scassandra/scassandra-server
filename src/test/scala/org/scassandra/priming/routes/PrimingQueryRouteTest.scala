@@ -148,6 +148,21 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)) should equal(None)
       }
     }
+
+    it("should accept a map as a column type") {
+      val query = "select * from users"
+      val whenQuery = When(query = Some(query))
+      val thenResults =
+        List(
+          Map("mapValue" -> Map())
+        )
+      val columnTypes = Some(Map[String, ColumnType[_]]("mapValue" -> new CqlMap(CqlVarchar, CqlVarchar)))
+
+      Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), column_types = columnTypes))) ~> queryRoute ~> check {
+        println(body)
+        status should equal(OK)
+      }
+    }
   }
 
   describe("Priming with a queryPattern") {

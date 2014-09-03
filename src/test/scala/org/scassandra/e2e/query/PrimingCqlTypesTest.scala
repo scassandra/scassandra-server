@@ -24,8 +24,6 @@ import java.net.InetAddress
 import java.math.BigInteger
 import dispatch._, Defaults._
 import java.util
-import org.scassandra.priming.query.When
-import org.scassandra.cqlmessages._
 import org.scassandra.priming.Success
 import org.scassandra.cqlmessages.types._
 import org.scassandra.priming.query.When

@@ -19,23 +19,7 @@ import org.scassandra.cqlmessages._
 import akka.util.{ByteStringBuilder, ByteIterator, ByteString}
 import com.typesafe.scalalogging.slf4j.Logging
 import scala._
-import org.scassandra.cqlmessages.types.{CqlList, CqlSet, ColumnType}
-
-
-object ResultHelper {
-
-  import CqlProtocolHelper._
-
-  def serialiseTypeInfomration(name: String, columnType: ColumnType[_], iterator: ByteStringBuilder) = {
-    iterator.putBytes(CqlProtocolHelper.serializeString(name).toArray)
-    iterator.putShort(columnType.code)
-    columnType match {
-      case CqlSet(setType) => iterator.putShort(setType.code)
-      case CqlList(listType) => iterator.putShort(listType.code)
-      case _ => // do nothing
-    }
-  }
-}
+import org.scassandra.cqlmessages.types.{CqlMap, CqlList, CqlSet, ColumnType}
 
 case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTypes : Map[String, ColumnType[_]], rows : List[Row] = List[Row]())(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Rows, stream, protocolVersion.serverCode) with Logging {
 
