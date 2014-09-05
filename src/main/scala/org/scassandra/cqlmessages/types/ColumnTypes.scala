@@ -25,6 +25,7 @@ abstract class ColumnType[T](val code : Short, val stringRep: String) extends Lo
 }
 
 object ColumnType {
+  //todo change to pattern match
   val ColumnTypeMapping = Map[String, ColumnType[_]](
     CqlInt.stringRep -> CqlInt,
     CqlBoolean.stringRep -> CqlBoolean,
@@ -50,7 +51,15 @@ object ColumnType {
     "list<varchar>" -> CqlList(CqlVarchar),
     "list<ascii>" -> CqlList(CqlAscii),
     "list<text>" -> CqlList(CqlText),
-    "map<varchar,varchar>" -> CqlMap(CqlVarchar, CqlVarchar)
+    "map<varchar,varchar>" -> CqlMap(CqlVarchar, CqlVarchar),
+    "map<varchar,text>" -> CqlMap(CqlVarchar, CqlText),
+    "map<varchar,ascii>" -> CqlMap(CqlVarchar, CqlAscii),
+    "map<ascii,asiii>" -> CqlMap(CqlAscii, CqlAscii),
+    "map<ascii,text>" -> CqlMap(CqlAscii, CqlText),
+    "map<ascii,varchar>" -> CqlMap(CqlAscii, CqlVarchar),
+    "map<text,text>" -> CqlMap(CqlText, CqlText),
+    "map<text,varchar>" -> CqlMap(CqlText, CqlVarchar),
+    "map<text,ascii>" -> CqlMap(CqlText, CqlAscii)
   )
 
   def fromString(string: String) : Option[ColumnType[_]] = {
