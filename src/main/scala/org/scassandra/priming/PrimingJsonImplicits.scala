@@ -43,7 +43,10 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
     def write(c: ColumnType[_]) = JsString(c.stringRep)
 
     def read(value: JsValue) = value match {
-      case JsString(string) => ColumnType.fromString(string).get
+      case JsString(string) => ColumnType.fromString(string) match {
+        case Some(columnType) => columnType
+        case None => throw new IllegalArgumentException("Not a valid column type " + value)
+      }
       case _ => throw new IllegalArgumentException("Expected ColumnType as JsString")
     }
   }

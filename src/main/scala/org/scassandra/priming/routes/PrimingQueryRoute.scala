@@ -51,7 +51,7 @@ trait PrimingQueryRoute extends HttpService with Logging {
             entity(as[PrimeQuerySingle]) {
               primeRequest => {
                 complete {
-
+                  logger.debug(s"Received prime request ${primeRequest}")
                   val primeCriteriaTry = PrimeQueryResultExtractor.extractPrimeCriteria(primeRequest)
 
                   primeCriteriaTry match {

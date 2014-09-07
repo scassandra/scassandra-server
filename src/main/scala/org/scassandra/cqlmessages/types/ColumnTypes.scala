@@ -54,7 +54,7 @@ object ColumnType {
     "map<varchar,varchar>" -> CqlMap(CqlVarchar, CqlVarchar),
     "map<varchar,text>" -> CqlMap(CqlVarchar, CqlText),
     "map<varchar,ascii>" -> CqlMap(CqlVarchar, CqlAscii),
-    "map<ascii,asiii>" -> CqlMap(CqlAscii, CqlAscii),
+    "map<ascii,ascii>" -> CqlMap(CqlAscii, CqlAscii),
     "map<ascii,text>" -> CqlMap(CqlAscii, CqlText),
     "map<ascii,varchar>" -> CqlMap(CqlAscii, CqlVarchar),
     "map<text,text>" -> CqlMap(CqlText, CqlText),
