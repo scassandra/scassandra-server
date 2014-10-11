@@ -130,6 +130,7 @@ object CqlProtocolHelper {
   }
 
   def readString(iterator: ByteIterator) : String = {
+    //todo handle null
     val stringLength = iterator.getShort
     val stringBytes = new Array[Byte](stringLength)
     iterator.getBytes(stringBytes)
@@ -200,6 +201,7 @@ object CqlProtocolHelper {
     if (size == -1) return None
     Some(iterator.getLong)
   }
+
   def readUUIDValue(iterator: ByteIterator) : Option[UUID] = {
     val size = iterator.getInt
     if (size == -1) return None
@@ -215,6 +217,7 @@ object CqlProtocolHelper {
     iterator.getBytes(bytes)
     Some(InetAddress.getByAddress(bytes))
   }
+
   def readVarintValue(iterator: ByteIterator) : Option[BigInt] = {
     val length = iterator.getInt
     if (length == -1) return None

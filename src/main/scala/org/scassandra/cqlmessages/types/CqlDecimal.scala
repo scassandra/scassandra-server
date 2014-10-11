@@ -18,7 +18,7 @@ package org.scassandra.cqlmessages.types
 import akka.util.ByteIterator
 import org.scassandra.cqlmessages.CqlProtocolHelper
 
-case object CqlDecimal extends ColumnType[Option[BigDecimal]](0x0006, "decimal") {
+case object CqlDecimal extends ColumnType[BigDecimal](0x0006, "decimal") {
    override def readValue(byteIterator: ByteIterator): Option[BigDecimal] = {
      CqlProtocolHelper.readDecimalValue(byteIterator)
    }

@@ -46,7 +46,7 @@ object ExecuteRequest {
 
     val variableValues = variableTypes.map (varType => {
       varType.readValue(bodyIterator)
-    } )
+    })
     ExecuteRequestV2(ProtocolVersion.ClientProtocolVersionTwo, stream, preparedStatementId, consistency, numberOfVariables, variableValues, flags)
   }
 

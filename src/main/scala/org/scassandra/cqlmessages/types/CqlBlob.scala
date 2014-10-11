@@ -18,7 +18,7 @@ package org.scassandra.cqlmessages.types
 import akka.util.{ByteString, ByteIterator}
 import org.scassandra.cqlmessages.CqlProtocolHelper
 
-case object CqlBlob extends ColumnType[Option[Array[Byte]]](0x0003, "blob") {
+case object CqlBlob extends ColumnType[Array[Byte]](0x0003, "blob") {
 
   import CqlProtocolHelper._
 

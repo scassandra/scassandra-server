@@ -42,8 +42,17 @@ class CqlTextTest extends FunSuite with Matchers {
 
   test("Reading null") {
     val bytes = ByteString(Array[Byte](-1,-1,-1,-1))
+
     val deserialisedValue = CqlText.readValue(bytes.iterator)
 
     deserialisedValue should equal(None)
+  }
+
+  test("Reading value in collection") {
+    val bytes = ByteString(Array[Byte](0, 2, 45, 43))
+
+    val deserialisedValue = CqlText.readValueInCollection(bytes.iterator)
+
+    deserialisedValue should equal("-+")
   }
 }

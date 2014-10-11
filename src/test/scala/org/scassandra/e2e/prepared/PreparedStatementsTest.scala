@@ -32,19 +32,10 @@ import com.datastax.driver.core.exceptions.{UnavailableException, WriteTimeoutEx
 import org.scalatest.BeforeAndAfter
 import dispatch._, Defaults._
 import spray.json._
-import org.scassandra.priming.prepared.ThenPreparedSingle
-import org.scassandra.priming.prepared.WhenPreparedSingle
-import scala.Some
-import org.scassandra.priming.prepared.PrimePreparedSingle
-import org.scassandra.priming.prepared.ThenPreparedSingle
-import org.scassandra.priming.prepared.WhenPreparedSingle
-import scala.Some
-import org.scassandra.priming.prepared.PrimePreparedSingle
 import org.scassandra.cqlmessages.types._
 import org.scassandra.priming.ConflictingPrimes
 import org.scassandra.priming.prepared.ThenPreparedSingle
 import org.scassandra.priming.prepared.WhenPreparedSingle
-import scala.Some
 import org.scassandra.priming.prepared.PrimePreparedSingle
 
 class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
@@ -56,6 +47,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     val response = Http(svc OK as.String)
     response()
   }
+
   test("Prepared statement without priming - no params") {
     //given
     val preparedStatement = session.prepare("select * from people")
@@ -337,7 +329,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
       ThenPreparedSingle(Some(List(primedRow)),
-        Some(List[ColumnType[_]](CqlAscii, CqlBlob, CqlBoolean, CqlTimestamp, CqlUUID, CqlVarchar, CqlTimeUUID, CqlInet)),
+        variable_types = Some(List[ColumnType[_]](CqlAscii, CqlBlob, CqlBoolean, CqlTimestamp, CqlUUID, CqlVarchar, CqlTimeUUID, CqlInet)),
         column_types = Some(resultColumnTypes))
     )
 

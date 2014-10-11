@@ -19,9 +19,10 @@ import akka.util.{ByteIterator}
 import com.typesafe.scalalogging.slf4j.Logging
 
 abstract class ColumnType[T](val code : Short, val stringRep: String) extends Logging {
-  def readValue(byteIterator : ByteIterator) : T
+  def readValue(byteIterator : ByteIterator) : Option[T]
   def writeValue(value : Any) : Array[Byte]
   def writeValueInCollection(value: Any) : Array[Byte] = ???
+  def readValueInCollection(byteIterator: ByteIterator) : T = ???
 }
 
 object ColumnType {

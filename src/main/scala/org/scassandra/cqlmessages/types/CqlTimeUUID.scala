@@ -19,7 +19,7 @@ import java.util.UUID
 import akka.util.ByteIterator
 import org.scassandra.cqlmessages.CqlProtocolHelper
 
-case object CqlTimeUUID extends ColumnType[Option[UUID]](0x000F, "timeuuid") {
+case object CqlTimeUUID extends ColumnType[UUID](0x000F, "timeuuid") {
    override def readValue(byteIterator: ByteIterator): Option[UUID] = {
      CqlProtocolHelper.readUUIDValue(byteIterator)
    }

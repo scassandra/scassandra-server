@@ -18,7 +18,7 @@ package org.scassandra.cqlmessages.types
 import akka.util.{ByteString, ByteIterator}
 import org.scassandra.cqlmessages.CqlProtocolHelper
 
-case object CqlInt extends ColumnType[Option[Int]](0x0009, "int") {
+case object CqlInt extends ColumnType[Int](0x0009, "int") {
 
   import CqlProtocolHelper._
 

@@ -20,12 +20,21 @@ import org.scassandra.cqlmessages.CqlProtocolHelper
 
 // only supports strings for now.
 //todo change this to a type class
-case class CqlMap(keyType: ColumnType[_], valueType: ColumnType[_]) extends ColumnType[Option[Map[String, String]]](0x0021, s"map<${keyType.stringRep},${valueType.stringRep}>") {
+case class CqlMap(keyType: ColumnType[_], valueType: ColumnType[_]) extends ColumnType[Map[Any, Any]](0x0021, s"map<${keyType.stringRep},${valueType.stringRep}>") {
 
   import CqlProtocolHelper._
 
-  override def readValue(byteIterator: ByteIterator): Option[Map[String, String]] = {
-    ???
+  override def readValue(byteIterator: ByteIterator): Option[Map[Any, Any]] = {
+    val setLength = byteIterator.getInt
+    if (setLength == -1) {
+      None
+    } else {
+      val numerOfElements = byteIterator.getShort
+      val result = (0 until numerOfElements).map( index =>
+        (keyType.readValueInCollection(byteIterator), valueType.readValueInCollection(byteIterator))
+      ).toMap
+      Some(result)
+    }
   }
 
   def writeValue(value: Any): Array[Byte] = {

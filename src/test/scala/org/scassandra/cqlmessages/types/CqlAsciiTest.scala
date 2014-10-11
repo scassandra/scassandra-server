@@ -46,4 +46,13 @@ class CqlAsciiTest extends FunSuite with Matchers {
 
     deserialisedValue should equal(None)
   }
+
+
+  test("Reading value in collection") {
+    val bytes = ByteString(Array[Byte](0, 2, 45, 43))
+
+    val deserialisedValue = CqlAscii.readValueInCollection(bytes.iterator)
+
+    deserialisedValue should equal("-+")
+  }
 }

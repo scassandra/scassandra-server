@@ -20,7 +20,7 @@ import org.scassandra.cqlmessages.CqlProtocolHelper
 
 // only supports strings for now.
 //todo change this to a types class
-case class CqlSet(setType : ColumnType[_]) extends ColumnType[Option[Set[_]]](0x0022, s"set<${setType.stringRep}>") {
+case class CqlSet(setType : ColumnType[_]) extends ColumnType[Set[_]](0x0022, s"set<${setType.stringRep}>") {
    override def readValue(byteIterator: ByteIterator): Option[Set[String]] = {
      CqlProtocolHelper.readVarcharSetValue(byteIterator)
    }

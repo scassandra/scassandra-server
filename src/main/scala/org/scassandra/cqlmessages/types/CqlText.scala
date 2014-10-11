@@ -17,7 +17,7 @@ package org.scassandra.cqlmessages.types
 
 import akka.util.ByteIterator
 
-case object CqlText extends ColumnType[Option[String]](0x000A, "text") {
+case object CqlText extends ColumnType[String](0x000A, "text") {
    override def readValue(byteIterator: ByteIterator): Option[String] = {
      CqlVarchar.readValue(byteIterator)
    }
@@ -29,4 +29,8 @@ case object CqlText extends ColumnType[Option[String]](0x000A, "text") {
    override def writeValueInCollection(value : Any) = {
      CqlVarchar.writeValueInCollection(value)
    }
- }
+
+   override def readValueInCollection(byteIterator: ByteIterator): String = {
+     CqlVarchar.readValueInCollection(byteIterator)
+   }
+}

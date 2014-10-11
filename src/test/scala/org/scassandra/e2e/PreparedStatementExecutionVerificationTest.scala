@@ -52,7 +52,7 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
     }
   }
 
-  test("Test verification of a single prepared statement executions") {
+  test("Test verification of a single prepared statement execution") {
     ActivityLog.clearPreparedStatementExecutions()
     val queryString: String = "select * from people where name = ?"
     val preparedStatement = session.prepare(queryString);

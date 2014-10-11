@@ -18,7 +18,7 @@ package org.scassandra.cqlmessages.types
 import akka.util.ByteIterator
 import org.scassandra.cqlmessages.CqlProtocolHelper
 
-case object CqlVarchar extends ColumnType[Option[String]](0x000D, "varchar") {
+case object CqlVarchar extends ColumnType[String](0x000D, "varchar") {
    override def readValue(byteIterator: ByteIterator): Option[String] = {
      CqlProtocolHelper.readLongString(byteIterator)
    }
@@ -28,5 +28,9 @@ case object CqlVarchar extends ColumnType[Option[String]](0x000D, "varchar") {
    }
    override def writeValueInCollection(value : Any) = {
      CqlProtocolHelper.serializeString(value.toString)
+   }
+   override def readValueInCollection(byteIterator: ByteIterator) : String = {
+     //todo handle null
+     CqlProtocolHelper.readString(byteIterator)
    }
  }
