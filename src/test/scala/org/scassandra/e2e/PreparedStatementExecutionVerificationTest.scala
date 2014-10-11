@@ -36,7 +36,7 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
   }
 
   test("Test clearing of prepared statement executions") {
-    ActivityLog.clearPreparedStatementExecutions()
+    //todo: clean activity log
     val queryString = "select * from people where name = ?"
     val preparedStatement = session.prepare(queryString);
     val boundStatement = preparedStatement.bind("Chris")
@@ -53,7 +53,7 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
   }
 
   test("Test verification of a single prepared statement execution") {
-    ActivityLog.clearPreparedStatementExecutions()
+    //todo: clean activity log
     val queryString: String = "select * from people where name = ?"
     val preparedStatement = session.prepare(queryString);
     val boundStatement = preparedStatement.bind("Chris")

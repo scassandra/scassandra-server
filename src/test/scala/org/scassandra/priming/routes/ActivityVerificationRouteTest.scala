@@ -26,13 +26,19 @@ import org.scassandra.priming.Query
 class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with ActivityVerificationRoute {
 
   implicit def actorRefFactory = system
+  implicit val activityLog = new ActivityLog
 
   import PrimingJsonImplicits._
 
+  before {
+    activityLog.clearConnections()
+    activityLog.clearPreparedStatementExecutions()
+    activityLog.clearQueries()
+  }
+
   describe("Retrieving connection activity") {
     it("Should return connection count from ActivityLog for single connection") {
-      ActivityLog.clearConnections()
-      ActivityLog.recordConnection()
+      activityLog.recordConnection()
 
       Get("/connection") ~> activityVerificationRoute ~> check {
         val response: String = responseAs[String]
@@ -42,7 +48,6 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
     }
 
     it("Should return connection count from ActivityLog for no connections") {
-      ActivityLog.clearConnections()
 
       Get("/connection") ~> activityVerificationRoute ~> check {
         val response: String = responseAs[String]
@@ -52,10 +57,10 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
     }
 
     it("Should clear connections for a delete") {
-      ActivityLog.recordConnection()
+      //todo clear activity
 
       Delete("/connection") ~> activityVerificationRoute ~> check {
-        ActivityLog.retrieveConnections().size should equal(0)
+        activityLog.retrieveConnections().size should equal(0)
       }
     }
   }
@@ -63,7 +68,6 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
   describe("Retrieving query activity") {
 
     it("Should return queries from ActivityLog - no queries") {
-      ActivityLog.clearQueries()
 
       Get("/query") ~> activityVerificationRoute ~> check {
         val response: String = responseAs[String]
@@ -73,9 +77,8 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
     }
 
     it("Should return queries from ActivityLog - single query") {
-      ActivityLog.clearQueries()
       val query: String = "select * from people"
-      ActivityLog.recordQuery(query, ONE)
+      activityLog.recordQuery(query, ONE)
 
       Get("/query") ~> activityVerificationRoute ~> check {
         val response: String = responseAs[String]
@@ -86,17 +89,17 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
     }
 
     it("Should clear queries for a delete") {
-      ActivityLog.recordQuery("select * from people", ONE)
+      activityLog.recordQuery("select * from people", ONE)
 
       Delete("/query") ~> activityVerificationRoute ~> check {
-        ActivityLog.retrieveQueries().size should equal(0)
+        activityLog.retrieveQueries().size should equal(0)
       }
     }
   }
 
   describe("Primed statement execution") {
     it("Should return prepared statement executions from ActivityLog - no activity") {
-      ActivityLog.clearPreparedStatementExecutions()
+      activityLog.clearPreparedStatementExecutions()
 
       Get("/prepared-statement-execution") ~> activityVerificationRoute ~> check {
         val response = responseAs[List[PreparedStatementExecution]]
@@ -105,9 +108,9 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
     }
 
     it("Should return queries from ActivityLog - single query") {
-      ActivityLog.clearPreparedStatementExecutions()
+      activityLog.clearPreparedStatementExecutions()
       val preparedStatementText: String = ""
-      ActivityLog.recordPreparedStatementExecution(preparedStatementText, ONE, List())
+      activityLog.recordPreparedStatementExecution(preparedStatementText, ONE, List())
 
       Get("/prepared-statement-execution") ~> activityVerificationRoute ~> check {
         val response = responseAs[List[PreparedStatementExecution]]
@@ -118,10 +121,10 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
     }
 
     it("Should clear queries for a delete") {
-      ActivityLog.recordPreparedStatementExecution("", ONE, List())
+      activityLog.recordPreparedStatementExecution("", ONE, List())
 
       Delete("/prepared-statement-execution") ~> activityVerificationRoute ~> check {
-        ActivityLog.retrievePreparedStatementExecutions().size should equal(0)
+        activityLog.retrievePreparedStatementExecutions().size should equal(0)
       }
     }
   }

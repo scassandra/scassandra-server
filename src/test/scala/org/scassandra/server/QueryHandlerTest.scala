@@ -44,11 +44,12 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
   val someCqlStatement = PrimeMatch("some cql statement", ONE)
   val cqlMessageFactory = VersionTwoMessageFactory
   val protocolVersion: Byte = ProtocolVersion.ServerProtocolVersionTwo
+  val activityLog = new ActivityLog
   implicit val impProtocolVersion = VersionTwo
 
   before {
     testProbeForTcpConnection = TestProbe()
-    underTest = TestActorRef(new QueryHandler(testProbeForTcpConnection.ref, mockPrimedResults, cqlMessageFactory))
+    underTest = TestActorRef(new QueryHandler(testProbeForTcpConnection.ref, mockPrimedResults, cqlMessageFactory, activityLog))
     reset(mockPrimedResults)
   }
 
@@ -166,7 +167,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
 
   test("Should store query in the ActivityLog") {
     //given
-    ActivityLog.clearQueries()
+    activityLog.clearQueries()
     val stream: Byte = 1
     val query = "select * from people"
     val consistency = TWO
@@ -176,7 +177,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     underTest ! QueryHandlerMessages.Query(queryBody, stream)
 
     //then
-    val recordedQueries = ActivityLog.retrieveQueries()
+    val recordedQueries = activityLog.retrieveQueries()
     recordedQueries.size should equal(1)
     val recordedQuery: Query = recordedQueries(0)
     recordedQuery should equal(Query(query, consistency))

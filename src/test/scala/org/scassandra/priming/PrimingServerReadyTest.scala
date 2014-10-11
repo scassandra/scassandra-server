@@ -31,7 +31,7 @@ class PrimingServerReadyTest extends TestKit(ActorSystem("TestSystem")) with Fun
       val primingReadyListener = TestProbe()
 
       // when
-      TestActorRef(new PrimingServer("localhost", 8045, PrimeQueryStore(), PrimePreparedStore(), new PrimePreparedPatternStore(), primingReadyListener.ref))
+      TestActorRef(new PrimingServer("localhost", 8045, PrimeQueryStore(), PrimePreparedStore(), new PrimePreparedPatternStore(), primingReadyListener.ref, new ActivityLog))
 
       // then
       primingReadyListener.expectMsg(ServerReady)

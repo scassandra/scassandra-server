@@ -36,7 +36,8 @@ class PrimingServer(listenAddress: String, port: Int,
                     implicit val primeQueryStore: PrimeQueryStore,
                     implicit val primePreparedStore: PrimePreparedStore,
                     implicit val primePreparedPatternStore: PrimePreparedPatternStore,
-                    serverReadyListener: ActorRef) extends Actor with Logging {
+                    serverReadyListener: ActorRef,
+                    implicit val activityLog: ActivityLog) extends Actor with Logging {
 
   import Tcp._
 
@@ -44,7 +45,7 @@ class PrimingServer(listenAddress: String, port: Int,
 
   logger.info(s"Opening port ${port} for priming")
 
-  val routing = context.actorOf(Props(classOf[PrimingServerHttpService], primeQueryStore, primePreparedStore, primePreparedPatternStore))
+  val routing = context.actorOf(Props(classOf[PrimingServerHttpService], primeQueryStore, primePreparedStore, primePreparedPatternStore, activityLog))
 
   IO(Http) ! Http.Bind(self, listenAddress, port)
 
@@ -65,7 +66,10 @@ class PrimingServer(listenAddress: String, port: Int,
   }
 }
 
-class PrimingServerHttpService(implicit val primeQueryStore: PrimeQueryStore, implicit val primePreparedStore: PrimePreparedStore, implicit val primePreparedPatternStore: PrimePreparedPatternStore) extends Actor with AllRoutes with Logging {
+class PrimingServerHttpService(implicit val primeQueryStore: PrimeQueryStore,
+                               implicit val primePreparedStore: PrimePreparedStore,
+                               implicit val primePreparedPatternStore: PrimePreparedPatternStore,
+                               implicit val activityLog: ActivityLog) extends Actor with AllRoutes with Logging {
 
   implicit def actorRefFactory = context.system
 

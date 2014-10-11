@@ -28,7 +28,8 @@ import org.scassandra.{ServerReady, ScassandraConfig}
 class TcpServer(listenAddress: String, port: Int,
                 primedResults: PrimeQueryStore,
                 primePrepareStore: PreparedStoreLookup,
-                serverReadyListener: ActorRef) extends Actor with Logging {
+                serverReadyListener: ActorRef,
+                activityLog: ActivityLog) extends Actor with Logging {
 
   import Tcp._
   import context.system
@@ -36,7 +37,7 @@ class TcpServer(listenAddress: String, port: Int,
   val manager = IO(Tcp)
 
   IO(Tcp) ! Bind(self, new InetSocketAddress(listenAddress, port))
-  val preparedHandler = context.actorOf(Props(classOf[PrepareHandler], primePrepareStore))
+  val preparedHandler = context.actorOf(Props(classOf[PrepareHandler], primePrepareStore, activityLog))
 
   def receive = {
     case b @ Bound(localAddress) => {
@@ -52,9 +53,9 @@ class TcpServer(listenAddress: String, port: Int,
 
     case c @ Connected(remote, local) => {
       logger.debug(s"Incoming connection, creating a connection handler! $remote $local")
-      ActivityLog.recordConnection()
+      activityLog.recordConnection()
       val handler = context.actorOf(Props(classOf[ConnectionHandler],
-        (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[QueryHandler], sender, primedResults, msgFactory)),
+        (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[QueryHandler], sender, primedResults, msgFactory, activityLog)),
         (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[RegisterHandler], sender, msgFactory)),
         preparedHandler,
         (af: ActorRefFactory, tcpConnection: ActorRef) => af.actorOf(Props(classOf[TcpConnectionWrapper], tcpConnection)))

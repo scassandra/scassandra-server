@@ -34,7 +34,7 @@ class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
   }
 
   test("Test clearing of query results") {
-    ActivityLog.clearQueries()
+    //todo: clean activity log
     val queryString: String = "select * from people"
     session.execute(queryString)
     val svc: Req = url("http://localhost:8043/query")
@@ -49,7 +49,7 @@ class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
   }
 
   test("Test verification of a single query") {
-    ActivityLog.clearQueries()
+    //todo: clean activity log
     val queryString: String = "select * from people"
     val statement = new SimpleStatement(queryString)
     statement.setConsistencyLevel(ConsistencyLevel.TWO)

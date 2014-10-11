@@ -18,7 +18,7 @@ package org.scassandra.priming
 import org.scassandra.cqlmessages.{ONE, Consistency}
 import com.typesafe.scalalogging.slf4j.Logging
 
-object ActivityLog extends Logging {
+class ActivityLog extends Logging {
   var connections : List[Connection] = List()
   var queries : List[Query] = List()
   var preparedStatementExecutions : List[PreparedStatementExecution] = List()

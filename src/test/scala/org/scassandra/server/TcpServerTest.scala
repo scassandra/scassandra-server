@@ -32,11 +32,11 @@ class TcpServerTest extends TestKit(ActorSystem("Test")) with Matchers with Impl
 
   test("Should record a connection with the ActivityLog") {
     //given
-    ActivityLog.clearConnections()
-    val underTest = TestActorRef(new TcpServer("localhost", 8044, new PrimeQueryStore, new PrimePreparedStore, system.actorOf(Props(classOf[ServerReadyListener]))))
+    val activityLog = new ActivityLog
+    val underTest = TestActorRef(new TcpServer("localhost", 8044, new PrimeQueryStore, new PrimePreparedStore, system.actorOf(Props(classOf[ServerReadyListener])), activityLog))
     //when
     underTest ! Connected(null, null)
     //then
-    ActivityLog.retrieveConnections().size should equal(1)
+    activityLog.retrieveConnections().size should equal(1)
   }
 }

@@ -30,10 +30,13 @@ class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutur
     val svc = url("http://localhost:8043/prime-query-single").DELETE
     val response = Http(svc OK as.String)
     response()
+
+    val deleteActivityUrl = url("http://localhost:8043/connection").DELETE
+    val deleteResponse = Http(deleteActivityUrl OK as.String)
+    deleteResponse()
   }
 
   test("Test verification of connection for a single java driver") {
-    ActivityLog.clearConnections()
 
     val cluster = Cluster.builder()
       .addContactPoint(ConnectionToServerStub.ServerHost)
@@ -54,7 +57,6 @@ class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutur
   }
 
   test("Test verification of connection when there has been no connections") {
-    ActivityLog.clearConnections()
     val svc: Req = url("http://localhost:8043/connection")
     val response = Http(svc OK as.String)
 

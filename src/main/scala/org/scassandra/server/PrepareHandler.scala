@@ -25,7 +25,7 @@ import org.scassandra.priming.query.PrimeMatch
 import scala.Some
 import org.scassandra.cqlmessages.types.{CqlVarchar, ColumnType}
 
-class PrepareHandler(primePreparedStore: PreparedStoreLookup) extends Actor with Logging {
+class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActivityLog) extends Actor with Logging {
 
   import CqlProtocolHelper._
 
@@ -67,9 +67,9 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup) extends Actor with
 
             if (executeRequest.numberOfVariables == preparedPrime.variableTypes.size) {
               val executeRequestParsedWithVariables = msgFactory.parseExecuteRequestWithVariables(stream, body, preparedPrime.variableTypes)
-              ActivityLog.recordPreparedStatementExecution(preparedStatementText, executeRequestParsedWithVariables.consistency, executeRequestParsedWithVariables.variables)
+              activityLog.recordPreparedStatementExecution(preparedStatementText, executeRequestParsedWithVariables.consistency, executeRequestParsedWithVariables.variables)
            } else {
-             ActivityLog.recordPreparedStatementExecution(preparedStatementText, executeRequest.consistency, List())
+             activityLog.recordPreparedStatementExecution(preparedStatementText, executeRequest.consistency, List())
              logger.warn(s"Execution of prepared statement has a different number of variables to the prime. Number of variables in message ${executeRequest.numberOfVariables}. Variables won't be recorded. $preparedPrime")
            }
 
@@ -83,7 +83,7 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup) extends Actor with
           }
           case None => {
             logger.info(s"Received execution of prepared statement that hasn't been primed so can't record variables. $preparedStatementText")
-            ActivityLog.recordPreparedStatementExecution(preparedStatement.get, executeRequest.consistency, List())
+            activityLog.recordPreparedStatementExecution(preparedStatement.get, executeRequest.consistency, List())
             connection ! msgFactory.createVoidMessage(stream)
           }
         }

@@ -51,6 +51,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
   val versionOneMessageFactory = VersionOneMessageFactory
   val protocolVersion: Byte = ProtocolVersion.ServerProtocolVersionTwo
   implicit val impProtocolVersion = VersionTwo
+  val activityLog: ActivityLog = new ActivityLog
   val primePreparedStore = mock[PrimePreparedStore]
   val stream: Byte = 0x3
 
@@ -58,7 +59,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     reset(primePreparedStore)
     when(primePreparedStore.findPrime(any(classOf[PrimeMatch]))).thenReturn(None)
     testProbeForTcpConnection = TestProbe()
-    underTest = TestActorRef(new PrepareHandler(primePreparedStore))
+    underTest = TestActorRef(new PrepareHandler(primePreparedStore, activityLog))
   }
 
 
@@ -106,7 +107,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
   }
   
   test("Should use incrementing IDs") {
-    underTest = TestActorRef(new PrepareHandler(primePreparedStore))
+    underTest = TestActorRef(new PrepareHandler(primePreparedStore, activityLog))
     val stream: Byte = 0x02
     val queryOne = "select * from something where name = ?"
     val prepareBodyOne: ByteString = PrepareRequest(protocolVersion, stream, queryOne).serialize().drop(8)
@@ -196,7 +197,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
   }
 
   test("Should record execution in activity log") {
-    ActivityLog.clearPreparedStatementExecutions()
+    activityLog.clearPreparedStatementExecutions()
     val stream: Byte = 0x02
     val query = "select * from something where name = ?"
     val preparedStatementId = sendPrepareAndCaptureId(stream, query)
@@ -207,8 +208,8 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency).serialize().drop(8);
     underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
-    ActivityLog.retrievePreparedStatementExecutions().size should equal(1)
-    ActivityLog.retrievePreparedStatementExecutions()(0) should equal(PreparedStatementExecution(query, consistency, List()))
+    activityLog.retrievePreparedStatementExecutions().size should equal(1)
+    activityLog.retrievePreparedStatementExecutions()(0) should equal(PreparedStatementExecution(query, consistency, List()))
   }
 
 

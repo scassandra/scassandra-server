@@ -15,6 +15,7 @@
  */
 package org.scassandra.priming.routes
 
+import org.scassandra.priming.prepared.PrimePreparedStore
 import spray.routing.HttpService
 import com.typesafe.scalalogging.slf4j.Logging
 import spray.http.StatusCodes
@@ -24,17 +25,19 @@ trait ActivityVerificationRoute extends HttpService with Logging {
 
   import PrimingJsonImplicits._
 
+  implicit val activityLog : ActivityLog
+
   val activityVerificationRoute =
     path("connection") {
       get {
         complete {
-          ActivityLog.retrieveConnections()
+          activityLog.retrieveConnections()
         }
       } ~
         delete {
           complete {
             logger.debug("Deleting all recorded connections")
-            ActivityLog.clearConnections()
+            activityLog.clearConnections()
             StatusCodes.OK
           }
         }
@@ -43,13 +46,13 @@ trait ActivityVerificationRoute extends HttpService with Logging {
       get {
         complete {
           logger.debug("Request for recorded queries")
-          ActivityLog.retrieveQueries()
+          activityLog.retrieveQueries()
         }
       } ~
         delete {
           complete {
             logger.debug("Deleting all recorded queries")
-            ActivityLog.clearQueries()
+            activityLog.clearQueries()
             StatusCodes.OK
           }
         }
@@ -58,13 +61,13 @@ trait ActivityVerificationRoute extends HttpService with Logging {
       get {
         complete {
           logger.debug("Request for record prepared statement executions")
-          ActivityLog.retrievePreparedStatementExecutions()
+          activityLog.retrievePreparedStatementExecutions()
         }
       } ~
       delete {
         complete {
           logger.debug("Deleting all recorded prepared statement executions")
-          ActivityLog.clearPreparedStatementExecutions()
+          activityLog.clearPreparedStatementExecutions()
           StatusCodes.OK
         }
       }
