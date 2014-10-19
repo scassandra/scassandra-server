@@ -8,7 +8,7 @@ organization := "org.scassandra"
 
 name := "scassandra-server"
 
-version := "0.3.0-SNAPSHOT"
+version := "0.3.0"
 
 scalaVersion := "2.10.3"
 
@@ -80,7 +80,7 @@ pomExtra := {
 libraryDependencies ++= Seq(
   "com.typesafe.akka" % "akka-testkit_2.10" % akkaVersion % "test",
   "io.spray" % "spray-testkit" % sprayVersion % "test",
-  "com.datastax.cassandra" % "cassandra-driver-core" % "2+" % "test" exclude("com.google.guava", "guava"),
+  "com.datastax.cassandra" % "cassandra-driver-core" % "2.0+" % "test" exclude("com.google.guava", "guava"),
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test",
   "org.scalatest" %% "scalatest" % "2.0" % "test",
   "org.mockito" % "mockito-core" % "1.9.5" % "test"
