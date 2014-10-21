@@ -79,6 +79,7 @@ class PrimeQueryStore extends Logging {
 
   def clear() = {
     queryPrimes = Map()
+    queryPatternPrimes = Map()
   }
 }
 

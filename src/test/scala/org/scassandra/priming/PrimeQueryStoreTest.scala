@@ -84,6 +84,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       // given
       val primeResults = PrimeQueryStore()
       val query: PrimeCriteria = PrimeCriteria("select * from users", Consistency.all)
+      val queryPattern: PrimeCriteria = PrimeCriteria("select .*", Consistency.all, true)
       val result: List[Map[String, String]] =
         List(
           Map(
@@ -97,12 +98,14 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
         )
 
       // when
-      primeResults add(query, Prime(result, columnTypes = Map("name" -> CqlVarchar, "age" -> CqlInt)))
-      primeResults clear()
-      val actualResult = primeResults.get(PrimeMatch(query.query, ONE))
+      primeResults.add(query, Prime(result, columnTypes = Map("name" -> CqlVarchar, "age" -> CqlInt)))
+      primeResults.add(queryPattern, Prime(result, columnTypes = Map("name" -> CqlVarchar, "age" -> CqlInt)))
+      primeResults.clear()
+      val primes = primeResults.get(PrimeMatch(query.query, ONE))
+      //val primesWithPatterns = primeResults.get(PrimeMatch(query.query, ONE))
 
       // then
-      actualResult.isEmpty should equal(true)
+      primes.isEmpty should equal(true)
     }
   }
 
