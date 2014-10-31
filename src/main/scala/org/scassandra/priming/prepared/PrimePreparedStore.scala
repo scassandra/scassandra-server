@@ -15,15 +15,13 @@
  */
 package org.scassandra.priming.prepared
 
-import org.scassandra.priming.routes.PrimeQueryResultExtractor
 import org.scassandra.cqlmessages.{Consistency}
 import org.scassandra.priming._
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.priming.query.PrimeCriteria
 import org.scassandra.priming.query.PrimeMatch
-import scala.Some
 import org.scassandra.priming.query.Prime
-import org.scassandra.cqlmessages.types.{ColumnType, CqlVarchar}
+import org.scassandra.cqlmessages.types.{ColumnType}
 
 class PrimePreparedStore extends Logging with PreparedStore with PreparedStoreLookup {
 
@@ -42,8 +40,6 @@ class PrimePreparedStore extends Logging with PreparedStore with PreparedStoreLo
 
     val consistencies = prime.when.consistency.getOrElse(Consistency.all)
     val primeCriteria = PrimeCriteria(query.get, consistencies)
-
-
 
     validator.validate(primeCriteria, primeToStore.prime, state.map( existingPrime => (existingPrime._1, existingPrime._2.prime)  ) ) match {
       case PrimeAddSuccess => {

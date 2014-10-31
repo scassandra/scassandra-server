@@ -41,6 +41,20 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     actualPrime.get.prime.rows should equal(List())
   }
 
+  test("Overriding result to read_request_timeout") {
+    //given
+    val underTest = new PrimePreparedStore
+    val query: String = "select * from people where name = ?"
+    val when = WhenPreparedSingle(Some(query))
+    val then = ThenPreparedSingle(Some(List()), result = Some(ReadTimeout))
+    val prime = PrimePreparedSingle(when, then)
+    //when
+    underTest.record(prime)
+    val actualPrime = underTest.findPrime(PrimeMatch(query))
+    //then
+    actualPrime.get.prime.result should equal(ReadTimeout)
+  }
+
   test("Single row without variable type info - defaults to varchar") {
     //given
     val underTest = new PrimePreparedStore

@@ -17,7 +17,7 @@ package org.scassandra.priming.prepared
 
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.cqlmessages.Consistency
-import org.scassandra.priming.{Defaulter, PrimeAddSuccess, PrimeAddResult}
+import org.scassandra.priming.{Success, Defaulter, PrimeAddSuccess, PrimeAddResult}
 import org.scassandra.priming.query.{Prime, PrimeCriteria, PrimeMatch}
 import scala.util.matching.Regex
 
@@ -27,7 +27,8 @@ class PrimePreparedPatternStore extends Logging with PreparedStore with Prepared
     val primeCriteria = PrimeCriteria(incomingPrime.when.queryPattern.get, incomingPrime.when.consistency.getOrElse(Consistency.all))
     val rows: List[Map[String, Any]] = incomingPrime.then.rows.getOrElse(List())
     val columnTypes = Defaulter.defaultColumnTypesToVarchar(incomingPrime.then.column_types, rows)
-    val prime = Prime(rows, columnTypes = columnTypes)
+    val result = incomingPrime.then.result.getOrElse(Success)
+    val prime = Prime(rows, columnTypes = columnTypes, result = result)
     val preparedPrime = PreparedPrime(incomingPrime.then.variable_types.getOrElse(List()), prime)
     state += (primeCriteria -> preparedPrime)
     PrimeAddSuccess
