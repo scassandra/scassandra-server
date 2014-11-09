@@ -2,8 +2,6 @@ import SonatypeKeys._
 
 sonatypeSettings
 
-atmosSettings
-
 organization := "org.scassandra"
 
 name := "scassandra-server"
