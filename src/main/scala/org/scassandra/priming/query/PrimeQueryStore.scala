@@ -20,6 +20,7 @@ import org.scassandra.cqlmessages._
 import org.scassandra.priming._
 import scala.collection.immutable.Map
 import org.scassandra.cqlmessages.types.ColumnType
+import scala.concurrent.duration.FiniteDuration
 import scala.util.matching.Regex
 
 class PrimeQueryStore extends Logging {
@@ -88,13 +89,13 @@ case class PrimeCriteria(query: String, consistency: List[Consistency], patternM
 
 case class PrimeMatch(query: String, consistency: Consistency = ONE)
 
-case class Prime(
-                  rows: List[Map[String, Any]] = List(),
+case class Prime( rows: List[Map[String, Any]] = List(),
                   result: Result = Success,
                   columnTypes: Map[String, ColumnType[_]] = Map(),
                   keyspace: String = "",
-                  table: String = ""
-                  )
+                  table: String = "",
+                  fixedDelay: Option[FiniteDuration] = None
+                 )
 
 object PrimeQueryStore {
   def apply() = {

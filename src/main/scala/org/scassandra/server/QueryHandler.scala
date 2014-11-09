@@ -19,14 +19,15 @@ import akka.util.ByteString
 
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.scalalogging.slf4j.Logging
-import akka.io.Tcp.Write
 import org.scassandra.priming._
-import scala.Some
-import org.scassandra.cqlmessages.{CqlMessageFactory, Consistency}
-import org.scassandra.priming.query.{PrimeMatch, PrimeQueryStore}
+import org.scassandra.cqlmessages.{CqlProtocolHelper, CqlMessageFactory, Consistency}
+import org.scassandra.priming.query.{Prime, PrimeMatch, PrimeQueryStore}
+
+import scala.concurrent.duration._
 
 class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, msgFactory: CqlMessageFactory, activityLog: ActivityLog) extends Actor with Logging {
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+
+  implicit val byteOrder = CqlProtocolHelper.byteOrder
 
   def receive = {
     case QueryHandlerMessages.Query(queryBody, stream) =>
@@ -44,31 +45,31 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
       if (queryText.startsWith("use ")) {
         val keyspaceName: String = queryText.substring(4, queryLength)
         logger.debug(s"Use keyspace $keyspaceName")
-        tcpConnection ! msgFactory.createSetKeyspaceMessage(keyspaceName, stream)
+        sendMessage(None, tcpConnection, msgFactory.createSetKeyspaceMessage(keyspaceName, stream))
       } else {
-        primeQueryStore.get(PrimeMatch(queryText, Consistency.fromCode(consistency))) match {
+        val primeForIncomingQuery: Option[Prime] = primeQueryStore.get(PrimeMatch(queryText, Consistency.fromCode(consistency)))
+        primeForIncomingQuery match {
           case Some(prime) => {
-            prime.result match {
+            val message = prime.result match {
               case Success => {
                 logger.info(s"Found matching prime $prime for query $queryText")
-                val message = msgFactory.createRowsMessage(prime, stream)
-                logger.debug(s"Sending message: $message")
-                tcpConnection ! message
+                msgFactory.createRowsMessage(prime, stream)
               }
               case ReadTimeout => {
-                tcpConnection ! msgFactory.createReadTimeoutMessage(stream)
+                msgFactory.createReadTimeoutMessage(stream)
               }
               case Unavailable => {
-                tcpConnection ! msgFactory.createUnavailableMessage(stream)
+                msgFactory.createUnavailableMessage(stream)
               }
               case WriteTimeout => {
-                tcpConnection ! msgFactory.createWriteTimeoutMessage(stream)
+                msgFactory.createWriteTimeoutMessage(stream)
               }
             }
+            sendMessage(prime.fixedDelay, tcpConnection, message)
           }
           case None => {
             logger.info(s"No prime found for $queryText")
-            tcpConnection ! msgFactory.createEmptyRowsMessage(stream)
+            sendMessage(None, tcpConnection, msgFactory.createEmptyRowsMessage(stream))
           }
           case msg @ _ => {
             logger.debug(s"Received unexpected result back from primed results: $msg")
@@ -77,6 +78,14 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
       }
     case message @ _ =>
       logger.debug(s"Received unknown message: $message")
+  }
+
+  private def sendMessage(delay: Option[FiniteDuration], receiver: ActorRef, message: Any) = {
+
+    delay match {
+      case None => receiver ! message
+      case Some(duration) => context.system.scheduler.scheduleOnce(duration, receiver, message)(context.system.dispatcher)
+    }
   }
 }
 

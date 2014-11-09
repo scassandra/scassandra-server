@@ -56,7 +56,9 @@ trait PrimingQueryRoute extends HttpService with Logging {
 
                   primeCriteriaTry match {
                     case Success(primeCriteria) =>
+
                       val primeResult = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+
                       primeQueryStore.add(primeCriteria, primeResult) match {
                         case cp: ConflictingPrimes => StatusCodes.BadRequest -> cp
                         case tm: TypeMismatches => StatusCodes.BadRequest -> tm

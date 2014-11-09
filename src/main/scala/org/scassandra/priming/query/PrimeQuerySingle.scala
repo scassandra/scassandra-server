@@ -26,5 +26,5 @@ case class PrimeQuerySingle(when: When, then: Then)
 
 case class When(query: Option[String] = None, queryPattern: Option[String] = None, consistency: Option[List[Consistency]] = None, keyspace: Option[String] = None, table : Option[String] = None)
 
-case class Then(rows: Option[List[Map[String, Any]]], result: Option[Result] = None, column_types: Option[Map[String, ColumnType[_]]] = None)
+case class Then(rows: Option[List[Map[String, Any]]], result: Option[Result] = None, column_types: Option[Map[String, ColumnType[_]]] = None, fixedDelay : Option[Long] = None)
 

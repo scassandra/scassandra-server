@@ -15,9 +15,12 @@
  */
 package org.scassandra.priming.routes
 
+import java.util.concurrent.TimeUnit
+
 import org.scassandra.cqlmessages.{Consistency}
 import com.typesafe.scalalogging.slf4j.Logging
 import scala.Predef._
+import scala.concurrent.duration.FiniteDuration
 import scala.{util, Some}
 import org.scassandra.priming.query._
 import org.scassandra.priming.{Defaulter, Success, Result}
@@ -37,8 +40,12 @@ object PrimeQueryResultExtractor extends Logging {
     }
 
     primeQueryRequest.when match {
-      case When(Some(query), None, _, _, _) => util.Success(PrimeCriteria(primeQueryRequest.when.query.get, primeConsistencies))
-      case When(None, Some(queryPattern), _, _, _) => util.Success(PrimeCriteria(primeQueryRequest.when.queryPattern.get, primeConsistencies, true))
+      // Prime for a specific query
+      case When(Some(query), None, _, _, _) => util.Success(PrimeCriteria(primeQueryRequest.when.query.get, primeConsistencies, patternMatch = false))
+
+      // Prime for a query pattern
+      case When(None, Some(queryPattern), _, _, _) => util.Success(PrimeCriteria(primeQueryRequest.when.queryPattern.get, primeConsistencies, patternMatch = true))
+
       case _ => Failure(new IllegalArgumentException("Can't specify query and queryPattern"))
     }
   }
@@ -48,6 +55,8 @@ object PrimeQueryResultExtractor extends Logging {
     val resultsAsList = primeRequest.then.rows.getOrElse(List())
     val then = primeRequest.then
     val result = then.result.getOrElse(Success)
+    val fixedDelay = primeRequest.then.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+
     logger.trace("Column types " + primeRequest.then.column_types)
    
     val columnTypes: Map[String, ColumnType[_]] = Defaulter.defaultColumnTypesToVarchar(primeRequest.then.column_types, resultsAsList)
@@ -57,7 +66,7 @@ object PrimeQueryResultExtractor extends Logging {
     val keyspace = primeRequest.when.keyspace.getOrElse("")
     val table = primeRequest.when.table.getOrElse("")
 
-    Prime(resultsAsList, result, columnTypes, keyspace, table)
+    Prime(resultsAsList, result, columnTypes, keyspace, table, fixedDelay)
   }
   
 
