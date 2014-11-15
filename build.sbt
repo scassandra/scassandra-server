@@ -8,7 +8,7 @@ name := "scassandra-server"
 
 version := "0.4.0-SNAPSHOT"
 
-scalaVersion := "2.10.3"
+scalaVersion := "2.10.4"
 
 val sprayVersion = "1.2.1"
 
