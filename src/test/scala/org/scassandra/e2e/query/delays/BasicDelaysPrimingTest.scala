@@ -20,14 +20,14 @@ import org.scassandra.cqlmessages.types.{CqlInt, CqlVarchar}
 import org.scassandra.priming.query.{Then, When}
 
 class BasicDelaysPrimingTest extends AbstractIntegrationTest {
-  test("Priming Rows with delay") {
+   qtest("Priming Rows with delay") {
     val query = "select * from people"
     val rowOne = Map("name" -> "Chris")
     val rows = List(rowOne)
     val then = Then(Some(rows), fixedDelay = Some(2000l))
     prime(When(query = Some(query)), then)
 
-    val timeBefore = System.currentTimeMillis();
+    val timeBefore = System.currentTimeMillis()
     val result = session.execute(query)
     val difference: Long = System.currentTimeMillis() - timeBefore
 

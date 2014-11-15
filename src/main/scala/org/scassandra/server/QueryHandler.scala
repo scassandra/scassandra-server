@@ -84,7 +84,10 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
 
     delay match {
       case None => receiver ! message
-      case Some(duration) => context.system.scheduler.scheduleOnce(duration, receiver, message)(context.system.dispatcher)
+      case Some(duration) => {
+        logger.info(s"Delaying response by $duration")
+        context.system.scheduler.scheduleOnce(duration, receiver, message)(context.system.dispatcher)
+      }
     }
   }
 }
