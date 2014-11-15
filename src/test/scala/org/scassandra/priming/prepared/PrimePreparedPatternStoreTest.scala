@@ -20,6 +20,8 @@ import org.scassandra.cqlmessages._
 import org.scassandra.cqlmessages.types.{CqlInt, CqlInet, CqlVarchar}
 import org.scassandra.priming.query.{Prime, PrimeMatch}
 import org.scassandra.priming.ReadTimeout
+import scala.concurrent.duration.FiniteDuration
+import java.util.concurrent.TimeUnit
 
 class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAndAfter {
 
@@ -57,6 +59,21 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
 
     //then
     result.get.prime.result should equal(ReadTimeout)
+  }
+
+  test("Should record fixed delay") {
+    //given
+    val pattern = ".*"
+    val when = WhenPreparedSingle(None, Some(pattern), Some(List(ONE)))
+    val then = ThenPreparedSingle(Some(List()), fixedDelay = Some(2000))
+    val preparedPrime = PrimePreparedSingle(when, then)
+
+    //when
+    underTest.record(preparedPrime)
+    val result: Option[PreparedPrime] = underTest.findPrime(PrimeMatch("select name from users where age = '6'"))
+
+    //then
+    result.get.prime.fixedDelay should equal(Some(FiniteDuration(2000, TimeUnit.MILLISECONDS)))
   }
 
   test("Should find prime if pattern and consistency match") {

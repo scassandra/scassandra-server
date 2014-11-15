@@ -28,5 +28,6 @@ case class WhenPreparedSingle(query: Option[String] = None,
 case class ThenPreparedSingle(rows: Option[List[Map[String, Any]]],
                               variable_types: Option[List[ColumnType[_]]] = None,
                               column_types: Option[Map[String, ColumnType[_]]] = None,
-                              result : Option[Result] = Some(Success)
+                              result : Option[Result] = Some(Success),
+                              fixedDelay : Option[Long] = None
                                )

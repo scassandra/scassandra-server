@@ -51,6 +51,16 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       }
     }
 
+    it("should store a fixedDelay") {
+      val when: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"))
+      val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()), fixedDelay = Some(1500l))
+      val prime = PrimePreparedSingle(when, then)
+      Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
+        status should equal(StatusCodes.OK)
+        verify(primePreparedStore).record(prime)
+      }
+    }
+
     it("Should use the pattern store if queryPattern specified") {
       val when: WhenPreparedSingle = WhenPreparedSingle(queryPattern = Some("select * from people where name = ?"))
       val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
@@ -73,7 +83,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
   describe("Retrieving of primes") {
     it("should return empty list when there are no primes") {
       val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map()
-      when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
+      when(primePreparedStore.retrievePrimes()).thenReturn(existingPrimes)
 
       Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
           responseAs[List[PrimePreparedSingle]].size should equal(0)
@@ -86,7 +96,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map(
         PrimeCriteria(query, List()) -> PreparedPrime(variableTypes, Prime())
       )
-      when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
+      when(primePreparedStore.retrievePrimes()).thenReturn(existingPrimes)
 
       Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
@@ -100,7 +110,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map(
         PrimeCriteria(query, List()) -> PreparedPrime(List(), Prime())
       )
-      when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
+      when(primePreparedStore.retrievePrimes()).thenReturn(existingPrimes)
 
       Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
@@ -215,5 +225,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       }
     }
   }
+
+  //todo test for specifying neither a query or queryPattern
 
 }

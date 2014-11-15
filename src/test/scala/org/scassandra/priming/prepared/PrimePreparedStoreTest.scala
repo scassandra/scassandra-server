@@ -23,9 +23,10 @@ import org.scassandra.priming.query.PrimeMatch
 import scala.Some
 import org.scassandra.priming.query.Prime
 import org.scassandra.cqlmessages.types.{CqlInet, CqlVarchar, CqlText}
+import scala.concurrent.duration.FiniteDuration
+import java.util.concurrent.TimeUnit
 
 class PrimePreparedStoreTest extends FunSuite with Matchers {
-
 
   test("Empty rows") {
     //given
@@ -148,6 +149,20 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     val actualPrime = underTest.findPrime(PrimeMatch(query))
     //then
     actualPrime.get should equal(PreparedPrime(List(), Prime(result = ReadTimeout)))
+  }
+
+  test("Specifying a fixed delay") {
+    //given
+    val underTest = new PrimePreparedStore
+    val query: String = "select * from people"
+    val when = WhenPreparedSingle(Some(query))
+    val then = ThenPreparedSingle(rows = Some(List()), fixedDelay = Some(1500l))
+    val prime = PrimePreparedSingle(when, then)
+    //when
+    underTest.record(prime)
+    val actualPrime = underTest.findPrime(PrimeMatch(query))
+    //then
+    actualPrime.get should equal(PreparedPrime(List(), Prime(fixedDelay = Some(FiniteDuration(1500l, TimeUnit.MILLISECONDS)))))
   }
 
   test("Clearing all the primes") {

@@ -24,7 +24,7 @@ import org.mockito.Matchers._
 import org.scassandra.cqlmessages._
 import akka.util.ByteString
 import org.scassandra.cqlmessages.request._
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{FiniteDuration, Duration}
 import java.util.concurrent.TimeUnit
 import org.scassandra.priming.prepared.{PrimePreparedPatternStore, PrimePreparedStore, PreparedPrime}
 import org.scassandra.priming._
@@ -210,6 +210,21 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
 
     activityLog.retrievePreparedStatementExecutions().size should equal(1)
     activityLog.retrievePreparedStatementExecutions()(0) should equal(PreparedStatementExecution(query, consistency, List()))
+  }
+
+  test("Should delay message if fixedDelay primed") {
+    val stream: Byte = 0x02
+    val query = "select * from something where name = ?"
+    val preparedStatementId = sendPrepareAndCaptureId(stream, query)
+    val prime = Prime(fixedDelay = Some(FiniteDuration(1500, TimeUnit.MILLISECONDS)))
+    val primeMatch = Some(PreparedPrime(prime = prime))
+    when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
+
+    val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId).serialize().drop(8);
+    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+
+    // i wish that expect msg took a min as well as a max :(
+    testProbeForTcpConnection.expectMsg(Rows("" ,"" ,stream, Map(), List()))
   }
 
 

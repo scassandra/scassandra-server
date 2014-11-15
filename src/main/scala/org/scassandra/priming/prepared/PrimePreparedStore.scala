@@ -22,6 +22,8 @@ import org.scassandra.priming.query.PrimeCriteria
 import org.scassandra.priming.query.PrimeMatch
 import org.scassandra.priming.query.Prime
 import org.scassandra.cqlmessages.types.{ColumnType}
+import scala.concurrent.duration.FiniteDuration
+import java.util.concurrent.TimeUnit
 
 class PrimePreparedStore extends Logging with PreparedStore with PreparedStoreLookup {
 
@@ -31,19 +33,20 @@ class PrimePreparedStore extends Logging with PreparedStore with PreparedStoreLo
     val rows = prime.then.rows.getOrElse(List())
     val query = prime.when.query
     val result = prime.then.result.getOrElse(Success)
-    val numberOfParameters = query.get.toCharArray.filter(_ == '?').size
+    val numberOfParameters = query.get.toCharArray.count(_ == '?')
+    val fixedDelay: Option[FiniteDuration] = prime.then.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
 
     val variableTypesDefaultedToVarchar: List[ColumnType[_]] = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, prime.then.variable_types)
     val colTypes = Defaulter.defaultColumnTypesToVarchar(prime.then.column_types, rows)
 
-    val primeToStore: PreparedPrime = PreparedPrime(variableTypesDefaultedToVarchar, prime = Prime(rows, columnTypes = colTypes, result = result))
+    val primeToStore: PreparedPrime = PreparedPrime(variableTypesDefaultedToVarchar, prime = Prime(rows, columnTypes = colTypes, result = result, fixedDelay = fixedDelay))
 
     val consistencies = prime.when.consistency.getOrElse(Consistency.all)
     val primeCriteria = PrimeCriteria(query.get, consistencies)
 
     validator.validate(primeCriteria, primeToStore.prime, state.map( existingPrime => (existingPrime._1, existingPrime._2.prime)  ) ) match {
       case PrimeAddSuccess => {
-        logger.info(s"Storing prime for prepared statement ${primeToStore} with prime criteria ${primeCriteria}")
+        logger.info(s"Storing prime for prepared statement $primeToStore with prime criteria $primeCriteria")
         state += (primeCriteria -> primeToStore)
         PrimeAddSuccess
       }

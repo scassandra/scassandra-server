@@ -20,7 +20,7 @@ import org.scassandra.cqlmessages.types.{CqlInt, CqlVarchar}
 import org.scassandra.priming.query.{Then, When}
 
 class BasicDelaysPrimingTest extends AbstractIntegrationTest {
-   qtest("Priming Rows with delay") {
+   test("Priming Rows with delay") {
     val query = "select * from people"
     val rowOne = Map("name" -> "Chris")
     val rows = List(rowOne)
@@ -35,4 +35,6 @@ class BasicDelaysPrimingTest extends AbstractIntegrationTest {
     allRows.size() should equal(1)
     difference should be > 2000l
   }
+
+  //todo #50 delay an error response
 }
