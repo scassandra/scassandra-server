@@ -1,12 +1,12 @@
 # Scassandra - Making testing Cassandra easy
 
-Server: ![TravisCI](https://travis-ci.org/scassandra/scassandra-server.svg?branch=master)
+![TravisCI](https://travis-ci.org/scassandra/scassandra-server.svg?branch=master) Scassandra Server
 
-Java Client: ![TravisCI](https://travis-ci.org/scassandra/scassandra-java-client.svg?branch=master)
+![TravisCI](https://travis-ci.org/scassandra/scassandra-java-client.svg?branch=master) Java Client
 
-Datastax Java 1.* Intregration tests:![TravisCI](https://travis-ci.org/scassandra/scassandra-it-java-driver-1.svg?branch=master)
+![TravisCI](https://travis-ci.org/scassandra/scassandra-it-java-driver-1.svg?branch=master) Datastax Java 1.* Intregration tests
 
-Datastax Java 2.0.* Integration tests: ![TravisCI](https://travis-ci.org/scassandra/scassandra-it-java-driver-2.svg?branch=master)
+![TravisCI](https://travis-ci.org/scassandra/scassandra-it-java-driver-2.svg?branch=master) Datastax Java 2.0.* Integration tests
 
 Datastax Java 2.1 not supported yet :(
 
