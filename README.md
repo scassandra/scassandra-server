@@ -4,9 +4,9 @@
 
 ![TravisCI](https://travis-ci.org/scassandra/scassandra-java-client.svg?branch=master) Java Client
 
-![TravisCI](https://travis-ci.org/scassandra/scassandra-it-java-driver-1.svg?branch=master) Datastax Java 1.* Intregration tests
 
-![TravisCI](https://travis-ci.org/scassandra/scassandra-it-java-driver-2.svg?branch=master) Datastax Java 2.0.* Integration tests
+![TravisCI](https://travis-ci.org/scassandra/scassandra-it-java-driver-2.svg?branch=master) Datastax Java 2.0.* Integration tests AND Datastax Java 1.* Intregration tests
+
 
 Datastax Java 2.1 not supported yet :(
 
