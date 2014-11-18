@@ -16,14 +16,19 @@
 package org.scassandra.cqlmessages
 
 object ProtocolVersion {
+  val ServerProtocolVersionThree : Byte = (0x81 & 0xFF).toByte
+  val ClientProtocolVersionThree : Byte = 0x03
+
   val ServerProtocolVersionTwo : Byte = (0x82 & 0xFF).toByte
   val ClientProtocolVersionTwo : Byte = 0x02
 
   val ServerProtocolVersionOne : Byte = (0x81 & 0xFF).toByte
   val ClientProtocolVersionOne : Byte = 0x01
 
+
   def protocol(clientVersion: Byte) = {
     clientVersion match {
+      case VersionThree.clientCode | VersionThree.serverCode => VersionThree
       case VersionTwo.clientCode | VersionTwo.serverCode => VersionTwo
       case VersionOne.clientCode | VersionOne.serverCode => VersionOne
     }
@@ -31,6 +36,10 @@ object ProtocolVersion {
 }
 
 abstract class ProtocolVersion(val clientCode : Byte, val serverCode: Byte)
+
+case object VersionThree extends ProtocolVersion(
+  ProtocolVersion.ClientProtocolVersionThree,
+  ProtocolVersion.ServerProtocolVersionThree)
 
 case object VersionTwo extends ProtocolVersion(
   ProtocolVersion.ClientProtocolVersionTwo,

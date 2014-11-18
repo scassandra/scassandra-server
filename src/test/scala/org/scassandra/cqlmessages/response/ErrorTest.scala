@@ -135,4 +135,14 @@ class ErrorTest extends FunSuite with Matchers {
 
     length should equal(4 + 2 + errorString.length + 2 + 4 + 4)
   }
+
+  test("Serialisation of unsupported version exception") {
+    val stream: Byte = 0x03
+    val unsupportedProtocolVersion = UnsupportedProtocolVersion(stream)
+
+    unsupportedProtocolVersion.header.opCode should equal(OpCodes.Error)
+    unsupportedProtocolVersion.errorCode should equal(ErrorCodes.ProtocolError)
+    unsupportedProtocolVersion.errorMessage should equal("Invalid or unsupported protocol version")
+    unsupportedProtocolVersion.header.streamId should equal(stream)
+  }
 }

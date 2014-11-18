@@ -55,7 +55,7 @@ class ServerStubRunner( val binaryListenAddress: String = "localhost",
   var tcpReadyListener: ActorRef = _
 
   def start() = {
-    system = ActorSystem(s"CassandraServerStub-${binaryPortNumber}-${adminPortNumber}")
+    system = ActorSystem(s"CassandraServerStub-$binaryPortNumber-$adminPortNumber")
     primingReadyListener = system.actorOf(Props(classOf[ServerReadyListener]), "PrimingReadyListener")
     tcpReadyListener = system.actorOf(Props(classOf[ServerReadyListener]), "TcpReadyListener")
     system.actorOf(Props(classOf[TcpServer], binaryListenAddress, binaryPortNumber, primedResults, preparedLookup, tcpReadyListener, activityLog), "BinaryTcpListener")

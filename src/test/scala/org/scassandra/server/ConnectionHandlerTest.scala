@@ -22,10 +22,8 @@ import akka.util.ByteString
 import org.scalatest._
 import org.scassandra.server.QueryHandlerMessages.Query
 import org.scassandra.cqlmessages._
-import org.scassandra.cqlmessages.response.{QueryBeforeReadyMessage, Ready}
-import org.scassandra.cqlmessages.response.QueryBeforeReadyMessage
+import org.scassandra.cqlmessages.response._
 import akka.io.Tcp.Received
-import org.scassandra.cqlmessages.response.Ready
 import org.scassandra.server.QueryHandlerMessages.Query
 
 class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
@@ -248,6 +246,16 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     testActorRef ! Received(ByteString(emptyPrepareMessage))
 
     prepareHandlerTestProbe.expectMsg(PrepareHandlerMessages.Execute(ByteString(messageBody), streamId, VersionTwoMessageFactory, tcpWrapperTestProbe.ref))
+  }
+
+  test("Should send unsupported version if protocol 3") {
+    implicit val protocolVersion = VersionTwo
+    val stream : Byte = 0x0 // hard coded for now
+    val startupMessage = MessageHelper.createStartupMessage(VersionThree)
+
+    testActorRef ! Received(ByteString(startupMessage.toArray))
+
+    tcpWrapperTestProbe.expectMsg(UnsupportedProtocolVersion(stream))
   }
 
   private def sendStartupMessage(protocolVersion: ProtocolVersion = VersionTwo) = {

@@ -42,6 +42,8 @@ class Error(protocolVersion: ProtocolVersion, val errorCode : Int, val errorMess
   }
 }
 
+case class UnsupportedProtocolVersion(stream: Byte)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.ProtocolError, "Invalid or unsupported protocol version", stream)
+
 case class QueryBeforeReadyMessage(stream : Byte = ResponseHeader.DefaultStreamId)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.ProtocolError, "Query sent before StartUp message", stream)
 
 case class ReadRequestTimeout(stream : Byte)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.ReadTimeout, "Read Request Timeout", stream) {

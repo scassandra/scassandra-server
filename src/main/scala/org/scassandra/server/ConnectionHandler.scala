@@ -20,7 +20,7 @@ import akka.io.Tcp
 import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.cqlmessages._
-import org.scassandra.cqlmessages.response.{ResponseHeader, QueryBeforeReadyMessage, Ready}
+import org.scassandra.cqlmessages.response.{UnsupportedProtocolVersion, ResponseHeader, QueryBeforeReadyMessage, Ready}
 
 /*
  * TODO: This class is on the verge of needing split up.
@@ -48,7 +48,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
   var registerHandler: ActorRef = _
   var queryHandler: ActorRef = _
 
-  val HeaderLength = 8
+  val ProtocolOneOrTwoHeaderLength = 8
 
   def receive = {
 
@@ -63,7 +63,10 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
       val messageLength = currentData.length
       logger.trace(s"Whole message length so far is $messageLength")
 
-      while (currentData.length >= HeaderLength && takeMessage()) {}
+      // the header could be 8 or 9 bits now :(
+      while (currentData.length >= ProtocolOneOrTwoHeaderLength && takeMessage()) {}
+
+
 
       if (currentData.length > 0) {
         logger.trace("Not received length yet..")
@@ -76,7 +79,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
       logger.info("Client disconnected.")
       context stop self
     }
-    case unknown @ _ =>
+    case unknown@_ =>
       logger.warn(s"Unknown message $unknown")
 
   }
@@ -117,7 +120,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
         val wrappedSender = connectionWrapperFactory(context, sender)
         prepareHandler ! PrepareHandlerMessages.Execute(messageBody, stream, messageFactory, wrappedSender)
       }
-      case opCode @ _ =>
+      case opCode@_ =>
         logger.warn(s"Received unknown opcode ${opCode} this probably means this feature is yet to be implemented the message body is ${messageBody}")
     }
   }
@@ -136,28 +139,39 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
   private def takeMessage(): Boolean = {
 
     val protocolVersion = currentData(0)
+
+    if (protocolVersion == VersionThree.clientCode) {
+      logger.warn("Received a version three message, currently only one and two supported so sending an unsupported protocol error to get the driver to use an older version of the protocol.")
+      val wrappedSender = connectionWrapperFactory(context, sender)
+      // we can't really send the correct stream back as it is a different type (short rather than byte)
+      wrappedSender ! UnsupportedProtocolVersion(0x0)(VersionTwo)
+      currentData = ByteString()
+      return false
+    }
+
+
     val stream: Byte = currentData(2)
     val opCode: Byte = currentData(3)
 
-    val bodyLengthArray = currentData.take(HeaderLength).drop(4)
+    val bodyLengthArray = currentData.take(ProtocolOneOrTwoHeaderLength).drop(4)
     logger.debug(s"Body length array ${bodyLengthArray}")
     val bodyLength = bodyLengthArray.asByteBuffer.getInt
     logger.debug(s"Body length ${bodyLength}")
 
-    if (currentData.length == bodyLength + HeaderLength) {
+    if (currentData.length == bodyLength + ProtocolOneOrTwoHeaderLength) {
       logger.debug("Received exactly the whole message")
       partialMessage = false
-      val messageBody = currentData.drop(HeaderLength)
+      val messageBody = currentData.drop(ProtocolOneOrTwoHeaderLength)
       processMessage(opCode, stream, messageBody, protocolVersion)
       currentData = ByteString()
       false
-    } else if (currentData.length > (bodyLength + HeaderLength)) {
+    } else if (currentData.length > (bodyLength + ProtocolOneOrTwoHeaderLength)) {
       partialMessage = true
       logger.debug("Received a larger message than the length specifies - assume the rest is another message")
-      val messageBody = currentData.drop(HeaderLength).take(bodyLength)
+      val messageBody = currentData.drop(ProtocolOneOrTwoHeaderLength).take(bodyLength)
       logger.debug(s"Message received ${messageBody.utf8String}")
       processMessage(opCode, stream, messageBody, protocolVersion)
-      currentData = currentData.drop(HeaderLength + bodyLength)
+      currentData = currentData.drop(ProtocolOneOrTwoHeaderLength + bodyLength)
       true
     } else {
       logger.debug(s"Not received whole message yet, currently ${currentData.length} but need ${bodyLength + 8}")

@@ -24,7 +24,7 @@ object MessageHelper {
     bytes drop 8 // drops the header and length
   }
 
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+  import CqlProtocolHelper._
 
   def createQueryMessage(queryString : String, stream : Byte = ResponseHeader.DefaultStreamId, consistency: Consistency = ONE, protocolVersion : Byte = ProtocolVersion.ClientProtocolVersionTwo) : List[Byte] = {
     val bodyLength = serializeInt(queryString.size + 4 + 2 + 1)
@@ -40,14 +40,19 @@ object MessageHelper {
     header ::: body
   }
 
-  def createStartupMessage(protocolVersion: ProtocolVersion = VersionTwo) : List[Byte] = {
+  def createStartupMessage(protocolVersion: ProtocolVersion = VersionTwo, stream: Byte = 0x0) : List[Byte] = {
     val messageBody = List[Byte](0x0, 0x1 , // number of start up options
     0x0, "CQL_VERSION".length.toByte)  :::
     "CQL_VERSION".getBytes.toList :::
       List[Byte](0x0, "3.0.0".length.toByte) :::
       "3.0.0".getBytes.toList
 
-    val bytes : List[Byte] = List[Byte](protocolVersion.clientCode, 0x0, 0x0, OpCodes.Startup) :::
+    val header: List[Byte] = protocolVersion match {
+      case VersionThree => List[Byte](protocolVersion.clientCode, stream, 0x0, 0x0, OpCodes.Startup)
+      case _ => List[Byte](protocolVersion.clientCode, stream, 0x0, OpCodes.Startup)
+    }
+    val bytes =
+      header :::
       List[Byte](0x0, 0x0, 0x0, messageBody.length.toByte) :::
       messageBody
 
