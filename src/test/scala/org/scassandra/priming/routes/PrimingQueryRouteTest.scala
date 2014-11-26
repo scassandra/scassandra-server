@@ -37,7 +37,7 @@ import org.scassandra.priming.query.Prime
 
 class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with PrimingQueryRoute {
   
-  import PrimingJsonImplicits._
+  import org.scassandra.PrimingJsonImplicitsForTest._
 
   implicit def actorRefFactory = system
 

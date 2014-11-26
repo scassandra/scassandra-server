@@ -18,12 +18,12 @@ package org.scassandra.priming
 import org.scalatest.{Matchers, FunSuite}
 import org.scassandra.priming.PrimingJsonImplicits.AnyJsonFormat
 import java.util.UUID
-import spray.json.{JsNumber, JsString}
+import spray.json.{JsNull, JsNumber, JsString}
 import java.net.InetAddress
 
 class AnyJsonFormatTest extends FunSuite with Matchers {
   test("Write None") {
-    AnyJsonFormat.write(None) should equal(JsString("null"))
+    AnyJsonFormat.write(None) should equal(JsNull)
   }
 
   test("Write Some") {
@@ -64,6 +64,6 @@ class AnyJsonFormatTest extends FunSuite with Matchers {
 
   test("Write Float") {
     val toSerialise : Float = 50.0f
-    AnyJsonFormat.write(toSerialise) should equal(JsNumber(toSerialise))
+    AnyJsonFormat.write(toSerialise) should equal(JsString("50.0"))
   }
 }

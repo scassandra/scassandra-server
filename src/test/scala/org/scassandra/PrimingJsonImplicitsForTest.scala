@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.priming
+package org.scassandra
 
-import spray.json._
-import spray.httpx.SprayJsonSupport
-import org.scassandra.cqlmessages.Consistency
-import org.scassandra.priming.query.PrimeCriteria
-import org.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
-import org.scassandra.priming.query.PrimeQuerySingle
-import org.scassandra.priming.query.When
-import org.scassandra.priming.query.Then
-import java.util.UUID
 import java.net.InetAddress
-import org.scassandra.cqlmessages.types.ColumnType
-import org.scassandra.priming.routes.Version
+import java.util.UUID
 
-object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
+import org.scassandra.cqlmessages.Consistency
+import org.scassandra.cqlmessages.types.ColumnType
+import org.scassandra.priming._
+import org.scassandra.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
+import org.scassandra.priming.query.{PrimeCriteria, PrimeQuerySingle, Then, When}
+import org.scassandra.priming.routes.Version
+import spray.httpx.SprayJsonSupport
+import spray.json._
+
+object PrimingJsonImplicitsForTest extends DefaultJsonProtocol with SprayJsonSupport {
 
   implicit object ConsistencyJsonFormat extends RootJsonFormat[Consistency] {
     def write(c: Consistency) = JsString(c.string)
@@ -72,9 +71,8 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
       case list: List[Any] => listFormat[Any].write(list)
       case b: Boolean if b => JsTrue
       case b: Boolean if !b => JsFalse
-      // sending as strings to not lose precision
-      case double: Double => JsString(double.toString)
-      case float: Float => JsString(float.toString)
+      case double: Double => JsNumber(double)
+      case float: Float => JsNumber(float)
       case uuid: UUID => JsString(uuid.toString)
       case bigInt: BigInt => JsNumber(bigInt)
       case bigD: BigDecimal => JsNumber(bigD)
