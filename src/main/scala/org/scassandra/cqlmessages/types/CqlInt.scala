@@ -26,7 +26,7 @@ case object CqlInt extends ColumnType[Int](0x0009, "int") {
     CqlProtocolHelper.readIntValue(byteIterator)
   }
 
-  def writeValue(value: Any) = {
+  def writeValue(value: Any): Array[Byte] = {
     val bs = ByteString.newBuilder
     bs.putInt(4)
     val valueAsInt = value match {

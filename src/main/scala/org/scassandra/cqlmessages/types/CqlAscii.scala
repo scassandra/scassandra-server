@@ -16,6 +16,7 @@
 package org.scassandra.cqlmessages.types
 
 import akka.util.ByteIterator
+import org.apache.cassandra.serializers.{TypeSerializer, AsciiSerializer}
 
 case object CqlAscii extends ColumnType[String](0x0001, "ascii") {
   override def readValue(byteBuffer: ByteIterator): Option[String] = {
@@ -33,4 +34,6 @@ case object CqlAscii extends ColumnType[String](0x0001, "ascii") {
   override def readValueInCollection(byteIterator: ByteIterator): String = {
     CqlVarchar.readValueInCollection(byteIterator)
   }
+
+  override def serializer: TypeSerializer[String] = AsciiSerializer.instance
 }

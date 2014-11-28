@@ -15,20 +15,44 @@
  */
 package org.scassandra.cqlmessages.types
 
+import java.nio.ByteBuffer
+import java.util
+
 import akka.util.ByteIterator
+import org.apache.cassandra.serializers.{ListSerializer, SetSerializer}
+import org.apache.cassandra.utils.ByteBufferUtil
 import org.scassandra.cqlmessages.CqlProtocolHelper
+import org.scassandra.cqlmessages.CqlProtocolHelper._
+import scala.collection.JavaConversions._
+
+import scala.collection.mutable
 
 //todo change this to a types class
-case class CqlList(listType : ColumnType[_]) extends ColumnType[Iterable[_]](0x0020, s"list<${listType.stringRep}>") {
+case class CqlList[T](listType : ColumnType[T]) extends ColumnType[Iterable[_]](0x0020, s"list<${listType.stringRep}>") {
    override def readValue(byteIterator: ByteIterator): Option[Iterable[String]] = {
      CqlProtocolHelper.readVarcharSetValue(byteIterator)
    }
 
-   def writeValue(value: Any) = {
-     if (value.isInstanceOf[Set[_]] || value.isInstanceOf[Seq[_]]) {
-       CqlProtocolHelper.serializeSet(value.asInstanceOf[Iterable[listType.type]], listType)
-     } else {
-       throw new IllegalArgumentException(s"Can't serialise ${value} as List of ${listType}")
-     }
-   }
+  def writeValue(value: Any) : Array[Byte] = {
+    val setSerialiser: ListSerializer[T] = ListSerializer.getInstance(listType.serializer)
+    val list: List[T] = value match {
+      case _: Set[T] =>
+        value.asInstanceOf[Set[T]].toList
+      case _: List[T] =>
+        value.asInstanceOf[List[T]]
+      case _: Seq[T] =>
+        value.asInstanceOf[Seq[T]].toList
+      case _ =>
+        throw new IllegalArgumentException(s"Can't serialise ${value} as List of ${listType}")
+    }
+
+    val serialised: util.List[ByteBuffer] = setSerialiser.serializeValues(list)
+
+    val setContents = serialised.foldLeft(new Array[Byte](0))((acc, byteBuffer) => {
+      val current: mutable.ArrayOps[Byte] = ByteBufferUtil.getArray(byteBuffer)
+      acc ++ serializeShort(current.size.toShort) ++ current
+    })
+
+    serializeInt(setContents.length + 2) ++ serializeShort(list.size.toShort) ++ setContents
+  }
  }

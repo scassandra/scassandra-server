@@ -15,22 +15,33 @@
  */
 package org.scassandra.cqlmessages.types
 
+import java.nio.ByteBuffer
+
 import akka.util.ByteIterator
+import org.apache.cassandra.serializers.{UTF8Serializer, AsciiSerializer, TypeSerializer}
+import org.apache.cassandra.utils.ByteBufferUtil
 import org.scassandra.cqlmessages.CqlProtocolHelper
 
 case object CqlVarchar extends ColumnType[String](0x000D, "varchar") {
    override def readValue(byteIterator: ByteIterator): Option[String] = {
      CqlProtocolHelper.readLongString(byteIterator)
    }
+
    override def writeValue(value : Any) = {
      if (value.isInstanceOf[Iterable[_]] || value.isInstanceOf[Map[_,_]]) throw new IllegalArgumentException(s"Can't serialise ${value} as String")
-     CqlProtocolHelper.serializeLongString(value.toString)
+
+     val serialized = ByteBufferUtil.getArray(serializer.serialize(value.toString))
+     CqlProtocolHelper.serializeInt(serialized.length) ++ serialized
    }
+
    override def writeValueInCollection(value : Any) = {
      CqlProtocolHelper.serializeString(value.toString)
    }
+
    override def readValueInCollection(byteIterator: ByteIterator) : String = {
      //todo handle null
      CqlProtocolHelper.readString(byteIterator)
    }
+
+   override def serializer: TypeSerializer[String] = UTF8Serializer.instance
  }

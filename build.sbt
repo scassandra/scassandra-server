@@ -24,7 +24,8 @@ libraryDependencies ++= Seq(
   "io.spray" % "spray-can" % sprayVersion,
   "io.spray" % "spray-routing" % sprayVersion,
   "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
-  "com.google.guava" % "guava" % "17.0"
+  "com.google.guava" % "guava" % "17.0",
+  "org.apache.cassandra" % "cassandra-clientutil" % "2.1.2"
 )
 
 // Read here for optional dependencies:

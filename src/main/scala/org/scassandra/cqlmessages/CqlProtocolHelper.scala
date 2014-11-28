@@ -18,6 +18,8 @@ package org.scassandra.cqlmessages
 import akka.util.{ByteString, ByteIterator}
 import java.util.UUID
 import java.net.InetAddress
+import org.apache.cassandra.serializers.FloatSerializer
+
 import scala.collection.immutable.IndexedSeq
 import org.scassandra.cqlmessages.types.ColumnType
 
@@ -56,7 +58,7 @@ object CqlProtocolHelper {
   }
 
   def serializeBooleanValue(bool : Boolean) : Array[Byte] = {
-    Array[Byte](0,0,0,1,(if (bool) 1 else 0))
+    Array[Byte](0,0,0,1, if (bool) 1 else 0)
   }
 
   def serializeBigIntValue(value : Long) : Array[Byte] = {
@@ -85,6 +87,9 @@ object CqlProtocolHelper {
   }
 
   def serializeFloatValue(floatValue : Float) : Array[Byte] = {
+
+//    FloatSerializer.instance.serialize(floatValue)
+
     val frameBuilder = ByteString.newBuilder
     frameBuilder.putInt(4)
     frameBuilder.putFloat(floatValue)
@@ -186,7 +191,7 @@ object CqlProtocolHelper {
 
   def readDoubleValue(iterator: ByteIterator) : Option[Double] = {
     val size = iterator.getInt
-    if (size == -1) return None
+    if (size == -1) None
     else Some(iterator.getDouble)
   }
 

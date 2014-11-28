@@ -22,13 +22,14 @@ class CqlSetTest extends FunSuite with Matchers {
 
   test("Serialisation of CqlSet - Varchar") {
     val underTest = CqlSet(CqlVarchar)
-    underTest.writeValue(List()) should equal(Array[Byte](0,0,0,2,0,0))
+    underTest.writeValue(List()) should equal(Array[Byte](0, 0, 0, 2, 0, 0))
+
     underTest.writeValue(List("one", "two", "three")) should equal(Array[Byte](
       0, 0, 0, 19, // number of bytes
-      0, 3,         // number of elements in the set
-      0, 3,   111, 110, 101,  // one
-      0, 3,   116, 119, 111,  // two
-      0, 5,   116, 104, 114, 101, 101 // three
+      0, 3, // number of elements in the set
+      0, 3, 111, 110, 101, // one
+      0, 3, 116, 119, 111, // two
+      0, 5, 116, 104, 114, 101, 101 // three
 
     ))
 
@@ -55,8 +56,36 @@ class CqlSetTest extends FunSuite with Matchers {
     }
   }
 
+  test("Serialisation of CqlSet - Ascii") {
+    val underTest = CqlSet(CqlAscii)
+    underTest.writeValue(List()) should equal(Array[Byte](0, 0, 0, 2, 0, 0))
+
+    underTest.writeValue(List("one", "two", "three")) should equal(Array[Byte](
+      0, 0, 0, 19, // number of bytes
+      0, 3, // number of elements in the set
+      0, 3, 111, 110, 101, // one
+      0, 3, 116, 119, 111, // two
+      0, 5, 116, 104, 114, 101, 101 // three
+
+    ))
+  }
+
+  test("Serialisation of CqlSet - CqlText") {
+    val underTest = CqlSet(CqlText)
+    underTest.writeValue(List()) should equal(Array[Byte](0, 0, 0, 2, 0, 0))
+
+    underTest.writeValue(List("one", "two", "three")) should equal(Array[Byte](
+      0, 0, 0, 19, // number of bytes
+      0, 3, // number of elements in the set
+      0, 3, 111, 110, 101, // one
+      0, 3, 116, 119, 111, // two
+      0, 5, 116, 104, 114, 101, 101 // three
+
+    ))
+  }
+
   test("Reading null") {
-    val bytes = ByteString(Array[Byte](-1,-1,-1,-1))
+    val bytes = ByteString(Array[Byte](-1, -1, -1, -1))
     val deserialisedValue = CqlSet(CqlVarchar).readValue(bytes.iterator)
 
     deserialisedValue should equal(None)

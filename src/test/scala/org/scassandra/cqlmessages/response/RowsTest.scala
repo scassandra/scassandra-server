@@ -316,7 +316,7 @@ class RowsTest extends FunSuite with Matchers {
 
  test("Serialization of Set of varchars column type") {
     val varcharSet = Set("one","two")
-    val setOfVarcharType: CqlSet = CqlSet(CqlVarchar)
+    val setOfVarcharType: CqlSet[String] = CqlSet(CqlVarchar)
     val columnNames = Map("field" -> setOfVarcharType)
     val rows: List[Row] = List(Row(Map("field" -> varcharSet)))
     val rowsBytes = Rows("keyspaceName", "tableName", stream, columnNames, rows).serialize().iterator

@@ -23,7 +23,7 @@ case object CqlFloat extends ColumnType[Float](0x0008, "float") {
      CqlProtocolHelper.readFloatValue(byteIterator)
    }
 
-   def writeValue(value: Any) = {
+   def writeValue(value: Any): Array[Byte] = {
      CqlProtocolHelper.serializeFloatValue(value.toString.toFloat)
    }
  }
