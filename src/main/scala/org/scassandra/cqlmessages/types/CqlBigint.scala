@@ -16,14 +16,24 @@
 package org.scassandra.cqlmessages.types
 
 import akka.util.ByteIterator
+import org.apache.cassandra.serializers.{LongSerializer, TypeSerializer}
 import org.scassandra.cqlmessages.CqlProtocolHelper
 
-case object CqlBigint extends ColumnType[Long](0x0002, "bigint") {
+case object CqlBigint extends ColumnType[java.lang.Long](0x0002, "bigint") {
    override def readValue(byteIterator: ByteIterator) = {
-     CqlProtocolHelper.readBigIntValue(byteIterator)
+     CqlProtocolHelper.readBigIntValue(byteIterator).map(new java.lang.Long(_))
    }
 
    override def writeValue(value: Any) = {
      CqlProtocolHelper.serializeBigIntValue(value.toString.toLong)
    }
+
+  override def convertToCorrectCollectionType(list: List[_]) : List[java.lang.Long] = {
+    list.map {
+      case bd: BigDecimal => new java.lang.Long(bd.toLong)
+      case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
+    }
+  }
+
+  override def serializer: TypeSerializer[java.lang.Long] = LongSerializer.instance
  }

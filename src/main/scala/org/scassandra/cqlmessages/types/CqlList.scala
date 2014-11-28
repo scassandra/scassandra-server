@@ -19,7 +19,7 @@ import java.nio.ByteBuffer
 import java.util
 
 import akka.util.ByteIterator
-import org.apache.cassandra.serializers.{ListSerializer, SetSerializer}
+import org.apache.cassandra.serializers.{ListSerializer}
 import org.apache.cassandra.utils.ByteBufferUtil
 import org.scassandra.cqlmessages.CqlProtocolHelper
 import org.scassandra.cqlmessages.CqlProtocolHelper._
@@ -46,7 +46,9 @@ case class CqlList[T](listType : ColumnType[T]) extends ColumnType[Iterable[_]](
         throw new IllegalArgumentException(s"Can't serialise ${value} as List of ${listType}")
     }
 
-    val serialised: util.List[ByteBuffer] = setSerialiser.serializeValues(list)
+    val collectionType: util.List[T] = listType.convertToCorrectCollectionType(list)
+
+    val serialised: util.List[ByteBuffer] = setSerialiser.serializeValues(collectionType)
 
     val setContents = serialised.foldLeft(new Array[Byte](0))((acc, byteBuffer) => {
       val current: mutable.ArrayOps[Byte] = ByteBufferUtil.getArray(byteBuffer)

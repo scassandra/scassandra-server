@@ -25,6 +25,7 @@ abstract class ColumnType[T](val code : Short, val stringRep: String) extends Lo
   def writeValueInCollection(value: Any) : Array[Byte] = ???
   def readValueInCollection(byteIterator: ByteIterator) : T = ???
   def serializer: TypeSerializer[T] = ???
+  def convertToCorrectCollectionType(list: List[_]) : List[T] = ???
 }
 
 object ColumnType {
@@ -54,6 +55,11 @@ object ColumnType {
     "list<varchar>" -> CqlList(CqlVarchar),
     "list<ascii>" -> CqlList(CqlAscii),
     "list<text>" -> CqlList(CqlText),
+    "list<int>" -> CqlList(CqlInt),
+    "list<bigint>" -> CqlList(CqlBigint),
+    "list<boolean>" -> CqlList(CqlBoolean),
+    "list<counter>" -> CqlList(CqlCounter),
+    "list<decimal>" -> CqlList(CqlDecimal),
     "map<varchar,varchar>" -> CqlMap(CqlVarchar, CqlVarchar),
     "map<varchar,text>" -> CqlMap(CqlVarchar, CqlText),
     "map<varchar,ascii>" -> CqlMap(CqlVarchar, CqlAscii),

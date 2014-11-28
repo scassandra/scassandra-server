@@ -15,6 +15,7 @@
  */
 package org.scassandra.priming
 
+import com.typesafe.scalalogging.slf4j.Logging
 import spray.json._
 import spray.httpx.SprayJsonSupport
 import org.scassandra.cqlmessages.Consistency
@@ -28,7 +29,7 @@ import java.net.InetAddress
 import org.scassandra.cqlmessages.types.ColumnType
 import org.scassandra.priming.routes.Version
 
-object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
+object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport with Logging {
 
   implicit object ConsistencyJsonFormat extends RootJsonFormat[Consistency] {
     def write(c: Consistency) = JsString(c.string)
@@ -45,7 +46,10 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport {
     def read(value: JsValue) = value match {
       case JsString(string) => ColumnType.fromString(string) match {
         case Some(columnType) => columnType
-        case None => throw new IllegalArgumentException("Not a valid column type " + value)
+        case None => {
+          logger.warn(s"Received invalid column type $string")
+          throw new IllegalArgumentException("Not a valid column type " + string)
+        }
       }
       case _ => throw new IllegalArgumentException("Expected ColumnType as JsString")
     }

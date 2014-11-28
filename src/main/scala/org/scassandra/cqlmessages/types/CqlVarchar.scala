@@ -43,5 +43,9 @@ case object CqlVarchar extends ColumnType[String](0x000D, "varchar") {
      CqlProtocolHelper.readString(byteIterator)
    }
 
+  override def convertToCorrectCollectionType(list: List[_]) : List[String] = {
+    list.map(_.toString)
+  }
+
    override def serializer: TypeSerializer[String] = UTF8Serializer.instance
  }

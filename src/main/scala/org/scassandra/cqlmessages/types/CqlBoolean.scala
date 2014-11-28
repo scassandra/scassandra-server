@@ -15,15 +15,27 @@
  */
 package org.scassandra.cqlmessages.types
 
+import java.lang
+
 import akka.util.ByteIterator
+import org.apache.cassandra.serializers.{BooleanSerializer, TypeSerializer}
 import org.scassandra.cqlmessages.CqlProtocolHelper
 
-case object CqlBoolean extends ColumnType[Boolean](0x0004, "boolean") {
-   override def readValue(byteIterator: ByteIterator): Option[Boolean] = {
-     CqlProtocolHelper.readBooleanValue(byteIterator)
+case object CqlBoolean extends ColumnType[java.lang.Boolean](0x0004, "boolean") {
+   override def readValue(byteIterator: ByteIterator): Option[java.lang.Boolean] = {
+     CqlProtocolHelper.readBooleanValue(byteIterator).map(new lang.Boolean(_))
    }
 
    def writeValue(value: Any) = {
      CqlProtocolHelper.serializeBooleanValue(value.toString.toBoolean)
    }
+
+  override def convertToCorrectCollectionType(list: List[_]) : List[java.lang.Boolean] = {
+    list.map {
+      case bd: Boolean => new lang.Boolean(bd)
+      case _ => throw new IllegalArgumentException("Expected list of Booleans")
+    }
+  }
+
+  override def serializer: TypeSerializer[java.lang.Boolean] = BooleanSerializer.instance
  }

@@ -34,7 +34,7 @@ class PrimeQueryStore extends Logging {
   def getAllPrimes: Map[PrimeCriteria, Prime] = queryPrimes
 
   def add(criteria: PrimeCriteria, prime: Prime): PrimeAddResult = {
-    logger.info(s"Adding prime with criteria ${criteria} and prime result ${prime}")
+    logger.info(s"Adding prime with criteria $criteria and prime result $prime")
 
     validator.validate(criteria, prime, queryPrimes) match {
       case PrimeAddSuccess => {

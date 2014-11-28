@@ -51,7 +51,7 @@ trait PrimingQueryRoute extends HttpService with Logging {
             entity(as[PrimeQuerySingle]) {
               primeRequest => {
                 complete {
-                  logger.debug(s"Received prime request ${primeRequest}")
+                  logger.debug(s"Received prime request $primeRequest")
                   val primeCriteriaTry = PrimeQueryResultExtractor.extractPrimeCriteria(primeRequest)
 
                   primeCriteriaTry match {
@@ -60,12 +60,20 @@ trait PrimingQueryRoute extends HttpService with Logging {
                       val primeResult = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
 
                       primeQueryStore.add(primeCriteria, primeResult) match {
-                        case cp: ConflictingPrimes => StatusCodes.BadRequest -> cp
-                        case tm: TypeMismatches => StatusCodes.BadRequest -> tm
+                        case cp: ConflictingPrimes => {
+                          logger.warn(s"Received invalid prime due to conflicting primes $cp")
+                          StatusCodes.BadRequest -> cp
+                        }
+                        case tm: TypeMismatches => {
+                          logger.warn(s"Received invalid prime due to type mismatch $tm")
+                          StatusCodes.BadRequest -> tm
+                        }
                         case _ => StatusCodes.OK
                       }
-                    case Failure(_) =>
+                    case failure @ Failure(_) => {
+                      logger.warn(s"Received invalid prime $failure")
                       StatusCodes.BadRequest
+                    }
                   }
                 }
               }
