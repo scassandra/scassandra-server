@@ -1,5 +1,6 @@
 package org.scassandra.e2e.query
 
+import java.net.InetAddress
 import java.util
 
 import com.datastax.driver.core.DataType
@@ -58,7 +59,7 @@ class ListPriming extends AbstractIntegrationTest {
     singleRow.getList("field", Class.forName("java.lang.String")) should equal(expectedList)
   }
 
-  test("Test a list of ints") {
+  test("Test a list of int") {
     val list = List(1, 2, 3)
     val whenQuery = "Test prime with cql list"
     val rows: List[Map[String, Any]] = List(Map("field" -> list))
@@ -138,11 +139,54 @@ class ListPriming extends AbstractIntegrationTest {
     singleRow.getList("field", Class.forName("java.math.BigDecimal")) should equal(expectedList)
   }
 
-  //todo double
-  //todo float
-  //todo inet
-  //todo int
-  //todo text
+  test("Test a list of double") {
+    val list = List(1.0, 2.0, 3.0)
+    val whenQuery = "Test prime with cql list"
+    val rows: List[Map[String, Any]] = List(Map("field" -> list))
+    val columnTypes  = Map("field" -> CqlList(CqlDouble))
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val singleRow = result.one()
+    singleRow.getColumnDefinitions.getType("field") should equal(DataType.list(DataType.cdouble()))
+
+    val expectedList = util.Arrays.asList(1.0, 2.0, 3.0)
+    singleRow.getList("field", Class.forName("java.lang.Double")) should equal(expectedList)
+  }
+
+  test("Test a list of float") {
+    val list = List(1.0f, 2.0f, 3.0f)
+    val whenQuery = "Test prime with cql list"
+    val rows: List[Map[String, Any]] = List(Map("field" -> list))
+    val columnTypes  = Map("field" -> CqlList(CqlFloat))
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val singleRow = result.one()
+    singleRow.getColumnDefinitions.getType("field") should equal(DataType.list(DataType.cfloat()))
+
+    val expectedList = util.Arrays.asList(1.0f, 2.0f, 3.0f)
+    singleRow.getList("field", Class.forName("java.lang.Float")) should equal(expectedList)
+  }
+
+  test("Test a list of inet") {
+    val list = List(InetAddress.getLocalHost)
+    val whenQuery = "Test prime with cql list"
+    val rows: List[Map[String, Any]] = List(Map("field" -> list))
+    val columnTypes  = Map("field" -> CqlList(CqlInet))
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val singleRow = result.one()
+    singleRow.getColumnDefinitions.getType("field") should equal(DataType.list(DataType.inet()))
+
+    val expectedList = util.Arrays.asList(InetAddress.getLocalHost)
+    singleRow.getList("field", Class.forName("java.net.InetAddress")) should equal(expectedList)
+  }
+
   //todo timestamp
   //todo uuid
   //todo timeuuid

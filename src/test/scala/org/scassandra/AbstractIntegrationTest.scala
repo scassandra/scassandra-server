@@ -28,7 +28,7 @@ import org.scassandra.cqlmessages.types.ColumnType
 
 object PrimingHelper {
 
-  import org.scassandra.priming.PrimingJsonImplicits._
+  import PrimingJsonImplicitsForTest._
 
   def primeQuery(when: When, rows: List[Map[String, Any]], result: Result = Success, columnTypes: Map[String, ColumnType[_]] = Map()): String = {
     primeQuery(when, Then(Some(rows), Some(result), Some(columnTypes)))

@@ -15,15 +15,27 @@
  */
 package org.scassandra.cqlmessages.types
 
+import java.lang
+
 import akka.util.ByteIterator
+import org.apache.cassandra.serializers.{DoubleSerializer, TypeSerializer}
 import org.scassandra.cqlmessages.CqlProtocolHelper
 
-case object CqlDouble extends ColumnType[Double](0x0007, "double") {
-   override def readValue(byteIterator: ByteIterator): Option[Double] = {
-     CqlProtocolHelper.readDoubleValue(byteIterator)
+case object CqlDouble extends ColumnType[java.lang.Double](0x0007, "double") {
+   override def readValue(byteIterator: ByteIterator): Option[java.lang.Double] = {
+     CqlProtocolHelper.readDoubleValue(byteIterator).map(new lang.Double(_))
    }
 
    def writeValue( value: Any) = {
      CqlProtocolHelper.serializeDoubleValue(value.toString.toDouble)
    }
+
+  override def convertToCorrectCollectionType(list: List[_]) : List[java.lang.Double] = {
+    list.map {
+      case bd: BigDecimal => new java.lang.Double(bd.toDouble)
+      case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
+    }
+  }
+
+  override def serializer: TypeSerializer[java.lang.Double] = DoubleSerializer.instance
  }
