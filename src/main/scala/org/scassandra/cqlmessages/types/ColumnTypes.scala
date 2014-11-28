@@ -63,6 +63,7 @@ object ColumnType {
     "list<double>" -> CqlList(CqlDouble),
     "list<float>" -> CqlList(CqlFloat),
     "list<inet>" -> CqlList(CqlInet),
+    "list<timestamp>" -> CqlList(CqlTimestamp),
     "map<varchar,varchar>" -> CqlMap(CqlVarchar, CqlVarchar),
     "map<varchar,text>" -> CqlMap(CqlVarchar, CqlText),
     "map<varchar,ascii>" -> CqlMap(CqlVarchar, CqlAscii),

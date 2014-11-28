@@ -15,15 +15,29 @@
  */
 package org.scassandra.cqlmessages.types
 
+import java.lang
+
 import akka.util.ByteIterator
+import org.apache.cassandra.serializers.{LongSerializer, TypeSerializer}
 import org.scassandra.cqlmessages.CqlProtocolHelper
 
-case object CqlTimestamp extends ColumnType[Long](0x000B, "timestamp") {
-  override def readValue(byteIterator: ByteIterator): Option[Long] = {
-    CqlProtocolHelper.readTimestampValue(byteIterator)
+case object CqlTimestamp extends ColumnType[java.lang.Long](0x000B, "timestamp") {
+
+  override def readValue(byteIterator: ByteIterator): Option[lang.Long] = {
+    CqlProtocolHelper.readBigIntValue(byteIterator).map(new java.lang.Long(_))
   }
 
   def writeValue( value: Any) = {
     CqlProtocolHelper.serializeTimestampValue(value.toString.toLong)
   }
+
+  override def convertToCorrectCollectionType(list: List[_]) : List[java.lang.Long] = {
+    list.map {
+      case bd: BigDecimal => new java.lang.Long(bd.toLong)
+      case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
+    }
+  }
+
+  override def serializer: TypeSerializer[java.lang.Long] = LongSerializer.instance
+
 }

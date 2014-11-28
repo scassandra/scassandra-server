@@ -15,12 +15,14 @@
  */
 package org.scassandra.cqlmessages.types
 
+import java.lang
+
 import akka.util.ByteIterator
 import org.apache.cassandra.serializers.{LongSerializer, TypeSerializer}
 import org.scassandra.cqlmessages.CqlProtocolHelper
 
 case object CqlBigint extends ColumnType[java.lang.Long](0x0002, "bigint") {
-   override def readValue(byteIterator: ByteIterator) = {
+   override def readValue(byteIterator: ByteIterator): Option[lang.Long] = {
      CqlProtocolHelper.readBigIntValue(byteIterator).map(new java.lang.Long(_))
    }
 

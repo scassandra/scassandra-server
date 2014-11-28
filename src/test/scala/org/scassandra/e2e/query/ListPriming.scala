@@ -2,6 +2,7 @@ package org.scassandra.e2e.query
 
 import java.net.InetAddress
 import java.util
+import java.util.Date
 
 import com.datastax.driver.core.DataType
 import org.scassandra.AbstractIntegrationTest
@@ -187,10 +188,25 @@ class ListPriming extends AbstractIntegrationTest {
     singleRow.getList("field", Class.forName("java.net.InetAddress")) should equal(expectedList)
   }
 
-  //todo timestamp
+  test("Test a list of date") {
+    val date = new Date
+    val list = List(date.getTime)
+    val whenQuery = "Test prime with cql list"
+    val rows: List[Map[String, Any]] = List(Map("field" -> list))
+    val columnTypes  = Map("field" -> CqlList(CqlTimestamp))
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val singleRow = result.one()
+    singleRow.getColumnDefinitions.getType("field") should equal(DataType.list(DataType.timestamp()))
+
+    val expectedList = util.Arrays.asList(date)
+    singleRow.getList("field", Class.forName("java.util.Date")) should equal(expectedList)
+  }
+
   //todo uuid
   //todo timeuuid
   //todo varint
   //todo blob
-
 }
