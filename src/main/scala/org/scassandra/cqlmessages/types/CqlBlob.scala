@@ -16,17 +16,18 @@
 package org.scassandra.cqlmessages.types
 
 import akka.util.{ByteString, ByteIterator}
+import org.apache.cassandra.serializers.{TypeSerializer}
 import org.scassandra.cqlmessages.CqlProtocolHelper
 
 case object CqlBlob extends ColumnType[Array[Byte]](0x0003, "blob") {
 
   import CqlProtocolHelper._
 
-   override def readValue(byteIterator: ByteIterator) = {
+   override def readValue(byteIterator: ByteIterator): Option[Array[Byte]] = {
      CqlProtocolHelper.readBlobValue(byteIterator)
    }
 
-   override def writeValue(value: Any) = {
+   override def writeValue(value: Any): Array[Byte] = {
      val bs = ByteString.newBuilder
      val array = hex2Bytes(value.toString)
      bs.putInt(array.length)
@@ -44,4 +45,14 @@ case object CqlBlob extends ColumnType[Array[Byte]](0x0003, "blob") {
        case s : Exception => throw new IllegalArgumentException(s"Not valid hex $hex")
      }
    }
+
+  override def convertToCorrectCollectionType(list: List[_]) : List[Array[Byte]] = {
+    list.map {
+      case array: Array[Byte] => array
+      case string: String => hex2Bytes(string)
+      case _ => throw new IllegalArgumentException("Expected byte array")
+    }
+  }
+
+  override def serializer: TypeSerializer[Array[Byte]] = CustomBytesSerializer.instance
  }

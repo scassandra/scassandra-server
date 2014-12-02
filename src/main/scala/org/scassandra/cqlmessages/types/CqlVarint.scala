@@ -15,15 +15,30 @@
  */
 package org.scassandra.cqlmessages.types
 
+import java.math.BigInteger
+
 import akka.util.ByteIterator
+import org.apache.cassandra.serializers.{IntegerSerializer, TypeSerializer}
 import org.scassandra.cqlmessages.CqlProtocolHelper
 
-case object CqlVarint extends ColumnType[BigInt](0x000E, "varint") {
-   override def readValue(byteIterator: ByteIterator): Option[BigInt] = {
-     CqlProtocolHelper.readVarintValue(byteIterator)
+case object CqlVarint extends ColumnType[BigInteger](0x000E, "varint") {
+   override def readValue(byteIterator: ByteIterator): Option[BigInteger] = {
+     CqlProtocolHelper.readVarintValue(byteIterator).map(_.bigInteger)
    }
 
-   def writeValue( value: Any) = {
+   def writeValue( value: Any): Array[Byte] = {
      CqlProtocolHelper.serializeVarintValue(BigInt(value.toString))
    }
+
+  override def convertToCorrectCollectionType(list: List[_]) : List[BigInteger] = {
+    list.map {
+      case bd: String => new BigInteger(bd)
+      case bigInt: BigInteger => bigInt
+      case bd: BigDecimal => bd.toBigInt().bigInteger
+      case bigInt: BigInt => bigInt.bigInteger
+      case _ => throw new IllegalArgumentException("Expected string representing an BigInteger")
+    }
+  }
+
+  override def serializer: TypeSerializer[BigInteger] = IntegerSerializer.instance
  }

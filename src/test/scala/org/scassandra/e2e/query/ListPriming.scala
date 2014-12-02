@@ -1,10 +1,13 @@
 package org.scassandra.e2e.query
 
+import java.math.BigInteger
 import java.net.InetAddress
+import java.nio.ByteBuffer
 import java.util
-import java.util.Date
+import java.util.{UUID, Date}
 
 import com.datastax.driver.core.DataType
+import org.apache.cassandra.utils.ByteBufferUtil
 import org.scassandra.AbstractIntegrationTest
 import org.scassandra.cqlmessages.types._
 import org.scassandra.priming.Success
@@ -205,8 +208,70 @@ class ListPriming extends AbstractIntegrationTest {
     singleRow.getList("field", Class.forName("java.util.Date")) should equal(expectedList)
   }
 
-  //todo uuid
-  //todo timeuuid
-  //todo varint
-  //todo blob
+  test("Test a list of uuid") {
+    val uuid = UUID.randomUUID()
+    val list = List(uuid)
+    val whenQuery = "Test prime with cql list"
+    val rows: List[Map[String, Any]] = List(Map("field" -> list))
+    val columnTypes  = Map("field" -> CqlList(CqlUUID))
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val singleRow = result.one()
+    singleRow.getColumnDefinitions.getType("field") should equal(DataType.list(DataType.uuid()))
+
+    val expectedList = util.Arrays.asList(uuid)
+    singleRow.getList("field", Class.forName("java.util.UUID")) should equal(expectedList)
+  }
+
+  test("Test a list of timeuuid") {
+    val uuid = UUID.fromString("1c0e8c70-754b-11e4-ac06-4b05b98cc84c")
+    val list = List(uuid)
+    val whenQuery = "Test prime with cql list"
+    val rows: List[Map[String, Any]] = List(Map("field" -> list))
+    val columnTypes  = Map("field" -> CqlList(CqlTimeUUID))
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val singleRow = result.one()
+    singleRow.getColumnDefinitions.getType("field") should equal(DataType.list(DataType.timeuuid()))
+
+    val expectedList = util.Arrays.asList(uuid)
+    singleRow.getList("field", Class.forName("java.util.UUID")) should equal(expectedList)
+  }
+
+  test("Test a list of varint") {
+    val list = List(BigInt("1"), BigInt("2"), BigInt("3"))
+    val whenQuery = "Test prime with cql list"
+    val rows: List[Map[String, Any]] = List(Map("field" -> list))
+    val columnTypes  = Map("field" -> CqlList(CqlVarint))
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val singleRow = result.one()
+    singleRow.getColumnDefinitions.getType("field") should equal(DataType.list(DataType.varint()))
+
+    val expectedList = util.Arrays.asList(new BigInteger("1"), new BigInteger("2"), new BigInteger("3"))
+    singleRow.getList("field", Class.forName("java.math.BigInteger")) should equal(expectedList)
+  }
+
+  test("Test a list of blob") {
+    val blob = Array[Byte](1,2,3,4,5)
+    val list = List(blob, blob)
+    val whenQuery = "Test prime with cql list"
+    val rows: List[Map[String, Any]] = List(Map("field" -> list))
+    val columnTypes  = Map("field" -> CqlList(CqlBlob))
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val singleRow = result.one()
+    singleRow.getColumnDefinitions.getType("field") should equal(DataType.list(DataType.blob()))
+
+    val expectedList = util.Arrays.asList(ByteBuffer.wrap(blob), ByteBuffer.wrap(blob))
+    singleRow.getList("field", Class.forName("java.nio.ByteBuffer")) should equal(expectedList)
+  }
 }
