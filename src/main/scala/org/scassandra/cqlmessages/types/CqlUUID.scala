@@ -29,12 +29,12 @@ case object CqlUUID extends ColumnType[UUID](0x000C, "uuid") {
      CqlProtocolHelper.serializeUUIDValue(UUID.fromString(value.toString))
    }
 
-  override def convertToCorrectCollectionType(list: List[_]) : List[UUID] = {
+  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[UUID] = {
     list.map {
       case bd: String => UUID.fromString(bd)
       case uuid: UUID => uuid
       case _ => throw new IllegalArgumentException("Expected string representing an uuid")
-    }
+    }.toList
   }
 
   override def serializer: TypeSerializer[UUID] = CustomUUIDSerializer.instance

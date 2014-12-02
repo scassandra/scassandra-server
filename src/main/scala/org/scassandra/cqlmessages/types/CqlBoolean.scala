@@ -30,11 +30,11 @@ case object CqlBoolean extends ColumnType[java.lang.Boolean](0x0004, "boolean") 
      CqlProtocolHelper.serializeBooleanValue(value.toString.toBoolean)
    }
 
-  override def convertToCorrectCollectionType(list: List[_]) : List[java.lang.Boolean] = {
+  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[java.lang.Boolean] = {
     list.map {
       case bd: Boolean => new lang.Boolean(bd)
       case _ => throw new IllegalArgumentException("Expected list of Booleans")
-    }
+    }.toList
   }
 
   override def serializer: TypeSerializer[java.lang.Boolean] = BooleanSerializer.instance

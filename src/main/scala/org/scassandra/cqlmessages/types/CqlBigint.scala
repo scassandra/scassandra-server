@@ -30,11 +30,11 @@ case object CqlBigint extends ColumnType[java.lang.Long](0x0002, "bigint") {
      CqlProtocolHelper.serializeBigIntValue(value.toString.toLong)
    }
 
-  override def convertToCorrectCollectionType(list: List[_]) : List[java.lang.Long] = {
+  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[java.lang.Long] = {
     list.map {
       case bd: BigDecimal => new java.lang.Long(bd.toLong)
       case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
-    }
+    }.toList
   }
 
   override def serializer: TypeSerializer[java.lang.Long] = LongSerializer.instance

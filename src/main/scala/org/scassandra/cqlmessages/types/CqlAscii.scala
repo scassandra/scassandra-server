@@ -35,8 +35,8 @@ case object CqlAscii extends ColumnType[String](0x0001, "ascii") {
     CqlVarchar.readValueInCollection(byteIterator)
   }
 
-  override def convertToCorrectCollectionType(list: List[_]) : List[String] = {
-    list.map(_.toString)
+  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[String] = {
+    list.map(_.toString).toList
   }
 
   override def serializer: TypeSerializer[String] = AsciiSerializer.instance

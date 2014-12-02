@@ -30,11 +30,11 @@ case object CqlFloat extends ColumnType[java.lang.Float](0x0008, "float") {
      CqlProtocolHelper.serializeFloatValue(value.toString.toFloat)
    }
 
-  override def convertToCorrectCollectionType(list: List[_]) : List[java.lang.Float] = {
+  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[java.lang.Float] = {
     list.map {
       case bd: BigDecimal => new java.lang.Float(bd.toFloat)
       case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
-    }
+    }.toList
   }
 
   override def serializer: TypeSerializer[java.lang.Float] = FloatSerializer.instance

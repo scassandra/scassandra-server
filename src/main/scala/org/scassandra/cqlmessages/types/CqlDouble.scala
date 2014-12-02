@@ -30,11 +30,11 @@ case object CqlDouble extends ColumnType[java.lang.Double](0x0007, "double") {
      CqlProtocolHelper.serializeDoubleValue(value.toString.toDouble)
    }
 
-  override def convertToCorrectCollectionType(list: List[_]) : List[java.lang.Double] = {
+  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[java.lang.Double] = {
     list.map {
       case bd: BigDecimal => new java.lang.Double(bd.toDouble)
       case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
-    }
+    }.toList
   }
 
   override def serializer: TypeSerializer[java.lang.Double] = DoubleSerializer.instance

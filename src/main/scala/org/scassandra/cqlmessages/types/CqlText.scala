@@ -35,8 +35,8 @@ case object CqlText extends ColumnType[String](0x000A, "text") {
      CqlVarchar.readValueInCollection(byteIterator)
    }
 
-  override def convertToCorrectCollectionType(list: List[_]) : List[String] = {
-    list.map(_.toString)
+  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[String] = {
+    list.map(_.toString).toList
   }
 
   override def serializer: TypeSerializer[String] = UTF8Serializer.instance

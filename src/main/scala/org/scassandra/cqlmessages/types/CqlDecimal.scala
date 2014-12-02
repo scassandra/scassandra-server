@@ -28,11 +28,11 @@ case object CqlDecimal extends ColumnType[java.math.BigDecimal](0x0006, "decimal
      CqlProtocolHelper.serializeDecimalValue(new java.math.BigDecimal(value.toString))
    }
 
-  override def convertToCorrectCollectionType(list: List[_]) : List[java.math.BigDecimal] = {
+  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[java.math.BigDecimal] = {
     list.map {
       case bd: BigDecimal => bd.bigDecimal
       case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
-    }
+    }.toList
   }
 
   override def serializer: TypeSerializer[java.math.BigDecimal] = DecimalSerializer.instance

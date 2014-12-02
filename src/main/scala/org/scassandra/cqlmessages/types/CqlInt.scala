@@ -28,11 +28,11 @@ case object CqlInt extends ColumnType[Integer](0x0009, "int") {
     CqlProtocolHelper.readIntValue(byteIterator).map(_.toInt)
   }
 
-  override def convertToCorrectCollectionType(list: List[_]) : List[Integer] = {
+  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[Integer] = {
     list.map {
       case bd: BigDecimal => new Integer(bd.toInt)
       case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
-    }
+    }.toList
   }
 
   def writeValue(value: Any): Array[Byte] = {

@@ -30,12 +30,12 @@ case object CqlInet extends ColumnType[InetAddress](0x0010, "inet") {
     CqlProtocolHelper.serializeInetValue(InetAddresses.forString(value.toString))
   }
 
-  override def convertToCorrectCollectionType(list: List[_]) : List[InetAddress] = {
+  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[InetAddress] = {
     list.map {
       case bd: String => InetAddress.getByName(bd)
       case inet: InetAddress => inet
       case _ => throw new IllegalArgumentException("Expected string representing an inet address")
-    }
+    }.toList
   }
 
   override def serializer: TypeSerializer[InetAddress] = InetAddressSerializer.instance

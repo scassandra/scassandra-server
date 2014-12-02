@@ -25,7 +25,8 @@ abstract class ColumnType[T](val code : Short, val stringRep: String) extends Lo
   def writeValueInCollection(value: Any) : Array[Byte] = ???
   def readValueInCollection(byteIterator: ByteIterator) : T = ???
   def serializer: TypeSerializer[T] = ???
-  def convertToCorrectCollectionType(list: List[_]) : List[T] = ???
+  def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[T] = ???
+  def convertToCorrectCollectionTypeForSet(set: Iterable[_]) : Set[T] = convertToCorrectCollectionTypeForList(set).toSet
 }
 
 object ColumnType {
@@ -51,6 +52,19 @@ object ColumnType {
     "set<varchar>" -> CqlSet(CqlVarchar),
     "set<ascii>" -> CqlSet(CqlAscii),
     "set<text>" -> CqlSet(CqlText),
+    "set<int>" -> CqlSet(CqlInt),
+    "set<bigint>" -> CqlSet(CqlBigint),
+    "set<boolean>" -> CqlSet(CqlBoolean),
+    "set<counter>" -> CqlSet(CqlCounter),
+    "set<decimal>" -> CqlSet(CqlDecimal),
+    "set<double>" -> CqlSet(CqlDouble),
+    "set<float>" -> CqlSet(CqlFloat),
+    "set<inet>" -> CqlSet(CqlInet),
+    "set<timestamp>" -> CqlSet(CqlTimestamp),
+    "set<uuid>" -> CqlSet(CqlUUID),
+    "set<timeuuid>" -> CqlSet(CqlTimeUUID),
+    "set<varint>" -> CqlSet(CqlVarint),
+    "set<blob>" -> CqlSet(CqlBlob),
     "list" -> CqlList(CqlVarchar),
     "list<varchar>" -> CqlList(CqlVarchar),
     "list<ascii>" -> CqlList(CqlAscii),

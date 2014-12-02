@@ -30,14 +30,14 @@ case object CqlVarint extends ColumnType[BigInteger](0x000E, "varint") {
      CqlProtocolHelper.serializeVarintValue(BigInt(value.toString))
    }
 
-  override def convertToCorrectCollectionType(list: List[_]) : List[BigInteger] = {
+  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[BigInteger] = {
     list.map {
       case bd: String => new BigInteger(bd)
       case bigInt: BigInteger => bigInt
       case bd: BigDecimal => bd.toBigInt().bigInteger
       case bigInt: BigInt => bigInt.bigInteger
       case _ => throw new IllegalArgumentException("Expected string representing an BigInteger")
-    }
+    }.toList
   }
 
   override def serializer: TypeSerializer[BigInteger] = IntegerSerializer.instance

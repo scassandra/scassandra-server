@@ -46,7 +46,7 @@ case class CqlList[T](listType : ColumnType[T]) extends ColumnType[Iterable[_]](
         throw new IllegalArgumentException(s"Can't serialise ${value} as List of ${listType}")
     }
 
-    val collectionType: util.List[T] = listType.convertToCorrectCollectionType(list)
+    val collectionType: util.List[T] = listType.convertToCorrectCollectionTypeForList(list)
 
     val serialised: util.List[ByteBuffer] = setSerialiser.serializeValues(collectionType)
 
