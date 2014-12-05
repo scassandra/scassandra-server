@@ -35,6 +35,7 @@ object ExecuteRequest {
   }
 
   def versionTwoWithTypes(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]) : ExecuteRequestV2 = {
+    
     val bodyIterator: ByteIterator = byteString.iterator
     // length of the id - this is a short
     bodyIterator.drop(2)

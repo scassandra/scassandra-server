@@ -15,6 +15,8 @@
  */
 package org.scassandra.priming
 
+import java.math.BigInteger
+
 import com.typesafe.scalalogging.slf4j.Logging
 import spray.json._
 import spray.httpx.SprayJsonSupport
@@ -81,6 +83,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
       case float: Float => JsString(float.toString)
       case uuid: UUID => JsString(uuid.toString)
       case bigInt: BigInt => JsNumber(bigInt)
+      case bigInt: BigInteger => JsNumber(bigInt)
       case bigD: BigDecimal => JsNumber(bigD)
       case bigD: java.math.BigDecimal => JsNumber(bigD)
       case inet: InetAddress => JsString(inet.getHostAddress)

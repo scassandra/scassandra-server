@@ -30,8 +30,8 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
   import CqlProtocolHelper._
 
-  var preparedStatementId : Int = 1
-  var preparedStatementsToId : Map[Int, String] = Map()
+  var preparedStatementId: Int = 1
+  var preparedStatementsToId: Map[Int, String] = Map()
 
   def receive: Actor.Receive = {
     case PrepareHandlerMessages.Prepare(body, stream, msgFactory, connection) => {
@@ -69,19 +69,19 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
             if (executeRequest.numberOfVariables == preparedPrime.variableTypes.size) {
               val executeRequestParsedWithVariables = msgFactory.parseExecuteRequestWithVariables(stream, body, preparedPrime.variableTypes)
               activityLog.recordPreparedStatementExecution(preparedStatementText, executeRequestParsedWithVariables.consistency, executeRequestParsedWithVariables.variables)
-           } else {
-             activityLog.recordPreparedStatementExecution(preparedStatementText, executeRequest.consistency, List())
-             logger.warn(s"Execution of prepared statement has a different number of variables to the prime. Number of variables in message ${executeRequest.numberOfVariables}. Variables won't be recorded. $preparedPrime")
-           }
+            } else {
+              activityLog.recordPreparedStatementExecution(preparedStatementText, executeRequest.consistency, List())
+              logger.warn(s"Execution of prepared statement has a different number of variables to the prime. Number of variables in message ${executeRequest.numberOfVariables}. Variables won't be recorded. $preparedPrime")
+            }
 
-           val msgToSend = preparedPrime.prime.result match {
-             case Success => msgFactory.createRowsMessage(preparedPrime.prime, stream)
-             case ReadTimeout => msgFactory.createReadTimeoutMessage(stream)
-             case WriteTimeout => msgFactory.createWriteTimeoutMessage(stream)
-             case Unavailable => msgFactory.createUnavailableMessage(stream)
-           }
+            val msgToSend = preparedPrime.prime.result match {
+              case Success => msgFactory.createRowsMessage(preparedPrime.prime, stream)
+              case ReadTimeout => msgFactory.createReadTimeoutMessage(stream)
+              case WriteTimeout => msgFactory.createWriteTimeoutMessage(stream)
+              case Unavailable => msgFactory.createUnavailableMessage(stream)
+            }
 
-           sendMessage(preparedPrime.prime.fixedDelay, connection, msgToSend)
+            sendMessage(preparedPrime.prime.fixedDelay, connection, msgToSend)
 
           }
           case None => {
@@ -95,7 +95,7 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
         connection ! msgFactory.createVoidMessage(stream)
       }
     }
-    case msg @ _ => {
+    case msg@_ => {
       logger.debug(s"Received unknown message $msg")
     }
   }
@@ -113,8 +113,11 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 }
 
 object PrepareHandlerMessages {
+
   case class Prepare(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
+
   case class Execute(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
+
 }
 
 /*

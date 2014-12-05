@@ -15,6 +15,7 @@
  */
 package org.scassandra
 
+import java.math.BigInteger
 import java.net.InetAddress
 import java.util.UUID
 
@@ -75,6 +76,7 @@ object PrimingJsonImplicitsForTest extends DefaultJsonProtocol with SprayJsonSup
       case float: Float => JsNumber(float)
       case uuid: UUID => JsString(uuid.toString)
       case bigInt: BigInt => JsNumber(bigInt)
+      case bigInt: BigInteger => JsNumber(bigInt)
       case bigD: BigDecimal => JsNumber(bigD)
       case bigD: java.math.BigDecimal => JsNumber(bigD)
       case inet: InetAddress => JsString(inet.getHostAddress)

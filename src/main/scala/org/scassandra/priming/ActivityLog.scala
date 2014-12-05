@@ -43,7 +43,9 @@ class ActivityLog extends Logging {
     queries = List()
   }
   
-  def retrievePreparedStatementExecutions(): List[PreparedStatementExecution] = preparedStatementExecutions
+  def retrievePreparedStatementExecutions(): List[PreparedStatementExecution] = {
+    preparedStatementExecutions
+  }
 
   def recordPreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any] ) = {
     val execution: PreparedStatementExecution = PreparedStatementExecution(preparedStatementText, consistency, variables)

@@ -20,10 +20,10 @@ import org.scalatest.{Matchers, BeforeAndAfterAll, BeforeAndAfter, FunSuite}
 import com.datastax.driver.core.{Session, Cluster}
 import dispatch._, Defaults._
 import spray.json._
-import scala.Some
+import DefaultJsonProtocol._
 import org.scassandra.priming.query.{When, Then, PrimeQuerySingle}
 import org.scassandra.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
-import org.scassandra.priming.{Result, Success}
+import org.scassandra.priming.{PreparedStatementExecution, Result, Success}
 import org.scassandra.cqlmessages.types.ColumnType
 
 object PrimingHelper {
@@ -54,6 +54,14 @@ object PrimingHelper {
 
     val response = Http(svc OK as.String)
     response()
+  }
+
+  def getRecordedPreparedStatements() = {
+    val svc = url("http://localhost:8043/prepared-statement-execution")
+    val response = Http(svc OK as.String)
+    val body: String = response()
+    println("Recorded prepared statement executions:"  + body)
+    JsonParser(body).convertTo[List[PreparedStatementExecution]]
   }
 }
 

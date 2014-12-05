@@ -21,7 +21,6 @@ import java.util
 import akka.util.ByteIterator
 import org.apache.cassandra.serializers.{ListSerializer}
 import org.apache.cassandra.utils.ByteBufferUtil
-import org.scassandra.cqlmessages.CqlProtocolHelper
 import org.scassandra.cqlmessages.CqlProtocolHelper._
 import scala.collection.JavaConversions._
 
@@ -29,8 +28,15 @@ import scala.collection.mutable
 
 //todo change this to a types class
 case class CqlList[T](listType : ColumnType[T]) extends ColumnType[Iterable[_]](0x0020, s"list<${listType.stringRep}>") {
-   override def readValue(byteIterator: ByteIterator): Option[Iterable[String]] = {
-     CqlProtocolHelper.readVarcharSetValue(byteIterator)
+   override def readValue(byteIterator: ByteIterator): Option[Iterable[T]] = {
+     //todo stop hard coding the version, pass it in
+     val numberOfBytes = byteIterator.getInt
+     if (numberOfBytes == -1) {
+       None
+     } else {
+       val bytes = ByteBuffer.wrap(byteIterator.take(numberOfBytes).toArray)
+       Some(ListSerializer.getInstance(listType.serializer).deserializeForNativeProtocol(bytes, 2))
+     }
    }
 
   def writeValue(value: Any) : Array[Byte] = {
