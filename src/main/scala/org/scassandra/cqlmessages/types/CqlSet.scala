@@ -26,12 +26,20 @@ import scala.collection.JavaConversions._
 import CqlProtocolHelper._
 
 import scala.collection.mutable
+import scala.collection.JavaConverters._
 
 // only supports strings for now.
 //todo change this to a types class
 case class CqlSet[T](setType : ColumnType[T]) extends ColumnType[Set[_]](0x0022, s"set<${setType.stringRep}>") {
-   override def readValue(byteIterator: ByteIterator): Option[Set[String]] = {
-     CqlProtocolHelper.readVarcharSetValue(byteIterator)
+   override def readValue(byteIterator: ByteIterator): Option[Set[T]] = {
+     //todo stop hard coding the version, pass it in
+     val numberOfBytes = byteIterator.getInt
+     if (numberOfBytes == -1) {
+       None
+     } else {
+       val bytes = ByteBuffer.wrap(byteIterator.take(numberOfBytes).toArray)
+       Some(SetSerializer.getInstance(setType.serializer).deserializeForNativeProtocol(bytes, 2).asScala.toSet)
+     }
    }
 
   def writeValue(value: Any) : Array[Byte] = {

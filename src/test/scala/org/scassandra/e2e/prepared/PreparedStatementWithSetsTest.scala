@@ -21,6 +21,7 @@ import java.nio.ByteBuffer
 import java.util
 import java.util.{Date, UUID}
 
+import com.google.common.collect.Sets
 import dispatch.Defaults._
 import dispatch._
 import org.scalatest.BeforeAndAfter
@@ -44,8 +45,8 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
   test("Text list as a varchar list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
-    val listVariable = util.Arrays.asList("one", "two", "three")
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlVarchar))
+    val listVariable = Sets.newHashSet("one", "two", "three")
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlVarchar))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -61,14 +62,14 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List("one", "two", "three"))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set("one", "two", "three"))
   }
 
   test("Text list as a text list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
-    val listVariable = util.Arrays.asList("one", "two", "three")
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlText))
+    val listVariable = Sets.newHashSet("one", "two", "three")
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlText))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -84,14 +85,14 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List("one", "two", "three"))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set("one", "two", "three"))
   }
 
   test("Text list as a ascii list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
-    val listVariable = util.Arrays.asList("one", "two", "three")
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlAscii))
+    val listVariable = Sets.newHashSet("one", "two", "three")
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlAscii))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -107,14 +108,14 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List("one", "two", "three"))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set("one", "two", "three"))
   }
 
   test("Text list as a bigint list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
-    val listVariable = util.Arrays.asList(1l, 2l, 3l)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlBigint))
+    val listVariable = Sets.newHashSet(1l, 2l, 3l)
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlBigint))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -130,14 +131,14 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List(1l, 2l, 3l))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set(1l, 2l, 3l))
   }
 
   test("Text list as a blob list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
-    val listVariable = util.Arrays.asList(ByteBuffer.wrap(Array[Byte](1,2,3,4,5)))
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlBlob))
+    val listVariable = Sets.newHashSet(ByteBuffer.wrap(Array[Byte](1,2,3,4,5)))
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlBlob))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -152,14 +153,14 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     // then
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
-    executions(0).variables(1) should equal(List("0x0102030405"))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set("0x0102030405"))
   }
 
   test("Text list as a boolean list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
-    val listVariable = util.Arrays.asList(true, false)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlBoolean))
+    val listVariable = Sets.newHashSet(true, false)
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlBoolean))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -175,15 +176,15 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List(true, false
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set(true, false
     ))
   }
 
   test("Text list as a decimal list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
-    val listVariable = util.Arrays.asList(new java.math.BigDecimal("0.1"), new java.math.BigDecimal("0.2"))
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlDecimal))
+    val listVariable = Sets.newHashSet(new java.math.BigDecimal("0.1"), new java.math.BigDecimal("0.2"))
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlDecimal))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -199,14 +200,14 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List(BigDecimal("0.1"), BigDecimal("0.2")))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set(BigDecimal("0.1"), BigDecimal("0.2")))
   }
 
   test("Text list as a double list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
-    val listVariable = util.Arrays.asList(0.1, 0.2)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlDouble))
+    val listVariable = Sets.newHashSet(0.1, 0.2)
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlDouble))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -222,15 +223,15 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List("0.1", "0.2"))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set("0.1", "0.2"))
   }
 
 
   test("Text list as a float list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
-    val listVariable = util.Arrays.asList(0.1f, 0.2f)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlFloat))
+    val listVariable = Sets.newHashSet(0.1f, 0.2f)
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlFloat))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -246,15 +247,15 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List("0.1", "0.2"))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set("0.1", "0.2"))
   }
 
   test("Text list as a inet list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val localhost: InetAddress = InetAddress.getByName("127.0.0.1")
-    val listVariable = util.Arrays.asList(localhost)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlInet))
+    val listVariable = Sets.newHashSet(localhost)
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlInet))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -270,14 +271,14 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List(localhost.getHostAddress))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set(localhost.getHostAddress))
   }
 
   test("Text list as a int list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
-    val listVariable = util.Arrays.asList(1,2,3,4)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlInt))
+    val listVariable = Sets.newHashSet(1,2,3,4)
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlInt))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -293,15 +294,15 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List(1,2,3,4))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set(1,2,3,4))
   }
 
   test("Text list as a timestamp list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val now = new Date()
-    val listVariable = util.Arrays.asList(now)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlTimestamp))
+    val listVariable = Sets.newHashSet(now)
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlTimestamp))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -317,15 +318,15 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List(now.getTime))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set(now.getTime))
   }
 
   test("Text list as a timeuuid list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val timeuuid = UUID.fromString("2b329cc0-73f0-11e4-ac06-4b05b98cc84c")
-    val listVariable = util.Arrays.asList(timeuuid, timeuuid)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlTimeUUID))
+    val listVariable = Sets.newHashSet(timeuuid, timeuuid)
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlTimeUUID))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -341,15 +342,15 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List(timeuuid.toString, timeuuid.toString))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set(timeuuid.toString, timeuuid.toString))
   }
 
   test("Text list as a uuid list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val uuid = UUID.randomUUID()
-    val listVariable = util.Arrays.asList(uuid, uuid)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlUUID))
+    val listVariable = Sets.newHashSet(uuid, uuid)
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlUUID))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -365,15 +366,15 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List(uuid.toString, uuid.toString))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set(uuid.toString, uuid.toString))
   }
 
   test("Text list as a varint list variable") {
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val bigInt = new BigInteger("1234")
-    val listVariable = util.Arrays.asList(bigInt, bigInt)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlVarint))
+    val listVariable = Sets.newHashSet(bigInt, bigInt)
+    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlVarint))
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
@@ -389,6 +390,6 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List(BigDecimal("1234"), BigDecimal("1234")))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set(BigDecimal("1234"), BigDecimal("1234")))
   }
 }
