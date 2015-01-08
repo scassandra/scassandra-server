@@ -1,4 +1,6 @@
 import SonatypeKeys._
+import sbtassembly.Plugin._
+import AssemblyKeys._
 
 sonatypeSettings
 
@@ -16,6 +18,13 @@ val akkaVersion = "2.2.4"
 
 addArtifact(Artifact("scassandra-server", "assembly"), sbtassembly.Plugin.AssemblyKeys.assembly)
 
+//mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
+//{
+//  case PathList("org", "stringtemplate", xs @ _*)         => MergeStrategy.first
+//  case x => old(x)
+//}
+//}
+
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.0.13",
   "com.typesafe.akka" % "akka-actor_2.10" % akkaVersion,
@@ -26,6 +35,7 @@ libraryDependencies ++= Seq(
   "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
   "com.google.guava" % "guava" % "17.0",
   "org.apache.cassandra" % "cassandra-clientutil" % "2.1.2"//,
+//  "org.apache.cassandra" % "cassandra-all" % "2.1.2"//,
 //  "org.apache.cassandra" % "cassandra-thrift" % "2.1.2"
 )
 
@@ -80,13 +90,16 @@ pomExtra := {
 libraryDependencies ++= Seq(
   "com.typesafe.akka" % "akka-testkit_2.10" % akkaVersion % "test",
   "io.spray" % "spray-testkit" % sprayVersion % "test",
-  "com.datastax.cassandra" % "cassandra-driver-core" % "2.0+" % "test" exclude("com.google.guava", "guava"),
+  "com.datastax.cassandra" % "cassandra-driver-core" % "2.0.9" % "test" exclude("com.google.guava", "guava"),
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test",
-  "org.scalatest" %% "scalatest" % "2.0" % "test",
+  "org.scalatest" %% "scalatest" % "2.2.3" % "test",
+  "org.pegdown" % "pegdown" % "1.4.2", // added as a hack to get scala test html reports working, was getting a NoClassDef
   "org.mockito" % "mockito-core" % "1.9.5" % "test"
 )
 
 scalacOptions in Test ++= Seq("-Yrangepos")
+
+(testOptions in Test) += Tests.Argument(TestFrameworks.ScalaTest, "-h", "target/report")
 
 parallelExecution in Test := false
 /*
