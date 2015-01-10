@@ -19,16 +19,15 @@ import java.nio.ByteBuffer
 import java.util
 
 import akka.util.ByteIterator
-import org.apache.cassandra.serializers.{ListSerializer, SetSerializer, AsciiSerializer}
+import org.apache.cassandra.serializers.SetSerializer
 import org.apache.cassandra.utils.ByteBufferUtil
-import org.scassandra.server.cqlmessages.{ProtocolVersion, CqlProtocolHelper}
+import org.scassandra.server.cqlmessages.CqlProtocolHelper._
+import org.scassandra.server.cqlmessages.ProtocolVersion
+
 import scala.collection.JavaConversions._
-import CqlProtocolHelper._
-
-import scala.collection.mutable
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 
-// only supports strings for now.
 //todo change this to a types class
 case class CqlSet[T](setType : ColumnType[T]) extends ColumnType[Set[_]](0x0022, s"set<${setType.stringRep}>") {
    override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[Set[T]] = {

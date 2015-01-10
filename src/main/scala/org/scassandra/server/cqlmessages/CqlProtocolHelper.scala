@@ -15,12 +15,10 @@
  */
 package org.scassandra.server.cqlmessages
 
-import akka.util.{ByteString, ByteIterator}
-import java.util.UUID
 import java.net.InetAddress
-import org.apache.cassandra.serializers.FloatSerializer
+import java.util.UUID
 
-import scala.collection.immutable.IndexedSeq
+import akka.util.{ByteIterator, ByteString}
 import org.scassandra.server.cqlmessages.types.ColumnType
 
 object CqlProtocolHelper {
