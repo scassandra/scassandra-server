@@ -15,14 +15,13 @@
  */
 package org.scassandra.server.cqlmessages.types
 
-import akka.util.{ByteString, ByteIterator}
+import akka.util.{ByteIterator, ByteString}
 import org.apache.cassandra.serializers.{Int32Serializer, TypeSerializer}
-import org.scassandra.server.cqlmessages.{ProtocolVersion, CqlProtocolHelper}
-import scala.collection.JavaConversions._
+import org.scassandra.server.cqlmessages.{CqlProtocolHelper, ProtocolVersion}
 
 case object CqlInt extends ColumnType[Integer](0x0009, "int") {
 
-  import CqlProtocolHelper._
+  import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 
   override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[Integer] = {
     CqlProtocolHelper.readIntValue(byteIterator).map(_.toInt)
@@ -46,8 +45,9 @@ case object CqlInt extends ColumnType[Integer](0x0009, "int") {
           throw new IllegalArgumentException
         }
       }
+      case asInt: Int => asInt
       case asString: String => asString.toInt
-      case unknownType@_ => throw new IllegalArgumentException(s"Can't serialise ${value} with type ${value.getClass} as Int")
+      case unknownType @ _ => throw new IllegalArgumentException(s"Can't serialise ${value} with type ${value.getClass} as Int")
     }
     bs.putInt(valueAsInt)
     bs.result().toArray

@@ -15,15 +15,15 @@
  */
 package org.scassandra.server
 
-import akka.actor.{ActorRef, ActorRefFactory, Props, Actor}
+import java.net.InetSocketAddress
+
+import akka.actor.{Actor, ActorRef, ActorRefFactory, Props}
 import akka.io.{IO, Tcp}
 import com.typesafe.scalalogging.slf4j.Logging
-import java.net.InetSocketAddress
-import org.scassandra.server.priming.ActivityLog
-import org.scassandra.server.priming.query.PrimeQueryStore
-import org.scassandra.server.priming.prepared.{PreparedStoreLookup, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.cqlmessages.CqlMessageFactory
-import org.scassandra.server.{ServerReady, ScassandraConfig}
+import org.scassandra.server.priming.ActivityLog
+import org.scassandra.server.priming.prepared.PreparedStoreLookup
+import org.scassandra.server.priming.query.PrimeQueryStore
 
 class TcpServer(listenAddress: String, port: Int,
                 primedResults: PrimeQueryStore,
@@ -31,7 +31,7 @@ class TcpServer(listenAddress: String, port: Int,
                 serverReadyListener: ActorRef,
                 activityLog: ActivityLog) extends Actor with Logging {
 
-  import Tcp._
+  import akka.io.Tcp._
   import context.system
 
   val manager = IO(Tcp)

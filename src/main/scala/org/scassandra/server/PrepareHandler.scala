@@ -1,34 +1,19 @@
-/*
- * Copyright (C) 2014 Christopher Batey and Dogan Narinc
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.scassandra.server
 
-import com.typesafe.scalalogging.slf4j.{Logging}
-import akka.actor.{ActorRef, Actor}
-import akka.util.{ByteString}
-import org.scassandra.server.cqlmessages._
-import org.scassandra.server.priming.prepared.{PreparedStoreLookup, PrimePreparedPatternStore, PrimePreparedStore}
+import akka.actor.{Actor, ActorRef}
+import akka.util.ByteString
+import com.typesafe.scalalogging.slf4j.Logging
+import org.scassandra.server.cqlmessages.CqlMessageFactory
+import org.scassandra.server.cqlmessages.types.{ColumnType, CqlVarchar}
 import org.scassandra.server.priming._
+import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import org.scassandra.server.priming.query.PrimeMatch
-import scala.Some
-import org.scassandra.server.cqlmessages.types.{CqlVarchar, ColumnType}
+
 import scala.concurrent.duration.FiniteDuration
 
 class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActivityLog) extends Actor with Logging {
 
-  import CqlProtocolHelper._
+  import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 
   var preparedStatementId: Int = 1
   var preparedStatementsToId: Map[Int, String] = Map()
@@ -68,9 +53,9 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
             if (executeRequest.numberOfVariables == preparedPrime.variableTypes.size) {
               val executeRequestParsedWithVariables = msgFactory.parseExecuteRequestWithVariables(stream, body, preparedPrime.variableTypes)
-              activityLog.recordPreparedStatementExecution(preparedStatementText, executeRequestParsedWithVariables.consistency, executeRequestParsedWithVariables.variables)
+              activityLog.recordPreparedStatementExecution(preparedStatementText, executeRequestParsedWithVariables.consistency, executeRequestParsedWithVariables.variables, preparedPrime.variableTypes)
             } else {
-              activityLog.recordPreparedStatementExecution(preparedStatementText, executeRequest.consistency, List())
+              activityLog.recordPreparedStatementExecution(preparedStatementText, executeRequest.consistency, List(), List())
               logger.warn(s"Execution of prepared statement has a different number of variables to the prime. Number of variables in message ${executeRequest.numberOfVariables}. Variables won't be recorded. $preparedPrime")
             }
 
@@ -85,8 +70,8 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
           }
           case None => {
-            logger.info(s"Received execution of prepared statement that hasn't been primed so can't record variables. $preparedStatementText")
-            activityLog.recordPreparedStatementExecution(preparedStatement.get, executeRequest.consistency, List())
+            logger.warn(s"Received execution of prepared statement that hasn't been primed so can't record variables. $preparedStatementText")
+            activityLog.recordPreparedStatementExecution(preparedStatement.get, executeRequest.consistency, List(), List())
             connection ! msgFactory.createVoidMessage(stream)
           }
         }
@@ -111,6 +96,8 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
     }
   }
 }
+
+
 
 object PrepareHandlerMessages {
 

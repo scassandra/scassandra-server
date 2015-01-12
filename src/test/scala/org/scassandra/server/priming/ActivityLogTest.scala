@@ -16,6 +16,7 @@
 package org.scassandra.server.priming
 
 import org.scalatest.{BeforeAndAfter, Matchers, FunSuite}
+import org.scassandra.server.cqlmessages.types.{CqlBigint, CqlAscii}
 import org.scassandra.server.cqlmessages.{TWO, ONE}
 
 class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
@@ -60,19 +61,18 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
     val preparedStatementText = "select * from people where name = ?"
     val variables = List("Chris")
     val consistency = ONE
+    val variableTypes = List(CqlAscii, CqlBigint)
     
-    underTest.recordPreparedStatementExecution(preparedStatementText, consistency, variables)
+    underTest.recordPreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes)
     val preparedStatementRecord = underTest.retrievePreparedStatementExecutions()
 
     preparedStatementRecord.size should equal(1)
-    preparedStatementRecord(0) should equal(PreparedStatementExecution(preparedStatementText, consistency, variables))
+    preparedStatementRecord(0) should equal(PreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes))
   }
 
   test("Clear prepared statement activity log") {
-    underTest.recordPreparedStatementExecution("anything", TWO, List())
+    underTest.recordPreparedStatementExecution("anything", TWO, List(), List())
     underTest.clearPreparedStatementExecutions()
     underTest.retrievePreparedStatementExecutions().size should equal(0)
   }
-
-
 }

@@ -16,10 +16,10 @@
 package org.scassandra.server.cqlmessages.types
 
 import java.util.UUID
+
 import akka.util.ByteIterator
 import org.apache.cassandra.serializers.TypeSerializer
-import org.scassandra.server.cqlmessages.{ProtocolVersion, CqlProtocolHelper}
-import org.scassandra.server.cqlmessages.types.CustomUUIDSerializer
+import org.scassandra.server.cqlmessages.{CqlProtocolHelper, ProtocolVersion}
 
 case object CqlTimeUUID extends ColumnType[UUID](0x000F, "timeuuid") {
    override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[UUID] = {

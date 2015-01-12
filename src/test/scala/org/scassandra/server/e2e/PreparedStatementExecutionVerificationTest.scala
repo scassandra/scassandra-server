@@ -15,17 +15,17 @@
  */
 package org.scassandra.server.e2e
 
+import dispatch.Defaults._
+import dispatch._
 import org.scalatest.concurrent.ScalaFutures
-import dispatch._, Defaults._
-import org.scassandra.server.priming.{PreparedStatementExecution, Query, ActivityLog, PrimingJsonImplicits}
-import spray.json._
 import org.scassandra.server.AbstractIntegrationTest
-import com.datastax.driver.core.{ConsistencyLevel, SimpleStatement}
 import org.scassandra.server.cqlmessages.ONE
+import org.scassandra.server.priming.PreparedStatementExecution
+import spray.json._
 
 class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 
-  import PrimingJsonImplicits._
+  import org.scassandra.server.priming.PrimingJsonImplicits._
 
   val primePreparedSinglePath = "http://localhost:8043/prepared-statement-execution"
 
@@ -38,7 +38,7 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
   test("Test clearing of prepared statement executions") {
     //todo: clean activity log
     val queryString = "select * from people where name = ?"
-    val preparedStatement = session.prepare(queryString);
+    val preparedStatement = session.prepare(queryString)
     val boundStatement = preparedStatement.bind("Chris")
     session.execute(boundStatement)
     val svc: Req = url(primePreparedSinglePath)
@@ -53,9 +53,8 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
   }
 
   test("Test verification of a single prepared statement execution") {
-    //todo: clean activity log
     val queryString: String = "select * from people where name = ?"
-    val preparedStatement = session.prepare(queryString);
+    val preparedStatement = session.prepare(queryString)
     val boundStatement = preparedStatement.bind("Chris")
     session.execute(boundStatement)
 
@@ -66,7 +65,7 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
       println(result)
       val preparedStatementExecutions = JsonParser(result).convertTo[List[PreparedStatementExecution]]
       preparedStatementExecutions.size should equal(1)
-      preparedStatementExecutions(0) should equal(PreparedStatementExecution(queryString, ONE, List()))
+      preparedStatementExecutions(0) should equal(PreparedStatementExecution(queryString, ONE, List(), List()))
     }
   }
 }

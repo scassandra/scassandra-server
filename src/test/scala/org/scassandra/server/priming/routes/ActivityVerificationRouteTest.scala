@@ -110,7 +110,7 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
     it("Should return queries from ActivityLog - single query") {
       activityLog.clearPreparedStatementExecutions()
       val preparedStatementText: String = ""
-      activityLog.recordPreparedStatementExecution(preparedStatementText, ONE, List())
+      activityLog.recordPreparedStatementExecution(preparedStatementText, ONE, List(), List())
 
       Get("/prepared-statement-execution") ~> activityVerificationRoute ~> check {
         val response = responseAs[List[PreparedStatementExecution]]
@@ -121,7 +121,7 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
     }
 
     it("Should clear queries for a delete") {
-      activityLog.recordPreparedStatementExecution("", ONE, List())
+      activityLog.recordPreparedStatementExecution("", ONE, List(), List())
 
       Delete("/prepared-statement-execution") ~> activityVerificationRoute ~> check {
         activityLog.retrievePreparedStatementExecutions().size should equal(0)

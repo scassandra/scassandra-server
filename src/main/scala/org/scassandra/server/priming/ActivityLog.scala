@@ -15,8 +15,9 @@
  */
 package org.scassandra.server.priming
 
-import org.scassandra.server.cqlmessages.{ONE, Consistency}
 import com.typesafe.scalalogging.slf4j.Logging
+import org.scassandra.server.cqlmessages.Consistency
+import org.scassandra.server.cqlmessages.types.ColumnType
 
 class ActivityLog extends Logging {
   var connections : List[Connection] = List()
@@ -47,8 +48,8 @@ class ActivityLog extends Logging {
     preparedStatementExecutions
   }
 
-  def recordPreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any] ) = {
-    val execution: PreparedStatementExecution = PreparedStatementExecution(preparedStatementText, consistency, variables)
+  def recordPreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[ColumnType[_]]): Unit = {
+    val execution: PreparedStatementExecution = PreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes)
     logger.info("Recording " + execution)
     preparedStatementExecutions = preparedStatementExecutions ::: execution :: Nil
   }
@@ -60,4 +61,4 @@ class ActivityLog extends Logging {
 
 case class Query(query: String, consistency: Consistency)
 case class Connection(result: String = "success")
-case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any] )
+case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[ColumnType[_]])

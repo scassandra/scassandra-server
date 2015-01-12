@@ -24,6 +24,7 @@ class CqlIntTest extends FunSuite with Matchers {
   test("Serialisation of CqlInt") {
     CqlInt.writeValue(BigDecimal("123")) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
     CqlInt.writeValue("123") should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
+    CqlInt.writeValue(123) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
 
     intercept[IllegalArgumentException] {
       CqlInt.writeValue(BigDecimal("123.67"))

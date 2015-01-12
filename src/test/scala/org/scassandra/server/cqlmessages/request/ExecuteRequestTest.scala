@@ -50,32 +50,37 @@ class ExecuteRequestTest extends FunSuite with Matchers {
     serialisation.isEmpty should equal(true)
   }
 
-  test("Seralisation of a execute - version 2") {
+  test("Serialization of a execute - version 2") {
     val stream : Byte = 0x01
     val protocolVersion : Byte = 0x1
     val consistency = TWO
     val id : Byte = 5
-    val executeRequest = new ExecuteRequestV2(protocolVersion, stream, id, consistency)
-    val serialisation = executeRequest.serialize().iterator
+    val variables = List(1234, 5678)
+    val variableTypes = List(CqlBigint, CqlDecimal)
+    val executeRequest = new ExecuteRequestV2(protocolVersion, stream, id, consistency, 2, variables, variableTypes = variableTypes)
+    val serialization = executeRequest.serialize().iterator
 
-    serialisation.getByte should equal(protocolVersion)
-    serialisation.getByte // ignore the flags
-    serialisation.getByte should equal(stream)
-    serialisation.getByte should equal(OpCodes.Execute)
+    serialization.getByte should equal(protocolVersion)
+    serialization.getByte // ignore the flags
+    serialization.getByte should equal(stream)
+    serialization.getByte should equal(OpCodes.Execute)
 
-    serialisation.drop(4) // length
+    serialization.drop(4) // length
 
-    CqlProtocolHelper.readShortBytes(serialisation) should equal(Array[Byte](0,0,0,id))
-    serialisation.getShort should equal(consistency.code)
-    serialisation.getByte should equal(0) // flags
+    CqlProtocolHelper.readShortBytes(serialization) should equal(Array[Byte](0,0,0,id))
+    serialization.getShort should equal(consistency.code)
+    serialization.getByte should equal(0) // flags
 
-    val numberOfOptions = serialisation.getShort
-    numberOfOptions should equal(0)
+    val numberOfVariables = serialization.getShort
+    numberOfVariables should equal(2)
 
-    serialisation.isEmpty should equal(true)
+    CqlProtocolHelper.readBigIntValue(serialization) should equal(Some(1234))
+    CqlProtocolHelper.readDecimalValue(serialization) should equal(Some(BigDecimal("5678")))
+
+    serialization.isEmpty should equal(true)
   }
 
-  test("Deserialise execute with numeric variable types - version 2") {
+  test("Deserialize execute with numeric variable types - version 2") {
     val stream: Byte = 5
     val v2MessageFromCassandra = ByteString(
       0, 4, // length of the prepared statement id

@@ -88,7 +88,7 @@ trait ExecuteRequest {
   val variables : List[Any]
 }
 
-case class ExecuteRequestV2(protocolVersion: Byte, stream: Byte, id: Int, consistency : Consistency = ONE, numberOfVariables : Int = 0, variables : List[Any] = List(), flags : Byte = 0x00) extends Request(new Header(protocolVersion, OpCodes.Execute, stream)) with ExecuteRequest {
+case class ExecuteRequestV2(protocolVersion: Byte, stream: Byte, id: Int, consistency : Consistency = ONE, numberOfVariables: Int = 0, variables : List[Any] = List(), flags : Byte = 0x00, variableTypes: List[ColumnType[_]] = List()) extends Request(new Header(protocolVersion, OpCodes.Execute, stream)) with ExecuteRequest {
 
   import CqlProtocolHelper._
 
@@ -102,7 +102,15 @@ case class ExecuteRequestV2(protocolVersion: Byte, stream: Byte, id: Int, consis
     bs.putShort(consistency.code)
     bs.putByte(flags)
 
-    bs.putShort(0) // 0 variables
+    bs.putShort(variables.size)
+
+    if (variables.size != variableTypes.size) throw new IllegalArgumentException("Must include variable type for every variable")
+
+    variableTypes zip variables foreach  {
+      case (varType, varValue) => {
+        bs.putBytes(varType.writeValue(varValue))
+      }
+    }
 
     val body = bs.result()
     ByteString(headerBytes ++ CqlProtocolHelper.serializeInt(body.size) ++ body)
