@@ -18,7 +18,6 @@ package org.scassandra.server.e2e.prepared
 import java.math.BigInteger
 import java.net.InetAddress
 import java.nio.ByteBuffer
-import java.util
 import java.util.{Date, UUID}
 
 import com.google.common.collect.Sets
@@ -200,7 +199,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set(BigDecimal("0.1"), BigDecimal("0.2")))
+    executions(0).variables(1).asInstanceOf[List[_]].toSet should equal(Set("0.1", "0.2"))
   }
 
   test("Text set as a double list variable") {

@@ -70,7 +70,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
     def write(x: Any) = x match {
       case n: Int => JsNumber(n)
       case n: Long => JsNumber(n)
-      case bd: BigDecimal => JsNumber(bd)
+      case bd: BigDecimal => JsString(bd.bigDecimal.toPlainString)
       case s: String => JsString(s)
       case seq: Seq[_] => seqFormat[Any].write(seq)
       case m: Map[String, _] => mapFormat[String, Any].write(m)
@@ -84,8 +84,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
       case uuid: UUID => JsString(uuid.toString)
       case bigInt: BigInt => JsNumber(bigInt)
       case bigInt: BigInteger => JsNumber(bigInt)
-      case bigD: BigDecimal => JsNumber(bigD)
-      case bigD: java.math.BigDecimal => JsNumber(bigD)
+      case bigD: java.math.BigDecimal => JsString(bigD.toPlainString)
       case inet: InetAddress => JsString(inet.getHostAddress)
       case bytes: Array[Byte] => JsString("0x" + bytes2hex(bytes))
       case None => JsNull

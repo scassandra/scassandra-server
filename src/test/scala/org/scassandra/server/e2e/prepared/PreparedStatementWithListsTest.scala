@@ -19,9 +19,8 @@ import java.math.BigInteger
 import java.net.InetAddress
 import java.nio.ByteBuffer
 import java.util
-import java.util.{UUID, Date}
+import java.util.{Date, UUID}
 
-import com.datastax.driver.core.Row
 import dispatch.Defaults._
 import dispatch._
 import org.scalatest.BeforeAndAfter
@@ -200,7 +199,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val executions = PrimingHelper.getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
-    executions(0).variables(1) should equal(List(BigDecimal("0.1"), BigDecimal("0.2")))
+    executions(0).variables(1) should equal(List("0.1", "0.2"))
   }
 
   test("Text list as a double list variable") {

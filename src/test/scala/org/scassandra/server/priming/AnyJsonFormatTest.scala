@@ -49,12 +49,12 @@ class AnyJsonFormatTest extends FunSuite with Matchers {
 
   test("Write java.math.BigDecimal") {
     val toSerialise = new java.math.BigDecimal("1234.56")
-    AnyJsonFormat.write(toSerialise) should equal(JsNumber(toSerialise))
+    AnyJsonFormat.write(toSerialise) should equal(JsString("1234.56"))
   }
 
   test("Write BigDecimal") {
     val toSerialise = BigDecimal("1234.56")
-    AnyJsonFormat.write(toSerialise) should equal(JsNumber(toSerialise))
+    AnyJsonFormat.write(toSerialise) should equal(JsString("1234.56"))
   }
 
   test("Write InetAddress") {
