@@ -46,9 +46,8 @@ case class UnsupportedProtocolVersion(stream: Byte)(implicit protocolVersion: Pr
 
 case class QueryBeforeReadyMessage(stream : Byte = ResponseHeader.DefaultStreamId)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.ProtocolError, "Query sent before StartUp message", stream)
 
-case class ReadRequestTimeout(stream : Byte)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.ReadTimeout, "Read Request Timeout", stream) {
+case class ReadRequestTimeout(stream : Byte, consistency: Consistency)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.ReadTimeout, "Read Request Timeout", stream) {
 
-  val consistency : Short = ONE.code
   val receivedResponses : Int = 0
   val blockFor : Int = 1
   val dataPresent : Byte = 0
@@ -60,7 +59,7 @@ case class ReadRequestTimeout(stream : Byte)(implicit protocolVersion: ProtocolV
     bodyBs.putInt(errorCode)
     val errorMessageBytes = CqlProtocolHelper.serializeString(errorMessage)
     bodyBs.putBytes(errorMessageBytes.toArray)
-    bodyBs.putShort(consistency)
+    bodyBs.putShort(consistency.code)
     bodyBs.putInt(receivedResponses)
     bodyBs.putInt(blockFor)
     bodyBs.putByte(dataPresent)
@@ -90,11 +89,10 @@ case class UnavailableException(stream: Byte)(implicit protocolVersion: Protocol
   }
 }
 
-case class WriteRequestTimeout(stream: Byte)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.WriteTimeout, "Write Request Timeout", stream) {
+case class WriteRequestTimeout(stream: Byte, consistency: Consistency)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.WriteTimeout, "Write Request Timeout", stream) {
 
   import CqlProtocolHelper._
 
-  val consistency : Short = ONE.code
   val receivedResponses : Int = 0
   val blockFor : Int = 1
   val writeType : String = WriteTypes.Simple
@@ -104,7 +102,7 @@ case class WriteRequestTimeout(stream: Byte)(implicit protocolVersion: ProtocolV
     bodyBs.putInt(errorCode)
     val errorMessageBytes = CqlProtocolHelper.serializeString(errorMessage)
     bodyBs.putBytes(errorMessageBytes.toArray)
-    bodyBs.putShort(consistency)
+    bodyBs.putShort(consistency.code)
     bodyBs.putInt(receivedResponses)
     bodyBs.putInt(blockFor)
     bodyBs.putBytes(CqlProtocolHelper.serializeString(writeType).toArray)

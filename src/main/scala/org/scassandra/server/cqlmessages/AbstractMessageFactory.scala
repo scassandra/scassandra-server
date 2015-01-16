@@ -56,12 +56,12 @@ abstract class AbstractMessageFactory extends CqlMessageFactory {
     Rows("","",stream,Map[String, ColumnType[_]](), List())
   }
 
-  def createReadTimeoutMessage(stream: Byte): ReadRequestTimeout = {
-    ReadRequestTimeout(stream)
+  override def createReadTimeoutMessage(stream: Byte, consistency: Consistency): ReadRequestTimeout = {
+    ReadRequestTimeout(stream, consistency)
   }
 
-  def createWriteTimeoutMessage(stream: Byte): WriteRequestTimeout = {
-    WriteRequestTimeout(stream)
+  override def createWriteTimeoutMessage(stream: Byte, consistency: Consistency): WriteRequestTimeout = {
+    WriteRequestTimeout(stream, consistency)
   }
 
   def createUnavailableMessage(stream: Byte): UnavailableException = {

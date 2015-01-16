@@ -56,23 +56,25 @@ class ErrorTest extends FunSuite with Matchers {
   }
 
   test("Read request timeout has error code 0x1200 and message Read Request Timeout") {
-    val readTimeout = ReadRequestTimeout(defaultStream)
+    val consistency = TWO
+    val readTimeout = ReadRequestTimeout(defaultStream, consistency)
 
     readTimeout.errorCode should equal(ErrorCodes.ReadTimeout)
     readTimeout.errorMessage should equal("Read Request Timeout")
   }
 
   test("Serialization of Read Request Timeout - hard coded data for now") {
-    val readTimeoutBytes = ReadRequestTimeout(defaultStream).serialize().iterator
+    val providedConsistency = TWO
+    val readTimeoutBytes = ReadRequestTimeout(defaultStream, providedConsistency).serialize().iterator
+
     val header = readTimeoutBytes.drop(4)
     val length = readTimeoutBytes.getInt
     val errorCode = readTimeoutBytes.getInt
     errorCode should equal(ErrorCodes.ReadTimeout)
     // error message - string
     val errorString = CqlProtocolHelper.readString(readTimeoutBytes)
-    println(s"errorString ${errorString}")
     val consistency = readTimeoutBytes.getShort
-    consistency should equal(ONE.code)
+    consistency should equal(providedConsistency.code)
     val receivedResponses = readTimeoutBytes.getInt
     receivedResponses should equal(0)
     val blockedFor = readTimeoutBytes.getInt
@@ -85,8 +87,8 @@ class ErrorTest extends FunSuite with Matchers {
 
   test("Serialization of Write Request Timeout - hard coded data for now") {
     val stream : Byte = 0x4
-    val writeTimeoutBytes = WriteRequestTimeout(stream).serialize().iterator
-    println(writeTimeoutBytes)
+    val providedConsistency = QUORUM
+    val writeTimeoutBytes = WriteRequestTimeout(stream, providedConsistency).serialize().iterator
     // drop the header
     writeTimeoutBytes.drop(4)
     // drop the length
@@ -99,7 +101,7 @@ class ErrorTest extends FunSuite with Matchers {
     errorString should equal("Write Request Timeout")
 
     val consistency = writeTimeoutBytes.getShort
-    consistency should equal(ONE.code)
+    consistency should equal(providedConsistency.code)
 
     val receivedResponses = writeTimeoutBytes.getInt
     receivedResponses should equal(0)

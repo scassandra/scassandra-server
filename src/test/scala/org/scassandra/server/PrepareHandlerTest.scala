@@ -160,7 +160,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId).serialize().drop(8)
     underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
-    testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream))
+    testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream, ONE))
   }
 
   test("Execute with write time out") {
@@ -172,7 +172,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId).serialize().drop(8)
     underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
-    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream))
+    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream, ONE))
   }
 
   test("Execute with unavailable") {

@@ -35,8 +35,8 @@ trait CqlMessageFactory {
   def createSetKeyspaceMessage(keyspaceName: String, stream: Byte): SetKeyspace
   def createRowsMessage(prime: Prime, stream: Byte): Rows
   def createEmptyRowsMessage(stream: Byte): Rows
-  def createReadTimeoutMessage(stream: Byte): ReadRequestTimeout
-  def createWriteTimeoutMessage(stream: Byte): WriteRequestTimeout
+  def createReadTimeoutMessage(stream: Byte, consistency: Consistency): ReadRequestTimeout
+  def createWriteTimeoutMessage(stream: Byte, consistency: Consistency): WriteRequestTimeout
   def createUnavailableMessage(stream: Byte): UnavailableException
   def createVoidMessage(stream: Byte): VoidResult
   def createPreparedResult(stream: Byte, id: Int, variableTypes: List[ColumnType[_]]): Result

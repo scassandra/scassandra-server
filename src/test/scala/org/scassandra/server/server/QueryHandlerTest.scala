@@ -112,22 +112,24 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
 
   test("Should return ReadRequestTimeout if result is ReadTimeout") {
     val stream: Byte = 0x05
-    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), ReadTimeout)))
+    val consistency = LOCAL_QUORUM
+    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query, stream, consistency).toArray.drop(8))
+    when(mockPrimedResults.get(PrimeMatch("some cql statement", consistency))).thenReturn(Some(Prime(List(), ReadTimeout)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream))
+    testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream, consistency))
   }
 
   test("Should return WriteRequestTimeout if result is WriteTimeout") {
     val stream: Byte = 0x05
-    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), WriteTimeout)))
+    val consistency = LOCAL_ONE
+    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query, consistency = consistency).toArray.drop(8))
+    when(mockPrimedResults.get(PrimeMatch("some cql statement", consistency))).thenReturn(Some(Prime(List(), WriteTimeout)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream))
+    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream, consistency))
   }
 
   test("Should return Unavailable Exception if result is UnavailableException") {

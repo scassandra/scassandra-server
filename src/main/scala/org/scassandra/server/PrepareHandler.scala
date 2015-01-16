@@ -3,7 +3,7 @@ package org.scassandra.server
 import akka.actor.{Actor, ActorRef}
 import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
-import org.scassandra.server.cqlmessages.CqlMessageFactory
+import org.scassandra.server.cqlmessages.{ONE, CqlMessageFactory}
 import org.scassandra.server.cqlmessages.types.{ColumnType, CqlVarchar}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
@@ -61,8 +61,8 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
             val msgToSend = preparedPrime.prime.result match {
               case Success => msgFactory.createRowsMessage(preparedPrime.prime, stream)
-              case ReadTimeout => msgFactory.createReadTimeoutMessage(stream)
-              case WriteTimeout => msgFactory.createWriteTimeoutMessage(stream)
+              case ReadTimeout => msgFactory.createReadTimeoutMessage(stream, ONE)
+              case WriteTimeout => msgFactory.createWriteTimeoutMessage(stream, ONE)
               case Unavailable => msgFactory.createUnavailableMessage(stream)
             }
 

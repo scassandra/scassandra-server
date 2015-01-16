@@ -20,7 +20,7 @@ import akka.util.ByteString
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.server.priming._
-import org.scassandra.server.cqlmessages.{CqlProtocolHelper, CqlMessageFactory, Consistency}
+import org.scassandra.server.cqlmessages.{ONE, CqlProtocolHelper, CqlMessageFactory, Consistency}
 import org.scassandra.server.priming.query.{Prime, PrimeMatch, PrimeQueryStore}
 
 import scala.concurrent.duration._
@@ -39,15 +39,15 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
       val bodyAsBytes = new Array[Byte](queryLength)
       iterator.getBytes(bodyAsBytes)
       val queryText = new String(bodyAsBytes)
-      val consistency = iterator.getShort
+      val consistency = Consistency.fromCode(iterator.getShort)
       logger.info(s"Incoming query: ${queryText} at consistency: ${consistency}")
-      activityLog.recordQuery(queryText, Consistency.fromCode(consistency))
+      activityLog.recordQuery(queryText, consistency)
       if (queryText.startsWith("use ")) {
         val keyspaceName: String = queryText.substring(4, queryLength)
         logger.debug(s"Use keyspace $keyspaceName")
         sendMessage(None, tcpConnection, msgFactory.createSetKeyspaceMessage(keyspaceName, stream))
       } else {
-        val primeForIncomingQuery: Option[Prime] = primeQueryStore.get(PrimeMatch(queryText, Consistency.fromCode(consistency)))
+        val primeForIncomingQuery: Option[Prime] = primeQueryStore.get(PrimeMatch(queryText, consistency))
         primeForIncomingQuery match {
           case Some(prime) => {
             val message = prime.result match {
@@ -56,13 +56,13 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
                 msgFactory.createRowsMessage(prime, stream)
               }
               case ReadTimeout => {
-                msgFactory.createReadTimeoutMessage(stream)
+                msgFactory.createReadTimeoutMessage(stream, consistency)
               }
               case Unavailable => {
                 msgFactory.createUnavailableMessage(stream)
               }
               case WriteTimeout => {
-                msgFactory.createWriteTimeoutMessage(stream)
+                msgFactory.createWriteTimeoutMessage(stream, consistency)
               }
             }
             sendMessage(prime.fixedDelay, tcpConnection, message)
