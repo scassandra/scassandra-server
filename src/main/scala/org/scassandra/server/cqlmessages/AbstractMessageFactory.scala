@@ -65,7 +65,7 @@ abstract class AbstractMessageFactory extends CqlMessageFactory {
   }
 
   def createUnavailableMessage(stream: Byte): UnavailableException = {
-    UnavailableException(stream)
+    UnavailableException(stream, ONE)
   }
 
   def createVoidMessage(stream: Byte): VoidResult = {

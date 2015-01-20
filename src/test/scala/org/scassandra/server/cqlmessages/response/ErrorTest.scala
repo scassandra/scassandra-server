@@ -115,7 +115,8 @@ class ErrorTest extends FunSuite with Matchers {
 
   test("Serialization of Unavailable Exception - hard coded data for now") {
     val stream: Byte = 0x1
-    val unavailableException = UnavailableException(stream).serialize().iterator
+    val providedConsistency = ALL
+    val unavailableException = UnavailableException(stream, providedConsistency).serialize().iterator
     // header
     val header = unavailableException.drop(4)
     // length
@@ -127,7 +128,7 @@ class ErrorTest extends FunSuite with Matchers {
     val errorString = CqlProtocolHelper.readString(unavailableException)
     // consistency - short 0x0001    ONE
     val consistency = unavailableException.getShort
-    consistency should equal(0x1)
+    consistency should equal(providedConsistency.code)
     // required - hard coded to 1
     val requiredResponses = unavailableException.getInt
     requiredResponses should equal(1)

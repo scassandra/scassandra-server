@@ -68,11 +68,10 @@ case class ReadRequestTimeout(stream : Byte, consistency: Consistency)(implicit 
   }
 }
 
-case class UnavailableException(stream: Byte)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.UnavailableException, "Unavailable Exception", stream) {
+case class UnavailableException(stream: Byte, consistency: Consistency)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.UnavailableException, "Unavailable Exception", stream) {
 
   import CqlProtocolHelper._
 
-  val consistency : Short = ONE.code
   val required : Int = 1
   val alive : Int = 0
 
@@ -81,7 +80,7 @@ case class UnavailableException(stream: Byte)(implicit protocolVersion: Protocol
     bodyBs.putInt(errorCode)
     val errorMessageBytes = CqlProtocolHelper.serializeString(errorMessage)
     bodyBs.putBytes(errorMessageBytes.toArray)
-    bodyBs.putShort(consistency)
+    bodyBs.putShort(consistency.code)
     bodyBs.putInt(required)
     bodyBs.putInt(alive)
 
