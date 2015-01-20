@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.server
+package org.scassandra.server.actors
 
 import akka.actor.{ActorSystem, Props}
 import akka.io.Tcp.Connected
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import org.scalatest.{BeforeAndAfter, FunSuiteLike, Matchers}
+import org.scassandra.server.ServerReadyListener
 import org.scassandra.server.priming.ActivityLog
 import org.scassandra.server.priming.prepared.PrimePreparedStore
 import org.scassandra.server.priming.query.PrimeQueryStore

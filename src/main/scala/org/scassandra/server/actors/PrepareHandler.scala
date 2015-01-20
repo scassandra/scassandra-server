@@ -1,4 +1,4 @@
-package org.scassandra.server
+package org.scassandra.server.actors
 
 import akka.actor.{Actor, ActorRef}
 import akka.util.ByteString
@@ -61,9 +61,9 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
             val msgToSend = preparedPrime.prime.result match {
               case Success => msgFactory.createRowsMessage(preparedPrime.prime, stream)
-              case ReadTimeout => msgFactory.createReadTimeoutMessage(stream, ONE)
-              case WriteTimeout => msgFactory.createWriteTimeoutMessage(stream, ONE)
-              case Unavailable => msgFactory.createUnavailableMessage(stream)
+              case ReadTimeout => msgFactory.createReadTimeoutMessage(stream, executeRequest.consistency)
+              case WriteTimeout => msgFactory.createWriteTimeoutMessage(stream, executeRequest.consistency)
+              case Unavailable => msgFactory.createUnavailableMessage(stream, executeRequest.consistency)
             }
 
             sendMessage(preparedPrime.prime.fixedDelay, connection, msgToSend)

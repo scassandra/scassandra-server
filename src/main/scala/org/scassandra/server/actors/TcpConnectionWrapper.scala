@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.server
+package org.scassandra.server.actors
 
 import akka.actor.{ActorRef, Actor}
 import org.scassandra.server.cqlmessages.CqlMessage

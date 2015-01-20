@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.server
+package org.scassandra.server.actors
 
 import java.net.InetSocketAddress
 
@@ -24,6 +24,7 @@ import org.scassandra.server.cqlmessages.CqlMessageFactory
 import org.scassandra.server.priming.ActivityLog
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import org.scassandra.server.priming.query.PrimeQueryStore
+import org.scassandra.server.{RegisterHandler, ServerReady}
 
 class TcpServer(listenAddress: String, port: Int,
                 primedResults: PrimeQueryStore,
@@ -40,18 +41,16 @@ class TcpServer(listenAddress: String, port: Int,
   val preparedHandler = context.actorOf(Props(classOf[PrepareHandler], primePrepareStore, activityLog))
 
   def receive = {
-    case b @ Bound(localAddress) => {
+    case b @ Bound(localAddress) =>
       logger.info(s"Port $port ready for Cassandra binary connections.")
       serverReadyListener ! ServerReady
-    }
 
-    case CommandFailed(_: Bind) => {
+    case CommandFailed(_: Bind) =>
       logger.error(s"Unable to bind to port $port for Cassandra binary connections. Is it in use?")
       context stop self
       context.system.shutdown()
-    }
 
-    case c @ Connected(remote, local) => {
+    case c @ Connected(remote, local) =>
       logger.debug(s"Incoming connection, creating a connection handler! $remote $local")
       activityLog.recordConnection()
       val handler = context.actorOf(Props(classOf[ConnectionHandler],
@@ -62,6 +61,5 @@ class TcpServer(listenAddress: String, port: Int,
       )
       logger.debug(s"Sending register with connection handler $handler")
       sender ! Register(handler)
-    }
   }
 }

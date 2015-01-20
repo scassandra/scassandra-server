@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.server
+package org.scassandra.server.actors
 
 import java.util.concurrent.TimeUnit
 
@@ -153,38 +153,41 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
 
   test("Execute with read time out") {
     val query = "select * from something where name = ?"
+    val consistency = QUORUM
     val preparedStatementId = sendPrepareAndCaptureId(stream, query)
     val primeMatch = Some(PreparedPrime(prime = Prime(result = ReadTimeout)))
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
 
-    val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId).serialize().drop(8)
+    val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency = consistency).serialize().drop(8)
     underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
-    testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream, ONE))
+    testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream, consistency))
   }
 
   test("Execute with write time out") {
     val query = "select * from something where name = ?"
+    val consistency = QUORUM
     val preparedStatementId = sendPrepareAndCaptureId(stream, query)
     val primeMatch = Some(PreparedPrime(prime = Prime(result = WriteTimeout)))
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
 
-    val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId).serialize().drop(8)
+    val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency = consistency).serialize().drop(8)
     underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
-    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream, ONE))
+    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream, consistency))
   }
 
   test("Execute with unavailable") {
     val query = "select * from something where name = ?"
+    val consistency = QUORUM
     val preparedStatementId = sendPrepareAndCaptureId(stream, query)
     val primeMatch = Some(PreparedPrime(prime = Prime(result = Unavailable)))
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
 
-    val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId).serialize().drop(8)
+    val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency = consistency).serialize().drop(8)
     underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
-    testProbeForTcpConnection.expectMsg(UnavailableException(stream))
+    testProbeForTcpConnection.expectMsg(UnavailableException(stream, consistency))
   }
 
   test("Should record execution in activity log") {

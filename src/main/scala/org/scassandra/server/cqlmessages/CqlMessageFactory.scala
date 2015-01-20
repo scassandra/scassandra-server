@@ -37,7 +37,7 @@ trait CqlMessageFactory {
   def createEmptyRowsMessage(stream: Byte): Rows
   def createReadTimeoutMessage(stream: Byte, consistency: Consistency): ReadRequestTimeout
   def createWriteTimeoutMessage(stream: Byte, consistency: Consistency): WriteRequestTimeout
-  def createUnavailableMessage(stream: Byte): UnavailableException
+  def createUnavailableMessage(stream: Byte, consistency: Consistency): UnavailableException
   def createVoidMessage(stream: Byte): VoidResult
   def createPreparedResult(stream: Byte, id: Int, variableTypes: List[ColumnType[_]]): Result
 

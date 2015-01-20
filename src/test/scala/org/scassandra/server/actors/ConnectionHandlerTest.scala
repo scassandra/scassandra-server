@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.server
+package org.scassandra.server.actors
 
 import akka.actor.ActorSystem
 import akka.io.Tcp.{Received, Write}
 import akka.testkit._
 import akka.util.ByteString
 import org.scalatest._
-import org.scassandra.server.QueryHandlerMessages.Query
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.response._
-import akka.io.Tcp.Received
-import org.scassandra.server.QueryHandlerMessages.Query
+import org.scassandra.server.priming.QueryHandlerMessages.Query
+import org.scassandra.server.{MessageHelper, RegisterHandlerMessages}
 
 class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
 
@@ -139,7 +138,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     val query = "select * from people"
     val queryLength = Array[Byte](0x0, 0x0, 0x0, query.length.toByte)
     val queryOptions = Array[Byte](0,1,0)
-    val queryWithLengthAndOptions = queryLength ++ query.getBytes() ++ queryOptions
+    val queryWithLengthAndOptions = queryLength ++ query.getBytes ++ queryOptions
     val queryMessage = MessageHelper.createQueryMessage(query, stream, protocolVersion = ProtocolVersion.ClientProtocolVersionTwo)
 
     testActorRef ! Received(ByteString(queryMessage.toArray))
@@ -154,7 +153,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     val query = "select * from people"
     val queryLength = Array[Byte](0x0, 0x0, 0x0, query.length.toByte)
     val queryOptions = Array[Byte](0,1,0)
-    val queryWithLengthAndOptions = queryLength ++ query.getBytes() ++ queryOptions
+    val queryWithLengthAndOptions = queryLength ++ query.getBytes ++ queryOptions
     val queryMessage = MessageHelper.createQueryMessage(query, stream, protocolVersion = ProtocolVersion.ClientProtocolVersionOne)
 
     testActorRef ! Received(ByteString(queryMessage.toArray))
@@ -169,7 +168,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     val stream : Byte = 0x05
     val queryLength = Array[Byte](0x0, 0x0, 0x0, query.length.toByte)
     val queryOptions = Array[Byte](0,1,0)
-    val queryWithLengthAndOptions = queryLength ++ query.getBytes() ++ queryOptions
+    val queryWithLengthAndOptions = queryLength ++ query.getBytes ++ queryOptions
     val queryMessage = MessageHelper.createQueryMessage(query, stream)
     
     val queryMessageFirstHalf = queryMessage take 5 toArray
@@ -212,7 +211,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     val query = "select * from people"
     val queryLength = Array[Byte](0x0, 0x0, 0x0, query.length.toByte)
     val queryOptions = Array[Byte](0,1,0)
-    val queryWithLengthAndOptions = queryLength ++ query.getBytes() ++ queryOptions
+    val queryWithLengthAndOptions = queryLength ++ query.getBytes ++ queryOptions
     val queryMessage = MessageHelper.createQueryMessage(query, stream)
 
     val twoMessages: List[Byte] = startupMessage ++ queryMessage
@@ -222,7 +221,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
   }
 
-  test("Should forward Preprare messages to the prepare handler") {
+  test("Should forward Prepare messages to the prepare handler") {
     sendStartupMessage()
     val streamId : Byte = 0x1
     val headerForPrepareMessage = new Header(ProtocolVersion.ClientProtocolVersionTwo,

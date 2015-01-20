@@ -64,8 +64,8 @@ abstract class AbstractMessageFactory extends CqlMessageFactory {
     WriteRequestTimeout(stream, consistency)
   }
 
-  def createUnavailableMessage(stream: Byte): UnavailableException = {
-    UnavailableException(stream, ONE)
+  override def createUnavailableMessage(stream: Byte, consistency: Consistency): UnavailableException = {
+    UnavailableException(stream, consistency)
   }
 
   def createVoidMessage(stream: Byte): VoidResult = {

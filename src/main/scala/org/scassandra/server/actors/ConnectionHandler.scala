@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.server
+package org.scassandra.server.actors
 
-import akka.actor.{Props, ActorRef, ActorRefFactory, Actor}
-import akka.io.Tcp
+import akka.actor.{Actor, ActorRef, ActorRefFactory}
 import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
+import org.scassandra.server.RegisterHandlerMessages
 import org.scassandra.server.cqlmessages._
-import org.scassandra.server.cqlmessages.response.{UnsupportedProtocolVersion, ResponseHeader, QueryBeforeReadyMessage, Ready}
+import org.scassandra.server.cqlmessages.response.UnsupportedProtocolVersion
+import org.scassandra.server.priming.QueryHandlerMessages
 
 /*
  * TODO: This class is on the verge of needing split up.
@@ -38,7 +39,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
                         prepareHandler: ActorRef,
                         connectionWrapperFactory: (ActorRefFactory, ActorRef) => ActorRef) extends Actor with Logging {
 
-  import Tcp._
+  import akka.io.Tcp._
 
   var ready = false
   var partialMessage = false
@@ -52,7 +53,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
 
   def receive = {
 
-    case Received(data: ByteString) => {
+    case Received(data: ByteString) =>
       logger.trace(s"Received a message of length ${data.length} data:: $data")
 
       currentData = data
@@ -74,11 +75,9 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
         dataFromPreviousMessage = currentData
         currentData = ByteString()
       }
-    }
-    case PeerClosed => {
+    case PeerClosed =>
       logger.info("Client disconnected.")
       context stop self
-    }
     case unknown@_ =>
       logger.warn(s"Unknown message $unknown")
 
@@ -88,7 +87,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
     logger.trace(s"Whole body $messageBody with length ${messageBody.length}")
 
     opCode match {
-      case OpCodes.Startup => {
+      case OpCodes.Startup =>
         logger.debug("Sending ready message")
         initialiseMessageFactory(protocolVersion)
         val wrappedSender = connectionWrapperFactory(context, sender)
@@ -96,8 +95,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
         registerHandler = registerHandlerFactory(context, wrappedSender, messageFactory)
         wrappedSender ! messageFactory.createReadyMessage(stream)
         ready = true
-      }
-      case OpCodes.Query => {
+      case OpCodes.Query =>
         if (!ready) {
           initialiseMessageFactory(protocolVersion)
           logger.info("Received query before startup message, sending error")
@@ -105,23 +103,19 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
         } else {
           queryHandler ! QueryHandlerMessages.Query(messageBody, stream)
         }
-      }
-      case OpCodes.Register => {
+      case OpCodes.Register =>
         logger.debug("Received register message. Sending to RegisterHandler")
         registerHandler ! RegisterHandlerMessages.Register(messageBody, stream)
-      }
-      case OpCodes.Prepare => {
+      case OpCodes.Prepare =>
         logger.debug("Received prepare message. Sending to PrepareHandler")
         val wrappedSender = connectionWrapperFactory(context, sender)
         prepareHandler ! PrepareHandlerMessages.Prepare(messageBody, stream, messageFactory, wrappedSender)
-      }
-      case OpCodes.Execute => {
+      case OpCodes.Execute =>
         logger.debug("Received execute message. Sending to ExecuteHandler")
         val wrappedSender = connectionWrapperFactory(context, sender)
         prepareHandler ! PrepareHandlerMessages.Execute(messageBody, stream, messageFactory, wrappedSender)
-      }
       case opCode@_ =>
-        logger.warn(s"Received unknown opcode ${opCode} this probably means this feature is yet to be implemented the message body is ${messageBody}")
+        logger.warn(s"Received unknown opcode $opCode this probably means this feature is yet to be implemented the message body is $messageBody")
     }
   }
 
@@ -154,9 +148,9 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
     val opCode: Byte = currentData(3)
 
     val bodyLengthArray = currentData.take(ProtocolOneOrTwoHeaderLength).drop(4)
-    logger.debug(s"Body length array ${bodyLengthArray}")
+    logger.debug(s"Body length array $bodyLengthArray")
     val bodyLength = bodyLengthArray.asByteBuffer.getInt
-    logger.debug(s"Body length ${bodyLength}")
+    logger.debug(s"Body length $bodyLength")
 
     if (currentData.length == bodyLength + ProtocolOneOrTwoHeaderLength) {
       logger.debug("Received exactly the whole message")

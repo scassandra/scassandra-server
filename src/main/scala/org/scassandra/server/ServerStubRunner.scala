@@ -17,6 +17,7 @@ package org.scassandra.server
 
 import akka.actor._
 import com.typesafe.scalalogging.slf4j.Logging
+import org.scassandra.server.actors.TcpServer
 import org.scassandra.server.priming.prepared.{CompositePreparedPrimeStore, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.priming.query.PrimeQueryStore
 import org.scassandra.server.priming.{ActivityLog, PrimingServer}

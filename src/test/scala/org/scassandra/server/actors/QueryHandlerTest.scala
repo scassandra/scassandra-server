@@ -13,27 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.server
+package org.scassandra.server.actors
 
 import akka.actor.{ActorRef, ActorSystem}
-import akka.io.Tcp.Write
 import akka.testkit._
 import akka.util.ByteString
-import org.scalatest.{Matchers, BeforeAndAfter, FunSuite}
-import org.scalatest.mock.MockitoSugar
-import org.scassandra.server.priming._
 import org.mockito.Mockito._
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scassandra.server.MessageHelper
 import org.scassandra.server.cqlmessages._
-import org.scassandra.server.cqlmessages.response.ReadRequestTimeout
-import scala.Some
-import org.scassandra.server.cqlmessages.response.WriteRequestTimeout
-import org.scassandra.server.cqlmessages.response.Row
-import org.scassandra.server.cqlmessages.response.SetKeyspace
-import org.scassandra.server.cqlmessages.response.UnavailableException
-import org.scassandra.server.cqlmessages.response.Rows
-import org.scassandra.server.priming.Query
-import org.scassandra.server.priming.query.{PrimeQueryStore, Prime, PrimeMatch}
-import org.scassandra.server.cqlmessages.types.{CqlVarchar, CqlInt}
+import org.scassandra.server.cqlmessages.response.{ReadRequestTimeout, Row, Rows, SetKeyspace, UnavailableException, WriteRequestTimeout}
+import org.scassandra.server.cqlmessages.types.{CqlInt, CqlVarchar}
+import org.scassandra.server.priming.{Query, _}
+import org.scassandra.server.priming.query.{Prime, PrimeMatch, PrimeQueryStore}
 
 class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with TestKitBase with MockitoSugar {
   implicit lazy val system = ActorSystem()
@@ -133,13 +126,15 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
   }
 
   test("Should return Unavailable Exception if result is UnavailableException") {
+    val query = "some cql statement"
     val stream: Byte = 0x05
-    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), Unavailable)))
+    val consistency: Consistency = LOCAL_ONE
+    val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(query, consistency = consistency).toArray.drop(8))
+    when(mockPrimedResults.get(PrimeMatch(query, consistency))).thenReturn(Some(Prime(List(), Unavailable)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(UnavailableException(stream))
+    testProbeForTcpConnection.expectMsg(UnavailableException(stream, consistency))
   }
 
   test("Test multiple rows") {
