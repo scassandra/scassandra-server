@@ -15,5 +15,3 @@ Stubbed Cassandra runs as a separate process that your application will believe 
 [See web site for documentation](http://www.scassandra.org/).
 
 For feature requests and bug reports send an email to: Christopher.batey@gmail.com or on twitter: @chbatey
-
-

@@ -18,6 +18,8 @@ val akkaVersion = "2.2.4"
 
 addArtifact(Artifact("scassandra-server", "assembly"), sbtassembly.Plugin.AssemblyKeys.assembly)
 
+test in assembly := {}
+
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.0.13",
   "com.typesafe.akka" % "akka-actor_2.10" % akkaVersion,
@@ -27,7 +29,7 @@ libraryDependencies ++= Seq(
   "io.spray" % "spray-routing" % sprayVersion,
   "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
   "com.google.guava" % "guava" % "17.0",
-  "org.apache.cassandra" % "cassandra-clientutil" % "2.1.2"
+  ("org.apache.cassandra" % "cassandra-all" % "2.1.2").exclude("org.antlr", "stringtemplate")
 )
 
 // Read here for optional dependencies:
@@ -38,8 +40,6 @@ resolvers ++= Seq(
   "releases oss" at "http://oss.sonatype.org/content/repositories/releases",
   "spray repo" at "http://repo.spray.io"
 )
-
-net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 publishArtifact in Test := false
 

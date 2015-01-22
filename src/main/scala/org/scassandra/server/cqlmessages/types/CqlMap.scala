@@ -15,43 +15,48 @@
  */
 package org.scassandra.server.cqlmessages.types
 
+import java.nio.ByteBuffer
+import java.util
+
 import akka.util.{ByteString, ByteIterator}
+import org.apache.cassandra.serializers.MapSerializer
+import org.apache.cassandra.utils.ByteBufferUtil
 import org.scassandra.server.cqlmessages.{ProtocolVersion, CqlProtocolHelper}
+import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
+import scala.collection.mutable
 
 // only supports strings for now.
 //todo change this to a type class
-case class CqlMap(keyType: ColumnType[_], valueType: ColumnType[_]) extends ColumnType[Map[Any, Any]](0x0021, s"map<${keyType.stringRep},${valueType.stringRep}>") {
+case class CqlMap[K, V](keyType: ColumnType[K], valueType: ColumnType[V]) extends ColumnType[Map[K, V]](0x0021, s"map<${keyType.stringRep},${valueType.stringRep}>") {
 
   import CqlProtocolHelper._
 
-  override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[Map[Any, Any]] = {
-    val setLength = byteIterator.getInt
-    if (setLength == -1) {
+  override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[Map[K, V]] = {
+    val mapNumberOfBytes = byteIterator.getInt
+    if (mapNumberOfBytes == -1) {
       None
     } else {
-      val numerOfElements = byteIterator.getShort
-      val result = (0 until numerOfElements).map( index =>
-        (keyType.readValueInCollection(byteIterator), valueType.readValueInCollection(byteIterator))
-      ).toMap
-      Some(result)
+      val bytes = new Array[Byte](mapNumberOfBytes)
+      byteIterator.getBytes(bytes)
+      val mapDeserializer: MapSerializer[K, V] = MapSerializer.getInstance(keyType.serializer, valueType.serializer)
+      val deserializedMap : Map[K, V] = mapDeserializer.deserializeForNativeProtocol(ByteBuffer.wrap(bytes), protocolVersion.version).asScala.toMap
+      Some(deserializedMap)
     }
   }
 
   def writeValue(value: Any): Array[Byte] = {
-    if (value.isInstanceOf[Map[String, String]]) {
-      val map = value.asInstanceOf[Map[String, String]]
+    if (value.isInstanceOf[Map[K, V]]) {
+      val map = value.asInstanceOf[Map[K, V]]
       val builder = ByteString.newBuilder
       val size: Int = map.size
-      builder.putShort(size)
-
-      for (valueToSerialise: (String, String) <- map) {
-        builder.putBytes(CqlProtocolHelper.serializeString(valueToSerialise._1))
-        builder.putBytes(CqlProtocolHelper.serializeString(valueToSerialise._2))
-      }
-
-
-      val serialisedMap = builder.result().toArray
-      CqlProtocolHelper.serializeInt(serialisedMap.size) ++ serialisedMap
+      val mapDeserializer: MapSerializer[K, V] = MapSerializer.getInstance(keyType.serializer, valueType.serializer)
+      val serialized: util.List[ByteBuffer] = mapDeserializer.serializeValues(map)
+      val mapContents = serialized.foldLeft(new Array[Byte](0))((acc, byteBuffer) => {
+        val current: mutable.ArrayOps[Byte] = ByteBufferUtil.getArray(byteBuffer)
+        acc ++ serializeShort(current.size.toShort) ++ current
+      })
+      serializeInt(mapContents.length + 2) ++ serializeShort(map.size.toShort) ++ mapContents
     } else {
       throw new IllegalArgumentException(s"Can't serialise $value as map")
     }
