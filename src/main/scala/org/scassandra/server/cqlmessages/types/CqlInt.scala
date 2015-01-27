@@ -28,16 +28,13 @@ case object CqlInt extends ColumnType[Integer](0x0009, "int") {
   }
 
   override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[Integer] = {
-    list.map {
-      case bd: BigDecimal => new Integer(bd.toInt)
-      case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
-    }.toList
+    list.map(convertToCorrectJavaTypeForSerializer).toList
   }
 
   def writeValue(value: Any): Array[Byte] = {
     val bs = ByteString.newBuilder
     bs.putInt(4)
-    val valueAsInt = value match {
+    val valueAsInt: Int = value match {
       case bd: BigDecimal => {
         if (bd.isValidInt) {
           bd.toInt
@@ -54,4 +51,11 @@ case object CqlInt extends ColumnType[Integer](0x0009, "int") {
   }
 
   override def serializer: TypeSerializer[Integer] = Int32Serializer.instance
+
+  override def convertToCorrectJavaTypeForSerializer(value: Any): Integer  = value match {
+    case bd: BigDecimal => new Integer(bd.toInt)
+    case string: String => Integer.parseInt(string)
+    case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
+  }
+
 }
