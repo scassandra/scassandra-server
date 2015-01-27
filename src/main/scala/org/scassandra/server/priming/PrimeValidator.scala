@@ -15,6 +15,7 @@
  */
 package org.scassandra.server.priming
 
+import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.server.cqlmessages._
 import java.math.BigDecimal
 import java.util.UUID
@@ -23,7 +24,7 @@ import scala.collection.immutable.Map
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
 import org.scassandra.server.cqlmessages.types.ColumnType
 
-class PrimeValidator {
+class PrimeValidator extends Logging {
 
   def validate(criteria: PrimeCriteria, prime: Prime, queryToResults: Map[PrimeCriteria, Prime]): PrimeAddResult = {
     // 1. Validate consistency
@@ -75,12 +76,10 @@ class PrimeValidator {
       false
     } catch {
       case
-        _: ClassCastException |
-        _: NumberFormatException |
-        _: IllegalArgumentException |
-        _: StringIndexOutOfBoundsException |
-        _: UnknownHostException =>
-        true
+        e: Exception =>
+          logger.warn(s"Unable to use provided prime for the given type", e)
+
+          true
     }
   }
 

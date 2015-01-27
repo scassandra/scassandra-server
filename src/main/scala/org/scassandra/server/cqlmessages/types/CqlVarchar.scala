@@ -48,4 +48,6 @@ case object CqlVarchar extends ColumnType[String](0x000D, "varchar") {
   }
 
    override def serializer: TypeSerializer[String] = UTF8Serializer.instance
- }
+
+  override def convertToCorrectJavaTypeForSerializer(value: Any): String = value.toString
+}

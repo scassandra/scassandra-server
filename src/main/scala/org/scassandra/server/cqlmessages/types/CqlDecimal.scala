@@ -15,6 +15,8 @@
  */
 package org.scassandra.server.cqlmessages.types
 
+import java.math
+
 import akka.util.ByteIterator
 import org.apache.cassandra.serializers.{DecimalSerializer, TypeSerializer}
 import org.scassandra.server.cqlmessages.{ProtocolVersion, CqlProtocolHelper}
@@ -29,11 +31,14 @@ case object CqlDecimal extends ColumnType[java.math.BigDecimal](0x0006, "decimal
    }
 
   override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[java.math.BigDecimal] = {
-    list.map {
-      case bd: BigDecimal => bd.bigDecimal
-      case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
-    }.toList
+    list.map(convertToCorrectJavaTypeForSerializer).toList
   }
 
   override def serializer: TypeSerializer[java.math.BigDecimal] = DecimalSerializer.instance
- }
+
+  override def convertToCorrectJavaTypeForSerializer(value: Any): math.BigDecimal = value match {
+    case bd: BigDecimal => bd.bigDecimal
+    case string: String => new math.BigDecimal(string)
+    case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
+  }
+}

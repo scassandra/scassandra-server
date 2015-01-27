@@ -41,4 +41,6 @@ case object CqlAscii extends ColumnType[String](0x0001, "ascii") {
   }
 
   override def serializer: TypeSerializer[String] = AsciiSerializer.instance
+
+  override def convertToCorrectJavaTypeForSerializer(value: Any): String = value.toString
 }

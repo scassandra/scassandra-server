@@ -46,21 +46,31 @@ case class CqlMap[K, V](keyType: ColumnType[K], valueType: ColumnType[V]) extend
   }
 
   def writeValue(value: Any): Array[Byte] = {
+    logger.debug(s"Trying to write $value for $this")
+
     if (value.isInstanceOf[Map[K, V]]) {
       val map = value.asInstanceOf[Map[K, V]]
+
+      val mapWithCorrectTypes: Map[K, V] = map.map({
+        case (k, v) => (keyType.convertToCorrectJavaTypeForSerializer(k), valueType.convertToCorrectJavaTypeForSerializer(v))
+      })
+
       val builder = ByteString.newBuilder
-      val size: Int = map.size
+      val size: Int = mapWithCorrectTypes.size
       val mapDeserializer: MapSerializer[K, V] = MapSerializer.getInstance(keyType.serializer, valueType.serializer)
-      val serialized: util.List[ByteBuffer] = mapDeserializer.serializeValues(map)
+      val serialized: util.List[ByteBuffer] = mapDeserializer.serializeValues(mapWithCorrectTypes)
       val mapContents = serialized.foldLeft(new Array[Byte](0))((acc, byteBuffer) => {
         val current: mutable.ArrayOps[Byte] = ByteBufferUtil.getArray(byteBuffer)
         acc ++ serializeShort(current.size.toShort) ++ current
       })
       serializeInt(mapContents.length + 2) ++ serializeShort(map.size.toShort) ++ mapContents
     } else {
+      logger.debug("Not a suitable map")
       throw new IllegalArgumentException(s"Can't serialise $value as map")
     }
   }
+
+  override def convertToCorrectJavaTypeForSerializer(value: Any): Map[K, V] = throw new UnsupportedOperationException
 }
 
 /*

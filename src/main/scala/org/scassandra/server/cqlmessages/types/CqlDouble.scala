@@ -38,4 +38,4 @@ case object CqlDouble extends ColumnType[java.lang.Double](0x0007, "double") {
   }
 
   override def serializer: TypeSerializer[java.lang.Double] = DoubleSerializer.instance
- }
+}

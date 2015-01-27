@@ -47,12 +47,14 @@ case object CqlBlob extends ColumnType[Array[Byte]](0x0003, "blob") {
    }
 
   override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[Array[Byte]] = {
-    list.map {
-      case array: Array[Byte] => array
-      case string: String => hex2Bytes(string)
-      case _ => throw new IllegalArgumentException("Expected byte array")
-    }.toList
+    list.map(convertToCorrectJavaTypeForSerializer).toList
   }
 
   override def serializer: TypeSerializer[Array[Byte]] = CustomBytesSerializer.instance
- }
+
+  override def convertToCorrectJavaTypeForSerializer(value: Any): Array[Byte] = value match {
+    case array: Array[Byte] => array
+    case string: String => hex2Bytes(string)
+    case _ => throw new IllegalArgumentException("Expected byte array")
+  }
+}
