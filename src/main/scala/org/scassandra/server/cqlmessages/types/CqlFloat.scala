@@ -31,11 +31,14 @@ case object CqlFloat extends ColumnType[java.lang.Float](0x0008, "float") {
    }
 
   override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[java.lang.Float] = {
-    list.map {
-      case bd: BigDecimal => new java.lang.Float(bd.toFloat)
-      case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
-    }.toList
+    list.map(convertToCorrectJavaTypeForSerializer).toList
   }
 
   override def serializer: TypeSerializer[java.lang.Float] = FloatSerializer.instance
- }
+
+  override def convertToCorrectJavaTypeForSerializer(value: Any): lang.Float = value match {
+    case bd: BigDecimal => new java.lang.Float(bd.toFloat)
+    case string: String => java.lang.Float.parseFloat(string)
+    case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
+  }
+}
