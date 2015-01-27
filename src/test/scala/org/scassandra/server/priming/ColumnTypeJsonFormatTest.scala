@@ -30,14 +30,12 @@ class ColumnTypeJsonFormatTest extends FunSuite with Matchers {
   }
 
   test("Set types parsing") {
-    ColumnTypeJsonFormat.read(JsString("set")) should equal(CqlSet(CqlVarchar))
     ColumnTypeJsonFormat.read(JsString("set<varchar>")) should equal(CqlSet(CqlVarchar))
     ColumnTypeJsonFormat.read(JsString("set<ascii>")) should equal(CqlSet(CqlAscii))
     ColumnTypeJsonFormat.read(JsString("set<text>")) should equal(CqlSet(CqlText))
   }
 
   test("List types parsing") {
-    ColumnTypeJsonFormat.read(JsString("list")) should equal(CqlList(CqlVarchar))
     ColumnTypeJsonFormat.read(JsString("list<varchar>")) should equal(CqlList(CqlVarchar))
     ColumnTypeJsonFormat.read(JsString("list<ascii>")) should equal(CqlList(CqlAscii))
     ColumnTypeJsonFormat.read(JsString("list<text>")) should equal(CqlList(CqlText))

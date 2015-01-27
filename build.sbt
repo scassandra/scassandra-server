@@ -18,6 +18,10 @@ val akkaVersion = "2.2.4"
 
 addArtifact(Artifact("scassandra-server", "assembly"), sbtassembly.Plugin.AssemblyKeys.assembly)
 
+resolvers += "Sonatype snapshots repo" at "https://oss.sonatype.org/content/repositories/snapshots"
+
+resolvers += Resolver.mavenLocal
+
 test in assembly := {}
 
 libraryDependencies ++= Seq(
@@ -29,7 +33,8 @@ libraryDependencies ++= Seq(
   "io.spray" % "spray-routing" % sprayVersion,
   "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
   "com.google.guava" % "guava" % "17.0",
-  ("org.apache.cassandra" % "cassandra-all" % "2.1.2").exclude("org.antlr", "stringtemplate")
+  ("org.apache.cassandra" % "cassandra-all" % "2.1.2").exclude("org.antlr", "stringtemplate"),
+  "org.scassandra" % "cql-antlr" % "0.1.0-SNAPSHOT" changing()
 )
 
 // Read here for optional dependencies:

@@ -18,6 +18,7 @@ package org.scassandra.server.cqlmessages.types
 import akka.util.{ByteIterator}
 import com.typesafe.scalalogging.slf4j.Logging
 import org.apache.cassandra.serializers.TypeSerializer
+import org.scassandra.cql._
 import org.scassandra.server.cqlmessages.{VersionTwo, ProtocolVersion}
 
 abstract class ColumnType[T](val code : Short, val stringRep: String) extends Logging {
@@ -30,7 +31,7 @@ abstract class ColumnType[T](val code : Short, val stringRep: String) extends Lo
   def convertToCorrectCollectionTypeForSet(set: Iterable[_]) : Set[T] = convertToCorrectCollectionTypeForList(set).toSet
 }
 
-object ColumnType {
+object ColumnType extends Logging {
   //todo change to pattern match
   val ColumnTypeMapping = Map[String, ColumnType[_]](
     CqlInt.stringRep -> CqlInt,
@@ -48,54 +49,28 @@ object ColumnType {
     CqlInet.stringRep -> CqlInet,
     CqlVarint.stringRep -> CqlVarint,
     CqlTimeUUID.stringRep -> CqlTimeUUID,
-    CqlVarchar.stringRep -> CqlVarchar,
-    "set" -> CqlSet(CqlVarchar),
-    "set<varchar>" -> CqlSet(CqlVarchar),
-    "set<ascii>" -> CqlSet(CqlAscii),
-    "set<text>" -> CqlSet(CqlText),
-    "set<int>" -> CqlSet(CqlInt),
-    "set<bigint>" -> CqlSet(CqlBigint),
-    "set<boolean>" -> CqlSet(CqlBoolean),
-    "set<counter>" -> CqlSet(CqlCounter),
-    "set<decimal>" -> CqlSet(CqlDecimal),
-    "set<double>" -> CqlSet(CqlDouble),
-    "set<float>" -> CqlSet(CqlFloat),
-    "set<inet>" -> CqlSet(CqlInet),
-    "set<timestamp>" -> CqlSet(CqlTimestamp),
-    "set<uuid>" -> CqlSet(CqlUUID),
-    "set<timeuuid>" -> CqlSet(CqlTimeUUID),
-    "set<varint>" -> CqlSet(CqlVarint),
-    "set<blob>" -> CqlSet(CqlBlob),
-    "list" -> CqlList(CqlVarchar),
-    "list<varchar>" -> CqlList(CqlVarchar),
-    "list<ascii>" -> CqlList(CqlAscii),
-    "list<text>" -> CqlList(CqlText),
-    "list<int>" -> CqlList(CqlInt),
-    "list<bigint>" -> CqlList(CqlBigint),
-    "list<boolean>" -> CqlList(CqlBoolean),
-    "list<counter>" -> CqlList(CqlCounter),
-    "list<decimal>" -> CqlList(CqlDecimal),
-    "list<double>" -> CqlList(CqlDouble),
-    "list<float>" -> CqlList(CqlFloat),
-    "list<inet>" -> CqlList(CqlInet),
-    "list<timestamp>" -> CqlList(CqlTimestamp),
-    "list<uuid>" -> CqlList(CqlUUID),
-    "list<timeuuid>" -> CqlList(CqlTimeUUID),
-    "list<varint>" -> CqlList(CqlVarint),
-    "list<blob>" -> CqlList(CqlBlob),
-    "map<varchar,varchar>" -> CqlMap(CqlVarchar, CqlVarchar),
-    "map<varchar,text>" -> CqlMap(CqlVarchar, CqlText),
-    "map<varchar,ascii>" -> CqlMap(CqlVarchar, CqlAscii),
-    "map<ascii,ascii>" -> CqlMap(CqlAscii, CqlAscii),
-    "map<ascii,text>" -> CqlMap(CqlAscii, CqlText),
-    "map<ascii,varchar>" -> CqlMap(CqlAscii, CqlVarchar),
-    "map<text,text>" -> CqlMap(CqlText, CqlText),
-    "map<text,varchar>" -> CqlMap(CqlText, CqlVarchar),
-    "map<text,ascii>" -> CqlMap(CqlText, CqlAscii)
+    CqlVarchar.stringRep -> CqlVarchar
   )
 
   def fromString(string: String) : Option[ColumnType[_]] = {
-    ColumnTypeMapping.get(string.toLowerCase())
+
+    val cqlTypeFactory = new CqlTypeFactory
+    val cqlType = cqlTypeFactory.buildType(string)
+
+    logger.info(s"Java type $cqlType")
+
+    def convertJavaToScalaType(javaType: CqlType): ColumnType[_] = {
+      javaType match {
+        case primitive: PrimitiveType => ColumnTypeMapping(primitive.serialise())
+        case map: MapType => new CqlMap(convertJavaToScalaType(map.getKeyType), convertJavaToScalaType(map.getValueType))
+        case set: SetType => new CqlSet(convertJavaToScalaType(set.getType))
+        case list: ListType => new CqlList(convertJavaToScalaType(list.getType))
+      }
+    }
+
+    val parsedType = Some(convertJavaToScalaType(cqlType))
+    logger.info(s"Type is $parsedType")
+    parsedType
   }
 
 }
