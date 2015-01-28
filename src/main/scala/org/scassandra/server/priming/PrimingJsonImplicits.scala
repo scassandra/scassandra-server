@@ -73,7 +73,10 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
       case bd: BigDecimal => JsString(bd.bigDecimal.toPlainString)
       case s: String => JsString(s)
       case seq: Seq[_] => seqFormat[Any].write(seq)
-      case m: Map[String, _] => mapFormat[String, Any].write(m)
+      case m: Map[Any, Any] => {
+        val keysAsString: Map[String, Any] = m.map({ case (k, v) => (k.toString, v)})
+        mapFormat[String, Any].write(keysAsString)
+      }
       case set: Set[Any] => setFormat[Any].write(set)
       case list: List[Any] => listFormat[Any].write(list)
       case b: Boolean if b => JsTrue
