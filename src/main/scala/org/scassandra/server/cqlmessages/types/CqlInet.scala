@@ -17,7 +17,7 @@ package org.scassandra.server.cqlmessages.types
 
 import java.net.InetAddress
 import akka.util.ByteIterator
-import org.apache.cassandra.serializers.{InetAddressSerializer, FloatSerializer, TypeSerializer}
+import org.apache.cassandra.serializers.{InetAddressSerializer, TypeSerializer}
 import org.scassandra.server.cqlmessages.{ProtocolVersion, CqlProtocolHelper}
 import com.google.common.net.InetAddresses
 
@@ -31,12 +31,14 @@ case object CqlInet extends ColumnType[InetAddress](0x0010, "inet") {
   }
 
   override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[InetAddress] = {
-    list.map {
-      case bd: String => InetAddress.getByName(bd)
-      case inet: InetAddress => inet
-      case _ => throw new IllegalArgumentException("Expected string representing an inet address")
-    }.toList
+    list.map(convertToCorrectJavaTypeForSerializer).toList
   }
 
   override def serializer: TypeSerializer[InetAddress] = InetAddressSerializer.instance
+
+  override def convertToCorrectJavaTypeForSerializer(value: Any): InetAddress = value match {
+    case bd: String => InetAddresses.forString(bd)
+    case inet: InetAddress => inet
+    case _ => throw new IllegalArgumentException("Expected string representing an inet address")
+  }
 }

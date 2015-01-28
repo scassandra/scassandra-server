@@ -42,7 +42,7 @@ case class CqlSet[T](setType : ColumnType[T]) extends ColumnType[Set[_]](0x0022,
    }
 
   def writeValue(value: Any) : Array[Byte] = {
-    val setSerialiser: SetSerializer[T] = SetSerializer.getInstance(setType.serializer)
+    val setSerializer: SetSerializer[T] = SetSerializer.getInstance(setType.serializer)
     val set: Set[T] = value match {
       case s: Set[T] =>
         s
@@ -51,12 +51,12 @@ case class CqlSet[T](setType : ColumnType[T]) extends ColumnType[Set[_]](0x0022,
       case _: Seq[T] =>
         value.asInstanceOf[Seq[T]].toSet
       case _ =>
-        throw new IllegalArgumentException(s"Can't serialise ${value} as Set of $setType")
+        throw new IllegalArgumentException(s"Can't serialise $value as Set of $setType")
     }
 
     val collectionType: util.Set[T] = setType.convertToCorrectCollectionTypeForSet(set)
 
-    val serialised: util.List[ByteBuffer] = setSerialiser.serializeValues(collectionType)
+    val serialised: util.List[ByteBuffer] = setSerializer.serializeValues(collectionType)
 
     val setContents = serialised.foldLeft(new Array[Byte](0))((acc, byteBuffer) => {
       val current: mutable.ArrayOps[Byte] = ByteBufferUtil.getArray(byteBuffer)
@@ -65,4 +65,6 @@ case class CqlSet[T](setType : ColumnType[T]) extends ColumnType[Set[_]](0x0022,
 
     serializeInt(setContents.length + 2) ++ serializeShort(set.size.toShort) ++ setContents
   }
- }
+
+  override def convertToCorrectJavaTypeForSerializer(value: Any): Set[_] = throw new UnsupportedOperationException("Can't have sets in collections yet")
+}

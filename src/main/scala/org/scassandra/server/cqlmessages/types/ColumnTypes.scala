@@ -29,7 +29,7 @@ abstract class ColumnType[T](val code : Short, val stringRep: String) extends Lo
   def serializer: TypeSerializer[T] = ???
   def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[T] = ???
   def convertToCorrectCollectionTypeForSet(set: Iterable[_]) : Set[T] = convertToCorrectCollectionTypeForList(set).toSet
-  def convertToCorrectJavaTypeForSerializer(value: Any): T = ???
+  def convertToCorrectJavaTypeForSerializer(value: Any): T
 }
 
 object ColumnType extends Logging {

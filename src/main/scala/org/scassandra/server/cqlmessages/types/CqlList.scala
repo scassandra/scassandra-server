@@ -64,4 +64,6 @@ case class CqlList[T](listType : ColumnType[T]) extends ColumnType[Iterable[_]](
 
     serializeInt(setContents.length + 2) ++ serializeShort(list.size.toShort) ++ setContents
   }
- }
+
+  override def convertToCorrectJavaTypeForSerializer(value: Any): Iterable[_] = throw new UnsupportedOperationException("Can't have lists in collections yet")
+}
