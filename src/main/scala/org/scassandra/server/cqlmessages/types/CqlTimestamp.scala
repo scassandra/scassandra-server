@@ -32,12 +32,16 @@ case object CqlTimestamp extends ColumnType[java.lang.Long](0x000B, "timestamp")
   }
 
   override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[java.lang.Long] = {
-    list.map {
-      case bd: BigDecimal => new java.lang.Long(bd.toLong)
-      case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
-    }.toList
+    list.map(convertToCorrectJavaTypeForSerializer).toList
   }
 
   override def serializer: TypeSerializer[java.lang.Long] = LongSerializer.instance
 
+  override def readValueInCollection(byteIterator: ByteIterator): lang.Long = super.readValueInCollection(byteIterator)
+
+  override def convertToCorrectJavaTypeForSerializer(value: Any): lang.Long = value match {
+    case bd: BigDecimal => new java.lang.Long(bd.toLong)
+    case string: String => java.lang.Long.parseLong(string)
+    case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
+  }
 }

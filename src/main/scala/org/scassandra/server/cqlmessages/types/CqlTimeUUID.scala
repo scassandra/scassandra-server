@@ -31,12 +31,14 @@ case object CqlTimeUUID extends ColumnType[UUID](0x000F, "timeuuid") {
    }
 
   override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[UUID] = {
-    list.map {
-      case bd: String => UUID.fromString(bd)
-      case uuid: UUID => uuid
-      case _ => throw new IllegalArgumentException("Expected string representing an time uuid")
-    }.toList
+    list.map(convertToCorrectJavaTypeForSerializer).toList
   }
 
   override def serializer: TypeSerializer[UUID] = CustomUUIDSerializer.instance
- }
+
+  override def convertToCorrectJavaTypeForSerializer(value: Any): UUID = value match {
+    case bd: String => UUID.fromString(bd)
+    case uuid: UUID => uuid
+    case _ => throw new IllegalArgumentException("Expected string representing an time uuid")
+  }
+}
