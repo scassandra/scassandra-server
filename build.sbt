@@ -8,7 +8,7 @@ organization := "org.scassandra"
 
 name := "scassandra-server"
 
-version := "0.6.0-SNAPSHOT"
+version := "0.6.0"
 
 scalaVersion := "2.10.4"
 
@@ -34,7 +34,7 @@ libraryDependencies ++= Seq(
   "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
   "com.google.guava" % "guava" % "17.0",
   ("org.apache.cassandra" % "cassandra-all" % "2.1.2").exclude("org.antlr", "stringtemplate"),
-  "org.scassandra" % "cql-antlr" % "0.1.0-SNAPSHOT" changing()
+  "org.scassandra" % "cql-antlr" % "0.1.0" changing()
 )
 
 // Read here for optional dependencies:
