@@ -15,11 +15,11 @@
  */
 package org.scassandra.server.cqlmessages.types
 
-import akka.util.{ByteIterator}
+import akka.util.ByteIterator
 import com.typesafe.scalalogging.slf4j.Logging
 import org.apache.cassandra.serializers.TypeSerializer
 import org.scassandra.cql._
-import org.scassandra.server.cqlmessages.{VersionTwo, ProtocolVersion}
+import org.scassandra.server.cqlmessages.ProtocolVersion
 
 abstract class ColumnType[T](val code : Short, val stringRep: String) extends Logging {
   def readValue(byteIterator : ByteIterator, protocolVersion: ProtocolVersion) : Option[T]
@@ -58,7 +58,7 @@ object ColumnType extends Logging {
     val cqlTypeFactory = new CqlTypeFactory
     val cqlType = cqlTypeFactory.buildType(string)
 
-    logger.info(s"Java type $cqlType")
+    logger.trace(s"Java type $cqlType")
 
     def convertJavaToScalaType(javaType: CqlType): ColumnType[_] = {
       javaType match {
