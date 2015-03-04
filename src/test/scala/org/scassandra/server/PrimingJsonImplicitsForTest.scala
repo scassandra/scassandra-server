@@ -69,7 +69,6 @@ object PrimingJsonImplicitsForTest extends DefaultJsonProtocol with SprayJsonSup
       case seq: Seq[_] => seqFormat[Any].write(seq)
       case m: Map[String, _] => mapFormat[String, Any].write(m)
       case set: Set[Any] => setFormat[Any].write(set)
-      case list: List[Any] => listFormat[Any].write(list)
       case b: Boolean if b => JsTrue
       case b: Boolean if !b => JsFalse
       case double: Double => JsNumber(double)

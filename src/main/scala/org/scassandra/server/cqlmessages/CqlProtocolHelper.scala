@@ -28,7 +28,7 @@ object CqlProtocolHelper {
   def serializeString(string: String) : Array[Byte] = {
     val bs = ByteString.newBuilder
     bs.putShort(string.length)
-    bs.putBytes(string.getBytes())
+    bs.putBytes(string.getBytes)
     bs.result().toArray
   }
 
