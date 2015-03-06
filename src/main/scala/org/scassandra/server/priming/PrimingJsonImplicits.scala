@@ -78,8 +78,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
         val keysAsString: Map[String, Any] = m.map({ case (k, v) => (k.toString, v)})
         mapFormat[String, Any].write(keysAsString)
       }
-//      case set: Set[_] => setFormat[Any].write(set.map(s => s))
-      case set: Set[Any] => setFormat[Any].write(set)
+      case set: Set[_] => setFormat[Any].write(set.map(s => s))
 
       case b: Boolean if b => JsTrue
       case b: Boolean if !b => JsFalse
