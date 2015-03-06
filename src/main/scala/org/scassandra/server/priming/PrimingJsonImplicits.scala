@@ -30,7 +30,6 @@ import java.util.UUID
 import java.net.InetAddress
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.routes.Version
-import scala.collection.JavaConverters._
 import scala.collection.Set
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport with Logging {
