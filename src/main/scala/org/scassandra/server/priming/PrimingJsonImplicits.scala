@@ -30,6 +30,8 @@ import java.util.UUID
 import java.net.InetAddress
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.routes.Version
+import scala.collection.JavaConverters._
+import scala.collection.Set
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport with Logging {
 
@@ -76,7 +78,9 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
         val keysAsString: Map[String, Any] = m.map({ case (k, v) => (k.toString, v)})
         mapFormat[String, Any].write(keysAsString)
       }
+//      case set: Set[_] => setFormat[Any].write(set.map(s => s))
       case set: Set[Any] => setFormat[Any].write(set)
+
       case b: Boolean if b => JsTrue
       case b: Boolean if !b => JsFalse
 
