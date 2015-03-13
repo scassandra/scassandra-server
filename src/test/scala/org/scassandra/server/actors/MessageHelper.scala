@@ -80,6 +80,10 @@ object MessageHelper {
     numberOfOptions ::: singleOption
   }
 
+  def createOptionsMessage(protocolVersion : Byte = ProtocolVersion.ClientProtocolVersionTwo, stream : Byte = 0) : List[Byte] = {
+    List[Byte](protocolVersion, 0x00, stream, OpCodes.Options) ::: serializeInt(0)
+  }
+
 
   private def serializeLongString(string: String): List[Byte] = {
     serializeInt(string.length) :::

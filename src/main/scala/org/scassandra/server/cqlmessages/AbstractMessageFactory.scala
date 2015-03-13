@@ -69,6 +69,11 @@ abstract class AbstractMessageFactory extends CqlMessageFactory {
     UnavailableException(stream, consistency, unavailableResult)
   }
 
+  override def createSupportedMessage(stream: Byte): Supported = {
+    // TODO: If compression is ever supported include 'COMPRESSION' options.
+    Supported(stream)
+  }
+
   def createVoidMessage(stream: Byte): VoidResult = {
     VoidResult(stream)
   }

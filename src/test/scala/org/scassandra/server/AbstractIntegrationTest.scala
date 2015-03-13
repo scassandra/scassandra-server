@@ -126,7 +126,9 @@ abstract class AbstractIntegrationTest(clusterConnect: Boolean = true) extends F
   override def afterAll() {
     stopServerStub()
 
-    cluster.close()
+    if(cluster != null) {
+      cluster.close()
+    }
   }
 }
 

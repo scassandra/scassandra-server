@@ -36,6 +36,7 @@ import org.scassandra.server.priming.QueryHandlerMessages
  */
 class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         registerHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
+                        optionsHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         prepareHandler: ActorRef,
                         connectionWrapperFactory: (ActorRefFactory, ActorRef) => ActorRef) extends Actor with ActorLogging {
 
@@ -48,6 +49,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
   var messageFactory: CqlMessageFactory = _
   var registerHandler: ActorRef = _
   var queryHandler: ActorRef = _
+  var optionsHandler: ActorRef = _
 
   val ProtocolOneOrTwoHeaderLength = 8
 
@@ -84,6 +86,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
         val wrappedSender = connectionWrapperFactory(context, sender)
         queryHandler = queryHandlerFactory(context, wrappedSender, messageFactory)
         registerHandler = registerHandlerFactory(context, wrappedSender, messageFactory)
+        optionsHandler = optionsHandlerFactory(context, wrappedSender, messageFactory)
         wrappedSender ! messageFactory.createReadyMessage(stream)
         ready = true
       case OpCodes.Query =>
@@ -97,6 +100,9 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
       case OpCodes.Register =>
         log.debug("Received register message. Sending to RegisterHandler")
         registerHandler ! RegisterHandlerMessages.Register(messageBody, stream)
+      case OpCodes.Options =>
+        log.debug("Received options message. Sending to OptionsHandler")
+        optionsHandler ! OptionsHandlerMessages.OptionsMessage(stream)
       case OpCodes.Prepare =>
         log.debug("Received prepare message. Sending to PrepareHandler")
         val wrappedSender = connectionWrapperFactory(context, sender)
