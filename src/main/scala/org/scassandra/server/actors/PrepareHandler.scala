@@ -19,7 +19,7 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
   var preparedStatementsToId: Map[Int, String] = Map()
 
   def receive: Actor.Receive = {
-    case PrepareHandlerMessages.Prepare(body, stream, msgFactory, connection) => {
+    case PrepareHandlerMessages.Prepare(body, stream, msgFactory, connection) =>
       logger.trace(s"Received prepare message $body")
       val query = readLongString(body.iterator).get
       val preparedPrime = primePreparedStore.findPrime(PrimeMatch(query))
@@ -37,8 +37,7 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
       logger.info(s"Prepared Statement has been prepared: |$query|. Prepared result is: $preparedResult")
       connection ! preparedResult
-    }
-    case PrepareHandlerMessages.Execute(body, stream, msgFactory, connection) => {
+    case PrepareHandlerMessages.Execute(body, stream, msgFactory, connection) =>
       logger.trace(s"Received execute bytes $body")
       val executeRequest = msgFactory.parseExecuteRequestWithoutVariables(stream, body)
       logger.debug(s"Received execute message $executeRequest")
@@ -47,9 +46,9 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
       if (preparedStatement.isDefined) {
         val preparedStatementText = preparedStatement.get
         val prime = primePreparedStore.findPrime(PrimeMatch(preparedStatementText, executeRequest.consistency))
-        logger.info(s"Received execution of prepared statement |${preparedStatementText}| and consistency |${executeRequest.consistency}|")
+        logger.info(s"Received execution of prepared statement |$preparedStatementText| and consistency |${executeRequest.consistency}|")
         prime match {
-          case Some(preparedPrime) => {
+          case Some(preparedPrime) =>
 
             if (executeRequest.numberOfVariables == preparedPrime.variableTypes.size) {
               val executeRequestParsedWithVariables = msgFactory.parseExecuteRequestWithVariables(stream, body, preparedPrime.variableTypes)
@@ -67,32 +66,26 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
             }
 
             sendMessage(preparedPrime.prime.fixedDelay, connection, msgToSend)
-
-          }
-          case None => {
+          case None =>
             logger.warn(s"Received execution of prepared statement that hasn't been primed so can't record variables. $preparedStatementText")
             activityLog.recordPreparedStatementExecution(preparedStatement.get, executeRequest.consistency, List(), List())
             connection ! msgFactory.createVoidMessage(stream)
-          }
         }
       } else {
         logger.warn(s"Received execution of an unknown prepared statement. Have you restarted Scassandra since your application prepared the statement?")
         connection ! msgFactory.createVoidMessage(stream)
       }
-    }
-    case msg@_ => {
+    case msg@_ =>
       logger.debug(s"Received unknown message $msg")
-    }
   }
 
   private def sendMessage(delay: Option[FiniteDuration], receiver: ActorRef, message: Any) = {
 
     delay match {
       case None => receiver ! message
-      case Some(duration) => {
+      case Some(duration) =>
         logger.info(s"Delaying response of prepared statement by $duration")
         context.system.scheduler.scheduleOnce(duration, receiver, message)(context.system.dispatcher)
-      }
     }
   }
 }
