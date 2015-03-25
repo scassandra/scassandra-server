@@ -57,11 +57,11 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
     }
   }
 
-  implicit object ResultJsonFormat extends RootJsonFormat[Result] {
-    def write(result: Result) = JsString(result.string)
+  implicit object ResultJsonFormat extends RootJsonFormat[ResultJsonRepresentation] {
+    def write(result: ResultJsonRepresentation) = JsString(result.string)
 
     def read(value: JsValue) = value match {
-      case JsString(string) => Result.fromString(string)
+      case JsString(string) => ResultJsonRepresentation.fromString(string)
       case _ => throw new IllegalArgumentException("Expected Result as JsString")
     }
   }
@@ -108,7 +108,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
     }
   }
 
-  implicit val impThen = jsonFormat4(Then)
+  implicit val impThen = jsonFormat5(Then)
   implicit val impWhen = jsonFormat5(When)
   implicit val impPrimeQueryResult = jsonFormat2(PrimeQuerySingle)
   implicit val impConnection = jsonFormat1(Connection)
@@ -118,7 +118,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
   implicit val impTypeMismatch = jsonFormat3(TypeMismatch)
   implicit val impTypeMismatches = jsonFormat1(TypeMismatches)
   implicit val impWhenPreparedSingle = jsonFormat3(WhenPreparedSingle)
-  implicit val impThenPreparedSingle = jsonFormat5(ThenPreparedSingle)
+  implicit val impThenPreparedSingle = jsonFormat6(ThenPreparedSingle)
   implicit val impPrimePreparedSingle = jsonFormat2(PrimePreparedSingle)
   implicit val impPreparedStatementExecution = jsonFormat4(PreparedStatementExecution)
   implicit val impVersion = jsonFormat1(Version)

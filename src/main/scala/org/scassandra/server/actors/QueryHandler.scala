@@ -1,7 +1,6 @@
 package org.scassandra.server.actors
 
 import akka.actor.{Actor, ActorRef}
-import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.server.cqlmessages.{Consistency, CqlMessageFactory, CqlProtocolHelper}
 import org.scassandra.server.priming._
@@ -35,17 +34,18 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
         primeForIncomingQuery match {
           case Some(prime) => {
             val message = prime.result match {
-              case Success => {
+                //todo errors
+              case SuccessResult => {
                 logger.info(s"Found matching prime $prime for query $queryText")
                 msgFactory.createRowsMessage(prime, stream)
               }
-              case ReadTimeout => {
-                msgFactory.createReadTimeoutMessage(stream, consistency)
+              case result: ReadRequestTimeoutResult => {
+                msgFactory.createReadTimeoutMessage(stream, consistency, result)
               }
-              case Unavailable => {
+              case result: UnavailableResult => {
                 msgFactory.createUnavailableMessage(stream, consistency)
               }
-              case WriteTimeout => {
+              case result: WriteRequestTimeoutResult => {
                 msgFactory.createWriteTimeoutMessage(stream, consistency)
               }
             }

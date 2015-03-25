@@ -18,6 +18,7 @@ package org.scassandra.server.cqlmessages.response
 import org.scalatest.{Matchers, FunSuite}
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.VersionTwo
+import org.scassandra.server.priming.ReadRequestTimeoutResult
 
 class ErrorTest extends FunSuite with Matchers {
 
@@ -56,16 +57,23 @@ class ErrorTest extends FunSuite with Matchers {
   }
 
   test("Read request timeout has error code 0x1200 and message Read Request Timeout") {
+    val required = 2
+    val actual = 1
+    val dataPresent = false
+    val readRequestTimeoutResult = ReadRequestTimeoutResult(actual, required, dataPresent)
     val consistency = TWO
-    val readTimeout = ReadRequestTimeout(defaultStream, consistency)
+    val readTimeout = ReadRequestTimeout(defaultStream, consistency, readRequestTimeoutResult)
 
     readTimeout.errorCode should equal(ErrorCodes.ReadTimeout)
     readTimeout.errorMessage should equal("Read Request Timeout")
+    readTimeout.receivedResponses should equal(actual)
+    readTimeout.blockFor should equal(required)
+    readTimeout.dataPresent should equal(0)
   }
 
   test("Serialization of Read Request Timeout - hard coded data for now") {
     val providedConsistency = TWO
-    val readTimeoutBytes = ReadRequestTimeout(defaultStream, providedConsistency).serialize().iterator
+    val readTimeoutBytes = ReadRequestTimeout(defaultStream, providedConsistency, ReadRequestTimeoutResult()).serialize().iterator
 
     val header = readTimeoutBytes.drop(4)
     val length = readTimeoutBytes.getInt

@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2014 Christopher Batey and Dogan Narinc
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright (C) 2014 Christopher Batey and Dogan Narinc
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package org.scassandra.server.actors
 
 import java.util.concurrent.TimeUnit
@@ -96,7 +96,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     verify(primePreparedStore).findPrime(PrimeMatch(query))
     testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", primedVariableTypes))
   }
-  
+
   test("Should use incrementing IDs") {
     underTest = TestActorRef(new PrepareHandler(primePreparedStore, activityLog))
     val stream: Byte = 0x02
@@ -155,20 +155,20 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val query = "select * from something where name = ?"
     val consistency = QUORUM
     val preparedStatementId = sendPrepareAndCaptureId(stream, query)
-    val primeMatch = Some(PreparedPrime(prime = Prime(result = ReadTimeout)))
+    val primeMatch = Some(PreparedPrime(prime = Prime(result = ReadRequestTimeoutResult())))
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
 
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency = consistency).serialize().drop(8)
     underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
-    testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream, consistency))
+    testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream, consistency, ReadRequestTimeoutResult()))
   }
 
   test("Execute with write time out") {
     val query = "select * from something where name = ?"
     val consistency = QUORUM
     val preparedStatementId = sendPrepareAndCaptureId(stream, query)
-    val primeMatch = Some(PreparedPrime(prime = Prime(result = WriteTimeout)))
+    val primeMatch = Some(PreparedPrime(prime = Prime(result = WriteRequestTimeoutResult())))
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
 
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency = consistency).serialize().drop(8)
@@ -181,7 +181,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val query = "select * from something where name = ?"
     val consistency = QUORUM
     val preparedStatementId = sendPrepareAndCaptureId(stream, query)
-    val primeMatch = Some(PreparedPrime(prime = Prime(result = Unavailable)))
+    val primeMatch = Some(PreparedPrime(prime = Prime(result = UnavailableResult())))
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
 
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency = consistency).serialize().drop(8)

@@ -17,6 +17,7 @@ package org.scassandra.server.cqlmessages.response
 
 import akka.util.ByteString
 import org.scassandra.server.cqlmessages._
+import org.scassandra.server.priming.ReadRequestTimeoutResult
 
 object ErrorCodes {
   val ProtocolError = 0x000A
@@ -46,11 +47,11 @@ case class UnsupportedProtocolVersion(stream: Byte)(implicit protocolVersion: Pr
 
 case class QueryBeforeReadyMessage(stream : Byte = ResponseHeader.DefaultStreamId)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.ProtocolError, "Query sent before StartUp message", stream)
 
-case class ReadRequestTimeout(stream : Byte, consistency: Consistency)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.ReadTimeout, "Read Request Timeout", stream) {
+case class ReadRequestTimeout(stream : Byte, consistency: Consistency, readRequestTimeoutResult: ReadRequestTimeoutResult)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.ReadTimeout, "Read Request Timeout", stream) {
 
-  val receivedResponses : Int = 0
-  val blockFor : Int = 1
-  val dataPresent : Byte = 0
+  val receivedResponses : Int = readRequestTimeoutResult.receivedResponses
+  val blockFor : Int = readRequestTimeoutResult.requiredResponses
+  val dataPresent : Byte = if (readRequestTimeoutResult.dataPresent) 1 else 0
 
   import CqlProtocolHelper._
 

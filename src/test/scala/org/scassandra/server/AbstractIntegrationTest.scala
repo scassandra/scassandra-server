@@ -15,22 +15,23 @@
  */
 package org.scassandra.server
 
-import java.net.{Socket, ConnectException}
-import org.scalatest.{Matchers, BeforeAndAfterAll, BeforeAndAfter, FunSuite}
-import com.datastax.driver.core.{Session, Cluster}
-import dispatch._, Defaults._
-import spray.json._
-import DefaultJsonProtocol._
-import org.scassandra.server.priming.query.{When, Then, PrimeQuerySingle}
-import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
-import org.scassandra.server.priming.{PreparedStatementExecution, Result, Success}
+import java.net.{ConnectException, Socket}
+
+import com.datastax.driver.core.{Cluster, Session}
+import dispatch.Defaults._
+import dispatch._
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSuite, Matchers}
 import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
+import org.scassandra.server.priming.query.{PrimeQuerySingle, Then, When}
+import org.scassandra.server.priming.{PreparedStatementExecution, ResultJsonRepresentation, Success}
+import spray.json._
 
 object PrimingHelper {
 
   import PrimingJsonImplicitsForTest._
 
-  def primeQuery(when: When, rows: List[Map[String, Any]], result: Result = Success, columnTypes: Map[String, ColumnType[_]] = Map()): String = {
+  def primeQuery(when: When, rows: List[Map[String, Any]], result: ResultJsonRepresentation = Success, columnTypes: Map[String, ColumnType[_]] = Map()): String = {
     primeQuery(when, Then(Some(rows), Some(result), Some(columnTypes)))
   }
 
@@ -71,7 +72,7 @@ abstract class AbstractIntegrationTest(clusterConnect: Boolean = true) extends F
   var cluster: Cluster = _
   var session: Session = _
 
-  def prime(when: When, rows: List[Map[String, Any]], result: Result = Success, columnTypes: Map[String, ColumnType[_]] = Map()) = {
+  def prime(when: When, rows: List[Map[String, Any]], result: ResultJsonRepresentation = Success, columnTypes: Map[String, ColumnType[_]] = Map()) = {
     PrimingHelper.primeQuery(when, rows, result, columnTypes)
   }
 

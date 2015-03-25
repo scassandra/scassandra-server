@@ -34,7 +34,7 @@ libraryDependencies ++= Seq(
   "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
   "com.google.guava" % "guava" % "17.0",
   ("org.apache.cassandra" % "cassandra-all" % "2.1.2").exclude("org.antlr", "stringtemplate"),
-  "org.scassandra" % "cql-antlr" % "0.1.0" changing()
+  "org.scassandra" % "cql-antlr" % "0.1.0"
 )
 
 // Read here for optional dependencies:

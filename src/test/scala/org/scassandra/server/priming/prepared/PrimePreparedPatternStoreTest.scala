@@ -15,13 +15,15 @@
  */
 package org.scassandra.server.priming.prepared
 
-import org.scalatest.{BeforeAndAfter, Matchers, FunSuite}
-import org.scassandra.server.cqlmessages._
-import org.scassandra.server.cqlmessages.types.{CqlInt, CqlInet, CqlVarchar}
-import org.scassandra.server.priming.query.{Prime, PrimeMatch}
-import org.scassandra.server.priming.ReadTimeout
-import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
+
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scassandra.server.cqlmessages._
+import org.scassandra.server.cqlmessages.types.{CqlInet, CqlInt, CqlVarchar}
+import org.scassandra.server.priming.query.{Prime, PrimeMatch}
+import org.scassandra.server.priming.{WriteRequestTimeoutResult, WriteTimeout}
+
+import scala.concurrent.duration.FiniteDuration
 
 class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAndAfter {
 
@@ -50,7 +52,7 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     //given
     val pattern = ".*"
     val when = WhenPreparedSingle(None, Some(pattern), Some(List(ONE)))
-    val then = ThenPreparedSingle(Some(List()), result = Some(ReadTimeout))
+    val then = ThenPreparedSingle(Some(List()), result = Some(WriteTimeout))
     val preparedPrime = PrimePreparedSingle(when, then)
 
     //when
@@ -58,7 +60,7 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     val result: Option[PreparedPrime] = underTest.findPrime(PrimeMatch("select name from users where age = '6'"))
 
     //then
-    result.get.prime.result should equal(ReadTimeout)
+    result.get.prime.result should equal(WriteRequestTimeoutResult())
   }
 
   test("Should record fixed delay") {

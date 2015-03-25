@@ -3,7 +3,7 @@ package org.scassandra.server.e2e.query
 import com.datastax.driver.core.exceptions.{WriteTimeoutException, ReadTimeoutException, UnavailableException}
 import com.datastax.driver.core.{ConsistencyLevel, SimpleStatement}
 import org.scassandra.server.AbstractIntegrationTest
-import org.scassandra.server.priming.{Unavailable, WriteTimeout, ReadTimeout}
+import org.scassandra.server.priming.{ErrorConstants, Unavailable, WriteTimeout, ReadTimeout}
 import org.scassandra.server.priming.query.{Then, When}
 
 class PrimingErrorsTest extends AbstractIntegrationTest {
@@ -46,4 +46,48 @@ class PrimingErrorsTest extends AbstractIntegrationTest {
 
     exception.getConsistencyLevel should equal(consistency)
   }
+
+  test("ReadTimeout: with required / received and data present set") {
+    val properties = Map[String, String](
+      ErrorConstants.ReceivedResponse -> "2",
+      ErrorConstants.RequiredResponse -> "3",
+      ErrorConstants.DataPresent -> "true")
+
+    prime(When(queryPattern = Some(".*")), Then(None, result = Some(ReadTimeout), config = properties))
+
+    val statement = new SimpleStatement("select * from some_table")
+    val consistency: ConsistencyLevel = ConsistencyLevel.ALL
+    statement.setConsistencyLevel(consistency)
+
+    val exception = intercept[ReadTimeoutException] {
+      session.execute(statement)
+    }
+
+    exception.getConsistencyLevel should equal(consistency)
+    exception.getReceivedAcknowledgements should equal(2)
+    exception.getRequiredAcknowledgements should equal(3)
+    exception.wasDataRetrieved() should equal(true)
+  }
+
+//  test("WriteTimeout: with required / received and data present set") {
+//    val properties = Map[String, String](
+//      ErrorConstants.ReceivedResponse -> "2",
+//      ErrorConstants.RequiredResponse -> "3",
+//      ErrorConstants.DataPresent -> "true")
+//
+//    prime(When(queryPattern = Some(".*")), Then(None, result = Some(WriteTimeout), config = properties))
+//
+//    val statement = new SimpleStatement("select * from some_table")
+//    val consistency: ConsistencyLevel = ConsistencyLevel.ALL
+//    statement.setConsistencyLevel(consistency)
+//
+//    val exception = intercept[WriteTimeoutException] {
+//      session.execute(statement)
+//    }
+//
+//    exception.getConsistencyLevel should equal(consistency)
+//    exception.getReceivedAcknowledgements should equal(2)
+//    exception.getRequiredAcknowledgements should equal(3)
+//
+//  }
 }

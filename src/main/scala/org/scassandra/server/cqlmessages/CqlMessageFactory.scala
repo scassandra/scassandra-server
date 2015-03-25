@@ -15,19 +15,12 @@
  */
 package org.scassandra.server.cqlmessages
 
-import org.scassandra.server.cqlmessages.response._
-import org.scassandra.server.cqlmessages.response.UnavailableException
-import org.scassandra.server.cqlmessages.response.QueryBeforeReadyMessage
-import org.scassandra.server.cqlmessages.response.ReadRequestTimeout
-import org.scassandra.server.cqlmessages.response.WriteRequestTimeout
-import org.scassandra.server.cqlmessages.response.VoidResult
-import org.scassandra.server.cqlmessages.response.Rows
-import org.scassandra.server.cqlmessages.response.Ready
-import org.scassandra.server.priming.query.Prime
-import org.scassandra.server.cqlmessages.response.SetKeyspace
 import akka.util.ByteString
-import org.scassandra.server.cqlmessages.request.{ExecuteRequest, ExecuteRequestV2}
+import org.scassandra.server.cqlmessages.request.ExecuteRequest
+import org.scassandra.server.cqlmessages.response.{QueryBeforeReadyMessage, ReadRequestTimeout, Ready, Rows, SetKeyspace, UnavailableException, VoidResult, WriteRequestTimeout, _}
 import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.server.priming.ReadRequestTimeoutResult
+import org.scassandra.server.priming.query.Prime
 
 trait CqlMessageFactory {
   def createReadyMessage(stream : Byte) : Ready
@@ -35,7 +28,7 @@ trait CqlMessageFactory {
   def createSetKeyspaceMessage(keyspaceName: String, stream: Byte): SetKeyspace
   def createRowsMessage(prime: Prime, stream: Byte): Rows
   def createEmptyRowsMessage(stream: Byte): Rows
-  def createReadTimeoutMessage(stream: Byte, consistency: Consistency): ReadRequestTimeout
+  def createReadTimeoutMessage(stream: Byte, consistency: Consistency, readRequestTimeoutResult: ReadRequestTimeoutResult): ReadRequestTimeout
   def createWriteTimeoutMessage(stream: Byte, consistency: Consistency): WriteRequestTimeout
   def createUnavailableMessage(stream: Byte, consistency: Consistency): UnavailableException
   def createVoidMessage(stream: Byte): VoidResult

@@ -23,6 +23,7 @@ import org.scassandra.server.cqlmessages.response.WriteRequestTimeout
 import org.scassandra.server.cqlmessages.response.VoidResult
 import org.scassandra.server.cqlmessages.response.Rows
 import org.scassandra.server.cqlmessages.response.Ready
+import org.scassandra.server.priming.ReadRequestTimeoutResult
 import org.scassandra.server.priming.query.Prime
 import org.scassandra.server.cqlmessages.response.Row
 import org.scassandra.server.cqlmessages.response.SetKeyspace
@@ -56,8 +57,8 @@ abstract class AbstractMessageFactory extends CqlMessageFactory {
     Rows("","",stream,Map[String, ColumnType[_]](), List())
   }
 
-  override def createReadTimeoutMessage(stream: Byte, consistency: Consistency): ReadRequestTimeout = {
-    ReadRequestTimeout(stream, consistency)
+  override def createReadTimeoutMessage(stream: Byte, consistency: Consistency, readRequestTimeoutResult: ReadRequestTimeoutResult): ReadRequestTimeout = {
+    ReadRequestTimeout(stream, consistency, readRequestTimeoutResult)
   }
 
   override def createWriteTimeoutMessage(stream: Byte, consistency: Consistency): WriteRequestTimeout = {
