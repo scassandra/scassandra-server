@@ -30,5 +30,5 @@ case class Then(rows: Option[List[Map[String, Any]]],
                 result: Option[ResultJsonRepresentation] = None,
                 column_types: Option[Map[String, ColumnType[_]]] = None,
                 fixedDelay: Option[Long] = None,
-                config: Map[String, String] = Map())
+                config: Option[Map[String, String]] = None)
 

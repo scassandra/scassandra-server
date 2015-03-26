@@ -32,7 +32,7 @@ class PrimePreparedPatternStore extends Logging with PreparedStore with Prepared
     val then: ThenPreparedSingle = incomingPrime.then
     val rows: List[Map[String, Any]] = then.rows.getOrElse(List())
     val columnTypes = Defaulter.defaultColumnTypesToVarchar(then.column_types, rows)
-    val result = PrimeQueryResultExtractor.convertToPrimeResult(then.config, then.result.getOrElse(Success))
+    val result = PrimeQueryResultExtractor.convertToPrimeResult(then.config.getOrElse(Map()), then.result.getOrElse(Success))
     val fixedDelay = then.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
     //todo errors
     val prime = Prime(rows, columnTypes = columnTypes, result = result, fixedDelay = fixedDelay)

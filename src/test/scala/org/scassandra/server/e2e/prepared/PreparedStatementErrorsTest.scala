@@ -15,7 +15,7 @@
  */
 package org.scassandra.server.e2e.prepared
 
-import com.datastax.driver.core.ConsistencyLevel
+import com.datastax.driver.core.{WriteType, ConsistencyLevel}
 import com.datastax.driver.core.exceptions.{ReadTimeoutException, UnavailableException, WriteTimeoutException}
 import dispatch.Defaults._
 import dispatch._
@@ -43,7 +43,7 @@ class PreparedStatementErrorsTest extends AbstractIntegrationTest with BeforeAnd
 
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
-      ThenPreparedSingle(None, result = Some(ReadTimeout), config = properties)
+      ThenPreparedSingle(None, result = Some(ReadTimeout), config = Some(properties))
     )
     val preparedStatement = session.prepare(preparedStatementText)
     val boundStatement = preparedStatement.bind("Chris")
@@ -62,18 +62,30 @@ class PreparedStatementErrorsTest extends AbstractIntegrationTest with BeforeAnd
 
   test("Prepared statement with priming - write_request_timeout") {
     val preparedStatementText: String = "select * from people where name = ?"
+    val properties = Map[String, String](
+      ErrorConstants.ReceivedResponse -> "2",
+      ErrorConstants.RequiredResponse -> "3",
+      ErrorConstants.WriteType -> "BATCH")
+    val consistency = ConsistencyLevel.EACH_QUORUM
+
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
-      ThenPreparedSingle(None, result = Some(WriteTimeout))
+      ThenPreparedSingle(None, result = Some(WriteTimeout), config = Some(properties))
     )
 
     val preparedStatement = session.prepare(preparedStatementText)
     val boundStatement = preparedStatement.bind("Chris")
+    boundStatement.setConsistencyLevel(consistency)
 
     //when
-    intercept[WriteTimeoutException] {
+    val exception = intercept[WriteTimeoutException] {
       session.execute(boundStatement)
     }
+
+    exception.getConsistencyLevel should equal(consistency)
+    exception.getReceivedAcknowledgements should equal(2)
+    exception.getRequiredAcknowledgements should equal(3)
+    exception.getWriteType should equal(WriteType.BATCH)
   }
 
   test("Prepared statement with priming - unavailable") {

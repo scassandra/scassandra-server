@@ -15,17 +15,18 @@
  */
 package org.scassandra.server.cqlmessages.response
 
+import org.apache.cassandra.db.WriteType
 import org.scalatest.{Matchers, FunSuite}
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.VersionTwo
-import org.scassandra.server.priming.ReadRequestTimeoutResult
+import org.scassandra.server.priming.{WriteRequestTimeoutResult, ReadRequestTimeoutResult}
 
 class ErrorTest extends FunSuite with Matchers {
 
   import CqlProtocolHelper._
 
   implicit val protocolVersion = VersionTwo
-  val defaultStream : Byte = 0x1
+  val defaultStream: Byte = 0x1
 
   test("Serialisation of a error response client protocol error") {
     val errorCode: Byte = 0xA
@@ -94,9 +95,13 @@ class ErrorTest extends FunSuite with Matchers {
   }
 
   test("Serialization of Write Request Timeout - hard coded data for now") {
-    val stream : Byte = 0x4
+    val stream: Byte = 0x4
     val providedConsistency = QUORUM
-    val writeTimeoutBytes = WriteRequestTimeout(stream, providedConsistency).serialize().iterator
+    val receivedResponsesExpected: Int = 2
+    val requiredResponsesExpected: Int = 3
+    val writeTypeExpected: WriteType = WriteType.CAS
+    val writeTimeoutResult = WriteRequestTimeoutResult(receivedResponsesExpected, requiredResponsesExpected, writeTypeExpected)
+    val writeTimeoutBytes = WriteRequestTimeout(stream, providedConsistency, writeTimeoutResult).serialize().iterator
     // drop the header
     writeTimeoutBytes.drop(4)
     // drop the length
@@ -112,13 +117,13 @@ class ErrorTest extends FunSuite with Matchers {
     consistency should equal(providedConsistency.code)
 
     val receivedResponses = writeTimeoutBytes.getInt
-    receivedResponses should equal(0)
+    receivedResponses should equal(receivedResponsesExpected)
 
     val blockedFor = writeTimeoutBytes.getInt
-    blockedFor should equal(1)
+    blockedFor should equal(requiredResponsesExpected)
 
     val writeType = CqlProtocolHelper.readString(writeTimeoutBytes)
-    writeType should equal(WriteTypes.Simple)
+    writeType should equal(writeTypeExpected.toString)
   }
 
   test("Serialization of Unavailable Exception - hard coded data for now") {

@@ -19,7 +19,7 @@ import akka.util.ByteString
 import org.scassandra.server.cqlmessages.request.ExecuteRequest
 import org.scassandra.server.cqlmessages.response.{QueryBeforeReadyMessage, ReadRequestTimeout, Ready, Rows, SetKeyspace, UnavailableException, VoidResult, WriteRequestTimeout, _}
 import org.scassandra.server.cqlmessages.types.ColumnType
-import org.scassandra.server.priming.ReadRequestTimeoutResult
+import org.scassandra.server.priming.{WriteRequestTimeoutResult, ReadRequestTimeoutResult}
 import org.scassandra.server.priming.query.Prime
 
 trait CqlMessageFactory {
@@ -29,7 +29,7 @@ trait CqlMessageFactory {
   def createRowsMessage(prime: Prime, stream: Byte): Rows
   def createEmptyRowsMessage(stream: Byte): Rows
   def createReadTimeoutMessage(stream: Byte, consistency: Consistency, readRequestTimeoutResult: ReadRequestTimeoutResult): ReadRequestTimeout
-  def createWriteTimeoutMessage(stream: Byte, consistency: Consistency): WriteRequestTimeout
+  def createWriteTimeoutMessage(stream: Byte, consistency: Consistency, writeRequestTimeoutResult: WriteRequestTimeoutResult): WriteRequestTimeout
   def createUnavailableMessage(stream: Byte, consistency: Consistency): UnavailableException
   def createVoidMessage(stream: Byte): VoidResult
   def createPreparedResult(stream: Byte, id: Int, variableTypes: List[ColumnType[_]]): Result

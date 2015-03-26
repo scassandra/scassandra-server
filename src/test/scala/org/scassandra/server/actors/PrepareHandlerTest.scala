@@ -168,13 +168,14 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val query = "select * from something where name = ?"
     val consistency = QUORUM
     val preparedStatementId = sendPrepareAndCaptureId(stream, query)
-    val primeMatch = Some(PreparedPrime(prime = Prime(result = WriteRequestTimeoutResult())))
+    val result: WriteRequestTimeoutResult = WriteRequestTimeoutResult()
+    val primeMatch = Some(PreparedPrime(prime = Prime(result = result)))
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
 
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency = consistency).serialize().drop(8)
     underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
-    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream, consistency))
+    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream, consistency, result))
   }
 
   test("Execute with unavailable") {

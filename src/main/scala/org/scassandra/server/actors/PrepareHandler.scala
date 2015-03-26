@@ -61,7 +61,7 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
             val msgToSend = preparedPrime.prime.result match {
               case SuccessResult => msgFactory.createRowsMessage(preparedPrime.prime, stream)
               case result: ReadRequestTimeoutResult => msgFactory.createReadTimeoutMessage(stream, executeRequest.consistency, result)
-              case result: WriteRequestTimeoutResult => msgFactory.createWriteTimeoutMessage(stream, executeRequest.consistency)
+              case result: WriteRequestTimeoutResult => msgFactory.createWriteTimeoutMessage(stream, executeRequest.consistency, result)
               case result: UnavailableResult => msgFactory.createUnavailableMessage(stream, executeRequest.consistency)
             }
 

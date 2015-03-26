@@ -113,17 +113,17 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
 
     testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream, consistency, ReadRequestTimeoutResult()))
   }
-//todo errors
 
   test("Should return WriteRequestTimeout if result is WriteTimeout") {
     val stream: Byte = 0x05
     val consistency = LOCAL_ONE
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query, consistency = consistency).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch("some cql statement", consistency))).thenReturn(Some(Prime(List(), WriteRequestTimeoutResult())))
+    val result: WriteRequestTimeoutResult = WriteRequestTimeoutResult()
+    when(mockPrimedResults.get(PrimeMatch("some cql statement", consistency))).thenReturn(Some(Prime(List(), result)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream, consistency))
+    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream, consistency, result))
   }
 
   test("Should return Unavailable Exception if result is UnavailableException") {

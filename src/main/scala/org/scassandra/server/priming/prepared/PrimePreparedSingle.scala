@@ -30,5 +30,5 @@ case class ThenPreparedSingle(rows: Option[List[Map[String, Any]]],
                               column_types: Option[Map[String, ColumnType[_]]] = None,
                               result : Option[ResultJsonRepresentation] = Some(Success),
                               fixedDelay : Option[Long] = None,
-                              config: Map[String, String] = Map()
+                              config: Option[Map[String, String]] = None
                                )

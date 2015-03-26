@@ -36,7 +36,7 @@ class PrimePreparedStore extends Logging with PreparedStore with PreparedStoreLo
     val query = prime.when.query
     val numberOfParameters = query.get.toCharArray.count(_ == '?')
     val fixedDelay: Option[FiniteDuration] = then.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
-    val result = PrimeQueryResultExtractor.convertToPrimeResult(then.config, then.result.getOrElse(Success))
+    val result = PrimeQueryResultExtractor.convertToPrimeResult(then.config.getOrElse(Map()), then.result.getOrElse(Success))
 
     val variableTypesDefaultedToVarchar: List[ColumnType[_]] = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, then.variable_types)
     val colTypes = Defaulter.defaultColumnTypesToVarchar(then.column_types, rows)

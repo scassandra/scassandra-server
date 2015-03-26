@@ -17,6 +17,7 @@ package org.scassandra.server.priming.routes
 
 import java.util.concurrent.TimeUnit
 
+import org.apache.cassandra.db.WriteType
 import org.scalatest.{Matchers, FunSuite}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.query.{Prime, Then, When, PrimeQuerySingle}
@@ -68,7 +69,7 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
       ErrorConstants.ReceivedResponse -> "2",
       ErrorConstants.RequiredResponse -> "3",
       ErrorConstants.DataPresent -> "true")
-    val then = Then(None, Some(ReadTimeout), config = properties)
+    val then = Then(None, Some(ReadTimeout), config = Some(properties))
     val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
 
     val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
@@ -76,14 +77,18 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
     primeResult.result should equal(ReadRequestTimeoutResult(2, 3, dataPresent = true))
   }
 
-  test("Extracting WriteRequestTimeout result with no extra params") {
+  test("Extracting WriteRequestTimeout result") {
     val when = When()
-    val then = Then(None, Some(WriteTimeout))
+    val properties = Map[String, String](
+      ErrorConstants.ReceivedResponse -> "2",
+      ErrorConstants.RequiredResponse -> "3",
+      ErrorConstants.WriteType -> "BATCH")
+    val then = Then(None, Some(WriteTimeout), config = Some(properties))
     val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
 
     val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
 
-    primeResult.result should equal(WriteRequestTimeoutResult())
+    primeResult.result should equal(WriteRequestTimeoutResult(2, 3, WriteType.BATCH))
   }
 
   test("Extracting Unavailable result with no extra params") {

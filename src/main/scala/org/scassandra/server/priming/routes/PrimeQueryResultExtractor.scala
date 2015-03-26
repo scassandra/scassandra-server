@@ -18,6 +18,7 @@ package org.scassandra.server.priming.routes
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.scalalogging.slf4j.Logging
+import org.apache.cassandra.db.WriteType
 import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeQuerySingle, Then, When}
@@ -47,11 +48,10 @@ object PrimeQueryResultExtractor extends Logging {
   def extractPrimeResult(primeRequest: PrimeQuerySingle): Prime = {
     // add the deserialized JSON request to the map of prime requests
     val then = primeRequest.then
-    val config = then.config
+    val config = then.config.getOrElse(Map())
     val resultsAsList = then.rows.getOrElse(List())
     val result = then.result.getOrElse(Success)
     val fixedDelay = primeRequest.then.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
-
     val primeResult: PrimeResult = convertToPrimeResult(config, result)
 
     logger.trace("Column types " + primeRequest.then.column_types)
@@ -73,27 +73,31 @@ object PrimeQueryResultExtractor extends Logging {
       case ReadTimeout => ReadRequestTimeoutResult(
         config.getOrElse(ErrorConstants.ReceivedResponse, "0").toInt,
         config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
-        config.getOrElse(ErrorConstants.DataPresent, "false").toBoolean)
-      case WriteTimeout => WriteRequestTimeoutResult()
+        config.getOrElse(ErrorConstants.DataPresent, "false").toBoolean
+      )
+      case WriteTimeout => WriteRequestTimeoutResult(
+        config.getOrElse(ErrorConstants.ReceivedResponse, "0").toInt,
+        config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
+        WriteType.valueOf(config.getOrElse(ErrorConstants.WriteType, "SIMPLE"))
+      )
       case Unavailable => UnavailableResult()
     }
     primeResult
   }
 
   def convertBackToPrimeQueryResult(allPrimes: Map[PrimeCriteria, Prime]) = {
-    allPrimes.map({ case (primeCriteria, prime) => {
+    allPrimes.map({ case (primeCriteria, prime) =>
       val when = When(Some(primeCriteria.query), keyspace = Some(prime.keyspace), table = Some(prime.table), consistency = Some(primeCriteria.consistency))
 
       val result = prime.result match {
         case SuccessResult => Success
-        case r:ReadRequestTimeoutResult => ReadTimeout
-        case r:WriteRequestTimeoutResult => WriteTimeout
+        case r: ReadRequestTimeoutResult => ReadTimeout
+        case r: WriteRequestTimeoutResult => WriteTimeout
       }
 
       val then = Then(Some(prime.rows), result = Some(result), column_types = Some(prime.columnTypes))
 
       PrimeQuerySingle(when, then)
-    }
     })
   }
 }

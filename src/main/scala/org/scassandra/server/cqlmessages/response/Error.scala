@@ -17,7 +17,7 @@ package org.scassandra.server.cqlmessages.response
 
 import akka.util.ByteString
 import org.scassandra.server.cqlmessages._
-import org.scassandra.server.priming.ReadRequestTimeoutResult
+import org.scassandra.server.priming.{ReadRequestTimeoutResult, WriteRequestTimeoutResult}
 
 object ErrorCodes {
   val ProtocolError = 0x000A
@@ -28,7 +28,7 @@ object ErrorCodes {
 
 class Error(protocolVersion: ProtocolVersion, val errorCode : Int, val errorMessage : String, stream: Byte) extends Response(new Header(protocolVersion.serverCode, opCode = OpCodes.Error, streamId = stream)) {
 
-  import CqlProtocolHelper._
+  import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 
   override def serialize() : ByteString = {
     val serialisedHeader: Array[Byte] = header.serialize()
@@ -53,7 +53,7 @@ case class ReadRequestTimeout(stream : Byte, consistency: Consistency, readReque
   val blockFor : Int = readRequestTimeoutResult.requiredResponses
   val dataPresent : Byte = if (readRequestTimeoutResult.dataPresent) 1 else 0
 
-  import CqlProtocolHelper._
+  import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 
   override def serialize() : ByteString = {
     val bodyBs = ByteString.newBuilder
@@ -71,7 +71,7 @@ case class ReadRequestTimeout(stream : Byte, consistency: Consistency, readReque
 
 case class UnavailableException(stream: Byte, consistency: Consistency)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.UnavailableException, "Unavailable Exception", stream) {
 
-  import CqlProtocolHelper._
+  import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 
   val required : Int = 1
   val alive : Int = 0
@@ -89,13 +89,15 @@ case class UnavailableException(stream: Byte, consistency: Consistency)(implicit
   }
 }
 
-case class WriteRequestTimeout(stream: Byte, consistency: Consistency)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.WriteTimeout, "Write Request Timeout", stream) {
+case class WriteRequestTimeout(stream: Byte, consistency: Consistency, writeRequestTimeoutResult: WriteRequestTimeoutResult)
+                              (implicit protocolVersion: ProtocolVersion)
+  extends Error(protocolVersion, ErrorCodes.WriteTimeout, "Write Request Timeout", stream) {
 
-  import CqlProtocolHelper._
+  import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 
-  val receivedResponses : Int = 0
-  val blockFor : Int = 1
-  val writeType : String = WriteTypes.Simple
+  val receivedResponses : Int = writeRequestTimeoutResult.receivedResponses
+  val blockFor : Int = writeRequestTimeoutResult.requiredResponses
+  val writeType : String = writeRequestTimeoutResult.writeType.toString
 
   override def serialize() : ByteString = {
     val bodyBs = ByteString.newBuilder
