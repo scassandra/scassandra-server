@@ -1,18 +1,18 @@
 /*
- * Copyright (C) 2014 Christopher Batey and Dogan Narinc
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright (C) 2014 Christopher Batey and Dogan Narinc
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package org.scassandra.server.actors
 
 import akka.actor.{ActorRef, ActorSystem}
@@ -23,10 +23,10 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.server.MessageHelper
 import org.scassandra.server.cqlmessages._
-import org.scassandra.server.cqlmessages.response.{ReadRequestTimeout, Row, Rows, SetKeyspace, UnavailableException, WriteRequestTimeout}
+import org.scassandra.server.cqlmessages.response._
 import org.scassandra.server.cqlmessages.types.{CqlInt, CqlVarchar}
-import org.scassandra.server.priming.{Query, _}
 import org.scassandra.server.priming.query.{Prime, PrimeMatch, PrimeQueryStore}
+import org.scassandra.server.priming.{Query, _}
 
 class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with TestKitBase with MockitoSugar {
   implicit lazy val system = ActorSystem()
@@ -92,7 +92,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
         "age" -> "99"
       )
     ),
-      Success,
+      SuccessResult,
       Map(
         "name" -> CqlVarchar,
         "age" -> CqlInt
@@ -107,22 +107,23 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     val stream: Byte = 0x05
     val consistency = LOCAL_QUORUM
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query, stream, consistency).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch("some cql statement", consistency))).thenReturn(Some(Prime(List(), ReadTimeout)))
+    when(mockPrimedResults.get(PrimeMatch("some cql statement", consistency))).thenReturn(Some(Prime(List(), ReadRequestTimeoutResult())))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream, consistency))
+    testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream, consistency, ReadRequestTimeoutResult()))
   }
 
   test("Should return WriteRequestTimeout if result is WriteTimeout") {
     val stream: Byte = 0x05
     val consistency = LOCAL_ONE
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query, consistency = consistency).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch("some cql statement", consistency))).thenReturn(Some(Prime(List(), WriteTimeout)))
+    val result: WriteRequestTimeoutResult = WriteRequestTimeoutResult()
+    when(mockPrimedResults.get(PrimeMatch("some cql statement", consistency))).thenReturn(Some(Prime(List(), result)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream, consistency))
+    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream, consistency, result))
   }
 
   test("Should return Unavailable Exception if result is UnavailableException") {
@@ -130,11 +131,12 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     val stream: Byte = 0x05
     val consistency: Consistency = LOCAL_ONE
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(query, consistency = consistency).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch(query, consistency))).thenReturn(Some(Prime(List(), Unavailable)))
+    val result: UnavailableResult = UnavailableResult()
+    when(mockPrimedResults.get(PrimeMatch(query, consistency))).thenReturn(Some(Prime(List(), result)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(UnavailableException(stream, consistency))
+    testProbeForTcpConnection.expectMsg(UnavailableException(stream, consistency, result))
   }
 
   test("Test multiple rows") {
@@ -154,7 +156,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
       "name" -> CqlVarchar,
       "age" -> CqlVarchar
     )
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(rows, Success, colTypes)))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(rows, SuccessResult, colTypes)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
@@ -186,7 +188,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     val someQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
     val expectedKeyspace = "somekeyspace"
 
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), Success, Map(), expectedKeyspace)))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), SuccessResult, Map(), expectedKeyspace)))
 
     // when
     underTest ! QueryHandlerMessages.Query(someQuery, stream)
@@ -201,7 +203,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     val someQuery: ByteString = ByteString(MessageHelper.createQueryMessage(someCqlStatement.query).toArray.drop(8))
     val expectedTable = "sometable"
 
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), Success, Map(), "", expectedTable)))
+    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), SuccessResult, Map(), "", expectedTable)))
 
     // when
     underTest ! QueryHandlerMessages.Query(someQuery, stream)

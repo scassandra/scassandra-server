@@ -1,30 +1,29 @@
 /*
- * Copyright (C) 2014 Christopher Batey and Dogan Narinc
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright (C) 2014 Christopher Batey and Dogan Narinc
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package org.scassandra.server.priming.prepared
 
-import org.scalatest.{Matchers, FunSuite}
-import org.scassandra.server.priming.query._
-import org.scassandra.server.cqlmessages._
-import org.scassandra.server.priming.{ConflictingPrimes, PrimeAddSuccess, ReadTimeout}
-import org.scassandra.server.priming.query.PrimeMatch
-import scala.Some
-import org.scassandra.server.priming.query.Prime
-import org.scassandra.server.cqlmessages.types.{CqlInet, CqlVarchar, CqlText}
-import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
+
+import org.scalatest.{FunSuite, Matchers}
+import org.scassandra.server.cqlmessages._
+import org.scassandra.server.cqlmessages.types.{CqlInet, CqlText, CqlVarchar}
+import org.scassandra.server.priming.query.{Prime, PrimeMatch}
+import org.scassandra.server.priming.{ConflictingPrimes, PrimeAddSuccess, ReadRequestTimeoutResult, ReadTimeout}
+
+import scala.concurrent.duration.FiniteDuration
 
 class PrimePreparedStoreTest extends FunSuite with Matchers {
 
@@ -53,7 +52,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     underTest.record(prime)
     val actualPrime = underTest.findPrime(PrimeMatch(query))
     //then
-    actualPrime.get.prime.result should equal(ReadTimeout)
+    actualPrime.get.prime.result should equal(ReadRequestTimeoutResult())
   }
 
   test("Single row without variable type info - defaults to varchar") {
@@ -148,7 +147,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     underTest.record(prime)
     val actualPrime = underTest.findPrime(PrimeMatch(query))
     //then
-    actualPrime.get should equal(PreparedPrime(List(), Prime(result = ReadTimeout)))
+    actualPrime.get should equal(PreparedPrime(List(), Prime(result = ReadRequestTimeoutResult())))
   }
 
   test("Specifying a fixed delay") {
@@ -214,7 +213,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     primeForAll.isDefined should equal(true)
     primeForLocalOne.isDefined should equal(true)
   }
-  
+
   test("Conflicting primes") {
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ?"

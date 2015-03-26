@@ -17,11 +17,11 @@ package org.scassandra.server.priming.query
 
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.server.cqlmessages._
-import org.scassandra.server.priming._
-import scala.collection.immutable.Map
 import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.server.priming._
+
+import scala.collection.immutable.Map
 import scala.concurrent.duration.FiniteDuration
-import scala.util.matching.Regex
 
 class PrimeQueryStore extends Logging {
 
@@ -90,7 +90,7 @@ case class PrimeCriteria(query: String, consistency: List[Consistency], patternM
 case class PrimeMatch(query: String, consistency: Consistency = ONE)
 
 case class Prime( rows: List[Map[String, Any]] = List(),
-                  result: Result = Success,
+                  result: PrimeResult = SuccessResult,
                   columnTypes: Map[String, ColumnType[_]] = Map(),
                   keyspace: String = "",
                   table: String = "",

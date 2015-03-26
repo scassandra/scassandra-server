@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 package org.scassandra.server.priming
+/**
+ * Used to parse the JSON represeting the result of the prime.
+ */
+abstract class ResultJsonRepresentation(val string: String)
 
-abstract class Result(val string: String)
+case object Success extends ResultJsonRepresentation("success")
 
-case object Success extends Result("success")
+case object ReadTimeout extends ResultJsonRepresentation("read_request_timeout")
 
-case object ReadTimeout extends Result("read_request_timeout")
+case object Unavailable extends ResultJsonRepresentation("unavailable")
 
-case object Unavailable extends Result("unavailable")
+case object WriteTimeout extends ResultJsonRepresentation("write_request_timeout")
 
-case object WriteTimeout extends Result("write_request_timeout")
-
-object Result {
-  def fromString(string: String): Result = {
+object ResultJsonRepresentation {
+  def fromString(string: String): ResultJsonRepresentation = {
     string match {
       case ReadTimeout.string => ReadTimeout
       case Unavailable.string => Unavailable

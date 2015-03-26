@@ -18,7 +18,7 @@ package org.scassandra.server.priming.routes
 import spray.routing.HttpService
 import com.typesafe.scalalogging.slf4j.Logging
 import spray.http.StatusCodes
-import org.scassandra.server.priming.{ConflictingPrimes, TypeMismatches, PrimingJsonImplicits}
+import org.scassandra.server.priming._
 import org.scassandra.server.priming.prepared._
 import scala.collection.immutable.Iterable
 
@@ -66,6 +66,11 @@ trait PrimingPreparedRoute extends HttpService with Logging {
       get {
         complete {
           val preparedPrimes: Iterable[PrimePreparedSingle] = primePreparedStore.retrievePrimes().map({case (primeCriteria, preparedPrime) =>
+            val result = preparedPrime.prime.result match {
+              case SuccessResult => Success
+              case r:ReadRequestTimeoutResult => ReadTimeout
+              case r:WriteRequestTimeoutResult => WriteTimeout
+            }
             PrimePreparedSingle(
               WhenPreparedSingle(
                 query = Some(primeCriteria.query), consistency = Some(primeCriteria.consistency)),
@@ -73,7 +78,7 @@ trait PrimingPreparedRoute extends HttpService with Logging {
                 Some(preparedPrime.prime.rows),
                 Some(preparedPrime.variableTypes),
                 Some(preparedPrime.prime.columnTypes),
-                Some(preparedPrime.prime.result)
+                Some(result)
               )
             )
           })

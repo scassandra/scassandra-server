@@ -1,42 +1,31 @@
 /*
- * Copyright (C) 2014 Christopher Batey and Dogan Narinc
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright (C) 2014 Christopher Batey and Dogan Narinc
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package org.scassandra.server.priming.routes
 
 import org.scalatest._
-import spray.http.StatusCodes.BadRequest
-import spray.http.StatusCodes.OK
-import spray.testkit.ScalatestRouteTest
 import org.scassandra.server.cqlmessages._
-import org.scassandra.server.priming._
-import org.scassandra.server.priming.query._
 import org.scassandra.server.cqlmessages.types._
-import org.scassandra.server.priming.query.PrimeCriteria
-import org.scassandra.server.priming.ConflictingPrimes
-import org.scassandra.server.priming.TypeMismatches
-import scala.Some
-import org.scassandra.server.priming.query.PrimeQuerySingle
-import org.scassandra.server.priming.TypeMismatch
-import org.scassandra.server.priming.query.When
-import org.scassandra.server.priming.query.PrimeMatch
-import org.scassandra.server.priming.query.Then
-import org.scassandra.server.priming.query.Prime
+import org.scassandra.server.priming.{ConflictingPrimes, TypeMismatch, TypeMismatches, _}
+import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch, PrimeQuerySingle, Then, When, _}
+import spray.http.StatusCodes.{BadRequest, OK}
+import spray.testkit.ScalatestRouteTest
 
 
 class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with PrimingQueryRoute {
-  
+
   import org.scassandra.server.PrimingJsonImplicitsForTest._
 
   implicit def actorRefFactory = system
@@ -44,7 +33,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
   implicit val primeQueryStore = PrimeQueryStore()
 
   val primeQuerySinglePath: String = "/prime-query-single"
-  
+
   after {
     primeQueryStore.clear()
   }
@@ -92,7 +81,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val defaultedColumnTypes = Map("name" -> CqlVarchar, "age" -> CqlVarchar)
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults)))) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, Success, defaultedColumnTypes))
+        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, SuccessResult, defaultedColumnTypes))
       }
     }
 
@@ -103,7 +92,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val result = Some(ReadTimeout)
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), result))) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, ReadTimeout))
+        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, ReadRequestTimeoutResult()))
       }
     }
 
@@ -114,7 +103,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val result = Some(WriteTimeout)
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), result))) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, WriteTimeout))
+        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, WriteRequestTimeoutResult()))
       }
     }
 
@@ -125,7 +114,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val result = Some(Success)
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), result))) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, Success))
+        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, SuccessResult))
       }
     }
 
@@ -136,7 +125,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val result = Some(Unavailable)
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), result))) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, Unavailable))
+        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, UnavailableResult()))
       }
     }
 
@@ -177,7 +166,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults)))) ~> queryRoute ~> check {
         status should equal(OK)
-        primeQueryStore.get(PrimeMatch(query = "select * from users")) should equal(Some(Prime(thenResults, Success, columnTypes = defaultedColumnTypes)))
+        primeQueryStore.get(PrimeMatch(query = "select * from users")) should equal(Some(Prime(thenResults, SuccessResult, columnTypes = defaultedColumnTypes)))
       }
     }
 
@@ -317,7 +306,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenRows, Success, columnTypes = thenColumnTypes))
+        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenRows, SuccessResult, columnTypes = thenColumnTypes))
       }
     }
 
@@ -337,7 +326,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenRows, Success, columnTypes = thenColumnTypes))
+        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenRows, SuccessResult, columnTypes = thenColumnTypes))
       }
     }
 
@@ -350,7 +339,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenRowsStorageFormat, Success, columnTypes = thenColumnTypes))
+        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenRowsStorageFormat, SuccessResult, columnTypes = thenColumnTypes))
       }
     }
 
@@ -362,14 +351,14 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
         Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-          primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenRows, Success, columnTypes = thenColumnTypes))
+          primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenRows, SuccessResult, columnTypes = thenColumnTypes))
         }
     }
 
   }
 
   describe("Retrieving of primes") {
-    it("should convert a prime back to the original JSON format") {
+      it("should convert a prime back to the original JSON format") {
       val query = "select * from users"
       val whenQuery = When(query = Some(query))
       val thenRows = Some(List(Map("field" -> "2c530380-b9f9-11e3-850e-338bb2a2e74f",
@@ -460,7 +449,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
                                                  keyspace : String = "",
                                                  table : String = "",
                                                  thenRows : Option[List[Map[String, Any]]] = None,
-                                                 result : Result = Success,
+                                                 result : ResultJsonRepresentation = Success,
                                                  columnTypes : Option[Map[String, ColumnType[_]]] = None,
                                                  consistencies : Option[List[Consistency]] = None) = {
 

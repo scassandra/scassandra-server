@@ -1,35 +1,31 @@
 /*
- * Copyright (C) 2014 Christopher Batey and Dogan Narinc
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright (C) 2014 Christopher Batey and Dogan Narinc
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+* http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package org.scassandra.server.priming.routes
 
-import org.scalatest.{FunSpec, Matchers}
-import spray.testkit.ScalatestRouteTest
-import org.scassandra.server.priming.{ConflictingPrimes, TypeMismatches, ReadTimeout, PrimingJsonImplicits}
-import spray.http.StatusCodes
-import org.scassandra.server.priming.prepared._
-import org.scalatest.mock.MockitoSugar
-import org.mockito.Mockito._
 import org.mockito.Matchers._
-import org.scassandra.server.priming.prepared.ThenPreparedSingle
-import org.scassandra.server.priming.prepared.WhenPreparedSingle
-import scala.Some
-import org.scassandra.server.priming.prepared.PrimePreparedSingle
+import org.mockito.Mockito._
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.{FunSpec, Matchers}
+import org.scassandra.server.cqlmessages.types.{CqlInt, CqlVarchar}
 import org.scassandra.server.cqlmessages.{ONE, TWO}
-import org.scassandra.server.priming.query.{PrimeCriteria, Prime}
-import org.scassandra.server.cqlmessages.types.{CqlVarchar, CqlInt}
+import org.scassandra.server.priming._
+import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle, _}
+import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
+import spray.http.StatusCodes
+import spray.testkit.ScalatestRouteTest
 
 class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRouteTest with PrimingPreparedRoute with MockitoSugar {
 
@@ -152,7 +148,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     it("should convert result to the original Json Format") {
       val query: String = "select * from people where name = ?"
       val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map(
-        PrimeCriteria(query, List()) -> PreparedPrime(List(), Prime(result = ReadTimeout))
+        PrimeCriteria(query, List()) -> PreparedPrime(List(), Prime(result = ReadRequestTimeoutResult()))
       )
       when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
 

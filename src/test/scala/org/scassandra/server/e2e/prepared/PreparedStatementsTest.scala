@@ -105,53 +105,6 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     results.size() should equal(0)
   }
 
-  test("Prepared statement with priming - read_request_timeout") {
-    val preparedStatementText: String = "select * from people where name = ?"
-    PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
-      ThenPreparedSingle(None, result = Some(ReadTimeout))
-    )
-    val preparedStatement = session.prepare(preparedStatementText)
-    val boundStatement = preparedStatement.bind("Chris")
-
-    //when
-    intercept[ReadTimeoutException] {
-      session.execute(boundStatement)
-    }
-  }
-
-  test("Prepared statement with priming - write_request_timeout") {
-    val preparedStatementText: String = "select * from people where name = ?"
-    PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
-      ThenPreparedSingle(None, result = Some(WriteTimeout))
-    )
-
-    val preparedStatement = session.prepare(preparedStatementText)
-    val boundStatement = preparedStatement.bind("Chris")
-
-    //when
-    intercept[WriteTimeoutException] {
-      session.execute(boundStatement)
-    }
-  }
-
-  test("Prepared statement with priming - unavailable") {
-    val preparedStatementText: String = "select * from people where name = ?"
-    PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
-      ThenPreparedSingle(None, result = Some(Unavailable))
-    )
-
-    val preparedStatement = session.prepare(preparedStatementText)
-    val boundStatement = preparedStatement.bind("Chris")
-
-    //when
-    intercept[UnavailableException] {
-      session.execute(boundStatement)
-    }
-  }
-
   test("Prepared statement with priming - single row") {
     val preparedStatementText: String = "select * from people where name = ?"
     PrimingHelper.primePreparedStatement(

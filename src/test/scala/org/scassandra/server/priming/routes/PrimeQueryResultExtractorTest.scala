@@ -17,7 +17,9 @@ package org.scassandra.server.priming.routes
 
 import java.util.concurrent.TimeUnit
 
+import org.apache.cassandra.db.WriteType
 import org.scalatest.{Matchers, FunSuite}
+import org.scassandra.server.priming._
 import org.scassandra.server.priming.query.{Prime, Then, When, PrimeQuerySingle}
 
 import scala.concurrent.duration.FiniteDuration
@@ -49,5 +51,56 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
     val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
 
     primeResult.fixedDelay should equal(Some(FiniteDuration(500, TimeUnit.MILLISECONDS)))
+  }
+
+  test("Extracting Success result") {
+    val when = When()
+    val then = Then(None, Some(Success), None, fixedDelay = None)
+    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
+
+    val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+
+    primeResult.result should equal(SuccessResult)
+  }
+
+  test("Extracting ReadRequestTimeout result") {
+    val when = When()
+    val properties = Map[String, String](
+      ErrorConstants.ReceivedResponse -> "2",
+      ErrorConstants.RequiredResponse -> "3",
+      ErrorConstants.DataPresent -> "true")
+    val then = Then(None, Some(ReadTimeout), config = Some(properties))
+    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
+
+    val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+
+    primeResult.result should equal(ReadRequestTimeoutResult(2, 3, dataPresent = true))
+  }
+
+  test("Extracting WriteRequestTimeout result") {
+    val when = When()
+    val properties = Map[String, String](
+      ErrorConstants.ReceivedResponse -> "2",
+      ErrorConstants.RequiredResponse -> "3",
+      ErrorConstants.WriteType -> "BATCH")
+    val then = Then(None, Some(WriteTimeout), config = Some(properties))
+    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
+
+    val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+
+    primeResult.result should equal(WriteRequestTimeoutResult(2, 3, WriteType.BATCH))
+  }
+
+  test("Extracting Unavailable result") {
+    val properties = Map[String, String](
+      ErrorConstants.Alive -> "2",
+      ErrorConstants.RequiredResponse -> "3")
+    val when = When()
+    val then = Then(None, Some(Unavailable), config = Some(properties))
+    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
+
+    val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+
+    primeResult.result should equal(UnavailableResult(3, 2))
   }
 }

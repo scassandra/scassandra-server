@@ -15,24 +15,28 @@
  */
 package org.scassandra.server.priming.prepared
 
+import java.util.concurrent.TimeUnit
+
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.server.cqlmessages.Consistency
-import org.scassandra.server.priming.{Success, Defaulter, PrimeAddSuccess, PrimeAddResult}
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
-import scala.util.matching.Regex
-import java.util.concurrent.TimeUnit
+import org.scassandra.server.priming.routes.PrimeQueryResultExtractor
+import org.scassandra.server.priming.{Defaulter, PrimeAddResult, PrimeAddSuccess, Success}
+
 import scala.concurrent.duration.FiniteDuration
 
 class PrimePreparedPatternStore extends Logging with PreparedStore with PreparedStoreLookup {
 
   override def record(incomingPrime: PrimePreparedSingle): PrimeAddResult = {
     val primeCriteria = PrimeCriteria(incomingPrime.when.queryPattern.get, incomingPrime.when.consistency.getOrElse(Consistency.all))
-    val rows: List[Map[String, Any]] = incomingPrime.then.rows.getOrElse(List())
-    val columnTypes = Defaulter.defaultColumnTypesToVarchar(incomingPrime.then.column_types, rows)
-    val result = incomingPrime.then.result.getOrElse(Success)
-    val fixedDelay = incomingPrime.then.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+    val then: ThenPreparedSingle = incomingPrime.then
+    val rows: List[Map[String, Any]] = then.rows.getOrElse(List())
+    val columnTypes = Defaulter.defaultColumnTypesToVarchar(then.column_types, rows)
+    val result = PrimeQueryResultExtractor.convertToPrimeResult(then.config.getOrElse(Map()), then.result.getOrElse(Success))
+    val fixedDelay = then.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+    //todo errors
     val prime = Prime(rows, columnTypes = columnTypes, result = result, fixedDelay = fixedDelay)
-    val preparedPrime = PreparedPrime(incomingPrime.then.variable_types.getOrElse(List()), prime)
+    val preparedPrime = PreparedPrime(then.variable_types.getOrElse(List()), prime)
     state += (primeCriteria -> preparedPrime)
     PrimeAddSuccess
   }

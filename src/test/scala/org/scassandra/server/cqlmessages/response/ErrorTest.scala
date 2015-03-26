@@ -15,16 +15,18 @@
  */
 package org.scassandra.server.cqlmessages.response
 
+import org.apache.cassandra.db.WriteType
 import org.scalatest.{Matchers, FunSuite}
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.VersionTwo
+import org.scassandra.server.priming.{UnavailableResult, WriteRequestTimeoutResult, ReadRequestTimeoutResult}
 
 class ErrorTest extends FunSuite with Matchers {
 
   import CqlProtocolHelper._
 
   implicit val protocolVersion = VersionTwo
-  val defaultStream : Byte = 0x1
+  val defaultStream: Byte = 0x1
 
   test("Serialisation of a error response client protocol error") {
     val errorCode: Byte = 0xA
@@ -56,16 +58,23 @@ class ErrorTest extends FunSuite with Matchers {
   }
 
   test("Read request timeout has error code 0x1200 and message Read Request Timeout") {
+    val required = 2
+    val actual = 1
+    val dataPresent = false
+    val readRequestTimeoutResult = ReadRequestTimeoutResult(actual, required, dataPresent)
     val consistency = TWO
-    val readTimeout = ReadRequestTimeout(defaultStream, consistency)
+    val readTimeout = ReadRequestTimeout(defaultStream, consistency, readRequestTimeoutResult)
 
     readTimeout.errorCode should equal(ErrorCodes.ReadTimeout)
     readTimeout.errorMessage should equal("Read Request Timeout")
+    readTimeout.receivedResponses should equal(actual)
+    readTimeout.blockFor should equal(required)
+    readTimeout.dataPresent should equal(0)
   }
 
   test("Serialization of Read Request Timeout - hard coded data for now") {
     val providedConsistency = TWO
-    val readTimeoutBytes = ReadRequestTimeout(defaultStream, providedConsistency).serialize().iterator
+    val readTimeoutBytes = ReadRequestTimeout(defaultStream, providedConsistency, ReadRequestTimeoutResult()).serialize().iterator
 
     val header = readTimeoutBytes.drop(4)
     val length = readTimeoutBytes.getInt
@@ -86,9 +95,13 @@ class ErrorTest extends FunSuite with Matchers {
   }
 
   test("Serialization of Write Request Timeout - hard coded data for now") {
-    val stream : Byte = 0x4
+    val stream: Byte = 0x4
     val providedConsistency = QUORUM
-    val writeTimeoutBytes = WriteRequestTimeout(stream, providedConsistency).serialize().iterator
+    val receivedResponsesExpected: Int = 2
+    val requiredResponsesExpected: Int = 3
+    val writeTypeExpected: WriteType = WriteType.CAS
+    val writeTimeoutResult = WriteRequestTimeoutResult(receivedResponsesExpected, requiredResponsesExpected, writeTypeExpected)
+    val writeTimeoutBytes = WriteRequestTimeout(stream, providedConsistency, writeTimeoutResult).serialize().iterator
     // drop the header
     writeTimeoutBytes.drop(4)
     // drop the length
@@ -104,19 +117,22 @@ class ErrorTest extends FunSuite with Matchers {
     consistency should equal(providedConsistency.code)
 
     val receivedResponses = writeTimeoutBytes.getInt
-    receivedResponses should equal(0)
+    receivedResponses should equal(receivedResponsesExpected)
 
     val blockedFor = writeTimeoutBytes.getInt
-    blockedFor should equal(1)
+    blockedFor should equal(requiredResponsesExpected)
 
     val writeType = CqlProtocolHelper.readString(writeTimeoutBytes)
-    writeType should equal(WriteTypes.Simple)
+    writeType should equal(writeTypeExpected.toString)
   }
 
   test("Serialization of Unavailable Exception - hard coded data for now") {
     val stream: Byte = 0x1
     val providedConsistency = ALL
-    val unavailableException = UnavailableException(stream, providedConsistency).serialize().iterator
+    val requiredResponsesExpected: Int = 5
+    val aliveExpected: Int = 1
+    val unavailableResult = UnavailableResult(requiredResponsesExpected, aliveExpected)
+    val unavailableException = UnavailableException(stream, providedConsistency, unavailableResult).serialize().iterator
     // header
     val header = unavailableException.drop(4)
     // length
@@ -131,10 +147,10 @@ class ErrorTest extends FunSuite with Matchers {
     consistency should equal(providedConsistency.code)
     // required - hard coded to 1
     val requiredResponses = unavailableException.getInt
-    requiredResponses should equal(1)
+    requiredResponses should equal(requiredResponsesExpected)
     // alive - hard coded to 0
     val alive = unavailableException.getInt
-    alive should equal(0)
+    alive should equal(aliveExpected)
 
     length should equal(4 + 2 + errorString.length + 2 + 4 + 4)
   }

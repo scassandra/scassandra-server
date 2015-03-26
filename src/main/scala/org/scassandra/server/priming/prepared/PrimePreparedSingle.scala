@@ -15,8 +15,8 @@
  */
 package org.scassandra.server.priming.prepared
 
-import org.scassandra.server.cqlmessages.{Consistency}
-import org.scassandra.server.priming.{Success, Result}
+import org.scassandra.server.cqlmessages.Consistency
+import org.scassandra.server.priming.{ResultJsonRepresentation, Success}
 import org.scassandra.server.cqlmessages.types.ColumnType
 
 case class PrimePreparedSingle(when: WhenPreparedSingle, then: ThenPreparedSingle)
@@ -28,6 +28,7 @@ case class WhenPreparedSingle(query: Option[String] = None,
 case class ThenPreparedSingle(rows: Option[List[Map[String, Any]]],
                               variable_types: Option[List[ColumnType[_]]] = None,
                               column_types: Option[Map[String, ColumnType[_]]] = None,
-                              result : Option[Result] = Some(Success),
-                              fixedDelay : Option[Long] = None
+                              result : Option[ResultJsonRepresentation] = Some(Success),
+                              fixedDelay : Option[Long] = None,
+                              config: Option[Map[String, String]] = None
                                )

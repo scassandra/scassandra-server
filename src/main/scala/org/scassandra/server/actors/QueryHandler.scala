@@ -1,7 +1,6 @@
 package org.scassandra.server.actors
 
 import akka.actor.{Actor, ActorRef}
-import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.server.cqlmessages.{Consistency, CqlMessageFactory, CqlProtocolHelper}
 import org.scassandra.server.priming._
@@ -33,31 +32,25 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
       } else {
         val primeForIncomingQuery: Option[Prime] = primeQueryStore.get(PrimeMatch(queryText, consistency))
         primeForIncomingQuery match {
-          case Some(prime) => {
+          case Some(prime) =>
             val message = prime.result match {
-              case Success => {
+                //todo errors
+              case SuccessResult =>
                 logger.info(s"Found matching prime $prime for query $queryText")
                 msgFactory.createRowsMessage(prime, stream)
-              }
-              case ReadTimeout => {
-                msgFactory.createReadTimeoutMessage(stream, consistency)
-              }
-              case Unavailable => {
-                msgFactory.createUnavailableMessage(stream, consistency)
-              }
-              case WriteTimeout => {
-                msgFactory.createWriteTimeoutMessage(stream, consistency)
-              }
+              case result: ReadRequestTimeoutResult =>
+                msgFactory.createReadTimeoutMessage(stream, consistency, result)
+              case result: UnavailableResult =>
+                msgFactory.createUnavailableMessage(stream, consistency, result)
+              case result: WriteRequestTimeoutResult =>
+                msgFactory.createWriteTimeoutMessage(stream, consistency, result)
             }
             sendMessage(prime.fixedDelay, tcpConnection, message)
-          }
-          case None => {
+          case None =>
             logger.info(s"No prime found for $queryText")
             sendMessage(None, tcpConnection, msgFactory.createEmptyRowsMessage(stream))
-          }
-          case msg @ _ => {
+          case msg @ _ =>
             logger.debug(s"Received unexpected result back from primed results: $msg")
-          }
         }
       }
     case message @ _ =>

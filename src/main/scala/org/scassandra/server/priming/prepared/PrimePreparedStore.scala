@@ -15,31 +15,35 @@
  */
 package org.scassandra.server.priming.prepared
 
-import org.scassandra.server.cqlmessages.{Consistency}
-import org.scassandra.server.priming._
-import com.typesafe.scalalogging.slf4j.Logging
-import org.scassandra.server.priming.query.PrimeCriteria
-import org.scassandra.server.priming.query.PrimeMatch
-import org.scassandra.server.priming.query.Prime
-import org.scassandra.server.cqlmessages.types.{ColumnType}
-import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
+
+import com.typesafe.scalalogging.slf4j.Logging
+import org.scassandra.server.cqlmessages.Consistency
+import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.server.priming._
+import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
+import org.scassandra.server.priming.routes.PrimeQueryResultExtractor
+
+import scala.concurrent.duration.FiniteDuration
 
 class PrimePreparedStore extends Logging with PreparedStore with PreparedStoreLookup {
 
   val validator: PrimeValidator = PrimeValidator()
 
   def record(prime: PrimePreparedSingle) : PrimeAddResult= {
-    val rows = prime.then.rows.getOrElse(List())
+    val then: ThenPreparedSingle = prime.then
+    val rows = then.rows.getOrElse(List())
     val query = prime.when.query
-    val result = prime.then.result.getOrElse(Success)
     val numberOfParameters = query.get.toCharArray.count(_ == '?')
-    val fixedDelay: Option[FiniteDuration] = prime.then.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+    val fixedDelay: Option[FiniteDuration] = then.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+    val result = PrimeQueryResultExtractor.convertToPrimeResult(then.config.getOrElse(Map()), then.result.getOrElse(Success))
 
-    val variableTypesDefaultedToVarchar: List[ColumnType[_]] = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, prime.then.variable_types)
-    val colTypes = Defaulter.defaultColumnTypesToVarchar(prime.then.column_types, rows)
+    val variableTypesDefaultedToVarchar: List[ColumnType[_]] = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, then.variable_types)
+    val colTypes = Defaulter.defaultColumnTypesToVarchar(then.column_types, rows)
 
-    val primeToStore: PreparedPrime = PreparedPrime(variableTypesDefaultedToVarchar, prime = Prime(rows, columnTypes = colTypes, result = result, fixedDelay = fixedDelay))
+    //todo errors
+    val primeToStore: PreparedPrime = PreparedPrime(variableTypesDefaultedToVarchar, prime = Prime(rows, columnTypes = colTypes,
+      result = result, fixedDelay = fixedDelay))
 
     val consistencies = prime.when.consistency.getOrElse(Consistency.all)
     val primeCriteria = PrimeCriteria(query.get, consistencies)
