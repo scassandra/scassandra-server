@@ -17,7 +17,7 @@ package org.scassandra.server.cqlmessages.response
 
 import akka.util.ByteString
 import org.scassandra.server.cqlmessages._
-import org.scassandra.server.priming.{ReadRequestTimeoutResult, WriteRequestTimeoutResult}
+import org.scassandra.server.priming.{UnavailableResult, ReadRequestTimeoutResult, WriteRequestTimeoutResult}
 
 object ErrorCodes {
   val ProtocolError = 0x000A
@@ -49,9 +49,9 @@ case class QueryBeforeReadyMessage(stream : Byte = ResponseHeader.DefaultStreamI
 
 case class ReadRequestTimeout(stream : Byte, consistency: Consistency, readRequestTimeoutResult: ReadRequestTimeoutResult)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.ReadTimeout, "Read Request Timeout", stream) {
 
-  val receivedResponses : Int = readRequestTimeoutResult.receivedResponses
-  val blockFor : Int = readRequestTimeoutResult.requiredResponses
-  val dataPresent : Byte = if (readRequestTimeoutResult.dataPresent) 1 else 0
+  val receivedResponses: Int = readRequestTimeoutResult.receivedResponses
+  val blockFor: Int = readRequestTimeoutResult.requiredResponses
+  val dataPresent: Byte = if (readRequestTimeoutResult.dataPresent) 1 else 0
 
   import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 
@@ -69,12 +69,13 @@ case class ReadRequestTimeout(stream : Byte, consistency: Consistency, readReque
   }
 }
 
-case class UnavailableException(stream: Byte, consistency: Consistency)(implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.UnavailableException, "Unavailable Exception", stream) {
+case class UnavailableException(stream: Byte, consistency: Consistency, unavailableResult: UnavailableResult)
+                               (implicit protocolVersion: ProtocolVersion) extends Error(protocolVersion, ErrorCodes.UnavailableException, "Unavailable Exception", stream) {
 
   import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 
-  val required : Int = 1
-  val alive : Int = 0
+  val required : Int = unavailableResult.requiredResponses
+  val alive : Int = unavailableResult.alive
 
   override def serialize() : ByteString = {
     val bodyBs = ByteString.newBuilder

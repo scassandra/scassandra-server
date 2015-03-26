@@ -41,7 +41,7 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
               case result: ReadRequestTimeoutResult =>
                 msgFactory.createReadTimeoutMessage(stream, consistency, result)
               case result: UnavailableResult =>
-                msgFactory.createUnavailableMessage(stream, consistency)
+                msgFactory.createUnavailableMessage(stream, consistency, result)
               case result: WriteRequestTimeoutResult =>
                 msgFactory.createWriteTimeoutMessage(stream, consistency, result)
             }

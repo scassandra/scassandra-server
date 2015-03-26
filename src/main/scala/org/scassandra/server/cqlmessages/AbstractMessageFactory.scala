@@ -23,7 +23,7 @@ import org.scassandra.server.cqlmessages.response.WriteRequestTimeout
 import org.scassandra.server.cqlmessages.response.VoidResult
 import org.scassandra.server.cqlmessages.response.Rows
 import org.scassandra.server.cqlmessages.response.Ready
-import org.scassandra.server.priming.{WriteRequestTimeoutResult, ReadRequestTimeoutResult}
+import org.scassandra.server.priming.{UnavailableResult, WriteRequestTimeoutResult, ReadRequestTimeoutResult}
 import org.scassandra.server.priming.query.Prime
 import org.scassandra.server.cqlmessages.response.Row
 import org.scassandra.server.cqlmessages.response.SetKeyspace
@@ -65,8 +65,8 @@ abstract class AbstractMessageFactory extends CqlMessageFactory {
     WriteRequestTimeout(stream, consistency, writeRequestTimeoutResult)
   }
 
-  override def createUnavailableMessage(stream: Byte, consistency: Consistency): UnavailableException = {
-    UnavailableException(stream, consistency)
+  override def createUnavailableMessage(stream: Byte, consistency: Consistency, unavailableResult: UnavailableResult): UnavailableException = {
+    UnavailableException(stream, consistency, unavailableResult)
   }
 
   def createVoidMessage(stream: Byte): VoidResult = {

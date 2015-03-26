@@ -77,7 +77,7 @@ class PreparedStatementErrorsTest extends AbstractIntegrationTest with BeforeAnd
     val boundStatement = preparedStatement.bind("Chris")
     boundStatement.setConsistencyLevel(consistency)
 
-    //when
+
     val exception = intercept[WriteTimeoutException] {
       session.execute(boundStatement)
     }
@@ -89,18 +89,28 @@ class PreparedStatementErrorsTest extends AbstractIntegrationTest with BeforeAnd
   }
 
   test("Prepared statement with priming - unavailable") {
+    //given
+    val properties = Map[String, String](
+      ErrorConstants.Alive -> "2",
+      ErrorConstants.RequiredResponse -> "3")
     val preparedStatementText: String = "select * from people where name = ?"
+    val consistency = ConsistencyLevel.LOCAL_ONE
     PrimingHelper.primePreparedStatement(
       WhenPreparedSingle(Some(preparedStatementText)),
-      ThenPreparedSingle(None, result = Some(Unavailable))
+      ThenPreparedSingle(None, result = Some(Unavailable), config = Some(properties))
     )
-
     val preparedStatement = session.prepare(preparedStatementText)
     val boundStatement = preparedStatement.bind("Chris")
+    boundStatement.setConsistencyLevel(consistency)
 
     //when
-    intercept[UnavailableException] {
+    val exception = intercept[UnavailableException] {
       session.execute(boundStatement)
     }
+
+    //then
+    exception.getConsistencyLevel should equal(consistency)
+    exception.getRequiredReplicas should equal(3)
+    exception.getAliveReplicas should equal(2)
   }
 }

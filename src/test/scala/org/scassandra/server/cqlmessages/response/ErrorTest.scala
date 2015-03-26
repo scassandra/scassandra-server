@@ -19,7 +19,7 @@ import org.apache.cassandra.db.WriteType
 import org.scalatest.{Matchers, FunSuite}
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.VersionTwo
-import org.scassandra.server.priming.{WriteRequestTimeoutResult, ReadRequestTimeoutResult}
+import org.scassandra.server.priming.{UnavailableResult, WriteRequestTimeoutResult, ReadRequestTimeoutResult}
 
 class ErrorTest extends FunSuite with Matchers {
 
@@ -129,7 +129,10 @@ class ErrorTest extends FunSuite with Matchers {
   test("Serialization of Unavailable Exception - hard coded data for now") {
     val stream: Byte = 0x1
     val providedConsistency = ALL
-    val unavailableException = UnavailableException(stream, providedConsistency).serialize().iterator
+    val requiredResponsesExpected: Int = 5
+    val aliveExpected: Int = 1
+    val unavailableResult = UnavailableResult(requiredResponsesExpected, aliveExpected)
+    val unavailableException = UnavailableException(stream, providedConsistency, unavailableResult).serialize().iterator
     // header
     val header = unavailableException.drop(4)
     // length
@@ -144,10 +147,10 @@ class ErrorTest extends FunSuite with Matchers {
     consistency should equal(providedConsistency.code)
     // required - hard coded to 1
     val requiredResponses = unavailableException.getInt
-    requiredResponses should equal(1)
+    requiredResponses should equal(requiredResponsesExpected)
     // alive - hard coded to 0
     val alive = unavailableException.getInt
-    alive should equal(0)
+    alive should equal(aliveExpected)
 
     length should equal(4 + 2 + errorString.length + 2 + 4 + 4)
   }

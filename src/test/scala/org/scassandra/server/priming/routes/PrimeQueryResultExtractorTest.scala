@@ -91,16 +91,16 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
     primeResult.result should equal(WriteRequestTimeoutResult(2, 3, WriteType.BATCH))
   }
 
-  test("Extracting Unavailable result with no extra params") {
+  test("Extracting Unavailable result") {
+    val properties = Map[String, String](
+      ErrorConstants.Alive -> "2",
+      ErrorConstants.RequiredResponse -> "3")
     val when = When()
-    val then = Then(None, Some(Unavailable))
+    val then = Then(None, Some(Unavailable), config = Some(properties))
     val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
 
     val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
 
-    primeResult.result should equal(UnavailableResult())
+    primeResult.result should equal(UnavailableResult(3, 2))
   }
-
-  //todo errors params for write and unavailable
-
 }

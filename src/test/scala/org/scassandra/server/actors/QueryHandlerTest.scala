@@ -131,11 +131,12 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     val stream: Byte = 0x05
     val consistency: Consistency = LOCAL_ONE
     val setKeyspaceQuery: ByteString = ByteString(MessageHelper.createQueryMessage(query, consistency = consistency).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch(query, consistency))).thenReturn(Some(Prime(List(), UnavailableResult())))
+    val result: UnavailableResult = UnavailableResult()
+    when(mockPrimedResults.get(PrimeMatch(query, consistency))).thenReturn(Some(Prime(List(), result)))
 
     underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
 
-    testProbeForTcpConnection.expectMsg(UnavailableException(stream, consistency))
+    testProbeForTcpConnection.expectMsg(UnavailableException(stream, consistency, result))
   }
 
   test("Test multiple rows") {

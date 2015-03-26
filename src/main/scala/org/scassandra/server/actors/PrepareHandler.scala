@@ -62,7 +62,7 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
               case SuccessResult => msgFactory.createRowsMessage(preparedPrime.prime, stream)
               case result: ReadRequestTimeoutResult => msgFactory.createReadTimeoutMessage(stream, executeRequest.consistency, result)
               case result: WriteRequestTimeoutResult => msgFactory.createWriteTimeoutMessage(stream, executeRequest.consistency, result)
-              case result: UnavailableResult => msgFactory.createUnavailableMessage(stream, executeRequest.consistency)
+              case result: UnavailableResult => msgFactory.createUnavailableMessage(stream, executeRequest.consistency, result)
             }
 
             sendMessage(preparedPrime.prime.fixedDelay, connection, msgToSend)
@@ -80,7 +80,6 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
   }
 
   private def sendMessage(delay: Option[FiniteDuration], receiver: ActorRef, message: Any) = {
-
     delay match {
       case None => receiver ! message
       case Some(duration) =>
@@ -90,14 +89,9 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
   }
 }
 
-
-
 object PrepareHandlerMessages {
-
   case class Prepare(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
-
   case class Execute(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
-
 }
 
 /*

@@ -80,7 +80,9 @@ object PrimeQueryResultExtractor extends Logging {
         config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
         WriteType.valueOf(config.getOrElse(ErrorConstants.WriteType, "SIMPLE"))
       )
-      case Unavailable => UnavailableResult()
+      case Unavailable => UnavailableResult(
+        config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
+        config.getOrElse(ErrorConstants.Alive, "0").toInt)
     }
     primeResult
   }

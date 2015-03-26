@@ -90,4 +90,22 @@ class PrimingErrorsTest extends AbstractIntegrationTest {
     exception.getRequiredAcknowledgements should equal(3)
     exception.getWriteType should equal(WriteType.BATCH)
   }
+
+  test("Unavailable: with alive and required sett") {
+    val properties = Map[String, String](
+      ErrorConstants.Alive -> "2",
+      ErrorConstants.RequiredResponse -> "3")
+    prime(When(queryPattern = Some(".*")), Then(None, result = Some(Unavailable), config = Some(properties)))
+    val statement = new SimpleStatement("select * from some_table")
+    val consistency: ConsistencyLevel = ConsistencyLevel.ALL
+    statement.setConsistencyLevel(consistency)
+
+    val exception = intercept[UnavailableException] {
+      session.execute(statement)
+    }
+
+    exception.getConsistencyLevel should equal(consistency)
+    exception.getRequiredReplicas should equal(3)
+    exception.getAliveReplicas should equal(2)
+  }
 }
