@@ -48,16 +48,16 @@ object PrimeQueryResultExtractor extends Logging {
 
   def extractPrimeResult(primeRequest: PrimeQuerySingle): Prime = {
     // add the deserialized JSON request to the map of prime requests
-    val andThen = primeRequest.andThen
+    val andThen = primeRequest.then
     val config = andThen.config.getOrElse(Map())
     val resultsAsList = andThen.rows.getOrElse(List())
     val result = andThen.result.getOrElse(Success)
-    val fixedDelay = primeRequest.andThen.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+    val fixedDelay = primeRequest.then.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
     val primeResult: PrimeResult = convertToPrimeResult(config, result)
 
-    logger.trace("Column types " + primeRequest.andThen.column_types)
+    logger.trace("Column types " + primeRequest.then.column_types)
 
-    val columnTypes: Map[String, ColumnType[_]] = Defaulter.defaultColumnTypesToVarchar(primeRequest.andThen.column_types, resultsAsList)
+    val columnTypes: Map[String, ColumnType[_]] = Defaulter.defaultColumnTypesToVarchar(primeRequest.then.column_types, resultsAsList)
 
     logger.trace("Incoming when {}", primeRequest.when)
 
