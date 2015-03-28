@@ -17,7 +17,7 @@ package org.scassandra.server.actors
 
 import java.net.InetSocketAddress
 
-import akka.actor.{Actor, ActorRef, ActorRefFactory, Props}
+import akka.actor._
 import akka.io.{IO, Tcp}
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.server.cqlmessages.CqlMessageFactory
@@ -30,7 +30,7 @@ class TcpServer(listenAddress: String, port: Int,
                 primedResults: PrimeQueryStore,
                 primePrepareStore: PreparedStoreLookup,
                 serverReadyListener: ActorRef,
-                activityLog: ActivityLog) extends Actor with Logging {
+                activityLog: ActivityLog) extends Actor with ActorLogging {
 
   import akka.io.Tcp._
   import context.system
@@ -42,16 +42,16 @@ class TcpServer(listenAddress: String, port: Int,
 
   def receive = {
     case b @ Bound(localAddress) =>
-      logger.info(s"Port $port ready for Cassandra binary connections.")
+      log.info(s"Port $port ready for Cassandra binary connections.")
       serverReadyListener ! ServerReady
 
     case CommandFailed(_: Bind) =>
-      logger.error(s"Unable to bind to port $port for Cassandra binary connections. Is it in use?")
+      log.error(s"Unable to bind to port $port for Cassandra binary connections. Is it in use?")
       context stop self
       context.system.shutdown()
 
     case c @ Connected(remote, local) =>
-      logger.debug(s"Incoming connection, creating a connection handler! $remote $local")
+      log.debug(s"Incoming connection, creating a connection handler! $remote $local")
       activityLog.recordConnection()
       val handler = context.actorOf(Props(classOf[ConnectionHandler],
         (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[QueryHandler], sender, primedResults, msgFactory, activityLog)),
@@ -59,7 +59,7 @@ class TcpServer(listenAddress: String, port: Int,
         preparedHandler,
         (af: ActorRefFactory, tcpConnection: ActorRef) => af.actorOf(Props(classOf[TcpConnectionWrapper], tcpConnection)))
       )
-      logger.debug(s"Sending register with connection handler $handler")
+      log.debug(s"Sending register with connection handler $handler")
       sender ! Register(handler)
   }
 }

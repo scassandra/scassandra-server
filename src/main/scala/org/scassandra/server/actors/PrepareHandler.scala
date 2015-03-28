@@ -1,6 +1,6 @@
 package org.scassandra.server.actors
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.{ActorLogging, Actor, ActorRef}
 import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.server.cqlmessages.CqlMessageFactory
@@ -11,7 +11,7 @@ import org.scassandra.server.priming.query.PrimeMatch
 
 import scala.concurrent.duration.FiniteDuration
 
-class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActivityLog) extends Actor with Logging {
+class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActivityLog) extends Actor with ActorLogging {
 
   import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 
@@ -20,7 +20,6 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
   def receive: Actor.Receive = {
     case PrepareHandlerMessages.Prepare(body, stream, msgFactory, connection) =>
-      logger.trace(s"Received prepare message $body")
       val query = readLongString(body.iterator).get
       val preparedPrime = primePreparedStore.findPrime(PrimeMatch(query))
       val preparedResult = if (preparedPrime.isDefined) {
@@ -35,18 +34,17 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
       preparedStatementId = preparedStatementId + 1
 
-      logger.info(s"Prepared Statement has been prepared: |$query|. Prepared result is: $preparedResult")
+      log.info(s"Prepared Statement has been prepared: |$query|. Prepared result is: $preparedResult")
       connection ! preparedResult
     case PrepareHandlerMessages.Execute(body, stream, msgFactory, connection) =>
-      logger.trace(s"Received execute bytes $body")
       val executeRequest = msgFactory.parseExecuteRequestWithoutVariables(stream, body)
-      logger.debug(s"Received execute message $executeRequest")
+      log.debug(s"Received execute message $executeRequest")
       val preparedStatement = preparedStatementsToId.get(executeRequest.id)
 
       if (preparedStatement.isDefined) {
         val preparedStatementText = preparedStatement.get
         val prime = primePreparedStore.findPrime(PrimeMatch(preparedStatementText, executeRequest.consistency))
-        logger.info(s"Received execution of prepared statement |$preparedStatementText| and consistency |${executeRequest.consistency}|")
+        log.info(s"Received execution of prepared statement |$preparedStatementText| and consistency |${executeRequest.consistency}|")
         prime match {
           case Some(preparedPrime) =>
 
@@ -55,7 +53,7 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
               activityLog.recordPreparedStatementExecution(preparedStatementText, executeRequestParsedWithVariables.consistency, executeRequestParsedWithVariables.variables, preparedPrime.variableTypes)
             } else {
               activityLog.recordPreparedStatementExecution(preparedStatementText, executeRequest.consistency, List(), List())
-              logger.warn(s"Execution of prepared statement has a different number of variables to the prime. Number of variables in message ${executeRequest.numberOfVariables}. Variables won't be recorded. $preparedPrime")
+              log.warning(s"Execution of prepared statement has a different number of variables to the prime. Number of variables in message ${executeRequest.numberOfVariables}. Variables won't be recorded. $preparedPrime")
             }
 
             val msgToSend = preparedPrime.prime.result match {
@@ -67,23 +65,23 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
             sendMessage(preparedPrime.prime.fixedDelay, connection, msgToSend)
           case None =>
-            logger.warn(s"Received execution of prepared statement that hasn't been primed so can't record variables. $preparedStatementText")
+            log.warning(s"Received execution of prepared statement that hasn't been primed so can't record variables. $preparedStatementText")
             activityLog.recordPreparedStatementExecution(preparedStatement.get, executeRequest.consistency, List(), List())
             connection ! msgFactory.createVoidMessage(stream)
         }
       } else {
-        logger.warn(s"Received execution of an unknown prepared statement. Have you restarted Scassandra since your application prepared the statement?")
+        log.warning(s"Received execution of an unknown prepared statement. Have you restarted Scassandra since your application prepared the statement?")
         connection ! msgFactory.createVoidMessage(stream)
       }
     case msg@_ =>
-      logger.debug(s"Received unknown message $msg")
+      log.debug(s"Received unknown message $msg")
   }
 
   private def sendMessage(delay: Option[FiniteDuration], receiver: ActorRef, message: Any) = {
     delay match {
       case None => receiver ! message
       case Some(duration) =>
-        logger.info(s"Delaying response of prepared statement by $duration")
+        log.info(s"Delaying response of prepared statement by $duration")
         context.system.scheduler.scheduleOnce(duration, receiver, message)(context.system.dispatcher)
     }
   }
