@@ -30,6 +30,7 @@ import java.util.UUID
 import java.net.InetAddress
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.routes.Version
+import scala.collection.Set
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport with Logging {
 
@@ -48,10 +49,9 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
     def read(value: JsValue) = value match {
       case JsString(string) => ColumnType.fromString(string) match {
         case Some(columnType) => columnType
-        case None => {
+        case None =>
           logger.warn(s"Received invalid column type $string")
           throw new IllegalArgumentException("Not a valid column type " + string)
-        }
       }
       case _ => throw new IllegalArgumentException("Expected ColumnType as JsString")
     }
@@ -73,14 +73,15 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
       case bd: BigDecimal => JsString(bd.bigDecimal.toPlainString)
       case s: String => JsString(s)
       case seq: Seq[_] => seqFormat[Any].write(seq)
-      case m: Map[Any, Any] => {
+      case m: Map[_, _] => {
         val keysAsString: Map[String, Any] = m.map({ case (k, v) => (k.toString, v)})
         mapFormat[String, Any].write(keysAsString)
       }
-      case set: Set[Any] => setFormat[Any].write(set)
-      case list: List[Any] => listFormat[Any].write(list)
+      case set: Set[_] => setFormat[Any].write(set.map(s => s))
+
       case b: Boolean if b => JsTrue
       case b: Boolean if !b => JsFalse
+
       // sending as strings to not lose precision
       case double: Double => JsString(double.toString)
       case float: Float => JsString(float.toString)
@@ -94,6 +95,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
       case Some(s) => AnyJsonFormat.write(s)
       case other => serializationError("Do not understand object of type " + other.getClass.getName)
     }
+
     def read(value: JsValue) = value match {
       case jsNumber : JsNumber => jsNumber.value
       case JsString(s) => s
@@ -103,6 +105,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
       case JsFalse => false
       case x => deserializationError("Do not understand how to deserialize " + x)
     }
+
     def bytes2hex(bytes: Array[Byte]): String = {
        bytes.map("%02x".format(_)).mkString
     }

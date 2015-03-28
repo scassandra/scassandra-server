@@ -36,7 +36,8 @@ object PrimeQueryResultExtractor extends Logging {
 
     primeQueryRequest.when match {
       // Prime for a specific query
-      case When(Some(query), None, _, _, _) => util.Success(PrimeCriteria(primeQueryRequest.when.query.get, primeConsistencies, patternMatch = false))
+      case When(Some(query), None, _, _, _) =>
+        util.Success(PrimeCriteria(primeQueryRequest.when.query.get, primeConsistencies, patternMatch = false))
 
       // Prime for a query pattern
       case When(None, Some(queryPattern), _, _, _) => util.Success(PrimeCriteria(primeQueryRequest.when.queryPattern.get, primeConsistencies, patternMatch = true))
