@@ -21,17 +21,19 @@ import scala.concurrent.{ExecutionContext, Await}
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
-
+import scala.language.postfixOps
 
 object ServerReadyAwaiter {
 
   import ExecutionContext.Implicits.global
 
   // awaitStartup() : timeout used implicitly by the ask pattern
-  implicit val timeout = Timeout(10 seconds)
+  implicit val timeout = 10 seconds
 
   def run(primingReadyListener: ActorRef, tcpReadyListener: ActorRef) = {
 
+    //todo produce a better error message if this times out.
+    //This is probably because a port is in use.
     val allReady = for {
       _ <- primingReadyListener ? OnServerReady
       _ <- tcpReadyListener ? OnServerReady
