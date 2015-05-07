@@ -17,12 +17,12 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
   import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 
-  var preparedStatementId: Int = 1
-  var preparedStatementsToId: Map[Int, String] = Map()
+  private var preparedStatementId: Int = 1
+  private var preparedStatementsToId: Map[Int, String] = Map()
 
   def receive: Actor.Receive = {
     case PrepareHandlerMessages.Prepare(body, stream, msgFactory: CqlMessageFactory, connection) =>
-      val query = readLongString(body.iterator).get
+      val query: String = readLongString(body.iterator).get
       val preparedPrime = primePreparedStore.findPrime(PrimeMatch(query))
 
       val preparedResult = preparedPrime
@@ -36,26 +36,29 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
       preparedStatementId = preparedStatementId + 1
       log.info(s"Prepared Statement has been prepared: |$query|. Prepared result is: $preparedResult")
       connection ! preparedResult
+
     case PrepareHandlerMessages.Execute(body, stream, msgFactory, connection) =>
       val executeRequest = msgFactory.parseExecuteRequestWithoutVariables(stream, body)
       log.debug(s"Received execute message $executeRequest")
-      val preparedStatement: Option[String] = preparedStatementsToId.get(executeRequest.id)
-      val recognisedStatement = preparedStatement.isDefined
 
-      val action: Action = if (recognisedStatement) {
-        val matchingPrimedAction = for {
-          text <- preparedStatement
-          pp <- primePreparedStore.findPrime(PrimeMatch(text, executeRequest.consistency))
-          if executeRequest.numberOfVariables == pp.variableTypes.size
-          parsed = msgFactory.parseExecuteRequestWithVariables(stream, body, pp.variableTypes)
-          pse = PreparedStatementExecution(text, parsed.consistency, parsed.variables, pp.variableTypes)
-        } yield Action(Some(pse), MessageAndDelay(createMessage(pp, executeRequest, stream, msgFactory), pp.prime.fixedDelay))
+      val prepStatement = preparedStatementsToId.get(executeRequest.id)
 
-        matchingPrimedAction.getOrElse(Action(Some(PreparedStatementExecution(preparedStatement.get, executeRequest.consistency, List(), List())),
-          MessageAndDelay(msgFactory.createVoidMessage(stream))))
+      val action = prepStatement match {
+        case Some(p) => {
+          val matchingPrimedAction = for {
+            prime <- primePreparedStore.findPrime(PrimeMatch(p, executeRequest.consistency))
+            if executeRequest.numberOfVariables == prime.variableTypes.size
+            parsed = msgFactory.parseExecuteRequestWithVariables(stream, body, prime.variableTypes)
+            pse = PreparedStatementExecution(p, parsed.consistency, parsed.variables, prime.variableTypes)
+          } yield Action(Some(pse), MessageAndDelay(createMessage(prime, executeRequest, stream, msgFactory), prime.prime.fixedDelay))
 
-      } else statementNotRecognised(stream, msgFactory)
+         lazy val defaultAction = Action(Some(PreparedStatementExecution(p, executeRequest.consistency, List(), List())),
+           MessageAndDelay(msgFactory.createVoidMessage(stream)))
 
+          matchingPrimedAction.getOrElse(defaultAction)
+        }
+        case None => statementNotRecognised(stream, msgFactory)
+      }
       sendMessage(action.msg, connection)
       action.activity.foreach(activityLog.recordPreparedStatementExecution)
   }
