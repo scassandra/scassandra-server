@@ -24,14 +24,13 @@ class ServerReadyListener extends Actor with Logging {
   var alreadyReady = false
 
   def receive = {
-        case OnServerReady => {
+        case OnServerReady =>
           serverReadyReceiver = sender
           if (alreadyReady) {
             logger.info("OnServerReady - ServerReady message already received. Sending ServerReady.")
             serverReadyReceiver ! ServerReady
           }
-        }
-        case ServerReady => {
+        case ServerReady =>
           if (serverReadyReceiver != null) {
             logger.info("ServerReady - Forwarding ServerReady to listener.")
             serverReadyReceiver ! ServerReady
@@ -39,7 +38,6 @@ class ServerReadyListener extends Actor with Logging {
             logger.info("ServerReady - No listener yet.")
             alreadyReady = true
           }
-        }
         case msg @ _ => logger.info(s"Received unknown message $msg")
   }
 }

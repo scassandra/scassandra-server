@@ -28,7 +28,7 @@ object ServerReadyAwaiter {
   import ExecutionContext.Implicits.global
 
   // awaitStartup() : timeout used implicitly by the ask pattern
-  implicit val timeout = 10 seconds
+  implicit val timeout = Timeout(10 seconds)
 
   def run(primingReadyListener: ActorRef, tcpReadyListener: ActorRef) = {
 

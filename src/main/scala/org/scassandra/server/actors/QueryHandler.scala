@@ -1,7 +1,6 @@
 package org.scassandra.server.actors
 
 import akka.actor.{ActorLogging, Actor, ActorRef}
-import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.server.cqlmessages.{Consistency, CqlMessageFactory, CqlProtocolHelper}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.query.{Prime, PrimeMatch, PrimeQueryStore}
@@ -33,7 +32,6 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
         primeForIncomingQuery match {
           case Some(prime) =>
             val message = prime.result match {
-                //todo errors
               case SuccessResult =>
                 log.info(s"Found matching prime $prime for query $queryText")
                 msgFactory.createRowsMessage(prime, stream)
@@ -52,8 +50,6 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
             log.debug(s"Received unexpected result back from primed results: $msg")
         }
       }
-    case message @ _ =>
-      log.debug(s"Received unknown message: $message")
   }
 
   private def sendMessage(delay: Option[FiniteDuration], receiver: ActorRef, message: Any) = {

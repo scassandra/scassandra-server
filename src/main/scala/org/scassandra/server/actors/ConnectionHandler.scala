@@ -52,9 +52,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
   val ProtocolOneOrTwoHeaderLength = 8
 
   def receive = {
-
     case Received(data: ByteString) =>
-
       currentData = data
       if (partialMessage) {
         currentData = dataFromPreviousMessage ++ data
@@ -64,8 +62,6 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
 
       // the header could be 8 or 9 bits now :(
       while (currentData.length >= ProtocolOneOrTwoHeaderLength && takeMessage()) {}
-
-
 
       if (currentData.length > 0) {
         partialMessage = true
@@ -81,7 +77,6 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
   }
 
   private def processMessage(opCode: Byte, stream: Byte, messageBody: ByteString, protocolVersion: Byte) = {
-
     opCode match {
       case OpCodes.Startup =>
         log.debug("Sending ready message")
@@ -127,9 +122,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
 
   /* should not be called if there isn't at least a header */
   private def takeMessage(): Boolean = {
-
     val protocolVersion = currentData(0)
-
     if (protocolVersion == VersionThree.clientCode) {
       log.warning("Received a version three message, currently only one and two supported so sending an unsupported protocol error to get the driver to use an older version of the protocol.")
       val wrappedSender = connectionWrapperFactory(context, sender)

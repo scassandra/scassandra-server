@@ -4,9 +4,11 @@ import akka.actor.{ActorLogging, Actor, ActorRef}
 import akka.util.ByteString
 import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.server.cqlmessages.CqlMessageFactory
+import org.scassandra.server.cqlmessages.request.ExecuteRequest
+import org.scassandra.server.cqlmessages.response.Response
 import org.scassandra.server.cqlmessages.types.{ColumnType, CqlVarchar}
 import org.scassandra.server.priming._
-import org.scassandra.server.priming.prepared.PreparedStoreLookup
+import org.scassandra.server.priming.prepared.{PreparedPrime, PreparedStoreLookup}
 import org.scassandra.server.priming.query.PrimeMatch
 
 import scala.concurrent.duration.FiniteDuration
@@ -19,70 +21,67 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
   var preparedStatementsToId: Map[Int, String] = Map()
 
   def receive: Actor.Receive = {
-    case PrepareHandlerMessages.Prepare(body, stream, msgFactory, connection) =>
+    case PrepareHandlerMessages.Prepare(body, stream, msgFactory: CqlMessageFactory, connection) =>
       val query = readLongString(body.iterator).get
       val preparedPrime = primePreparedStore.findPrime(PrimeMatch(query))
-      val preparedResult = if (preparedPrime.isDefined) {
-        msgFactory.createPreparedResult(stream, preparedStatementId, preparedPrime.get.variableTypes)
-      } else {
-        val numberOfParameters = query.toCharArray.count(_ == '?')
-        val variableTypes: List[ColumnType[_]] = (0 until numberOfParameters).map(num => CqlVarchar).toList
-        msgFactory.createPreparedResult(stream, preparedStatementId, variableTypes)
-      }
 
+      val preparedResult = preparedPrime
+        .map(prime => msgFactory.createPreparedResult(stream, preparedStatementId, prime.variableTypes))
+        .getOrElse({
+          val numberOfParameters = query.toCharArray.count(_ == '?')
+          val variableTypes = (0 until numberOfParameters).map(num => CqlVarchar).toList
+          msgFactory.createPreparedResult(stream, preparedStatementId, variableTypes)
+      })
       preparedStatementsToId += (preparedStatementId -> query)
-
       preparedStatementId = preparedStatementId + 1
-
       log.info(s"Prepared Statement has been prepared: |$query|. Prepared result is: $preparedResult")
       connection ! preparedResult
     case PrepareHandlerMessages.Execute(body, stream, msgFactory, connection) =>
       val executeRequest = msgFactory.parseExecuteRequestWithoutVariables(stream, body)
       log.debug(s"Received execute message $executeRequest")
-      val preparedStatement = preparedStatementsToId.get(executeRequest.id)
+      val preparedStatement: Option[String] = preparedStatementsToId.get(executeRequest.id)
+      val recognisedStatement = preparedStatement.isDefined
 
-      if (preparedStatement.isDefined) {
-        val preparedStatementText = preparedStatement.get
-        val prime = primePreparedStore.findPrime(PrimeMatch(preparedStatementText, executeRequest.consistency))
-        log.info(s"Received execution of prepared statement |$preparedStatementText| and consistency |${executeRequest.consistency}|")
-        prime match {
-          case Some(preparedPrime) =>
+      val action: Action = if (recognisedStatement) {
+        val matchingPrimedAction = for {
+          text <- preparedStatement
+          pp <- primePreparedStore.findPrime(PrimeMatch(text, executeRequest.consistency))
+          if executeRequest.numberOfVariables == pp.variableTypes.size
+          parsed = msgFactory.parseExecuteRequestWithVariables(stream, body, pp.variableTypes)
+          pse = PreparedStatementExecution(text, parsed.consistency, parsed.variables, pp.variableTypes)
+        } yield Action(Some(pse), MessageAndDelay(createMessage(pp, executeRequest, stream, msgFactory), pp.prime.fixedDelay))
 
-            if (executeRequest.numberOfVariables == preparedPrime.variableTypes.size) {
-              val executeRequestParsedWithVariables = msgFactory.parseExecuteRequestWithVariables(stream, body, preparedPrime.variableTypes)
-              activityLog.recordPreparedStatementExecution(preparedStatementText, executeRequestParsedWithVariables.consistency, executeRequestParsedWithVariables.variables, preparedPrime.variableTypes)
-            } else {
-              activityLog.recordPreparedStatementExecution(preparedStatementText, executeRequest.consistency, List(), List())
-              log.warning(s"Execution of prepared statement has a different number of variables to the prime. Number of variables in message ${executeRequest.numberOfVariables}. Variables won't be recorded. $preparedPrime")
-            }
+        matchingPrimedAction.getOrElse(Action(Some(PreparedStatementExecution(preparedStatement.get, executeRequest.consistency, List(), List())),
+          MessageAndDelay(msgFactory.createVoidMessage(stream))))
 
-            val msgToSend = preparedPrime.prime.result match {
-              case SuccessResult => msgFactory.createRowsMessage(preparedPrime.prime, stream)
-              case result: ReadRequestTimeoutResult => msgFactory.createReadTimeoutMessage(stream, executeRequest.consistency, result)
-              case result: WriteRequestTimeoutResult => msgFactory.createWriteTimeoutMessage(stream, executeRequest.consistency, result)
-              case result: UnavailableResult => msgFactory.createUnavailableMessage(stream, executeRequest.consistency, result)
-            }
+      } else statementNotRecognised(stream, msgFactory)
 
-            sendMessage(preparedPrime.prime.fixedDelay, connection, msgToSend)
-          case None =>
-            log.warning(s"Received execution of prepared statement that hasn't been primed so can't record variables. $preparedStatementText")
-            activityLog.recordPreparedStatementExecution(preparedStatement.get, executeRequest.consistency, List(), List())
-            connection ! msgFactory.createVoidMessage(stream)
-        }
-      } else {
-        log.warning(s"Received execution of an unknown prepared statement. Have you restarted Scassandra since your application prepared the statement?")
-        connection ! msgFactory.createVoidMessage(stream)
-      }
-    case msg@_ =>
-      log.debug(s"Received unknown message $msg")
+      sendMessage(action.msg, connection)
+      action.activity.foreach(activityLog.recordPreparedStatementExecution)
   }
 
-  private def sendMessage(delay: Option[FiniteDuration], receiver: ActorRef, message: Any) = {
-    delay match {
-      case None => receiver ! message
+  case class MessageAndDelay(msg: Any, delay: Option[FiniteDuration] = None)
+  case class Action(activity: Option[PreparedStatementExecution], msg: MessageAndDelay)
+
+  private def statementNotRecognised(stream: Byte, msgFactory: CqlMessageFactory): Action = {
+    Action(None, MessageAndDelay(msgFactory.createVoidMessage(stream)))
+  }
+
+  private def createMessage(preparedPrime: PreparedPrime, executeRequest: ExecuteRequest ,stream: Byte, msgFactory: CqlMessageFactory) = {
+    preparedPrime.prime.result match {
+      case SuccessResult => msgFactory.createRowsMessage(preparedPrime.prime, stream)
+      case result: ReadRequestTimeoutResult => msgFactory.createReadTimeoutMessage(stream, executeRequest.consistency, result)
+      case result: WriteRequestTimeoutResult => msgFactory.createWriteTimeoutMessage(stream, executeRequest.consistency, result)
+      case result: UnavailableResult => msgFactory.createUnavailableMessage(stream, executeRequest.consistency, result)
+    }
+  }
+
+  private def sendMessage(msgAndDelay: MessageAndDelay, receiver: ActorRef) = {
+    msgAndDelay.delay match {
+      case None => receiver ! msgAndDelay.msg
       case Some(duration) =>
         log.info(s"Delaying response of prepared statement by $duration")
-        context.system.scheduler.scheduleOnce(duration, receiver, message)(context.system.dispatcher)
+        context.system.scheduler.scheduleOnce(duration, receiver, msgAndDelay.msg)(context.system.dispatcher)
     }
   }
 }
@@ -91,50 +90,3 @@ object PrepareHandlerMessages {
   case class Prepare(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
   case class Execute(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
 }
-
-/*
-Example execute message body
-ByteString(
-0, 4, // length of the prepared statement id
-0, 0, 0, 1, // prepared statement id
-0, 1, // consistency
-5, // flags
-0, 7, // number of variables
-0, 0, 0, 8,    0, 0, 0, 0, 0, 0, 4, -46, -    val bigInt : java.lang.Long = 1234
-0, 0, 0, 8,    0, 0, 0, 0, 0, 0, 9, 41,  -    val counter : java.lang.Long = 2345
-0, 0, 0, 5,    0, 0, 0, 0, 1,            -    val decimal : java.math.BigDecimal = new java.math.BigDecimal("1")
-0, 0, 0, 8,    63, -8, 0, 0, 0, 0, 0, 0, -    val double : java.lang.Double = 1.5
-0, 0, 0, 4,    64, 32, 0, 0,             -    val float : java.lang.Float = 2.5f
-0, 0, 0, 4,    0, 0, 13, -128,           -    val int : java.lang.Integer = 3456
-0, 0, 0, 1,   123,                       -    val varint : java.math.BigInteger = new java.math.BigInteger("123")
-
-0, 0, 19, -120) // serial consistency?? not sure
-
-
-ByteString(
-0, 4,
- 0, 0, 0, 1,
- 0, 1,
- 5,
- 0, 9,
-
- 0, 0, 0, 5,    97, 115, 99, 105, 105,
- 0, 0, 0, 0,
- 0, 0, 0, 1,    1,
- 0, 0, 0, 8,    0, 0, 1, 69, -11, 123, 55, 49,
- 0, 0, 0, 16,  -84, 87, -28, 43, 59, -11, 72, -102, -128, 95, 83, -11, -80, -117, 97, -41,
- 0, 0, 0, 7,   118, 97, 114, 99, 104, 97, 114,
- 0, 0, 0, 16,  48, -99, -19, 96, -38, -105, 17, -29, -71, 0, -23, -112, 98, 25, 105, 100,
- 0, 0, 0, 4,   127, 0, 0, 1,
-
- -1, -1, -1, -1, 0, 0, 19, -120)
-
- execute from v1 driver
-
- ByteString(
- 0, 4,
- 0, 0, 0, 1,
- 0, 1,  // number of
- 0,  0, 0, 5,   67, 104, 114, 105, 115,
- 0, 1)
- */

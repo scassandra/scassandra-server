@@ -54,6 +54,11 @@ class ActivityLog extends Logging {
     preparedStatementExecutions = preparedStatementExecutions ::: execution :: Nil
   }
 
+  def recordPreparedStatementExecution(execution: PreparedStatementExecution): Unit = {
+    logger.info("Recording " + execution)
+    preparedStatementExecutions = preparedStatementExecutions ::: execution :: Nil
+  }
+
   def clearPreparedStatementExecutions() = {
     preparedStatementExecutions = List()
   }

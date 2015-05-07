@@ -16,8 +16,6 @@
 package org.scassandra.server
 
 import akka.actor.{ActorLogging, Actor, ActorRef}
-import com.typesafe.scalalogging.slf4j.Logging
-import akka.io.Tcp.Write
 import akka.util.ByteString
 import org.scassandra.server.cqlmessages.CqlMessageFactory
 
@@ -26,9 +24,6 @@ class RegisterHandler(connection: ActorRef, msgFactory: CqlMessageFactory) exten
     case registerMsg @ RegisterHandlerMessages.Register(_, stream) => {
       log.debug(s"Received register message $registerMsg")
       connection ! msgFactory.createReadyMessage(stream)
-    }
-    case msg @ _ => {
-      log.info(s"Received unknown message $msg")
     }
   }
 }

@@ -19,7 +19,6 @@ import java.net.InetSocketAddress
 
 import akka.actor._
 import akka.io.{IO, Tcp}
-import com.typesafe.scalalogging.slf4j.Logging
 import org.scassandra.server.cqlmessages.CqlMessageFactory
 import org.scassandra.server.priming.ActivityLog
 import org.scassandra.server.priming.prepared.PreparedStoreLookup

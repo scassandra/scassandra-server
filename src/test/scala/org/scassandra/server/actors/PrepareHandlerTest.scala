@@ -27,7 +27,7 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.request.{ExecuteRequestV2, PrepareRequest, _}
 import org.scassandra.server.cqlmessages.response.{PreparedResultV2, ReadRequestTimeout, Rows, UnavailableException, VoidResult, WriteRequestTimeout}
-import org.scassandra.server.cqlmessages.types.{CqlBigint, CqlInt, CqlVarchar}
+import org.scassandra.server.cqlmessages.types.{ColumnType, CqlBigint, CqlInt, CqlVarchar}
 import org.scassandra.server.priming.prepared.{PreparedPrime, PrimePreparedStore}
 import org.scassandra.server.priming.query.{Prime, PrimeMatch}
 import org.scassandra.server.priming.{PreparedStatementExecution, _}
@@ -53,7 +53,6 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     testProbeForTcpConnection = TestProbe()
     underTest = TestActorRef(new PrepareHandler(primePreparedStore, activityLog))
   }
-
 
   test("Should return result prepared message - no params") {
     val stream: Byte = 0x02
@@ -210,6 +209,42 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     activityLog.retrievePreparedStatementExecutions()(0) should equal(PreparedStatementExecution(query, consistency, variables.map(Some(_)), variableTypes))
   }
 
+  test("Should record execution in activity log without variables when variables don't match prime") {
+    activityLog.clearPreparedStatementExecutions()
+    val stream: Byte = 0x02
+    val query = "select * from something where name = ? and something = ?"
+    val preparedStatementId = sendPrepareAndCaptureId(stream, query, List(CqlVarchar, CqlVarchar))
+    val consistency = TWO
+    val variableTypes = List(CqlBigint, CqlBigint)
+    val variables: List[Int] = List(10, 20)
+    val primeMatch = Some(PreparedPrime(List(CqlVarchar))) // prime has a single variable
+    when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
+
+    val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency, 1, variables, variableTypes = variableTypes).serialize().drop(8)
+    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+
+    activityLog.retrievePreparedStatementExecutions().size should equal(1)
+    activityLog.retrievePreparedStatementExecutions()(0) should equal(PreparedStatementExecution(query, consistency, List(), List()))
+  }
+
+  test("Should record execution in activity log event if not primed") {
+    activityLog.clearPreparedStatementExecutions()
+    val stream: Byte = 0x02
+    val query = "select * from something where name = ?"
+    val preparedStatementId = sendPrepareAndCaptureId(stream, query)
+    val consistency = TWO
+    val variableTypes = List(CqlBigint)
+    val variables: List[Int] = List(10)
+    val primeMatch = Some(PreparedPrime(variableTypes))
+    when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(None)
+
+    val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency, 1, variables, variableTypes = variableTypes).serialize().drop(8)
+    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+
+    activityLog.retrievePreparedStatementExecutions().size should equal(1)
+    activityLog.retrievePreparedStatementExecutions()(0) should equal(PreparedStatementExecution(query, consistency, List(), List()))
+  }
+
   test("Should delay message if fixedDelay primed") {
     val stream: Byte = 0x02
     val query = "select * from something where name = ?"
@@ -226,10 +261,10 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
   }
 
 
-  private def sendPrepareAndCaptureId(stream: Byte, query: String) : Int = {
+  private def sendPrepareAndCaptureId(stream: Byte, query: String, variableTypes: List[ColumnType[_]] = List(CqlVarchar)) : Int = {
     val prepareBodyOne: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
     underTest ! PrepareHandlerMessages.Prepare(prepareBodyOne, stream, versionTwoMessageFactory , testProbeForTcpConnection.ref)
-    val preparedResponseWithId: PreparedResultV2 = testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", List(CqlVarchar)))
+    val preparedResponseWithId: PreparedResultV2 = testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", variableTypes))
     reset(primePreparedStore)
     when(primePreparedStore.findPrime(any(classOf[PrimeMatch]))).thenReturn(None)
     preparedResponseWithId.preparedStatementId

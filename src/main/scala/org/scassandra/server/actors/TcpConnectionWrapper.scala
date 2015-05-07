@@ -18,15 +18,10 @@ package org.scassandra.server.actors
 import akka.actor.{ActorLogging, ActorRef, Actor}
 import org.scassandra.server.cqlmessages.CqlMessage
 import akka.io.Tcp.Write
-import com.typesafe.scalalogging.slf4j.Logging
 
 class  TcpConnectionWrapper(tcpConnection : ActorRef) extends Actor with ActorLogging {
   def receive: Actor.Receive = {
-    case msg : CqlMessage => {
+    case msg : CqlMessage =>
       tcpConnection ! Write(msg.serialize())
-    }
-    case _ @ msg => {
-      log.error(s"Received unknown msg $msg")
-    }
   }
 }
