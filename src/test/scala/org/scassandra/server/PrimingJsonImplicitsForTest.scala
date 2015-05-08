@@ -76,7 +76,6 @@ object PrimingJsonImplicitsForTest extends DefaultJsonProtocol with SprayJsonSup
       case uuid: UUID => JsString(uuid.toString)
       case bigInt: BigInt => JsNumber(bigInt)
       case bigInt: BigInteger => JsNumber(bigInt)
-      case bigD: BigDecimal => JsNumber(bigD)
       case bigD: java.math.BigDecimal => JsNumber(bigD)
       case inet: InetAddress => JsString(inet.getHostAddress)
       case bytes: Array[Byte] => JsString("0x" + bytes2hex(bytes))
