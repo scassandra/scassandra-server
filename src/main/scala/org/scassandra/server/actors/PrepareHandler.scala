@@ -40,7 +40,7 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
     val prepStatement = preparedStatementsToId.get(executeRequest.id)
 
     val action = prepStatement match {
-      case Some(p) => {
+      case Some(p) =>
         val matchingPrimedAction = for {
           prime <- primePreparedStore.findPrime(PrimeMatch(p, executeRequest.consistency))
           if executeRequest.numberOfVariables == prime.variableTypes.size
@@ -52,7 +52,6 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
           MessageWithDelay(msgFactory.createVoidMessage(stream)))
 
         matchingPrimedAction.getOrElse(defaultAction)
-      }
       case None => statementNotRecognised(stream, msgFactory)
     }
     action

@@ -13,7 +13,6 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
 
   def receive = {
     case QueryHandlerMessages.Query(queryBody, stream) =>
-
       val iterator = queryBody.iterator
       // the first 4 bytes are an int which is the length of the query
       val queryLength = iterator.getInt
@@ -46,20 +45,16 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
           case None =>
             log.info(s"No prime found for $queryText")
             sendMessage(None, tcpConnection, msgFactory.createEmptyRowsMessage(stream))
-          case msg @ _ =>
-            log.debug(s"Received unexpected result back from primed results: $msg")
         }
       }
   }
 
   private def sendMessage(delay: Option[FiniteDuration], receiver: ActorRef, message: Any) = {
-
     delay match {
       case None => receiver ! message
-      case Some(duration) => {
+      case Some(duration) =>
         log.info(s"Delaying response by $duration")
         context.system.scheduler.scheduleOnce(duration, receiver, message)(context.system.dispatcher)
-      }
     }
   }
 

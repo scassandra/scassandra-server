@@ -19,6 +19,10 @@ import akka.actor.{ActorLogging, ActorRef, Actor}
 import org.scassandra.server.cqlmessages.CqlMessage
 import akka.io.Tcp.Write
 
+/*
+ * Wraps a tcp connection and serialises CqlMessages so other actors aren't
+ * aware of the serialisation.
+ */
 class  TcpConnectionWrapper(tcpConnection : ActorRef) extends Actor with ActorLogging {
   def receive: Actor.Receive = {
     case msg : CqlMessage =>
