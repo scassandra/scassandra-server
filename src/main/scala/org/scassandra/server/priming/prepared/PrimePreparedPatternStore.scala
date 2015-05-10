@@ -34,7 +34,6 @@ class PrimePreparedPatternStore extends Logging with PreparedStore with Prepared
     val columnTypes = Defaulter.defaultColumnTypesToVarchar(then.column_types, rows)
     val result = PrimeQueryResultExtractor.convertToPrimeResult(then.config.getOrElse(Map()), then.result.getOrElse(Success))
     val fixedDelay = then.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
-    //todo errors
     val prime = Prime(rows, columnTypes = columnTypes, result = result, fixedDelay = fixedDelay)
     val preparedPrime = PreparedPrime(then.variable_types.getOrElse(List()), prime)
     state += (primeCriteria -> preparedPrime)
@@ -53,7 +52,7 @@ class PrimePreparedPatternStore extends Logging with PreparedStore with Prepared
 
     state.find(findWithRegex).map(_._2).map(
       variablesAndPrime => {
-        val numberOfVariables = primeMatch.query.toCharArray.filter(_ == '?').size
+        val numberOfVariables = primeMatch.query.toCharArray.count(_ == '?')
         val variableTypesDefaulted = Defaulter.defaultVariableTypesToVarChar(numberOfVariables, Some(variablesAndPrime.variableTypes))
         PreparedPrime(variableTypesDefaulted, variablesAndPrime.prime)
       })

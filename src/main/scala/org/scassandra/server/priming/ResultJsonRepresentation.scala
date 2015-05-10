@@ -15,7 +15,7 @@
  */
 package org.scassandra.server.priming
 /**
- * Used to parse the JSON represeting the result of the prime.
+ * Used to parse the JSON representing the result of the prime.
  */
 abstract class ResultJsonRepresentation(val string: String)
 

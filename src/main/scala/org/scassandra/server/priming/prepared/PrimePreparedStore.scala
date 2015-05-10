@@ -41,7 +41,6 @@ class PrimePreparedStore extends Logging with PreparedStore with PreparedStoreLo
     val variableTypesDefaultedToVarchar: List[ColumnType[_]] = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, then.variable_types)
     val colTypes = Defaulter.defaultColumnTypesToVarchar(then.column_types, rows)
 
-    //todo errors
     val primeToStore: PreparedPrime = PreparedPrime(variableTypesDefaultedToVarchar, prime = Prime(rows, columnTypes = colTypes,
       result = result, fixedDelay = fixedDelay))
 
@@ -49,22 +48,20 @@ class PrimePreparedStore extends Logging with PreparedStore with PreparedStoreLo
     val primeCriteria = PrimeCriteria(query.get, consistencies)
 
     validator.validate(primeCriteria, primeToStore.prime, state.map( existingPrime => (existingPrime._1, existingPrime._2.prime)  ) ) match {
-      case PrimeAddSuccess => {
+      case PrimeAddSuccess =>
         logger.info(s"Storing prime for prepared statement $primeToStore with prime criteria $primeCriteria")
         state += (primeCriteria -> primeToStore)
         PrimeAddSuccess
-      }
-      case notSuccess: PrimeAddResult => {
+      case notSuccess: PrimeAddResult =>
         logger.info(s"Storing prime for prepared statement $primeToStore failed due to $notSuccess")
         notSuccess
-      }
     }
   }
 
   def findPrime(primeMatch : PrimeMatch) : Option[PreparedPrime] = {
     def findPrime: ((PrimeCriteria, PreparedPrime)) => Boolean = {
-      entry => entry._1.query == primeMatch.query &&
-        entry._1.consistency.contains(primeMatch.consistency)
+      case (primeCriteria, _) => primeCriteria.query == primeMatch.query &&
+        primeCriteria.consistency.contains(primeMatch.consistency)
     }
     state.find(findPrime).map(_._2)
   }

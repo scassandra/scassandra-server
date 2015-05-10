@@ -16,10 +16,6 @@
 package org.scassandra.server.priming
 
 import com.typesafe.scalalogging.slf4j.Logging
-import org.scassandra.server.cqlmessages._
-import java.math.BigDecimal
-import java.util.UUID
-import java.net.{UnknownHostException, InetAddress}
 import scala.collection.immutable.Map
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
 import org.scassandra.server.cqlmessages.types.ColumnType

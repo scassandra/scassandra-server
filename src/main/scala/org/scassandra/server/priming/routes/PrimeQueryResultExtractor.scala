@@ -29,19 +29,14 @@ import scala.util.{Failure, Try}
 
 object PrimeQueryResultExtractor extends Logging {
   def extractPrimeCriteria(primeQueryRequest: PrimeQuerySingle): Try[PrimeCriteria] = {
-    val primeConsistencies = primeQueryRequest.when.consistency match {
-      case Some(list) => list
-      case None => Consistency.all
-    }
+    val primeConsistencies = primeQueryRequest.when.consistency.getOrElse(Consistency.all)
 
     primeQueryRequest.when match {
       // Prime for a specific query
       case When(Some(query), None, _, _, _) =>
-        util.Success(PrimeCriteria(primeQueryRequest.when.query.get, primeConsistencies, patternMatch = false))
-
+        util.Success(PrimeCriteria(query, primeConsistencies, patternMatch = false))
       // Prime for a query pattern
-      case When(None, Some(queryPattern), _, _, _) => util.Success(PrimeCriteria(primeQueryRequest.when.queryPattern.get, primeConsistencies, patternMatch = true))
-
+      case When(None, Some(queryPattern), _, _, _) => util.Success(PrimeCriteria(queryPattern, primeConsistencies, patternMatch = true))
       case _ => Failure(new IllegalArgumentException("Can't specify query and queryPattern"))
     }
   }
@@ -56,9 +51,7 @@ object PrimeQueryResultExtractor extends Logging {
     val primeResult: PrimeResult = convertToPrimeResult(config, result)
 
     logger.trace("Column types " + primeRequest.then.column_types)
-
     val columnTypes: Map[String, ColumnType[_]] = Defaulter.defaultColumnTypesToVarchar(primeRequest.then.column_types, resultsAsList)
-
     logger.trace("Incoming when {}", primeRequest.when)
 
     val keyspace = primeRequest.when.keyspace.getOrElse("")

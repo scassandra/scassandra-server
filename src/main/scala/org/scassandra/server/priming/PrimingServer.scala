@@ -21,7 +21,7 @@ import spray.routing.{RejectionHandler, ExceptionHandler, RoutingSettings, HttpS
 import spray.util.LoggingContext
 import akka.event.Logging
 import com.typesafe.scalalogging.slf4j.Logging
-import akka.actor.{ActorRef, Props, Actor}
+import akka.actor.{ActorSystem, ActorRef, Props, Actor}
 import org.scassandra.server.priming.routes.{VersionRoute, ActivityVerificationRoute, PrimingQueryRoute, PrimingPreparedRoute}
 import org.scassandra.server.priming.query.PrimeQueryStore
 import org.scassandra.server.priming.prepared.{PrimePreparedPatternStore, PrimePreparedStore}
@@ -41,28 +41,24 @@ class PrimingServer(listenAddress: String, port: Int,
 
   import Tcp._
 
-  implicit def actorRefFactory = context.system
+  implicit def actorRefFactory: ActorSystem = context.system
 
-  logger.info(s"Opening port ${port} for priming")
+  logger.info(s"Opening port $port for priming")
 
   val routing = context.actorOf(Props(classOf[PrimingServerHttpService], primeQueryStore, primePreparedStore, primePreparedPatternStore, activityLog))
 
   IO(Http) ! Http.Bind(self, listenAddress, port)
 
   def receive = {
-    case Connected(_, _) => {
+    case Connected(_, _) =>
       sender ! Tcp.Register(routing)
-    }
-    case b @ Bound(_) => {
+    case b @ Bound(_) =>
       logger.info(s"Priming server bound to admin port $port")
       serverReadyListener ! ServerReady
-    }
-    case CommandFailed(_) => {
+    case CommandFailed(_) =>
       logger.error(s"Unable to bind to admin port $port. Is it in use?")
       context stop self
       context.system.shutdown()
-    }
-    case msg @ _ => logger.info(s"Received unknown message $msg")
   }
 }
 
@@ -71,7 +67,7 @@ class PrimingServerHttpService(implicit val primeQueryStore: PrimeQueryStore,
                                implicit val primePreparedPatternStore: PrimePreparedPatternStore,
                                implicit val activityLog: ActivityLog) extends Actor with AllRoutes with Logging {
 
-  implicit def actorRefFactory = context.system
+  implicit def actorRefFactory: ActorSystem = context.system
 
   // some default spray initialisation
   val routingSettings = RoutingSettings default context

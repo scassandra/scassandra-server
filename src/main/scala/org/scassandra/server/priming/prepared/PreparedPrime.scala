@@ -20,5 +20,4 @@ import org.scassandra.server.cqlmessages.types.ColumnType
 
 case class PreparedPrime(
                   variableTypes: List[ColumnType[_]] = List(),
-                  prime: Prime = Prime()
-                  )
+                  prime: Prime = Prime())

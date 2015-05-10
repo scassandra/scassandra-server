@@ -35,13 +35,11 @@ object Defaulter {
 
   def defaultVariableTypesToVarChar(numberOfVariables : Int, providedVariableTypes : Option[List[ColumnType[_]]]) : List[ColumnType[_]] = {
     providedVariableTypes match {
-      case Some(varTypes) => {
+      case Some(varTypes) =>
         val defaults = (0 until numberOfVariables).map(num => CqlVarchar).toList
         varTypes ++ (defaults drop varTypes.size)
-      }
-      case None => {
+      case None =>
         (0 until numberOfVariables).map(num => CqlVarchar).toList
-      }
     }
   }
 
