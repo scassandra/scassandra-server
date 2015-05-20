@@ -86,7 +86,7 @@ pomExtra := {
 libraryDependencies ++= Seq(
   "com.typesafe.akka" % "akka-testkit_2.10" % akkaVersion % "test",
   "io.spray" % "spray-testkit" % sprayVersion % "test",
-  "com.datastax.cassandra" % "cassandra-driver-core" % "2.0.9" % "test" exclude("com.google.guava", "guava"),
+  "com.datastax.cassandra" % "cassandra-driver-core" % "2.0.10" % "test" exclude("com.google.guava", "guava"),
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test",
   "org.scalatest" %% "scalatest" % "2.2.3" % "test",
   "org.pegdown" % "pegdown" % "1.4.2", // added as a hack to get scala test html reports working, was getting a NoClassDef

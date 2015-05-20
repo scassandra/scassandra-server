@@ -38,3 +38,18 @@ case class Ready(stream : Byte = ResponseHeader.DefaultStreamId)(implicit protoc
     bs.result()
   }
 }
+
+case class Supported(stream : Byte = ResponseHeader.DefaultStreamId, map: Map[String,Set[String]] = Map("CQL_VERSION" -> Set("3.0.0")))(implicit protocolVersion: ProtocolVersion)
+  extends Response(new Header(protocolVersion.serverCode, opCode = OpCodes.Supported, streamId = stream)) {
+
+  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+
+  override def serialize() : ByteString = {
+    val bs = ByteString.newBuilder
+    bs.putBytes(header.serialize())
+    val mapBytes = CqlProtocolHelper.serializeStringMultiMap(map)
+    bs.putInt(mapBytes.size)
+    bs.putBytes(mapBytes)
+    bs.result()
+  }
+}

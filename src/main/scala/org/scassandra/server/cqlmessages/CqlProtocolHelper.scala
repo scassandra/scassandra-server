@@ -19,7 +19,11 @@ import java.net.InetAddress
 import java.util.UUID
 
 import akka.util.{ByteIterator, ByteString}
+import io.netty.buffer.{ByteBuf, Unpooled}
+import org.apache.cassandra.transport.CBUtil
 import org.scassandra.server.cqlmessages.types.ColumnType
+
+import scala.collection.JavaConverters._
 
 object CqlProtocolHelper {
   implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
@@ -130,6 +134,23 @@ object CqlProtocolHelper {
     }
     val serialisedSet = frameBuilder.result().toArray
     serializeInt(serialisedSet.length) ++ serialisedSet
+  }
+
+  def serializeCB[U](size: Int, f: (ByteBuf) => Unit) = {
+    val data = new Array[Byte](size)
+    f(Unpooled.wrappedBuffer(data).clear())
+    data
+  }
+
+  def serializeStringList(input: List[String]) =
+    serializeCB(CBUtil.sizeOfStringList(input.asJava), CBUtil.writeStringList(input.asJava, _))
+
+  def serializeStringMap(input: Map[String,String]) =
+    serializeCB(CBUtil.sizeOfStringMap(input.asJava), CBUtil.writeStringMap(input.asJava, _))
+
+  def serializeStringMultiMap(input: Map[String, Set[String]]) = {
+    val map = input.mapValues(s => s.toList.asJava).asJava
+    serializeCB(CBUtil.sizeOfStringToStringListMap(map), CBUtil.writeStringToStringListMap(map, _))
   }
 
   def readString(iterator: ByteIterator) : String = {

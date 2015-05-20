@@ -50,9 +50,11 @@ class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutur
     whenReady(response) {
       result =>
         val connectionList = JsonParser(result).convertTo[List[Connection]]
-        // What ever the pooling options are set to the java driver appears to make 3 connections
-        // verified with wireshark
-        connectionList.size should equal(9)
+        // The java driver establishes 1 control + core connections.
+        connectionList.size should equal(1 + cluster
+          .getConfiguration
+          .getPoolingOptions
+          .getCoreConnectionsPerHost(HostDistance.LOCAL))
     }
   }
 

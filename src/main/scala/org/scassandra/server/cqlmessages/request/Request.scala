@@ -32,9 +32,7 @@ object StartupRequest extends Request(StartupHeader) {
   override def serialize() = {
     val header = StartupHeader.serialize()
 
-    val body = CqlProtocolHelper.serializeShort(options.size.toShort) ++
-      CqlProtocolHelper.serializeString(options.head._1) ++
-      CqlProtocolHelper.serializeString(options.head._2)
+    val body = CqlProtocolHelper.serializeStringMap(options)
 
     ByteString((header ++ CqlProtocolHelper.serializeInt(body.size) ++ body))
   }

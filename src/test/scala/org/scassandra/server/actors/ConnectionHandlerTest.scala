@@ -20,6 +20,7 @@ import akka.io.Tcp.{Received, Write}
 import akka.testkit._
 import akka.util.ByteString
 import org.scalatest._
+import org.scassandra.server.actors.OptionsHandlerMessages.OptionsMessage
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.response._
 import org.scassandra.server.priming.QueryHandlerMessages.Query
@@ -31,6 +32,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
   var queryHandlerTestProbe : TestProbe = null
   var registerHandlerTestProbe : TestProbe = null
+  var optionsHandlerTestProbe : TestProbe = null
   var prepareHandlerTestProbe : TestProbe = null
   var tcpWrapperTestProbe : TestProbe = null
 
@@ -43,6 +45,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     queryHandlerTestProbe = TestProbe()
     registerHandlerTestProbe = TestProbe()
     prepareHandlerTestProbe = TestProbe()
+    optionsHandlerTestProbe = TestProbe()
     testActorRef = TestActorRef(new ConnectionHandler(
       (_,_,msgFactory) => {
         lastMsgFactoryUsedForQuery = msgFactory
@@ -51,6 +54,9 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
       (_,_,msgFactory) => {
         lastMsgFactoryUsedForRegister = msgFactory
         registerHandlerTestProbe.ref
+      },
+      (_,_,msgFactory) => {
+        optionsHandlerTestProbe.ref
       },
       prepareHandlerTestProbe.ref,
       (_,_) => {
@@ -203,6 +209,34 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
     registerHandlerTestProbe.expectMsg(RegisterHandlerMessages.Register(ByteString(MessageHelper.dropHeaderAndLength(registerMessage.toArray)), stream))
     lastMsgFactoryUsedForRegister should equal(VersionOneMessageFactory)
+  }
+
+  test("Should forward options to OptionsHandler - version two protocol") {
+    sendStartupMessage()
+
+    implicit val protocolVersion = VersionTwo
+
+    val stream : Byte = 0x04
+
+    val optionsMessage = MessageHelper.createOptionsMessage(stream=stream)
+
+    testActorRef ! Received(ByteString(optionsMessage.toArray))
+
+    optionsHandlerTestProbe.expectMsg(OptionsMessage(stream))
+  }
+
+  test("Should forward options to OptionsHandler - version one protocol") {
+    sendStartupMessage()
+
+    implicit val protocolVersion = VersionOne
+
+    val stream : Byte = 0x04
+
+    val optionsMessage = MessageHelper.createOptionsMessage(ProtocolVersion.ClientProtocolVersionOne, stream=stream)
+
+    testActorRef ! Received(ByteString(optionsMessage.toArray))
+
+    optionsHandlerTestProbe.expectMsg(OptionsMessage(stream))
   }
 
   test("Should handle two cql messages in the same data message") {

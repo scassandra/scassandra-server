@@ -33,6 +33,7 @@ trait CqlMessageFactory {
   def createUnavailableMessage(stream: Byte, consistency: Consistency, unavailableResult: UnavailableResult): UnavailableException
   def createVoidMessage(stream: Byte): VoidResult
   def createPreparedResult(stream: Byte, id: Int, variableTypes: List[ColumnType[_]]): Result
+  def createSupportedMessage(stream: Byte): Supported
 
   def parseExecuteRequestWithoutVariables(stream: Byte, byteString: ByteString): ExecuteRequest
   def parseExecuteRequestWithVariables(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): ExecuteRequest
