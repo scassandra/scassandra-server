@@ -10,11 +10,11 @@ name := "scassandra-server"
 
 version := "0.7.0-SNAPSHOT"
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.11.6"
 
-val sprayVersion = "1.2.1"
+val sprayVersion = "1.3.3"
 
-val akkaVersion = "2.2.4"
+val akkaVersion = "2.3.9"
 
 addArtifact(Artifact("scassandra-server", "assembly"), sbtassembly.Plugin.AssemblyKeys.assembly)
 
@@ -26,12 +26,12 @@ test in assembly := {}
 
 libraryDependencies ++= Seq(
   "ch.qos.logback" % "logback-classic" % "1.0.13",
-  "com.typesafe.akka" % "akka-actor_2.10" % akkaVersion,
-  "com.typesafe.akka" % "akka-remote_2.10" % akkaVersion,
-  "io.spray" %% "spray-json" % "1.2.5",
-  "io.spray" % "spray-can" % sprayVersion,
-  "io.spray" % "spray-routing" % sprayVersion,
-  "com.typesafe" %% "scalalogging-slf4j" % "1.0.1",
+  "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+  "com.typesafe.akka" %% "akka-remote" % akkaVersion,
+  "io.spray" %% "spray-json" % "1.3.2",
+  "io.spray" %% "spray-can" % sprayVersion,
+  "io.spray" %% "spray-routing" % sprayVersion,
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
   "com.google.guava" % "guava" % "17.0",
   ("org.apache.cassandra" % "cassandra-all" % "2.1.2").exclude("org.antlr", "stringtemplate"),
   "org.scassandra" % "cql-antlr" % "0.1.0"
@@ -84,12 +84,12 @@ pomExtra := {
  *
  */
 libraryDependencies ++= Seq(
-  "com.typesafe.akka" % "akka-testkit_2.10" % akkaVersion % "test",
-  "io.spray" % "spray-testkit" % sprayVersion % "test",
+  "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
+  "io.spray" %% "spray-testkit" % sprayVersion % "test",
   "com.datastax.cassandra" % "cassandra-driver-core" % "2.0.10" % "test" exclude("com.google.guava", "guava"),
   "net.databinder.dispatch" %% "dispatch-core" % "0.11.0" % "test",
   "org.scalatest" %% "scalatest" % "2.2.3" % "test",
-  "org.pegdown" % "pegdown" % "1.4.2", // added as a hack to get scala test html reports working, was getting a NoClassDef
+//  "org.pegdown" % "pegdown" % "1.4.2", // added as a hack to get scala test html reports working, was getting a NoClassDef
   "org.mockito" % "mockito-core" % "1.9.5" % "test"
 )
 

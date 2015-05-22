@@ -20,14 +20,14 @@ import spray.can.Http
 import spray.routing.{RejectionHandler, ExceptionHandler, RoutingSettings, HttpService}
 import spray.util.LoggingContext
 import akka.event.Logging
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import akka.actor.{ActorSystem, ActorRef, Props, Actor}
 import org.scassandra.server.priming.routes.{VersionRoute, ActivityVerificationRoute, PrimingQueryRoute, PrimingPreparedRoute}
 import org.scassandra.server.priming.query.PrimeQueryStore
 import org.scassandra.server.priming.prepared.{PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.{ServerReady, ScassandraConfig}
 
-trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryRoute with ActivityVerificationRoute with VersionRoute with Logging {
+trait AllRoutes extends HttpService with PrimingPreparedRoute with PrimingQueryRoute with ActivityVerificationRoute with VersionRoute with LazyLogging {
 
   val allRoutes = routeForPreparedPriming ~ queryRoute ~ activityVerificationRoute ~ versionRoute
 }
@@ -37,7 +37,7 @@ class PrimingServer(listenAddress: String, port: Int,
                     implicit val primePreparedStore: PrimePreparedStore,
                     implicit val primePreparedPatternStore: PrimePreparedPatternStore,
                     serverReadyListener: ActorRef,
-                    implicit val activityLog: ActivityLog) extends Actor with Logging {
+                    implicit val activityLog: ActivityLog) extends Actor with LazyLogging {
 
   import Tcp._
 
@@ -65,7 +65,7 @@ class PrimingServer(listenAddress: String, port: Int,
 class PrimingServerHttpService(implicit val primeQueryStore: PrimeQueryStore,
                                implicit val primePreparedStore: PrimePreparedStore,
                                implicit val primePreparedPatternStore: PrimePreparedPatternStore,
-                               implicit val activityLog: ActivityLog) extends Actor with AllRoutes with Logging {
+                               implicit val activityLog: ActivityLog) extends Actor with AllRoutes with LazyLogging {
 
   implicit def actorRefFactory: ActorSystem = context.system
 

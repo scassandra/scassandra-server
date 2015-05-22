@@ -15,12 +15,12 @@
  */
 package org.scassandra.server.priming
 
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import scala.collection.immutable.Map
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
 import org.scassandra.server.cqlmessages.types.ColumnType
 
-class PrimeValidator extends Logging {
+class PrimeValidator extends LazyLogging {
 
   def validate(criteria: PrimeCriteria, prime: Prime, queryToResults: Map[PrimeCriteria, Prime]): PrimeAddResult = {
     // 1. Validate consistency

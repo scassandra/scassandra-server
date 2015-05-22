@@ -16,7 +16,7 @@
 package org.scassandra.server.priming.routes
 
 import spray.routing.HttpService
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import spray.http.StatusCodes
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.query._
@@ -25,7 +25,7 @@ import org.scassandra.server.priming.query.PrimeQuerySingle
 import org.scassandra.server.priming.query.Prime
 import scala.util.{Success, Failure}
 
-trait PrimingQueryRoute extends HttpService with Logging {
+trait PrimingQueryRoute extends HttpService with LazyLogging {
 
   import PrimingJsonImplicits._
 

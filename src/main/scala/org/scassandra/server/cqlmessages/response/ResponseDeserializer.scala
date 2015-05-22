@@ -17,10 +17,10 @@ package org.scassandra.server.cqlmessages.response
 
 import akka.util.{ByteIterator, ByteString}
 import org.scassandra.server.cqlmessages._
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import java.nio.ByteOrder
 
-object ResponseDeserializer extends Logging {
+object ResponseDeserializer extends LazyLogging {
 
   implicit val byteOrder : ByteOrder = ByteOrder.BIG_ENDIAN
 

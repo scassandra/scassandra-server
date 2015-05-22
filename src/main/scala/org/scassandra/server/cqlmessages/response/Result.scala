@@ -17,7 +17,7 @@ package org.scassandra.server.cqlmessages.response
 
 import akka.util.ByteString
 import java.util.UUID
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import java.nio.ByteOrder
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.types._
@@ -37,7 +37,7 @@ case class VoidResult(stream : Byte)(implicit protocolVersion: ProtocolVersion) 
   }
 }
 
-object Result extends Logging {
+object Result extends LazyLogging {
 
   implicit val byteOrder : ByteOrder = ByteOrder.BIG_ENDIAN
 

@@ -17,7 +17,7 @@ package org.scassandra.server.priming.routes
 
 import java.util.concurrent.TimeUnit
 
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.cassandra.db.WriteType
 import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.cqlmessages.types.ColumnType
@@ -27,7 +27,7 @@ import org.scassandra.server.priming._
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Try}
 
-object PrimeQueryResultExtractor extends Logging {
+object PrimeQueryResultExtractor extends LazyLogging {
   def extractPrimeCriteria(primeQueryRequest: PrimeQuerySingle): Try[PrimeCriteria] = {
     val primeConsistencies = primeQueryRequest.when.consistency.getOrElse(Consistency.all)
 

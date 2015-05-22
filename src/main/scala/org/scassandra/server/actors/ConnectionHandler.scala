@@ -17,7 +17,7 @@ package org.scassandra.server.actors
 
 import akka.actor.{ActorLogging, Actor, ActorRef, ActorRefFactory}
 import akka.util.ByteString
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.RegisterHandlerMessages
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.response.UnsupportedProtocolVersion

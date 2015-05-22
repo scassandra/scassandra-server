@@ -15,7 +15,7 @@
  */
 package org.scassandra.server.priming.query
 
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming._
@@ -23,7 +23,7 @@ import org.scassandra.server.priming._
 import scala.collection.immutable.Map
 import scala.concurrent.duration.FiniteDuration
 
-class PrimeQueryStore extends Logging {
+class PrimeQueryStore extends LazyLogging {
 
   val validator = PrimeValidator()
 

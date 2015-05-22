@@ -17,7 +17,7 @@ package org.scassandra.server.priming.prepared
 
 import java.util.concurrent.TimeUnit
 
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming._
@@ -26,7 +26,7 @@ import org.scassandra.server.priming.routes.PrimeQueryResultExtractor
 
 import scala.concurrent.duration.FiniteDuration
 
-class PrimePreparedStore extends Logging with PreparedStore with PreparedStoreLookup {
+class PrimePreparedStore extends LazyLogging with PreparedStore with PreparedStoreLookup {
 
   val validator: PrimeValidator = PrimeValidator()
 

@@ -16,13 +16,13 @@
 package org.scassandra.server
 
 import akka.actor._
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.actors.TcpServer
 import org.scassandra.server.priming.prepared.{CompositePreparedPrimeStore, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.priming.query.PrimeQueryStore
 import org.scassandra.server.priming.{ActivityLog, PrimingServer}
 
-object ServerStubRunner extends Logging {
+object ServerStubRunner extends LazyLogging {
   def main(args: Array[String]) {
     val binaryListenAddress = ScassandraConfig.binaryListenAddress
     val binaryPortNumber = ScassandraConfig.binaryPort
@@ -41,7 +41,7 @@ object ServerStubRunner extends Logging {
 class ServerStubRunner( val binaryListenAddress: String = "localhost",
                         val binaryPortNumber: Int = 8042,
                         val adminListenAddress: String = "localhost",
-                        val adminPortNumber: Int = 8043) extends Logging {
+                        val adminPortNumber: Int = 8043) extends LazyLogging {
 
   var system: ActorSystem = _
 

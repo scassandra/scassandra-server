@@ -17,9 +17,9 @@
 package org.scassandra.server
 
 import akka.actor.{ActorRef, Actor}
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 
-class ServerReadyListener extends Actor with Logging {
+class ServerReadyListener extends Actor with LazyLogging {
   var serverReadyReceiver: ActorRef = null
   var alreadyReady = false
 

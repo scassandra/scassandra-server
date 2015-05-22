@@ -16,9 +16,9 @@
 package org.scassandra.server.priming.routes
 
 import spray.routing.HttpService
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 
-trait VersionRoute extends HttpService with Logging {
+trait VersionRoute extends HttpService with LazyLogging {
 
   import org.scassandra.server.priming.PrimingJsonImplicits._
 

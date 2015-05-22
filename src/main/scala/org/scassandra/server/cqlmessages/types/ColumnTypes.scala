@@ -16,12 +16,12 @@
 package org.scassandra.server.cqlmessages.types
 
 import akka.util.ByteIterator
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import org.apache.cassandra.serializers.TypeSerializer
 import org.scassandra.cql._
 import org.scassandra.server.cqlmessages.ProtocolVersion
 
-abstract class ColumnType[T](val code : Short, val stringRep: String) extends Logging {
+abstract class ColumnType[T](val code : Short, val stringRep: String) extends LazyLogging {
   def readValue(byteIterator : ByteIterator, protocolVersion: ProtocolVersion) : Option[T]
   def writeValue(value : Any) : Array[Byte]
   def writeValueInCollection(value: Any) : Array[Byte] = ???
@@ -32,7 +32,7 @@ abstract class ColumnType[T](val code : Short, val stringRep: String) extends Lo
   def convertToCorrectJavaTypeForSerializer(value: Any): T
 }
 
-object ColumnType extends Logging {
+object ColumnType extends LazyLogging {
   //todo change to pattern match
   val ColumnTypeMapping = Map[String, ColumnType[_]](
     CqlInt.stringRep -> CqlInt,

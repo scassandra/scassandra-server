@@ -17,11 +17,11 @@ package org.scassandra.server.priming.routes
 
 import org.scassandra.server.priming.prepared.PrimePreparedStore
 import spray.routing.HttpService
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import spray.http.StatusCodes
 import org.scassandra.server.priming.{ActivityLog, PrimingJsonImplicits}
 
-trait ActivityVerificationRoute extends HttpService with Logging {
+trait ActivityVerificationRoute extends HttpService with LazyLogging {
 
   import PrimingJsonImplicits._
 

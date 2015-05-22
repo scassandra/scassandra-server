@@ -17,11 +17,11 @@ package org.scassandra.server.cqlmessages.response
 
 import org.scassandra.server.cqlmessages._
 import akka.util.{ByteStringBuilder, ByteIterator, ByteString}
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import scala._
 import org.scassandra.server.cqlmessages.types.{CqlMap, CqlList, CqlSet, ColumnType}
 
-case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTypes : Map[String, ColumnType[_]], rows : List[Row] = List[Row]())(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Rows, stream, protocolVersion.serverCode) with Logging {
+case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTypes : Map[String, ColumnType[_]], rows : List[Row] = List[Row]())(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Rows, stream, protocolVersion.serverCode) with LazyLogging {
 
   import CqlProtocolHelper._
 

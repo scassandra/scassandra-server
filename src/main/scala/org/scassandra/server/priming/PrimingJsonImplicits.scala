@@ -17,7 +17,7 @@ package org.scassandra.server.priming
 
 import java.math.BigInteger
 
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import spray.json._
 import spray.httpx.SprayJsonSupport
 import org.scassandra.server.cqlmessages.Consistency
@@ -32,7 +32,7 @@ import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.routes.Version
 import scala.collection.Set
 
-object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport with Logging {
+object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport with LazyLogging {
 
   implicit object ConsistencyJsonFormat extends RootJsonFormat[Consistency] {
     def write(c: Consistency) = JsString(c.string)

@@ -15,11 +15,11 @@
  */
 package org.scassandra.server.priming
 
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.cqlmessages.types.ColumnType
 
-class ActivityLog extends Logging {
+class ActivityLog extends LazyLogging {
   var connections : List[Connection] = List()
   var queries : List[Query] = List()
   var preparedStatementExecutions : List[PreparedStatementExecution] = List()

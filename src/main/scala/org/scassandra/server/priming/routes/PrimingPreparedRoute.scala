@@ -16,13 +16,13 @@
 package org.scassandra.server.priming.routes
 
 import spray.routing.HttpService
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import spray.http.StatusCodes
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.prepared._
 import scala.collection.immutable.Iterable
 
-trait PrimingPreparedRoute extends HttpService with Logging {
+trait PrimingPreparedRoute extends HttpService with LazyLogging {
 
   import PrimingJsonImplicits._
 

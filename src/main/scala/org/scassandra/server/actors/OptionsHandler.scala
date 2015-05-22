@@ -1,10 +1,10 @@
 package org.scassandra.server.actors
 
 import akka.actor.{ActorRef, Actor}
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.cqlmessages.CqlMessageFactory
 
-class OptionsHandler(connection: ActorRef, msgFactory: CqlMessageFactory) extends Actor with Logging {
+class OptionsHandler(connection: ActorRef, msgFactory: CqlMessageFactory) extends Actor with LazyLogging {
   import org.scassandra.server.actors.OptionsHandlerMessages._
 
   override def receive: Receive = {
