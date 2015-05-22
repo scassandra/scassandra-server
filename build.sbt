@@ -95,7 +95,7 @@ libraryDependencies ++= Seq(
 
 scalacOptions in Test ++= Seq("-Yrangepos")
 
-(testOptions in Test) += Tests.Argument(TestFrameworks.ScalaTest, "-h", "target/report")
+//(testOptions in Test) += Tests.Argument(TestFrameworks.ScalaTest, "-h", "target/report")
 
 parallelExecution in Test := false
 /*
