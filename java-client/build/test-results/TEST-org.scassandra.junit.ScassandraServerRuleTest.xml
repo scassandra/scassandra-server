@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.scassandra.junit.ScassandraServerRuleTest" tests="3" failures="0" errors="0" timestamp="2015-06-08T11:26:35" hostname="desktop" time="0.058">
+  <properties/>
+  <testcase name="ruleStartsScassandaBeforeAnyTestRuns" classname="org.scassandra.junit.ScassandraServerRuleTest" time="0.016"/>
+  <testcase name="clearsConnectionsBetweenTests" classname="org.scassandra.junit.ScassandraServerRuleTest" time="0.017"/>
+  <testcase name="primingClientClearedBeforeEachTest" classname="org.scassandra.junit.ScassandraServerRuleTest" time="0.024"/>
+  <system-out><![CDATA[2015-06-08 12:26:35,131 INFO  [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-2] - [org.scassandra.server.priming.PrimingServer]- Opening port 7043 for priming
+2015-06-08 12:26:35,134 INFO  [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-8] - [org.scassandra.server.ServerReadyListener]- ServerReady - No listener yet.
+[INFO] [06/08/2015 12:26:35.134] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener] Port 7042 ready for Cassandra binary connections.
+2015-06-08 12:26:35,137 INFO  [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-3] - [org.scassandra.server.priming.PrimingServer]- Priming server bound to admin port 7043
+2015-06-08 12:26:35,137 INFO  [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-8] - [org.scassandra.server.ServerReadyListener]- ServerReady - Forwarding ServerReady to listener.
+[INFO] [06/08/2015 12:26:35.135] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-8] [akka://CassandraServerStub-7042-7043/user/IO-HTTP/listener-0] Bound to localhost/127.0.0.1:7043
+2015-06-08 12:26:35,137 INFO  [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-8] - [org.scassandra.server.ServerReadyListener]- OnServerReady - ServerReady message already received. Sending ServerReady.
+2015-06-08 12:26:35,138 INFO  [Test worker] - [org.scassandra.http.client.PrimingClient]- Sending {"when":{"query":""},"then":{"rows":[],"result":"success"}} to url http://localhost:7043/prime-query-single
+2015-06-08 12:26:35,152 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.PrimingServerHttpService]- Received prime request PrimeQuerySingle(When(Some(),None,None,None,None),Then(Some(List()),Some(Success),None,None,None))
+2015-06-08 12:26:35,162 INFO  [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.query.PrimeQueryStore]- Adding prime with criteria PrimeCriteria(,List(org.scassandra.server.cqlmessages.ANY$@10f5431d, org.scassandra.server.cqlmessages.ONE$@15adb056, org.scassandra.server.cqlmessages.TWO$@23366f17, org.scassandra.server.cqlmessages.THREE$@64ea345d, org.scassandra.server.cqlmessages.QUORUM$@5e3d7e76, org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.LOCAL_QUORUM$@36b4c7ea, org.scassandra.server.cqlmessages.EACH_QUORUM$@3c945bd, org.scassandra.server.cqlmessages.SERIAL$@36b2557c, org.scassandra.server.cqlmessages.LOCAL_SERIAL$@427b8c2f, org.scassandra.server.cqlmessages.LOCAL_ONE$@52e0981d),false) and prime result Prime(List(),SuccessResult,Map(),,,None)
+2015-06-08 12:26:35,166 INFO  [Test worker] - [org.scassandra.http.client.PrimingClient]- Sending {"when":{"query":""},"then":{"rows":[],"result":"success"}} to url http://localhost:7043/prime-prepared-single
+2015-06-08 12:26:35,173 INFO  [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.prepared.PrimePreparedStore]- Storing prime for prepared statement PreparedPrime(List(),Prime(List(),SuccessResult,Map(),,,None)) with prime criteria PrimeCriteria(,List(org.scassandra.server.cqlmessages.ANY$@10f5431d, org.scassandra.server.cqlmessages.ONE$@15adb056, org.scassandra.server.cqlmessages.TWO$@23366f17, org.scassandra.server.cqlmessages.THREE$@64ea345d, org.scassandra.server.cqlmessages.QUORUM$@5e3d7e76, org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.LOCAL_QUORUM$@36b4c7ea, org.scassandra.server.cqlmessages.EACH_QUORUM$@3c945bd, org.scassandra.server.cqlmessages.SERIAL$@36b2557c, org.scassandra.server.cqlmessages.LOCAL_SERIAL$@427b8c2f, org.scassandra.server.cqlmessages.LOCAL_ONE$@52e0981d),false)
+2015-06-08 12:26:35,217 DEBUG [Test worker] - [com.datastax.driver.core.Cluster]- Starting new cluster with contact points [localhost/127.0.0.1:7042]
+2015-06-08 12:26:35,367 DEBUG [Test worker] - [com.datastax.driver.core.Connection]- [localhost/127.0.0.1:7042-1] Transport initialized and ready
+2015-06-08 12:26:35,367 DEBUG [Test worker] - [com.datastax.driver.core.ControlConnection]- [Control connection] Refreshing node list and token map
+[INFO] [06/08/2015 12:26:35.371] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] Incoming query: SELECT * FROM system.local WHERE key='local' at consistency: org.scassandra.server.cqlmessages.ONE$@15adb056
+2015-06-08 12:26:35,372 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.query.PrimeQueryStore]- Current primes: Map(PrimeCriteria(,List(org.scassandra.server.cqlmessages.ANY$@10f5431d, org.scassandra.server.cqlmessages.ONE$@15adb056, org.scassandra.server.cqlmessages.TWO$@23366f17, org.scassandra.server.cqlmessages.THREE$@64ea345d, org.scassandra.server.cqlmessages.QUORUM$@5e3d7e76, org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.LOCAL_QUORUM$@36b4c7ea, org.scassandra.server.cqlmessages.EACH_QUORUM$@3c945bd, org.scassandra.server.cqlmessages.SERIAL$@36b2557c, org.scassandra.server.cqlmessages.LOCAL_SERIAL$@427b8c2f, org.scassandra.server.cqlmessages.LOCAL_ONE$@52e0981d),false) -> Prime(List(),SuccessResult,Map(),,,None))
+2015-06-08 12:26:35,372 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.query.PrimeQueryStore]- Query for |PrimeMatch(SELECT * FROM system.local WHERE key='local',org.scassandra.server.cqlmessages.ONE$@15adb056)|
+[INFO] [06/08/2015 12:26:35.374] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] No prime found for SELECT * FROM system.local WHERE key='local'
+[INFO] [06/08/2015 12:26:35.375] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-8] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] Incoming query: SELECT * FROM system.peers at consistency: org.scassandra.server.cqlmessages.ONE$@15adb056
+2015-06-08 12:26:35,375 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.query.PrimeQueryStore]- Current primes: Map(PrimeCriteria(,List(org.scassandra.server.cqlmessages.ANY$@10f5431d, org.scassandra.server.cqlmessages.ONE$@15adb056, org.scassandra.server.cqlmessages.TWO$@23366f17, org.scassandra.server.cqlmessages.THREE$@64ea345d, org.scassandra.server.cqlmessages.QUORUM$@5e3d7e76, org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.LOCAL_QUORUM$@36b4c7ea, org.scassandra.server.cqlmessages.EACH_QUORUM$@3c945bd, org.scassandra.server.cqlmessages.SERIAL$@36b2557c, org.scassandra.server.cqlmessages.LOCAL_SERIAL$@427b8c2f, org.scassandra.server.cqlmessages.LOCAL_ONE$@52e0981d),false) -> Prime(List(),SuccessResult,Map(),,,None))
+2015-06-08 12:26:35,375 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.query.PrimeQueryStore]- Query for |PrimeMatch(SELECT * FROM system.peers,org.scassandra.server.cqlmessages.ONE$@15adb056)|
+[INFO] [06/08/2015 12:26:35.375] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-8] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] No prime found for SELECT * FROM system.peers
+2015-06-08 12:26:35,384 DEBUG [Test worker] - [com.datastax.driver.core.ControlConnection]- [Control connection] Refreshing schema
+[INFO] [06/08/2015 12:26:35.385] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] Incoming query: SELECT * FROM system.schema_keyspaces at consistency: org.scassandra.server.cqlmessages.ONE$@15adb056
+2015-06-08 12:26:35,385 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] - [org.scassandra.server.priming.query.PrimeQueryStore]- Current primes: Map(PrimeCriteria(,List(org.scassandra.server.cqlmessages.ANY$@10f5431d, org.scassandra.server.cqlmessages.ONE$@15adb056, org.scassandra.server.cqlmessages.TWO$@23366f17, org.scassandra.server.cqlmessages.THREE$@64ea345d, org.scassandra.server.cqlmessages.QUORUM$@5e3d7e76, org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.LOCAL_QUORUM$@36b4c7ea, org.scassandra.server.cqlmessages.EACH_QUORUM$@3c945bd, org.scassandra.server.cqlmessages.SERIAL$@36b2557c, org.scassandra.server.cqlmessages.LOCAL_SERIAL$@427b8c2f, org.scassandra.server.cqlmessages.LOCAL_ONE$@52e0981d),false) -> Prime(List(),SuccessResult,Map(),,,None))
+2015-06-08 12:26:35,385 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] - [org.scassandra.server.priming.query.PrimeQueryStore]- Query for |PrimeMatch(SELECT * FROM system.schema_keyspaces,org.scassandra.server.cqlmessages.ONE$@15adb056)|
+[INFO] [06/08/2015 12:26:35.385] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] No prime found for SELECT * FROM system.schema_keyspaces
+2015-06-08 12:26:35,385 WARN  [Test worker] - [com.datastax.driver.core.ControlConnection]- Cannot find Cassandra version for host localhost/127.0.0.1:7042 to parse the schema, using 2.0.0 based on protocol version in use. If parsing the schema fails, this could be the cause
+[INFO] [06/08/2015 12:26:35.385] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] Incoming query: SELECT * FROM system.schema_columnfamilies at consistency: org.scassandra.server.cqlmessages.ONE$@15adb056
+2015-06-08 12:26:35,386 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.query.PrimeQueryStore]- Current primes: Map(PrimeCriteria(,List(org.scassandra.server.cqlmessages.ANY$@10f5431d, org.scassandra.server.cqlmessages.ONE$@15adb056, org.scassandra.server.cqlmessages.TWO$@23366f17, org.scassandra.server.cqlmessages.THREE$@64ea345d, org.scassandra.server.cqlmessages.QUORUM$@5e3d7e76, org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.LOCAL_QUORUM$@36b4c7ea, org.scassandra.server.cqlmessages.EACH_QUORUM$@3c945bd, org.scassandra.server.cqlmessages.SERIAL$@36b2557c, org.scassandra.server.cqlmessages.LOCAL_SERIAL$@427b8c2f, org.scassandra.server.cqlmessages.LOCAL_ONE$@52e0981d),false) -> Prime(List(),SuccessResult,Map(),,,None))
+2015-06-08 12:26:35,386 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.query.PrimeQueryStore]- Query for |PrimeMatch(SELECT * FROM system.schema_columnfamilies,org.scassandra.server.cqlmessages.ONE$@15adb056)|
+[INFO] [06/08/2015 12:26:35.386] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] No prime found for SELECT * FROM system.schema_columnfamilies
+2015-06-08 12:26:35,386 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.query.PrimeQueryStore]- Current primes: Map(PrimeCriteria(,List(org.scassandra.server.cqlmessages.ANY$@10f5431d, org.scassandra.server.cqlmessages.ONE$@15adb056, org.scassandra.server.cqlmessages.TWO$@23366f17, org.scassandra.server.cqlmessages.THREE$@64ea345d, org.scassandra.server.cqlmessages.QUORUM$@5e3d7e76, org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.LOCAL_QUORUM$@36b4c7ea, org.scassandra.server.cqlmessages.EACH_QUORUM$@3c945bd, org.scassandra.server.cqlmessages.SERIAL$@36b2557c, org.scassandra.server.cqlmessages.LOCAL_SERIAL$@427b8c2f, org.scassandra.server.cqlmessages.LOCAL_ONE$@52e0981d),false) -> Prime(List(),SuccessResult,Map(),,,None))
+[INFO] [06/08/2015 12:26:35.386] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] Incoming query: SELECT * FROM system.schema_columns at consistency: org.scassandra.server.cqlmessages.ONE$@15adb056
+2015-06-08 12:26:35,386 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.query.PrimeQueryStore]- Query for |PrimeMatch(SELECT * FROM system.schema_columns,org.scassandra.server.cqlmessages.ONE$@15adb056)|
+[INFO] [06/08/2015 12:26:35.386] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] No prime found for SELECT * FROM system.schema_columns
+2015-06-08 12:26:35,386 DEBUG [Test worker] - [com.datastax.driver.core.ControlConnection]- [Control connection] Refreshing node list and token map
+[INFO] [06/08/2015 12:26:35.387] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] Incoming query: SELECT * FROM system.local WHERE key='local' at consistency: org.scassandra.server.cqlmessages.ONE$@15adb056
+2015-06-08 12:26:35,387 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.query.PrimeQueryStore]- Current primes: Map(PrimeCriteria(,List(org.scassandra.server.cqlmessages.ANY$@10f5431d, org.scassandra.server.cqlmessages.ONE$@15adb056, org.scassandra.server.cqlmessages.TWO$@23366f17, org.scassandra.server.cqlmessages.THREE$@64ea345d, org.scassandra.server.cqlmessages.QUORUM$@5e3d7e76, org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.LOCAL_QUORUM$@36b4c7ea, org.scassandra.server.cqlmessages.EACH_QUORUM$@3c945bd, org.scassandra.server.cqlmessages.SERIAL$@36b2557c, org.scassandra.server.cqlmessages.LOCAL_SERIAL$@427b8c2f, org.scassandra.server.cqlmessages.LOCAL_ONE$@52e0981d),false) -> Prime(List(),SuccessResult,Map(),,,None))
+2015-06-08 12:26:35,387 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.query.PrimeQueryStore]- Query for |PrimeMatch(SELECT * FROM system.local WHERE key='local',org.scassandra.server.cqlmessages.ONE$@15adb056)|
+[INFO] [06/08/2015 12:26:35.388] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] No prime found for SELECT * FROM system.local WHERE key='local'
+[INFO] [06/08/2015 12:26:35.388] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] Incoming query: SELECT * FROM system.peers at consistency: org.scassandra.server.cqlmessages.ONE$@15adb056
+2015-06-08 12:26:35,388 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] - [org.scassandra.server.priming.query.PrimeQueryStore]- Current primes: Map(PrimeCriteria(,List(org.scassandra.server.cqlmessages.ANY$@10f5431d, org.scassandra.server.cqlmessages.ONE$@15adb056, org.scassandra.server.cqlmessages.TWO$@23366f17, org.scassandra.server.cqlmessages.THREE$@64ea345d, org.scassandra.server.cqlmessages.QUORUM$@5e3d7e76, org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.LOCAL_QUORUM$@36b4c7ea, org.scassandra.server.cqlmessages.EACH_QUORUM$@3c945bd, org.scassandra.server.cqlmessages.SERIAL$@36b2557c, org.scassandra.server.cqlmessages.LOCAL_SERIAL$@427b8c2f, org.scassandra.server.cqlmessages.LOCAL_ONE$@52e0981d),false) -> Prime(List(),SuccessResult,Map(),,,None))
+2015-06-08 12:26:35,388 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] - [org.scassandra.server.priming.query.PrimeQueryStore]- Query for |PrimeMatch(SELECT * FROM system.peers,org.scassandra.server.cqlmessages.ONE$@15adb056)|
+[INFO] [06/08/2015 12:26:35.388] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] No prime found for SELECT * FROM system.peers
+2015-06-08 12:26:35,389 DEBUG [Test worker] - [com.datastax.driver.core.ControlConnection]- [Control connection] Successfully connected to localhost/127.0.0.1:7042
+2015-06-08 12:26:35,392 INFO  [Cassandra Java Driver worker-0] - [com.datastax.driver.core.Cluster]- New Cassandra host localhost/127.0.0.1:7042 added
+2015-06-08 12:26:35,393 DEBUG [Cassandra Java Driver worker-0] - [com.datastax.driver.core.ControlConnection]- [Control connection] Refreshing node list and token map
+2015-06-08 12:26:35,393 DEBUG [Cassandra Java Driver worker-0] - [com.datastax.driver.core.ControlConnection]- [Control connection] Refreshing node list and token map
+2015-06-08 12:26:35,394 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.query.PrimeQueryStore]- Current primes: Map(PrimeCriteria(,List(org.scassandra.server.cqlmessages.ANY$@10f5431d, org.scassandra.server.cqlmessages.ONE$@15adb056, org.scassandra.server.cqlmessages.TWO$@23366f17, org.scassandra.server.cqlmessages.THREE$@64ea345d, org.scassandra.server.cqlmessages.QUORUM$@5e3d7e76, org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.LOCAL_QUORUM$@36b4c7ea, org.scassandra.server.cqlmessages.EACH_QUORUM$@3c945bd, org.scassandra.server.cqlmessages.SERIAL$@36b2557c, org.scassandra.server.cqlmessages.LOCAL_SERIAL$@427b8c2f, org.scassandra.server.cqlmessages.LOCAL_ONE$@52e0981d),false) -> Prime(List(),SuccessResult,Map(),,,None))
+2015-06-08 12:26:35,394 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.query.PrimeQueryStore]- Query for |PrimeMatch(SELECT * FROM system.local WHERE key='local',org.scassandra.server.cqlmessages.ONE$@15adb056)|
+[INFO] [06/08/2015 12:26:35.393] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] Incoming query: SELECT * FROM system.local WHERE key='local' at consistency: org.scassandra.server.cqlmessages.ONE$@15adb056
+[INFO] [06/08/2015 12:26:35.394] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] No prime found for SELECT * FROM system.local WHERE key='local'
+2015-06-08 12:26:35,394 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-3] - [org.scassandra.server.priming.query.PrimeQueryStore]- Current primes: Map(PrimeCriteria(,List(org.scassandra.server.cqlmessages.ANY$@10f5431d, org.scassandra.server.cqlmessages.ONE$@15adb056, org.scassandra.server.cqlmessages.TWO$@23366f17, org.scassandra.server.cqlmessages.THREE$@64ea345d, org.scassandra.server.cqlmessages.QUORUM$@5e3d7e76, org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.LOCAL_QUORUM$@36b4c7ea, org.scassandra.server.cqlmessages.EACH_QUORUM$@3c945bd, org.scassandra.server.cqlmessages.SERIAL$@36b2557c, org.scassandra.server.cqlmessages.LOCAL_SERIAL$@427b8c2f, org.scassandra.server.cqlmessages.LOCAL_ONE$@52e0981d),false) -> Prime(List(),SuccessResult,Map(),,,None))
+[INFO] [06/08/2015 12:26:35.394] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-3] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] Incoming query: SELECT * FROM system.peers at consistency: org.scassandra.server.cqlmessages.ONE$@15adb056
+2015-06-08 12:26:35,394 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-3] - [org.scassandra.server.priming.query.PrimeQueryStore]- Query for |PrimeMatch(SELECT * FROM system.peers,org.scassandra.server.cqlmessages.ONE$@15adb056)|
+[INFO] [06/08/2015 12:26:35.394] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-3] [akka://CassandraServerStub-7042-7043/user/BinaryTcpListener/$b/$b] No prime found for SELECT * FROM system.peers
+2015-06-08 12:26:35,403 DEBUG [Cassandra Java Driver worker-1] - [com.datastax.driver.core.Connection]- [localhost/127.0.0.1:7042-2] Transport initialized and ready
+2015-06-08 12:26:35,405 DEBUG [Cassandra Java Driver worker-1] - [com.datastax.driver.core.Connection]- [localhost/127.0.0.1:7042-3] Transport initialized and ready
+2015-06-08 12:26:35,405 DEBUG [Cassandra Java Driver worker-1] - [com.datastax.driver.core.Session]- Added connection pool for localhost/127.0.0.1:7042
+2015-06-08 12:26:35,408 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded priming
+2015-06-08 12:26:35,408 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] - [org.scassandra.server.priming.PrimingServerHttpService]- Return 200
+2015-06-08 12:26:35,414 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded connections
+2015-06-08 12:26:35,417 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded queries
+2015-06-08 12:26:35,419 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded prepared statement executions
+2015-06-08 12:26:35,421 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded prepared statement executions
+2015-06-08 12:26:35,424 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded priming
+2015-06-08 12:26:35,424 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] - [org.scassandra.server.priming.PrimingServerHttpService]- Return 200
+2015-06-08 12:26:35,428 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded connections
+2015-06-08 12:26:35,431 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded queries
+2015-06-08 12:26:35,433 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded prepared statement executions
+2015-06-08 12:26:35,439 DEBUG [Test worker] - [org.scassandra.http.client.ActivityClient]- Received response []
+2015-06-08 12:26:35,439 DEBUG [Test worker] - [org.scassandra.http.client.ActivityClient]- Parsed connections []
+2015-06-08 12:26:35,442 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded priming
+2015-06-08 12:26:35,442 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-5] - [org.scassandra.server.priming.PrimingServerHttpService]- Return 200
+2015-06-08 12:26:35,448 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded connections
+2015-06-08 12:26:35,450 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded queries
+2015-06-08 12:26:35,453 DEBUG [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-9] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded prepared statement executions
+2015-06-08 12:26:35,460 DEBUG [Test worker] - [org.scassandra.http.client.PrimingClient]- Received response from scassandra []
+2015-06-08 12:26:35,464 DEBUG [Test worker] - [org.scassandra.http.client.PrimingClient]- Received response from scassandra []
+[INFO] [06/08/2015 12:26:35.480] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-13] [akka://CassandraServerStub-7042-7043/user/IO-HTTP/listener-0/0] Message [akka.dispatch.sysmsg.DeathWatchNotification] from Actor[akka://CassandraServerStub-7042-7043/user/IO-HTTP/listener-0/0#186316420] to Actor[akka://CassandraServerStub-7042-7043/user/IO-HTTP/listener-0/0#186316420] was not delivered. [1] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+[INFO] [06/08/2015 12:26:35.481] [CassandraServerStub-7042-7043-akka.actor.default-dispatcher-13] [akka://CassandraServerStub-7042-7043/user/IO-HTTP/listener-0/1] Message [akka.dispatch.sysmsg.DeathWatchNotification] from Actor[akka://CassandraServerStub-7042-7043/user/IO-HTTP/listener-0/1#-544744252] to Actor[akka://CassandraServerStub-7042-7043/user/IO-HTTP/listener-0/1#-544744252] was not delivered. [2] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+2015-06-08 12:26:35,486 DEBUG [New I/O worker #1] - [com.datastax.driver.core.Connection]- [localhost/127.0.0.1:7042-1] connection error
+java.io.IOException: Connection reset by peer
+	at sun.nio.ch.FileDispatcherImpl.read0(Native Method) ~[na:1.8.0_31]
+	at sun.nio.ch.SocketDispatcher.read(SocketDispatcher.java:39) ~[na:1.8.0_31]
+	at sun.nio.ch.IOUtil.readIntoNativeBuffer(IOUtil.java:223) ~[na:1.8.0_31]
+	at sun.nio.ch.IOUtil.read(IOUtil.java:192) ~[na:1.8.0_31]
+	at sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:379) ~[na:1.8.0_31]
+	at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:64) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:108) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:318) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:89) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) ~[netty-3.9.0.Final.jar:na]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [na:1.8.0_31]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [na:1.8.0_31]
+	at java.lang.Thread.run(Thread.java:745) [na:1.8.0_31]
+2015-06-08 12:26:35,487 DEBUG [New I/O worker #2] - [com.datastax.driver.core.Connection]- [localhost/127.0.0.1:7042-2] connection error
+java.io.IOException: Connection reset by peer
+	at sun.nio.ch.FileDispatcherImpl.read0(Native Method) ~[na:1.8.0_31]
+	at sun.nio.ch.SocketDispatcher.read(SocketDispatcher.java:39) ~[na:1.8.0_31]
+	at sun.nio.ch.IOUtil.readIntoNativeBuffer(IOUtil.java:223) ~[na:1.8.0_31]
+	at sun.nio.ch.IOUtil.read(IOUtil.java:192) ~[na:1.8.0_31]
+	at sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:379) ~[na:1.8.0_31]
+	at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:64) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:108) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:318) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:89) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) ~[netty-3.9.0.Final.jar:na]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [na:1.8.0_31]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [na:1.8.0_31]
+	at java.lang.Thread.run(Thread.java:745) [na:1.8.0_31]
+2015-06-08 12:26:35,487 DEBUG [New I/O worker #3] - [com.datastax.driver.core.Connection]- [localhost/127.0.0.1:7042-3] connection error
+java.io.IOException: Connection reset by peer
+	at sun.nio.ch.FileDispatcherImpl.read0(Native Method) ~[na:1.8.0_31]
+	at sun.nio.ch.SocketDispatcher.read(SocketDispatcher.java:39) ~[na:1.8.0_31]
+	at sun.nio.ch.IOUtil.readIntoNativeBuffer(IOUtil.java:223) ~[na:1.8.0_31]
+	at sun.nio.ch.IOUtil.read(IOUtil.java:192) ~[na:1.8.0_31]
+	at sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:379) ~[na:1.8.0_31]
+	at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:64) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:108) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:318) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:89) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) ~[netty-3.9.0.Final.jar:na]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [na:1.8.0_31]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [na:1.8.0_31]
+	at java.lang.Thread.run(Thread.java:745) [na:1.8.0_31]
+2015-06-08 12:26:35,488 DEBUG [New I/O worker #1] - [com.datastax.driver.core.Connection]- Defuncting connection to localhost/127.0.0.1:7042
+com.datastax.driver.core.TransportException: [localhost/127.0.0.1:7042] Unexpected exception triggered (java.io.IOException: Connection reset by peer)
+	at com.datastax.driver.core.Connection$Dispatcher.exceptionCaught(Connection.java:614) [cassandra-driver-core-2.0.5.jar:na]
+	at org.jboss.netty.channel.SimpleChannelUpstreamHandler.handleUpstream(SimpleChannelUpstreamHandler.java:112) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline.sendUpstream(DefaultChannelPipeline.java:564) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline$DefaultChannelHandlerContext.sendUpstream(DefaultChannelPipeline.java:791) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.handler.codec.oneone.OneToOneDecoder.handleUpstream(OneToOneDecoder.java:60) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline.sendUpstream(DefaultChannelPipeline.java:564) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline$DefaultChannelHandlerContext.sendUpstream(DefaultChannelPipeline.java:791) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.handler.codec.frame.FrameDecoder.exceptionCaught(FrameDecoder.java:377) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.SimpleChannelUpstreamHandler.handleUpstream(SimpleChannelUpstreamHandler.java:112) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline.sendUpstream(DefaultChannelPipeline.java:564) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline.sendUpstream(DefaultChannelPipeline.java:559) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.Channels.fireExceptionCaught(Channels.java:525) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:74) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:108) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:318) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:89) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.util.ThreadRenamingRunnable.run(ThreadRenamingRunnable.java:108) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.util.internal.DeadLockProofWorker$1.run(DeadLockProofWorker.java:42) [netty-3.9.0.Final.jar:na]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [na:1.8.0_31]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [na:1.8.0_31]
+	at java.lang.Thread.run(Thread.java:745) [na:1.8.0_31]
+Caused by: java.io.IOException: Connection reset by peer
+	at sun.nio.ch.FileDispatcherImpl.read0(Native Method) ~[na:1.8.0_31]
+	at sun.nio.ch.SocketDispatcher.read(SocketDispatcher.java:39) ~[na:1.8.0_31]
+	at sun.nio.ch.IOUtil.readIntoNativeBuffer(IOUtil.java:223) ~[na:1.8.0_31]
+	at sun.nio.ch.IOUtil.read(IOUtil.java:192) ~[na:1.8.0_31]
+	at sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:379) ~[na:1.8.0_31]
+	at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:64) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:108) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:318) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:89) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) [netty-3.9.0.Final.jar:na]
+	... 3 common frames omitted
+2015-06-08 12:26:35,488 DEBUG [New I/O worker #3] - [com.datastax.driver.core.Connection]- Defuncting connection to localhost/127.0.0.1:7042
+com.datastax.driver.core.TransportException: [localhost/127.0.0.1:7042] Unexpected exception triggered (java.io.IOException: Connection reset by peer)
+	at com.datastax.driver.core.Connection$Dispatcher.exceptionCaught(Connection.java:614) [cassandra-driver-core-2.0.5.jar:na]
+	at org.jboss.netty.channel.SimpleChannelUpstreamHandler.handleUpstream(SimpleChannelUpstreamHandler.java:112) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline.sendUpstream(DefaultChannelPipeline.java:564) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline$DefaultChannelHandlerContext.sendUpstream(DefaultChannelPipeline.java:791) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.handler.codec.oneone.OneToOneDecoder.handleUpstream(OneToOneDecoder.java:60) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline.sendUpstream(DefaultChannelPipeline.java:564) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline$DefaultChannelHandlerContext.sendUpstream(DefaultChannelPipeline.java:791) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.handler.codec.frame.FrameDecoder.exceptionCaught(FrameDecoder.java:377) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.SimpleChannelUpstreamHandler.handleUpstream(SimpleChannelUpstreamHandler.java:112) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline.sendUpstream(DefaultChannelPipeline.java:564) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline.sendUpstream(DefaultChannelPipeline.java:559) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.Channels.fireExceptionCaught(Channels.java:525) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:74) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:108) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:318) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:89) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.util.ThreadRenamingRunnable.run(ThreadRenamingRunnable.java:108) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.util.internal.DeadLockProofWorker$1.run(DeadLockProofWorker.java:42) [netty-3.9.0.Final.jar:na]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [na:1.8.0_31]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [na:1.8.0_31]
+	at java.lang.Thread.run(Thread.java:745) [na:1.8.0_31]
+Caused by: java.io.IOException: Connection reset by peer
+	at sun.nio.ch.FileDispatcherImpl.read0(Native Method) ~[na:1.8.0_31]
+	at sun.nio.ch.SocketDispatcher.read(SocketDispatcher.java:39) ~[na:1.8.0_31]
+	at sun.nio.ch.IOUtil.readIntoNativeBuffer(IOUtil.java:223) ~[na:1.8.0_31]
+	at sun.nio.ch.IOUtil.read(IOUtil.java:192) ~[na:1.8.0_31]
+	at sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:379) ~[na:1.8.0_31]
+	at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:64) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:108) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:318) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:89) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) [netty-3.9.0.Final.jar:na]
+	... 3 common frames omitted
+2015-06-08 12:26:35,488 DEBUG [New I/O worker #2] - [com.datastax.driver.core.Connection]- Defuncting connection to localhost/127.0.0.1:7042
+com.datastax.driver.core.TransportException: [localhost/127.0.0.1:7042] Unexpected exception triggered (java.io.IOException: Connection reset by peer)
+	at com.datastax.driver.core.Connection$Dispatcher.exceptionCaught(Connection.java:614) [cassandra-driver-core-2.0.5.jar:na]
+	at org.jboss.netty.channel.SimpleChannelUpstreamHandler.handleUpstream(SimpleChannelUpstreamHandler.java:112) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline.sendUpstream(DefaultChannelPipeline.java:564) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline$DefaultChannelHandlerContext.sendUpstream(DefaultChannelPipeline.java:791) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.handler.codec.oneone.OneToOneDecoder.handleUpstream(OneToOneDecoder.java:60) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline.sendUpstream(DefaultChannelPipeline.java:564) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline$DefaultChannelHandlerContext.sendUpstream(DefaultChannelPipeline.java:791) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.handler.codec.frame.FrameDecoder.exceptionCaught(FrameDecoder.java:377) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.SimpleChannelUpstreamHandler.handleUpstream(SimpleChannelUpstreamHandler.java:112) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline.sendUpstream(DefaultChannelPipeline.java:564) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.DefaultChannelPipeline.sendUpstream(DefaultChannelPipeline.java:559) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.Channels.fireExceptionCaught(Channels.java:525) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:74) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:108) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:318) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:89) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.util.ThreadRenamingRunnable.run(ThreadRenamingRunnable.java:108) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.util.internal.DeadLockProofWorker$1.run(DeadLockProofWorker.java:42) [netty-3.9.0.Final.jar:na]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [na:1.8.0_31]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [na:1.8.0_31]
+	at java.lang.Thread.run(Thread.java:745) [na:1.8.0_31]
+Caused by: java.io.IOException: Connection reset by peer
+	at sun.nio.ch.FileDispatcherImpl.read0(Native Method) ~[na:1.8.0_31]
+	at sun.nio.ch.SocketDispatcher.read(SocketDispatcher.java:39) ~[na:1.8.0_31]
+	at sun.nio.ch.IOUtil.readIntoNativeBuffer(IOUtil.java:223) ~[na:1.8.0_31]
+	at sun.nio.ch.IOUtil.read(IOUtil.java:192) ~[na:1.8.0_31]
+	at sun.nio.ch.SocketChannelImpl.read(SocketChannelImpl.java:379) ~[na:1.8.0_31]
+	at org.jboss.netty.channel.socket.nio.NioWorker.read(NioWorker.java:64) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.process(AbstractNioWorker.java:108) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:318) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioWorker.run(AbstractNioWorker.java:89) [netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioWorker.run(NioWorker.java:178) [netty-3.9.0.Final.jar:na]
+	... 3 common frames omitted
+2015-06-08 12:26:35,488 DEBUG [New I/O worker #1] - [com.datastax.driver.core.Cluster]- Host localhost/127.0.0.1:7042 is Suspected
+2015-06-08 12:26:35,488 DEBUG [New I/O worker #3] - [com.datastax.driver.core.Cluster]- Host localhost/127.0.0.1:7042 is Suspected
+2015-06-08 12:26:35,488 DEBUG [New I/O worker #2] - [com.datastax.driver.core.Cluster]- Host localhost/127.0.0.1:7042 is Suspected
+2015-06-08 12:26:35,490 DEBUG [New I/O worker #3] - [com.datastax.driver.core.Connection]- [localhost/127.0.0.1:7042-2] closing connection
+2015-06-08 12:26:35,490 DEBUG [New I/O worker #1] - [com.datastax.driver.core.Connection]- [localhost/127.0.0.1:7042-1] closing connection
+2015-06-08 12:26:35,491 DEBUG [Cassandra Java Driver worker-2] - [com.datastax.driver.core.Connection]- [localhost/127.0.0.1:7042-4] Error connecting to localhost/127.0.0.1:7042 (Connection refused: localhost/127.0.0.1:7042)
+2015-06-08 12:26:35,491 DEBUG [New I/O worker #2] - [com.datastax.driver.core.Connection]- [localhost/127.0.0.1:7042-3] closing connection
+2015-06-08 12:26:35,492 DEBUG [Cassandra Java Driver worker-2] - [com.datastax.driver.core.Connection]- Defuncting connection to localhost/127.0.0.1:7042
+com.datastax.driver.core.TransportException: [localhost/127.0.0.1:7042] Cannot connect
+	at com.datastax.driver.core.Connection.<init>(Connection.java:104) [cassandra-driver-core-2.0.5.jar:na]
+	at com.datastax.driver.core.Connection$Factory.open(Connection.java:445) [cassandra-driver-core-2.0.5.jar:na]
+	at com.datastax.driver.core.Cluster$Manager$4.runMayThrow(Cluster.java:1403) [cassandra-driver-core-2.0.5.jar:na]
+	at com.datastax.driver.core.ExceptionCatchingRunnable.run(ExceptionCatchingRunnable.java:32) [cassandra-driver-core-2.0.5.jar:na]
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511) [na:1.8.0_31]
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266) [na:1.8.0_31]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [na:1.8.0_31]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [na:1.8.0_31]
+	at java.lang.Thread.run(Thread.java:745) [na:1.8.0_31]
+Caused by: java.net.ConnectException: Connection refused: localhost/127.0.0.1:7042
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[na:1.8.0_31]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:716) ~[na:1.8.0_31]
+	at org.jboss.netty.channel.socket.nio.NioClientBoss.connect(NioClientBoss.java:150) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioClientBoss.processSelectedKeys(NioClientBoss.java:105) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioClientBoss.process(NioClientBoss.java:79) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:318) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioClientBoss.run(NioClientBoss.java:42) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.util.ThreadRenamingRunnable.run(ThreadRenamingRunnable.java:108) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.util.internal.DeadLockProofWorker$1.run(DeadLockProofWorker.java:42) ~[netty-3.9.0.Final.jar:na]
+	... 3 common frames omitted
+2015-06-08 12:26:35,492 DEBUG [New I/O boss #25] - [com.datastax.driver.core.Connection]- [localhost/127.0.0.1:7042-4] connection error
+java.net.ConnectException: Connection refused: localhost/127.0.0.1:7042
+	at sun.nio.ch.SocketChannelImpl.checkConnect(Native Method) ~[na:1.8.0_31]
+	at sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:716) ~[na:1.8.0_31]
+	at org.jboss.netty.channel.socket.nio.NioClientBoss.connect(NioClientBoss.java:150) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioClientBoss.processSelectedKeys(NioClientBoss.java:105) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioClientBoss.process(NioClientBoss.java:79) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.AbstractNioSelector.run(AbstractNioSelector.java:318) ~[netty-3.9.0.Final.jar:na]
+	at org.jboss.netty.channel.socket.nio.NioClientBoss.run(NioClientBoss.java:42) ~[netty-3.9.0.Final.jar:na]
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142) [na:1.8.0_31]
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617) [na:1.8.0_31]
+	at java.lang.Thread.run(Thread.java:745) [na:1.8.0_31]
+2015-06-08 12:26:35,493 DEBUG [Cassandra Java Driver worker-2] - [com.datastax.driver.core.Connection]- [localhost/127.0.0.1:7042-4] closing connection
+2015-06-08 12:26:35,493 DEBUG [Cassandra Java Driver worker-2] - [com.datastax.driver.core.Cluster]- Host localhost/127.0.0.1:7042 is DOWN
+2015-06-08 12:26:35,494 DEBUG [Cassandra Java Driver worker-3] - [com.datastax.driver.core.Cluster]- Host localhost/127.0.0.1:7042 is DOWN
+2015-06-08 12:26:35,494 DEBUG [Cassandra Java Driver worker-2] - [com.datastax.driver.core.ControlConnection]- [Control connection] localhost/127.0.0.1:7042 is down, currently connected to localhost/127.0.0.1:7042
+2015-06-08 12:26:35,494 DEBUG [Cassandra Java Driver worker-3] - [com.datastax.driver.core.ControlConnection]- [Control connection] localhost/127.0.0.1:7042 is down, currently connected to localhost/127.0.0.1:7042
+2015-06-08 12:26:35,495 DEBUG [Cassandra Java Driver worker-3] - [com.datastax.driver.core.Cluster]- localhost/127.0.0.1:7042 is down, scheduling connection retries
+2015-06-08 12:26:35,495 DEBUG [Cassandra Java Driver worker-2] - [com.datastax.driver.core.Cluster]- localhost/127.0.0.1:7042 is down, scheduling connection retries
+2015-06-08 12:26:35,497 ERROR [Cassandra Java Driver blocking tasks worker-0] - [com.datastax.driver.core.ControlConnection]- [Control connection] Cannot connect to any host, scheduling retry
+2015-06-08 12:26:35,497 ERROR [Cassandra Java Driver blocking tasks worker-1] - [com.datastax.driver.core.ControlConnection]- [Control connection] Cannot connect to any host, scheduling retry
+2015-06-08 12:26:35,497 DEBUG [Cassandra Java Driver worker-3] - [com.datastax.driver.core.AbstractReconnectionHandler]- First reconnection scheduled in 1000ms
+2015-06-08 12:26:35,497 DEBUG [Cassandra Java Driver worker-2] - [com.datastax.driver.core.AbstractReconnectionHandler]- First reconnection scheduled in 1000ms
+2015-06-08 12:26:35,497 DEBUG [Cassandra Java Driver blocking tasks worker-1] - [com.datastax.driver.core.AbstractReconnectionHandler]- First reconnection scheduled in 1000ms
+2015-06-08 12:26:35,497 DEBUG [Cassandra Java Driver blocking tasks worker-0] - [com.datastax.driver.core.AbstractReconnectionHandler]- First reconnection scheduled in 1000ms
+2015-06-08 12:26:35,501 INFO  [Test worker] - [org.scassandra.server.ServerStubRunner]- Server is shut down
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

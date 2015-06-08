@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.scassandra.integration.IntegrationTest" tests="5" failures="0" errors="0" timestamp="2015-06-08T11:26:35" hostname="desktop" time="0.107">
+  <properties/>
+  <testcase name="testQueryPrimeConflictingConsistencies" classname="org.scassandra.integration.IntegrationTest" time="0.025"/>
+  <testcase name="testActivityRetrieveOfPreparedStatementExecutions" classname="org.scassandra.integration.IntegrationTest" time="0.014"/>
+  <testcase name="testPreparedPrimeAndRetrievalOfPrime" classname="org.scassandra.integration.IntegrationTest" time="0.022"/>
+  <testcase name="testQueryPrimeAndRetrieveOfPrime" classname="org.scassandra.integration.IntegrationTest" time="0.018"/>
+  <testcase name="clientsShouldBeAbleToConnect" classname="org.scassandra.integration.IntegrationTest" time="0.026"/>
+  <system-out><![CDATA[2015-06-08 12:26:35,520 INFO  [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-2] - [org.scassandra.server.priming.PrimingServer]- Opening port 3456 for priming
+2015-06-08 12:26:35,523 INFO  [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-4] - [org.scassandra.server.ServerReadyListener]- ServerReady - No listener yet.
+[INFO] [06/08/2015 12:26:35.522] [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] [akka://CassandraServerStub-2345-3456/user/BinaryTcpListener] Port 2345 ready for Cassandra binary connections.
+2015-06-08 12:26:35,525 INFO  [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-4] - [org.scassandra.server.priming.PrimingServer]- Priming server bound to admin port 3456
+2015-06-08 12:26:35,525 INFO  [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.ServerReadyListener]- ServerReady - Forwarding ServerReady to listener.
+[INFO] [06/08/2015 12:26:35.525] [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] [akka://CassandraServerStub-2345-3456/user/IO-HTTP/listener-0] Bound to localhost/127.0.0.1:3456
+2015-06-08 12:26:35,526 INFO  [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.ServerReadyListener]- OnServerReady - ServerReady message already received. Sending ServerReady.
+2015-06-08 12:26:35,528 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded priming
+2015-06-08 12:26:35,528 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.PrimingServerHttpService]- Return 200
+2015-06-08 12:26:35,534 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded connections
+2015-06-08 12:26:35,536 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded queries
+2015-06-08 12:26:35,539 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded prepared statement executions
+2015-06-08 12:26:35,541 INFO  [Test worker] - [org.scassandra.http.client.PrimingClient]- Sending {"when":{"query":"select * from people","consistency":["ALL","ANY"]},"then":{"rows":[],"result":"success"}} to url http://localhost:3456/prime-query-single
+2015-06-08 12:26:35,544 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.PrimingServerHttpService]- Received prime request PrimeQuerySingle(When(Some(select * from people),None,Some(List(org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.ANY$@10f5431d)),None,None),Then(Some(List()),Some(Success),None,None,None))
+2015-06-08 12:26:35,544 INFO  [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.query.PrimeQueryStore]- Adding prime with criteria PrimeCriteria(select * from people,List(org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.ANY$@10f5431d),false) and prime result Prime(List(),SuccessResult,Map(),,,None)
+2015-06-08 12:26:35,545 INFO  [Test worker] - [org.scassandra.http.client.PrimingClient]- Sending {"when":{"query":"select * from people","consistency":["ALL","ONE"]},"then":{"rows":[],"result":"success"}} to url http://localhost:3456/prime-query-single
+2015-06-08 12:26:35,547 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Received prime request PrimeQuerySingle(When(Some(select * from people),None,Some(List(org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.ONE$@15adb056)),None,None),Then(Some(List()),Some(Success),None,None,None))
+2015-06-08 12:26:35,547 INFO  [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.query.PrimeQueryStore]- Adding prime with criteria PrimeCriteria(select * from people,List(org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.ONE$@15adb056),false) and prime result Prime(List(),SuccessResult,Map(),,,None)
+2015-06-08 12:26:35,548 WARN  [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Received invalid prime due to conflicting primes ConflictingPrimes(List(PrimeCriteria(select * from people,List(org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.ANY$@10f5431d),false)))
+2015-06-08 12:26:35,551 WARN  [Test worker] - [org.scassandra.http.client.PrimingClient]- Priming came back with non-200 response code: HTTP/1.1 400 Bad Request and body: {
+  "existingPrimes": [{
+    "query": "select * from people",
+    "consistency": ["ALL", "ANY"],
+    "patternMatch": false
+  }]
+}
+2015-06-08 12:26:35,553 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded priming
+2015-06-08 12:26:35,553 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Return 200
+2015-06-08 12:26:35,557 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded connections
+2015-06-08 12:26:35,560 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded queries
+2015-06-08 12:26:35,562 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded prepared statement executions
+2015-06-08 12:26:35,564 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Request for record prepared statement executions
+2015-06-08 12:26:35,565 DEBUG [Test worker] - [org.scassandra.http.client.ActivityClient]- Received response []
+2015-06-08 12:26:35,565 DEBUG [Test worker] - [org.scassandra.http.client.ActivityClient]- Parsed prepared statement executions []
+2015-06-08 12:26:35,567 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded priming
+2015-06-08 12:26:35,567 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.PrimingServerHttpService]- Return 200
+2015-06-08 12:26:35,571 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded connections
+2015-06-08 12:26:35,574 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded queries
+2015-06-08 12:26:35,576 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded prepared statement executions
+2015-06-08 12:26:35,576 INFO  [Test worker] - [org.scassandra.http.client.PrimingClient]- Sending {"when":{"query":"select * from people where name \u003d ?","consistency":["ALL"]},"then":{"rows":[{"name":"chris"}],"result":"success"}} to url http://localhost:3456/prime-prepared-single
+2015-06-08 12:26:35,584 INFO  [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.prepared.PrimePreparedStore]- Storing prime for prepared statement PreparedPrime(List(CqlVarchar),Prime(List(Map(name -> chris)),SuccessResult,Map(name -> CqlVarchar),,,None)) with prime criteria PrimeCriteria(select * from people where name = ?,List(org.scassandra.server.cqlmessages.ALL$@266a5ae7),false)
+2015-06-08 12:26:35,588 DEBUG [Test worker] - [org.scassandra.http.client.PrimingClient]- Received response from scassandra [{
+  "when": {
+    "query": "select * from people where name = ?",
+    "consistency": ["ALL"]
+  },
+  "then": {
+    "rows": [{
+      "name": "chris"
+    }],
+    "variable_types": ["varchar"],
+    "column_types": {
+      "name": "varchar"
+    },
+    "result": "success"
+  }
+}]
+2015-06-08 12:26:35,588 DEBUG [Test worker] - [org.scassandra.cql.CqlTypeFactory]- Type begins: varchar
+2015-06-08 12:26:35,588 DEBUG [Test worker] - [org.scassandra.cql.CqlTypeFactory]- Type ends: varchar
+2015-06-08 12:26:35,588 DEBUG [Test worker] - [org.scassandra.cql.CqlTypeFactory]- Type begins: varchar
+2015-06-08 12:26:35,588 DEBUG [Test worker] - [org.scassandra.cql.CqlTypeFactory]- Type ends: varchar
+2015-06-08 12:26:35,590 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded priming
+2015-06-08 12:26:35,590 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Return 200
+2015-06-08 12:26:35,594 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded connections
+2015-06-08 12:26:35,596 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded queries
+2015-06-08 12:26:35,598 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded prepared statement executions
+2015-06-08 12:26:35,598 INFO  [Test worker] - [org.scassandra.http.client.PrimingClient]- Sending {"when":{"query":"select * from people","consistency":["ALL","ANY"]},"then":{"rows":[{"name":"chris"}],"result":"success"}} to url http://localhost:3456/prime-query-single
+2015-06-08 12:26:35,601 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Received prime request PrimeQuerySingle(When(Some(select * from people),None,Some(List(org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.ANY$@10f5431d)),None,None),Then(Some(List(Map(name -> chris))),Some(Success),None,None,None))
+2015-06-08 12:26:35,601 INFO  [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.query.PrimeQueryStore]- Adding prime with criteria PrimeCriteria(select * from people,List(org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.ANY$@10f5431d),false) and prime result Prime(List(Map(name -> chris)),SuccessResult,Map(name -> CqlVarchar),,,None)
+2015-06-08 12:26:35,606 DEBUG [Test worker] - [org.scassandra.http.client.PrimingClient]- Received response from scassandra [{
+  "when": {
+    "query": "select * from people",
+    "consistency": ["ALL", "ANY"],
+    "keyspace": "",
+    "table": ""
+  },
+  "then": {
+    "rows": [{
+      "name": "chris"
+    }],
+    "result": "success",
+    "column_types": {
+      "name": "varchar"
+    }
+  }
+}]
+2015-06-08 12:26:35,606 DEBUG [Test worker] - [org.scassandra.cql.CqlTypeFactory]- Type begins: varchar
+2015-06-08 12:26:35,606 DEBUG [Test worker] - [org.scassandra.cql.CqlTypeFactory]- Type ends: varchar
+2015-06-08 12:26:35,609 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded priming
+2015-06-08 12:26:35,609 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.PrimingServerHttpService]- Return 200
+2015-06-08 12:26:35,616 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded connections
+2015-06-08 12:26:35,619 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded queries
+2015-06-08 12:26:35,622 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-6] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded prepared statement executions
+2015-06-08 12:26:35,625 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Deleting all recorded connections
+2015-06-08 12:26:35,627 INFO  [Test worker] - [org.scassandra.http.client.PrimingClient]- Sending {"when":{"query":"select * from people"},"then":{"result":"read_request_timeout"}} to url http://localhost:3456/prime-query-single
+2015-06-08 12:26:35,630 DEBUG [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.PrimingServerHttpService]- Received prime request PrimeQuerySingle(When(Some(select * from people),None,None,None,None),Then(None,Some(ReadTimeout),None,None,None))
+2015-06-08 12:26:35,632 INFO  [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] - [org.scassandra.server.priming.query.PrimeQueryStore]- Adding prime with criteria PrimeCriteria(select * from people,List(org.scassandra.server.cqlmessages.ANY$@10f5431d, org.scassandra.server.cqlmessages.ONE$@15adb056, org.scassandra.server.cqlmessages.TWO$@23366f17, org.scassandra.server.cqlmessages.THREE$@64ea345d, org.scassandra.server.cqlmessages.QUORUM$@5e3d7e76, org.scassandra.server.cqlmessages.ALL$@266a5ae7, org.scassandra.server.cqlmessages.LOCAL_QUORUM$@36b4c7ea, org.scassandra.server.cqlmessages.EACH_QUORUM$@3c945bd, org.scassandra.server.cqlmessages.SERIAL$@36b2557c, org.scassandra.server.cqlmessages.LOCAL_SERIAL$@427b8c2f, org.scassandra.server.cqlmessages.LOCAL_ONE$@52e0981d),false) and prime result Prime(List(),ReadRequestTimeoutResult(0,1,false),Map(),,,None)
+[INFO] [06/08/2015 12:26:35.634] [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-8] [akka://CassandraServerStub-2345-3456/user/IO-HTTP/listener-0/0] Message [akka.actor.Terminated] from Actor[akka://CassandraServerStub-2345-3456/user/PrimingServer/$a#-1374392970] to Actor[akka://CassandraServerStub-2345-3456/user/IO-HTTP/listener-0/0#-1482617559] was not delivered. [1] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+[INFO] [06/08/2015 12:26:35.634] [CassandraServerStub-2345-3456-akka.actor.default-dispatcher-10] [akka://CassandraServerStub-2345-3456/user/IO-HTTP/listener-0/1] Message [akka.actor.Terminated] from Actor[akka://CassandraServerStub-2345-3456/user/PrimingServer/$a#-1374392970] to Actor[akka://CassandraServerStub-2345-3456/user/IO-HTTP/listener-0/1#1190539095] was not delivered. [2] dead letters encountered. This logging can be turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
+2015-06-08 12:26:35,647 INFO  [Test worker] - [org.scassandra.server.ServerStubRunner]- Server is shut down
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
