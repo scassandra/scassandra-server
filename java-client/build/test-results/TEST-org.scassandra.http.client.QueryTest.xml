@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="org.scassandra.http.client.QueryTest" tests="2" failures="0" errors="0" timestamp="2015-06-08T11:26:30" hostname="desktop" time="0.003">
-  <properties/>
-  <testcase name="testEqualsContract" classname="org.scassandra.http.client.QueryTest" time="0.003"/>
-  <testcase name="consistencyDefaultsToOne" classname="org.scassandra.http.client.QueryTest" time="0.0"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

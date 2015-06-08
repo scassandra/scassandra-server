@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="org.scassandra.http.client.ConnectionTest" tests="1" failures="0" errors="0" timestamp="2015-06-08T11:26:30" hostname="desktop" time="0.038">
-  <properties/>
-  <testcase name="testEqualsContract" classname="org.scassandra.http.client.ConnectionTest" time="0.038"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>
