@@ -18,14 +18,3 @@ For any features you add please make them available in the Java client. All comm
 
 Integration tests for different versions of the DataStax Java Driver are in the java-it-tests folder.## Contribution
 
-The server component is written in Scala and built with SBT.
-
-For any features you add please make them available in the Java client. All communication between the Java Client and the server is over HTTP.
-
-Integration tests for different versions of the DataStax Java Driver are in the java-it-tests folder.## Contribution
-
-The server component is written in Scala and built with SBT.
-
-For any features you add please make them available in the Java client. All communication between the Java Client and the server is over HTTP.
-
-Integration tests for different versions of the DataStax Java Driver are in the java-it-tests folder.
