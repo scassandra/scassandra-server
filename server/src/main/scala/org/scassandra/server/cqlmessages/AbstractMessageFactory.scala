@@ -15,6 +15,8 @@
  */
 package org.scassandra.server.cqlmessages
 
+import akka.util.ByteString
+import org.scassandra.server.cqlmessages.request.QueryRequest
 import org.scassandra.server.cqlmessages.response._
 import org.scassandra.server.cqlmessages.response.UnavailableException
 import org.scassandra.server.cqlmessages.response.QueryBeforeReadyMessage
@@ -37,6 +39,7 @@ abstract class AbstractMessageFactory extends CqlMessageFactory {
 
   val protocolVersion : Byte
   implicit val protocolVersionImp : ProtocolVersion
+  import CqlProtocolHelper._
 
   override def createReadyMessage(stream: Byte): Ready = {
     Ready(stream)
@@ -76,5 +79,17 @@ abstract class AbstractMessageFactory extends CqlMessageFactory {
 
   def createVoidMessage(stream: Byte): VoidResult = {
     VoidResult(stream)
+  }
+
+  override def parseQueryRequest(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): QueryRequest = {
+    val iterator = byteString.iterator
+    val query = CqlProtocolHelper.readLongString(iterator)
+    val consistency = iterator.getShort
+    val flags = iterator.getByte
+    val numberOfVariables = iterator.getShort
+    val variableValues = variableTypes.map (varType => {
+      varType.readValue(iterator, protocolVersionImp)
+    } )
+    QueryRequest(stream, query.getOrElse("Failed to parse Query string"), consistency, flags, variableValues)
   }
 }

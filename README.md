@@ -10,13 +10,13 @@ Stubbed Cassandra runs as a separate process that your application will believe 
 
 For feature requests and bug reports send an email to: Christopher.batey@gmail.com or on twitter: @chbatey
 
-## Contribution
+## Contributing
 
 The server component is written in Scala and built with SBT.
 
 For any features you add please make them available in the Java client. All communication between the Java Client and the server is over HTTP.
 
-Integration tests for different versions of the DataStax Java Driver are in the java-it-tests folder.## Contribution
+Integration tests for different versions of the DataStax Java Driver are in the java-it-tests folder.
 
 Beware that there are deprecation warnings in the integration tests. Don't fix these as I still want to test
 deprecated APIs.

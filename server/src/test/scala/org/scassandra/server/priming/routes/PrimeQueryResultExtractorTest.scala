@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit
 
 import org.apache.cassandra.db.WriteType
 import org.scalatest.{Matchers, FunSuite}
+import org.scassandra.server.cqlmessages.types.CqlText
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.query.{Prime, Then, When, PrimeQuerySingle}
 
@@ -102,5 +103,15 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
     val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
 
     primeResult.result should equal(UnavailableResult(3, 2))
+  }
+
+  test("Should extract variableTypes for prime") {
+    val when = When()
+    val then = Then(None, None, None, variable_types = Some(List(CqlText)))
+    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
+
+    val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+
+    primeResult.variableTypes should equal(List(CqlText))
   }
 }

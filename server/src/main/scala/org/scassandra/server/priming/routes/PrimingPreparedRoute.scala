@@ -49,9 +49,8 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
                 case tm: TypeMismatches => StatusCodes.BadRequest -> tm
                 case _ => StatusCodes.OK
               }
-              case None => {
+              case None =>
                 StatusCodes.BadRequest -> "Must specify either query or queryPattern, not both"
-              }
             }
           }
         }

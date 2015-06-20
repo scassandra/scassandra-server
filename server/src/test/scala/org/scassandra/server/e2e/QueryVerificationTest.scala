@@ -15,52 +15,35 @@
  */
 package org.scassandra.server.e2e
 
-import org.scalatest.concurrent.ScalaFutures
-import dispatch._, Defaults._
-import org.scassandra.server.priming.{Query, ActivityLog, PrimingJsonImplicits}
-import spray.json._
-import org.scassandra.server.AbstractIntegrationTest
 import com.datastax.driver.core.{ConsistencyLevel, SimpleStatement}
+import org.scalatest.concurrent.ScalaFutures
+import org.scassandra.server.AbstractIntegrationTest
+import org.scassandra.server.PrimingHelper._
 import org.scassandra.server.cqlmessages.TWO
+import org.scassandra.server.priming.Query
 
 class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 
-  import PrimingJsonImplicits._
-
   before {
-    val svc = url("http://localhost:8043/prime-query-single").DELETE
-    val response = Http(svc OK as.String)
-    response()
+    clearQueryPrimes()
   }
 
   test("Test clearing of query results") {
-    //todo: clean activity log
-    val queryString: String = "select * from people"
-    session.execute(queryString)
-    val svc: Req = url("http://localhost:8043/query")
-    val delete = svc.DELETE
-    val deleteResponse = Http(delete OK as.String)
-    deleteResponse()
+    session.execute("select * from people")
 
-    val listOfQueriesResponse = Http(svc OK as.String)
-    whenReady(listOfQueriesResponse) { result =>
-      JsonParser(result).convertTo[List[Query]].size should equal(0)
-    }
+    clearRecordedQueries()
+
+    getRecordedQueries() shouldEqual List()
   }
 
   test("Test verification of a single query") {
-    //todo: clean activity log
     val queryString: String = "select * from people"
     val statement = new SimpleStatement(queryString)
     statement.setConsistencyLevel(ConsistencyLevel.TWO)
-    session.execute(queryString)
-    val svc: Req = url("http://localhost:8043/query")
-    val response = Http(svc OK as.String)
 
-    whenReady(response) { result =>
-      val queryList = JsonParser(result).convertTo[List[Query]]
-      println(queryList)
-      queryList.exists(_ == Query(queryString, TWO))
-    }
+    session.execute(statement)
+
+    val queryList = getRecordedQueries()
+    queryList shouldEqual List(Query(queryString, TWO))
   }
 }

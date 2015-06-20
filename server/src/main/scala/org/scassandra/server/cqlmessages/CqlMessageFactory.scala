@@ -16,7 +16,7 @@
 package org.scassandra.server.cqlmessages
 
 import akka.util.ByteString
-import org.scassandra.server.cqlmessages.request.ExecuteRequest
+import org.scassandra.server.cqlmessages.request.{QueryRequest, ExecuteRequest}
 import org.scassandra.server.cqlmessages.response.{QueryBeforeReadyMessage, ReadRequestTimeout, Ready, Rows, SetKeyspace, UnavailableException, VoidResult, WriteRequestTimeout, _}
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.{UnavailableResult, WriteRequestTimeoutResult, ReadRequestTimeoutResult}
@@ -37,4 +37,6 @@ trait CqlMessageFactory {
 
   def parseExecuteRequestWithoutVariables(stream: Byte, byteString: ByteString): ExecuteRequest
   def parseExecuteRequestWithVariables(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): ExecuteRequest
+
+  def parseQueryRequest(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): QueryRequest
 }

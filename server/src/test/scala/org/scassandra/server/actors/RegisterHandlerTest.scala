@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.server
+package org.scassandra.server.actors
 
 import akka.actor.ActorSystem
-import akka.io.Tcp.Write
 import akka.testkit.{TestActorRef, TestProbe, TestKit}
 import akka.util.ByteString
 import org.scalatest.FunSuiteLike
 import org.scalatest.matchers.ShouldMatchers
+import org.scassandra.server.{RegisterHandlerMessages, RegisterHandler}
 import org.scassandra.server.cqlmessages.VersionTwoMessageFactory
 
 class RegisterHandlerTest extends TestKit(ActorSystem("TestSystem")) with FunSuiteLike with ShouldMatchers {
