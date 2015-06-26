@@ -7,15 +7,9 @@ buildscript {
         mavenCentral()
         maven { url "https://oss.sonatype.org/content/groups/public"}
     }
-    dependencies {
-        classpath 'com.github.townsfolk:gradle-release:1.2'
-    }
-}
-apply plugin: 'release'
 
-install.dependsOn shadowJar
-uploadArchives.dependsOn shadowJar
-createReleaseTag.dependsOn uploadArchives
+}
+
 
 buildscript {
     repositories { jcenter() }
@@ -177,5 +171,9 @@ shadowJar {
 
     }
 }
+
+install.dependsOn shadowJar
+uploadArchives.dependsOn shadowJar
+
 
 
