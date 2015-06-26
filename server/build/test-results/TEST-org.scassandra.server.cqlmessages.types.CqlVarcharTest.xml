@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <testsuite 
-errors="0" failures="0" hostname="Christophers-MacBook-Pro.local" name="org.scassandra.server.cqlmessages.types.CqlVarcharTest" tests="3" time="0.014" timestamp="2015-06-26T21:15:40">
+errors="0" failures="0" hostname="Christophers-MacBook-Pro.local" name="org.scassandra.server.cqlmessages.types.CqlVarcharTest" tests="3" time="0.017" timestamp="2015-06-26T21:56:58">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment">
     </property>
@@ -102,13 +102,13 @@ errors="0" failures="0" hostname="Christophers-MacBook-Pro.local" name="org.scas
     <property name="sun.cpu.isalist" value=""> </property>
   </properties>
   <testcase 
-  name="Serialisation of CqlVarchar" classname="org.scassandra.server.cqlmessages.types.CqlVarcharTest" time="0.012">
+  name="Serialisation of CqlVarchar" classname="org.scassandra.server.cqlmessages.types.CqlVarcharTest" time="0.015">
 </testcase>
   <testcase 
-  name="Reading null" classname="org.scassandra.server.cqlmessages.types.CqlVarcharTest" time="0.001">
+  name="Reading null" classname="org.scassandra.server.cqlmessages.types.CqlVarcharTest" time="0.0">
 </testcase>
   <testcase 
-  name="Reading value in collection" classname="org.scassandra.server.cqlmessages.types.CqlVarcharTest" time="0.0">
+  name="Reading value in collection" classname="org.scassandra.server.cqlmessages.types.CqlVarcharTest" time="0.001">
 </testcase>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>

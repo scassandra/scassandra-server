@@ -1,6 +1,5 @@
 dependencies {
     compile project(':java-it-tests:common')
-    compile group: 'org.scassandra', name: 'java-client', version: scassandraVersion
     compile('com.datastax.cassandra:cassandra-driver-core:2.0.+') {
         exclude module: 'log4j'
         exclude module: 'slf4j-log4j12'

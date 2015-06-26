@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <testsuite 
-errors="0" failures="0" hostname="Christophers-MacBook-Pro.local" name="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" tests="9" time="0.269" timestamp="2015-06-26T21:15:40">
+errors="0" failures="0" hostname="Christophers-MacBook-Pro.local" name="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" tests="9" time="0.336" timestamp="2015-06-26T21:56:58">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment">
     </property>
@@ -102,31 +102,31 @@ errors="0" failures="0" hostname="Christophers-MacBook-Pro.local" name="org.scas
     <property name="sun.cpu.isalist" value=""> </property>
   </properties>
   <testcase 
-  name="Retrieving connection activity Should return connection count from ActivityLog for single connection" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.086">
+  name="Retrieving connection activity Should return connection count from ActivityLog for single connection" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.099">
 </testcase>
   <testcase 
   name="Retrieving connection activity Should return connection count from ActivityLog for no connections" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.001">
 </testcase>
   <testcase 
-  name="Retrieving connection activity Should clear connections for a delete" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.155">
+  name="Retrieving connection activity Should clear connections for a delete" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.204">
 </testcase>
   <testcase 
-  name="Retrieving query activity Should return queries from ActivityLog - no queries" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.001">
+  name="Retrieving query activity Should return queries from ActivityLog - no queries" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.002">
 </testcase>
   <testcase 
-  name="Retrieving query activity Should return queries from ActivityLog - single query" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.003">
+  name="Retrieving query activity Should return queries from ActivityLog - single query" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.005">
 </testcase>
   <testcase 
-  name="Retrieving query activity Should clear queries for a delete" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.001">
+  name="Retrieving query activity Should clear queries for a delete" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.002">
 </testcase>
   <testcase 
   name="Primed statement execution Should return prepared statement executions from ActivityLog - no activity" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.003">
 </testcase>
   <testcase 
-  name="Primed statement execution Should return queries from ActivityLog - single query" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.005">
+  name="Primed statement execution Should return queries from ActivityLog - single query" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.008">
 </testcase>
   <testcase 
-  name="Primed statement execution Should clear queries for a delete" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.001">
+  name="Primed statement execution Should clear queries for a delete" classname="org.scassandra.server.priming.routes.ActivityVerificationRouteTest" time="0.002">
 </testcase>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>

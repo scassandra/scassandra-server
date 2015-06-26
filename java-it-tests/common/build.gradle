@@ -1,7 +1,4 @@
 dependencies {
-    compile(group: 'org.scassandra', name: 'java-client', version: scassandraVersion, classifier: 'standalone') {
-        exclude module: 'cassandra-clientutil'
-        exclude module: 'scassandra-server_2.10'
-    }
+    compile project(":java-client")
     compile 'com.google.guava:guava:17.0'
 }

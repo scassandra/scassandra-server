@@ -10,7 +10,7 @@ import org.scassandra.cql.ListType;
 import org.scassandra.cql.PrimitiveType;
 import org.scassandra.http.client.ColumnTypes;
 import org.scassandra.http.client.PrimingRequest;
-import scassandra.org.apache.cassandra.utils.ByteBufferUtil;
+import org.apache.cassandra.utils.ByteBufferUtil;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
