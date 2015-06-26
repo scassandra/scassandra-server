@@ -3,4 +3,6 @@ jdk:
   - oraclejdk8
 scala:
   - 2.11.6
-script: ./gradlew clean check -x signArchives
+
+install: ./gradlew assemble -x signArchives
+script: ./gradlew  check -x signArchives
