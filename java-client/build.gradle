@@ -13,6 +13,8 @@ buildscript {
 }
 apply plugin: 'release'
 
+install.dependsOn shadowJar
+uploadArchives.dependsOn shadowJar
 createReleaseTag.dependsOn uploadArchives
 
 buildscript {
@@ -175,8 +177,5 @@ shadowJar {
 
     }
 }
-
-install.dependsOn shadowJar
-uploadArchives.dependsOn shadowJar
 
 
