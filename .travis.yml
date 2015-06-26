@@ -3,4 +3,4 @@ jdk:
   - oraclejdk8
 scala:
   - 2.11.6
-script: cd server && sbt clean test && cd ../java-client && ./gradlew clean check && cd ../java-it-tests && ./gradlew clean check
+script: ./gradlew clean check 
