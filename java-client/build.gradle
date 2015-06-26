@@ -124,7 +124,7 @@ uploadArchives {
 }
 
 dependencies {
-    compile('org.scassandra:scassandra-server_2.11:0.8.0-SNAPSHOT')
+    compile project(':server')
     compile 'org.scassandra:cql-antlr:0.1.0'
     compile 'org.apache.httpcomponents:httpclient:4.3.3'
     compile 'com.google.code.gson:gson:2.2.4'

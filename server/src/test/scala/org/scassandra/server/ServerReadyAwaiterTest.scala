@@ -22,6 +22,7 @@ import akka.actor.{ActorRef, Props, ActorSystem}
 import akka.pattern.AskTimeoutException
 import scala.concurrent._
 
+// todo re-write this class, bad sleeping :(
 class ServerReadyAwaiterTest extends TestKit(ActorSystem("TestSystem")) with FunSpecLike with Matchers {
 
   import ExecutionContext.Implicits.global

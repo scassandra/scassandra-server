@@ -1,0 +1,6 @@
+include 'server'
+include 'java-client'
+include 'java-it-tests'
+include 'java-it-tests:common'
+include 'java-it-tests:driver20'
+include 'java-it-tests:driver21'

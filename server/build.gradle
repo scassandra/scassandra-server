@@ -1,0 +1,141 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven { url "https://oss.sonatype.org/content/groups/public"}
+    }
+    dependencies {
+        classpath "com.github.maiflai:gradle-scalatest:0.7"
+        classpath 'com.github.townsfolk:gradle-release:1.2'
+    }
+}
+
+apply plugin: "com.github.maiflai.scalatest"
+apply plugin: 'scala'
+apply plugin: 'signing'
+apply plugin: 'maven'
+apply plugin: 'release'
+
+createReleaseTag.dependsOn uploadArchives
+
+group 'org.scassandra'
+jar.baseName = 'scassandra-server_2.11'
+
+if (!project.hasProperty("ossrhUsername")) {
+    ext.ossrhUsername = "dummy"
+}
+if (!project.hasProperty("ossrhPassword")) {
+    ext.ossrhPassword = "dummy"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
+    maven {
+        url "https://oss.sonatype.org/content/groups/staging"
+    }
+}
+
+task sourceJar(type: Jar) {
+    classifier = 'sources'
+    baseName = 'scassandra-server_2.11'
+    from sourceSets.main.allScala
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    baseName = 'scassandra-server'
+    excludes = ['**/**']
+    from 'build/docs/javadoc'
+}
+
+artifacts {
+    archives jar
+    archives javadocJar
+    archives sourceJar
+}
+
+signing {
+    sign configurations.archives
+}
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+            pom.artifactId = 'scassandra-server_2.11'
+
+            pom.project {
+                name 'Scassandra Server'
+                packaging 'jar'
+                // optionally artifactId can be defined here
+                description 'Scassandra server'
+                url 'https://github.com/scassandra/'
+
+                scm {
+                    connection 'scm:git:git@github.com:scassandra/scassandra-java-client.git'
+                    developerConnection 'git@github.com:scassandra/scassandra-java-client.git'
+                    url 'https://github.com/scassandra/scassandra-java-client'
+                }
+
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'chbatey'
+                        name 'Christopher Batey'
+                        email 'christopher.batey@gmail.com'
+                    }
+                    developer {
+                        id 'tepafoo'
+                        name 'Dogan Narinc'
+                        email 'tepafoo@gmail.com'
+                    }
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    compile 'org.scala-lang:scala-library:2.11.7'
+    compile  "ch.qos.logback:logback-classic:1.0.13"
+    compile  "com.typesafe.akka:akka-actor_2.11:2.3.9"
+    compile  "com.typesafe.akka:akka-remote_2.11:2.3.9"
+    compile  "io.spray:spray-json_2.11:1.3.2"
+    compile  "io.spray:spray-can_2.11:1.3.3"
+    compile  "io.spray:spray-routing_2.11:1.3.3"
+    compile  "com.typesafe.scala-logging:scala-logging_2.11:3.1.0"
+    compile  "com.google.guava:guava:17.0"
+    compile  "org.apache.cassandra:cassandra-all:2.1.2" //).exclude("org.antlr", "stringtemplate")
+    compile  "org.scassandra:cql-antlr:0.1.0"
+
+    testCompile "com.typesafe.akka:akka-testkit_2.11:2.3.9"
+    testCompile "io.spray:spray-testkit_2.11:1.3.3"
+    testCompile "com.datastax.cassandra:cassandra-driver-core:2.0.10" //exclude("com.google.guava", "guava"),
+    testCompile "net.databinder.dispatch:dispatch-core_2.11:0.11.0"
+    testCompile "org.scalatest:scalatest_2.11:2.2.3"
+    testCompile "org.mockito:mockito-core:1.9.5"
+    testRuntime 'org.pegdown:pegdown:1.1.0'
+}
+
+test {
+    maxParallelForks = 1
+}

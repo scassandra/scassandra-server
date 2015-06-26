@@ -2,6 +2,8 @@ package org.scassandra.server.actors
 
 import akka.actor.ActorSystem
 import akka.testkit.{TestActorRef, TestProbe, TestKit}
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 import org.scalatest.{FunSuiteLike, Matchers}
 import org.scassandra.server.cqlmessages.VersionTwoMessageFactory
 

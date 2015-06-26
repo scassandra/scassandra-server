@@ -19,7 +19,9 @@ import akka.actor.ActorSystem
 import akka.io.Tcp.{Received, Write}
 import akka.testkit._
 import akka.util.ByteString
+import org.junit.runner.RunWith
 import org.scalatest._
+import org.scalatest.junit.JUnitRunner
 import org.scassandra.server.actors.OptionsHandlerMessages.OptionsMessage
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.response._
