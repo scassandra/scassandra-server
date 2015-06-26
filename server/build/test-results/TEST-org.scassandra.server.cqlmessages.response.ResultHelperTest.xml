@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <testsuite 
-errors="0" failures="0" hostname="Christophers-MacBook-Pro.local" name="org.scassandra.server.cqlmessages.response.ResultHelperTest" tests="1" time="0.047" timestamp="2015-06-26T21:05:07">
+errors="0" failures="0" hostname="Christophers-MacBook-Pro.local" name="org.scassandra.server.cqlmessages.response.ResultHelperTest" tests="1" time="0.066" timestamp="2015-06-26T21:15:40">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment">
     </property>
@@ -102,7 +102,7 @@ errors="0" failures="0" hostname="Christophers-MacBook-Pro.local" name="org.scas
     <property name="sun.cpu.isalist" value=""> </property>
   </properties>
   <testcase 
-  name="Serialising map type" classname="org.scassandra.server.cqlmessages.response.ResultHelperTest" time="0.037">
+  name="Serialising map type" classname="org.scassandra.server.cqlmessages.response.ResultHelperTest" time="0.053">
 </testcase>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
