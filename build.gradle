@@ -1,11 +1,8 @@
-apply plugin: 'java'
-apply plugin: 'scala'
-
 plugins {
     id 'net.researchgate.release' version '2.1.2'
 }
-
-//createReleaseTag.dependsOn uploadArchives
+apply plugin: 'java'
+apply plugin: 'scala'
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.4'
