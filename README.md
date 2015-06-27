@@ -18,3 +18,5 @@ For any features you add please make them available in the Java client. All comm
 
 Integration tests for different versions of the DataStax Java Driver are in the java-it-tests folder.## Contribution
 
+Beware that there are deprecation warnings in the integration tests. Don't fix these as I still want to test
+deprecated APIs.
