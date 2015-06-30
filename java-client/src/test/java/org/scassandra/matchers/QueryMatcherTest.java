@@ -15,12 +15,14 @@
  */
 package org.scassandra.matchers;
 
+import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.scassandra.http.client.Query;
 
 import java.util.Arrays;
 
 import static org.junit.Assert.assertTrue;
+import static org.scassandra.cql.PrimitiveType.*;
 
 public class QueryMatcherTest {
 
@@ -38,6 +40,26 @@ public class QueryMatcherTest {
 
         boolean matched = underTest.matchesSafely(Arrays.asList(queryWithSameText));
 
+        assertTrue(matched);
+    }
+
+    @Test
+    public void matchingStringVariables() throws Exception {
+        //given
+        Query actualExecution = Query.builder(TEXT, ASCII, VARCHAR)
+                .withQuery("same query")
+                .withVariables("one", "two", "three")
+                .build();
+        Query expectedExecution = Query.builder()
+                .withQuery("same query")
+                .withVariables("one", "two", "three")
+                .build();
+        QueryMatcher underTest = new QueryMatcher(expectedExecution);
+
+        //when
+        boolean matched = underTest.matchesSafely(Lists.newArrayList(actualExecution));
+
+        //then
         assertTrue(matched);
     }
 }

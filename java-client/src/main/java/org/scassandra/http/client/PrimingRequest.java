@@ -124,11 +124,6 @@ public final class PrimingRequest {
         }
 
         public PrimingRequest build() {
-
-            if (PrimeType.QUERY.equals(this.type) && this.variableTypesMeta != null) {
-                throw new IllegalStateException("Variable types only applicable for a prepared statement prime. Not a query prime");
-            }
-
             if (query != null && queryPattern != null) {
                 throw new IllegalStateException("Can't specify query and queryPattern");
             }

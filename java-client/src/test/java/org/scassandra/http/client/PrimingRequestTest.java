@@ -23,21 +23,6 @@ import static org.junit.Assert.fail;
 
 public class PrimingRequestTest {
     @Test
-    public void throwsIllegalStateExceptionIfVariablesTypesSetForQueryPrime() {
-        //given
-        //when
-        try {
-            PrimingRequest.queryBuilder()
-                    .withVariableTypes(ColumnTypes.Bigint)
-                    .build();
-            fail("Expected illegal state exception");
-        } catch (IllegalStateException e) {
-            //then
-            assertEquals("Variable types only applicable for a prepared statement prime. Not a query prime", e.getMessage());
-        }
-    }
-
-    @Test
     public void throwsIllegalStateExceptionIfNoQuerySpecified() {
         //given
         //when
