@@ -20,6 +20,7 @@ import java.net.Socket
 import java.util
 
 import akka.util.ByteString
+import org.scassandra.server.actors.MessageHelper
 import org.scassandra.server.cqlmessages.OpCodes
 import org.scassandra.server.cqlmessages.response.ResultKinds
 

@@ -34,17 +34,17 @@ object StartupRequest extends Request(StartupHeader) {
 
     val body = CqlProtocolHelper.serializeStringMap(options)
 
-    ByteString((header ++ CqlProtocolHelper.serializeInt(body.size) ++ body))
+    ByteString(header ++ CqlProtocolHelper.serializeInt(body.length) ++ body)
   }
 }
 
-case class QueryRequest(stream: Byte, query: String, val consistency : Short = 0x0001, val flags : Byte = 0x00) extends Request(QueryHeader(stream)) {
+case class QueryRequest(stream: Byte, query: String, consistency : Short = 0x0001, flags : Byte = 0x00, parameters: List[Any] = List()) extends Request(QueryHeader(stream)) {
   override def serialize() = {
     val body =  CqlProtocolHelper.serializeLongString(query) ++
       CqlProtocolHelper.serializeShort(consistency) ++
       CqlProtocolHelper.serializeByte(flags)
 
-    ByteString(header.serialize() ++ CqlProtocolHelper.serializeInt(body.size) ++ body)
+    ByteString(header.serialize() ++ CqlProtocolHelper.serializeInt(body.length) ++ body)
   }
 }
 
@@ -52,7 +52,7 @@ case class PrepareRequest(protocolVersion: Byte, stream: Byte, query: String) ex
   def serialize(): ByteString = {
     val headerBytes: Array[Byte] = header.serialize()
     val body: Array[Byte] = CqlProtocolHelper.serializeLongString(query)
-    ByteString(headerBytes ++ CqlProtocolHelper.serializeInt(body.size) ++ body)
+    ByteString(headerBytes ++ CqlProtocolHelper.serializeInt(body.length) ++ body)
   }
 }
 

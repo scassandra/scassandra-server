@@ -107,9 +107,8 @@ case class ExecuteRequestV2(protocolVersion: Byte, stream: Byte, id: Int, consis
     if (variables.size != variableTypes.size) throw new IllegalArgumentException("Must include variable type for every variable")
 
     variableTypes zip variables foreach  {
-      case (varType, varValue) => {
+      case (varType, varValue) =>
         bs.putBytes(varType.writeValue(varValue))
-      }
     }
 
     val body = bs.result()

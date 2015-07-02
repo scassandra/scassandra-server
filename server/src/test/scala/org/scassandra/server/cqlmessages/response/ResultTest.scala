@@ -56,8 +56,8 @@ class ResultTest extends FunSuite with Matchers {
     rows.tableName should equal("people")
     rows.rows.length should equal(1)
     rows.columnTypes should equal(Map("id" -> CqlVarchar, "first_name" -> CqlVarchar))
-    rows.rows(0).columns("first_name") should equal("chris")
-    rows.rows(0).columns("id") should equal("a06d0900-0054-11e3-81a5-672ef88f159d")
+    rows.rows.head.columns("first_name") should equal("chris")
+    rows.rows.head.columns("id") should equal("a06d0900-0054-11e3-81a5-672ef88f159d")
   }
 
   test("SetKeyspace message from real Cassandra") {

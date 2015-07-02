@@ -15,20 +15,29 @@
  */
 package org.scassandra.server.priming.query
 
-import org.scassandra.server.cqlmessages.{Consistency}
+import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.priming.ResultJsonRepresentation
 import org.scassandra.server.cqlmessages.types.ColumnType
 
 /*
   These case classes are for parsing the incoming JSON for /prime-query-single
+
+  Really variable_types make more sense in the When but for reason I put them in the
+  Then for prepared statements and I didn't want the two to be inconsistent
  */
 case class PrimeQuerySingle(when: When, thenDo: Then)
 
-case class When(query: Option[String] = None, queryPattern: Option[String] = None, consistency: Option[List[Consistency]] = None, keyspace: Option[String] = None, table: Option[String] = None)
+case class When(query: Option[String] = None,
+                queryPattern: Option[String] = None,
+                consistency: Option[List[Consistency]] = None,
+                keyspace: Option[String] = None,
+                table: Option[String] = None
+                 )
 
 case class Then(rows: Option[List[Map[String, Any]]],
                 result: Option[ResultJsonRepresentation] = None,
                 column_types: Option[Map[String, ColumnType[_]]] = None,
                 fixedDelay: Option[Long] = None,
-                config: Option[Map[String, String]] = None)
+                config: Option[Map[String, String]] = None,
+                variable_types: Option[List[ColumnType[_]]] = None)
 

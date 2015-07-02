@@ -24,7 +24,7 @@ case object CqlText extends ColumnType[String](0x000A, "text") {
      CqlVarchar.readValue(byteIterator, protocolVersion)
    }
 
-   override def writeValue(value : Any) = {
+   override def writeValue(value : Any): Array[Byte] = {
      CqlVarchar.writeValue(value)
    }
 

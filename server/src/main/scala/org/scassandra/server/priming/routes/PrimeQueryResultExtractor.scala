@@ -49,6 +49,7 @@ object PrimeQueryResultExtractor extends LazyLogging {
     val result = thenDo.result.getOrElse(Success)
     val fixedDelay = primeRequest.thenDo.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
     val primeResult: PrimeResult = convertToPrimeResult(config, result)
+    val variableTypes: List[ColumnType[_]] = then.variable_types.getOrElse(List())
 
     logger.trace("Column types " + primeRequest.thenDo.column_types)
     val columnTypes: Map[String, ColumnType[_]] = Defaulter.defaultColumnTypesToVarchar(primeRequest.thenDo.column_types, resultsAsList)
@@ -57,7 +58,7 @@ object PrimeQueryResultExtractor extends LazyLogging {
     val keyspace = primeRequest.when.keyspace.getOrElse("")
     val table = primeRequest.when.table.getOrElse("")
 
-    Prime(resultsAsList, primeResult, columnTypes, keyspace, table, fixedDelay)
+    Prime(resultsAsList, primeResult, columnTypes, keyspace, table, fixedDelay, variableTypes)
   }
 
 

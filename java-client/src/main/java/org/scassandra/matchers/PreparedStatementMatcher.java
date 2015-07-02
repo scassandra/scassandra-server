@@ -16,7 +16,6 @@
 package org.scassandra.matchers;
 
 import org.hamcrest.Description;
-import org.hamcrest.TypeSafeMatcher;
 import org.scassandra.cql.CqlType;
 import org.scassandra.http.client.PreparedStatementExecution;
 import org.slf4j.Logger;
@@ -24,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-public class PreparedStatementMatcher extends TypeSafeMatcher<List<PreparedStatementExecution>> {
+public class PreparedStatementMatcher extends ScassandraMatcher<List<PreparedStatementExecution>, PreparedStatementExecution> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PreparedStatementMatcher.class);
 
@@ -49,38 +48,14 @@ public class PreparedStatementMatcher extends TypeSafeMatcher<List<PreparedState
         description.appendText("Expected prepared statement " + expectedPreparedStatementExecution + " to be executed");
     }
 
-    @Override
-    protected boolean matchesSafely(List<PreparedStatementExecution> queries) {
-        for (int i = 0; i < queries.size(); i++) {
-            PreparedStatementExecution actualPreparedStatementExecution = queries.get(i);
-            try {
-                if (doesPreparedStatementMatch(actualPreparedStatementExecution)) {
-                    return true;
-                }
-            } catch (IllegalArgumentException e) {
-                // if it is the last one let this out
-                if (i == queries.size() - 1) {
-                    throw e;
-                } else {
-                    LOGGER.info("Found prepared statement execution that didn't match: {}, reason: {}", actualPreparedStatementExecution, e.getMessage());
-                }
-            }
-        }
-        return false;
-    }
-
     /*
     The server sends back all floats and doubles as strings to preserve accuracy so we convert the
     actual variable to the expected variables type
      */
-    private boolean doesPreparedStatementMatch(PreparedStatementExecution actualPreparedStatementExecution) {
-
+    @Override
+    protected boolean match(PreparedStatementExecution actualPreparedStatementExecution) {
         List<CqlType> variableTypes = actualPreparedStatementExecution.getVariableTypes();
         List<Object> actualVariables = actualPreparedStatementExecution.getVariables();
-        if (variableTypes.size() != actualVariables.size()) {
-            throw new IllegalArgumentException(String.format("Server has returned a different number of variables to variable types: variables %s variableTypes %s", actualVariables, variableTypes));
-        }
-
 
         if (!actualPreparedStatementExecution.getConsistency().equals(expectedPreparedStatementExecution.getConsistency()))
             return false;
@@ -88,19 +63,6 @@ public class PreparedStatementMatcher extends TypeSafeMatcher<List<PreparedState
             return false;
         List<Object> expectedVariables = expectedPreparedStatementExecution.getVariables();
 
-        if (expectedVariables.size() != actualVariables.size()) {
-            return false;
-        }
-
-
-        for (int index = 0; index < expectedVariables.size(); index++) {
-
-            Object expectedVariable = expectedVariables.get(index);
-            Object actualVariable = actualVariables.get(index);
-            CqlType columnType = variableTypes.get(index);
-            if (!columnType.equals(expectedVariable, actualVariable)) return false;
-
-        }
-        return true;
+        return checkVariables(expectedVariables, variableTypes, actualVariables);
     }
 }

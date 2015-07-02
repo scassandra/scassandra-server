@@ -18,7 +18,6 @@ package org.scassandra.http.client;
 import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
 import org.scassandra.cql.CqlType;
-import org.scassandra.server.cqlmessages.types.CqlText;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,7 +27,7 @@ public final class PreparedStatementExecution {
     private final String preparedStatementText;
     private final String consistency;
     private final List<Object> variables;
-    private List<CqlType> variableTypes;
+    private final List<CqlType> variableTypes;
 
     private PreparedStatementExecution(String preparedStatementText, String consistency, List<Object> variables, List<CqlType> variableTypes) {
         this.preparedStatementText = preparedStatementText;

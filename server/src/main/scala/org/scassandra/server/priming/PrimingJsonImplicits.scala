@@ -111,11 +111,11 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
     }
   }
 
-  implicit val impThen = jsonFormat5(Then)
+  implicit val impThen = jsonFormat6(Then)
   implicit val impWhen = jsonFormat5(When)
   implicit val impPrimeQueryResult = jsonFormat(PrimeQuerySingle, "when", "then")
   implicit val impConnection = jsonFormat1(Connection)
-  implicit val impQuery = jsonFormat2(Query)
+  implicit val impQuery = jsonFormat4(Query)
   implicit val impPrimeCriteria = jsonFormat3(PrimeCriteria)
   implicit val impConflictingPrimes = jsonFormat1(ConflictingPrimes)
   implicit val impTypeMismatch = jsonFormat3(TypeMismatch)

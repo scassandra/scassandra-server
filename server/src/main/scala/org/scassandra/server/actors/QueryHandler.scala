@@ -16,6 +16,7 @@
 package org.scassandra.server.actors
 
 import akka.actor.{ActorLogging, Actor, ActorRef}
+import org.scassandra.server.cqlmessages.types.CqlText
 import org.scassandra.server.cqlmessages.{Consistency, CqlMessageFactory, CqlProtocolHelper}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.query.{Prime, PrimeMatch, PrimeQueryStore}
@@ -35,12 +36,14 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
       iterator.getBytes(bodyAsBytes)
       val queryText = new String(bodyAsBytes)
       val consistency = Consistency.fromCode(iterator.getShort)
-      log.info(s"Incoming query: $queryText at consistency: $consistency")
-      activityLog.recordQuery(queryText, consistency)
+      val flags = iterator.getByte
+      log.info("Query flags {}", flags)
+
       if (queryText.startsWith("use ")) {
         val keyspaceName: String = queryText.substring(4, queryLength)
         log.debug(s"Use keyspace $keyspaceName")
         sendMessage(None, tcpConnection, msgFactory.createSetKeyspaceMessage(keyspaceName, stream))
+        activityLog.recordQuery(queryText, consistency)
       } else {
         val primeForIncomingQuery: Option[Prime] = primeQueryStore.get(PrimeMatch(queryText, consistency))
         primeForIncomingQuery match {
@@ -57,11 +60,16 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
                 msgFactory.createWriteTimeoutMessage(stream, consistency, result)
             }
             sendMessage(prime.fixedDelay, tcpConnection, message)
+            val queryRequest = msgFactory.parseQueryRequest(stream, queryBody, prime.variableTypes)
+            log.info(s"Parsed query request $queryRequest")
+            activityLog.recordQuery(queryRequest.query, consistency, queryRequest.parameters, prime.variableTypes)
           case None =>
             log.info(s"No prime found for $queryText")
             sendMessage(None, tcpConnection, msgFactory.createEmptyRowsMessage(stream))
+            activityLog.recordQuery(queryText, consistency)
         }
       }
+      log.info(s"Incoming query: $queryText at consistency: $consistency")
   }
 
   private def sendMessage(delay: Option[FiniteDuration], receiver: ActorRef, message: Any) = {
@@ -72,5 +80,20 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
         context.system.scheduler.scheduleOnce(duration, receiver, message)(context.system.dispatcher)
     }
   }
-
 }
+
+
+object QueryFlagParser {
+  def hasFlag(flag : Byte, value : Byte) = {
+    (value & flag) == flag
+  }
+}
+
+object QueryFlags {
+  val Values : Byte = (1 << 0).toByte
+  val SkipMetadata : Byte = (1 << 1).toByte
+  val PageSize : Byte = (1 << 3).toByte
+  val PagingState : Byte = (1 << 4).toByte
+  val SerialConsistency : Byte = (1 << 5).toByte
+}
+

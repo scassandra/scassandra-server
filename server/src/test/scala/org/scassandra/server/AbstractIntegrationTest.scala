@@ -24,12 +24,13 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSuite, Matchers}
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
 import org.scassandra.server.priming.query.{PrimeQuerySingle, Then, When}
-import org.scassandra.server.priming.{PreparedStatementExecution, ResultJsonRepresentation, Success}
+import org.scassandra.server.priming.{Query, PreparedStatementExecution, ResultJsonRepresentation, Success}
 import spray.json._
 
 object PrimingHelper {
 
   import PrimingJsonImplicitsForTest._
+  val DefaultHost = "http://localhost:8043/"
 
   def primeQuery(when: When, rows: List[Map[String, Any]], result: ResultJsonRepresentation = Success, columnTypes: Map[String, ColumnType[_]] = Map()): String = {
     primeQuery(when, Then(Some(rows), Some(result), Some(columnTypes)))
@@ -38,7 +39,7 @@ object PrimingHelper {
   def primeQuery(when: When, thenDo: Then) : String = {
     val prime = PrimeQuerySingle(when, thenDo).toJson
     println("Sending JSON: " + prime.toString)
-    val svc = url("http://localhost:8043/prime-query-single") <<
+    val svc = url(s"${DefaultHost}prime-query-single") <<
       prime.toString() <:<
       Map("Content-Type" -> "application/json")
 
@@ -49,7 +50,7 @@ object PrimingHelper {
   def primePreparedStatement(query: WhenPreparedSingle, thenDo: ThenPreparedSingle) = {
     val prime = PrimePreparedSingle(query, thenDo).toJson
     println("Sending JSON: " + prime.toString)
-    val svc = url("http://localhost:8043/prime-prepared-single") <<
+    val svc = url(s"${DefaultHost}prime-prepared-single") <<
       prime.toString <:<
       Map("Content-Type" -> "application/json")
 
@@ -58,11 +59,29 @@ object PrimingHelper {
   }
 
   def getRecordedPreparedStatements() = {
-    val svc = url("http://localhost:8043/prepared-statement-execution")
+    val svc = url(s"${DefaultHost}prepared-statement-execution")
     val response = Http(svc OK as.String)
     val body: String = response()
     println("Recorded prepared statement executions:"  + body)
     JsonParser(body).convertTo[List[PreparedStatementExecution]]
+  }
+
+  def getRecordedQueries(): List[Query] = {
+    val svc = url(s"${DefaultHost}query")
+    val response = Http(svc OK as.String)
+    val body: String = response()
+    println("Recorded queries executions:"  + body)
+    JsonParser(body).convertTo[List[Query]]
+  }
+
+  def clearQueryPrimes(): String = {
+    val svc = url(s"${DefaultHost}prime-query-single").DELETE
+    Http(svc OK as.String)(dispatch.Defaults.executor)()
+  }
+
+  def clearRecordedQueries(): String = {
+    val svc = url(s"${DefaultHost}query").DELETE
+    Http(svc OK as.String)(dispatch.Defaults.executor)()
   }
 }
 

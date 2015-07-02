@@ -94,7 +94,8 @@ case class Prime( rows: List[Map[String, Any]] = List(),
                   columnTypes: Map[String, ColumnType[_]] = Map(),
                   keyspace: String = "",
                   table: String = "",
-                  fixedDelay: Option[FiniteDuration] = None
+                  fixedDelay: Option[FiniteDuration] = None,
+                  variableTypes: List[ColumnType[_]] = List()
                  )
 
 object PrimeQueryStore {
