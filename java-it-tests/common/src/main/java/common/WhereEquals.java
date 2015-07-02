@@ -1,10 +1,10 @@
 package common;
 
-public class WhereEquals {
+public class WhereEquals<T> {
     private String field;
-    private String value;
+    private T value;
 
-    public WhereEquals(String field, String value) {
+    public WhereEquals(String field, T value) {
         this.field = field;
         this.value = value;
     }
@@ -13,7 +13,7 @@ public class WhereEquals {
         return field;
     }
 
-    public String getValue() {
+    public T getValue() {
         return value;
     }
 }

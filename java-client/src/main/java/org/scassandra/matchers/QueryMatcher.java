@@ -16,24 +16,37 @@
 package org.scassandra.matchers;
 
 import org.hamcrest.Description;
-import org.hamcrest.TypeSafeMatcher;
+import org.scassandra.cql.CqlType;
 import org.scassandra.http.client.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-class QueryMatcher extends TypeSafeMatcher<List<Query>> {
+class QueryMatcher extends ScassandraMatcher<List<Query>, Query> {
 
-    private Query query;
+    private static final Logger LOGGER = LoggerFactory.getLogger(QueryMatcher.class);
 
-    public QueryMatcher(Query query) {
-        if (query == null) throw new IllegalArgumentException("null query");
-        this.query = query;
+    private Query expectedQuery;
+
+    public  QueryMatcher(Query expectedQuery) {
+        if (expectedQuery == null) throw new IllegalArgumentException("null query");
+        this.expectedQuery = expectedQuery;
     }
 
     @Override
-    protected boolean matchesSafely(List<Query> queries) {
-        return queries.contains(this.query);
+    protected boolean match(Query actualQuery) {
+        if (!actualQuery.getConsistency().equals(expectedQuery.getConsistency()))
+            return false;
+        if (!actualQuery.getQuery().equals(expectedQuery.getQuery()))
+            return false;
+        List<Object> expectedVariables = expectedQuery.getVariables();
+
+        List<CqlType> variableTypes = actualQuery.getVariableTypes();
+        List<Object> actualVariables = actualQuery.getVariables();
+        return checkVariables(expectedVariables, variableTypes, actualVariables);
     }
+
 
     @Override
     public void describeMismatchSafely(List<Query> actual, Description description) {
@@ -45,6 +58,6 @@ class QueryMatcher extends TypeSafeMatcher<List<Query>> {
 
     @Override
     public void describeTo(Description description) {
-        description.appendText("Expected query " + query + " to be executed");
+        description.appendText("Expected query " + expectedQuery + " to be executed");
     }
 }

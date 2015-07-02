@@ -28,6 +28,7 @@ import org.scassandra.server.priming.routes.Version
 import spray.httpx.SprayJsonSupport
 import spray.json._
 
+//todo extend the prod one and override the differences
 object PrimingJsonImplicitsForTest extends DefaultJsonProtocol with SprayJsonSupport {
 
   implicit object ConsistencyJsonFormat extends RootJsonFormat[Consistency] {
@@ -97,11 +98,11 @@ object PrimingJsonImplicitsForTest extends DefaultJsonProtocol with SprayJsonSup
     }
   }
 
-  implicit val impThen = jsonFormat5(Then)
+  implicit val impThen = jsonFormat6(Then)
   implicit val impWhen = jsonFormat5(When)
   implicit val impPrimeQueryResult = jsonFormat2(PrimeQuerySingle)
   implicit val impConnection = jsonFormat1(Connection)
-  implicit val impQuery = jsonFormat2(Query)
+  implicit val impQuery = jsonFormat4(Query)
   implicit val impPrimeCriteria = jsonFormat3(PrimeCriteria)
   implicit val impConflictingPrimes = jsonFormat1(ConflictingPrimes)
   implicit val impTypeMismatch = jsonFormat3(TypeMismatch)

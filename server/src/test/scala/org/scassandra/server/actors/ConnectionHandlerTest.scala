@@ -26,7 +26,7 @@ import org.scassandra.server.actors.OptionsHandlerMessages.OptionsMessage
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.response._
 import org.scassandra.server.priming.QueryHandlerMessages.Query
-import org.scassandra.server.{MessageHelper, RegisterHandlerMessages}
+import org.scassandra.server.RegisterHandlerMessages
 
 class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
 

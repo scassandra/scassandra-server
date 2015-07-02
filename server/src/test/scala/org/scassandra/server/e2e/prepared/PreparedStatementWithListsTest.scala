@@ -25,6 +25,7 @@ import dispatch.Defaults._
 import dispatch._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
+import org.scassandra.server.PrimingHelper.getRecordedPreparedStatements
 import org.scassandra.server.cqlmessages.types._
 import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle}
 import org.scassandra.server.{AbstractIntegrationTest, PrimingHelper}
@@ -58,7 +59,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val result = session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
     executions(0).variables(1) should equal(List("one", "two", "three"))
@@ -81,7 +82,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
     executions(0).variables(1) should equal(List("one", "two", "three"))
@@ -104,7 +105,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
     executions(0).variables(1) should equal(List("one", "two", "three"))
@@ -127,7 +128,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
     executions(0).variables(1) should equal(List(1l, 2l, 3l))
@@ -150,7 +151,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(1) should equal(List("0x0102030405"))
   }
@@ -172,7 +173,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
     executions(0).variables(1) should equal(List(true, false
@@ -196,7 +197,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
     executions(0).variables(1) should equal(List("0.1", "0.2"))
@@ -219,7 +220,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
     executions(0).variables(1) should equal(List("0.1", "0.2"))
@@ -243,7 +244,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
     executions(0).variables(1) should equal(List("0.1", "0.2"))
@@ -267,7 +268,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
     executions(0).variables(1) should equal(List(localhost.getHostAddress))
@@ -290,7 +291,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
     executions(0).variables(1) should equal(List(1,2,3,4))
@@ -314,7 +315,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
     executions(0).variables(1) should equal(List(now.getTime))
@@ -338,7 +339,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
     executions(0).variables(1) should equal(List(timeuuid.toString, timeuuid.toString))
@@ -362,7 +363,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
     executions(0).variables(1) should equal(List(uuid.toString, uuid.toString))
@@ -386,7 +387,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     session.execute(boundStatement)
 
     // then
-    val executions = PrimingHelper.getRecordedPreparedStatements()
+    val executions = getRecordedPreparedStatements()
     executions.size should equal(1)
     executions(0).variables(0) should equal(BigDecimal(id.toString))
     executions(0).variables(1) should equal(List(BigDecimal("1234"), BigDecimal("1234")))

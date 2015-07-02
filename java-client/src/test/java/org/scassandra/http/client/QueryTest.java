@@ -24,7 +24,7 @@ public class QueryTest {
 
     @Test
     public void testEqualsContract() {
-        EqualsVerifier.forClass(Query.class).verify();
+        EqualsVerifier.forClass(Query.class).allFieldsShouldBeUsed().verify();
     }
 
     @Test

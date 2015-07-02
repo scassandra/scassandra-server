@@ -24,8 +24,8 @@ class ActivityLog extends LazyLogging {
   var queries : List[Query] = List()
   var preparedStatementExecutions : List[PreparedStatementExecution] = List()
 
-  def recordQuery(query: String, consistency: Consistency) = {
-    queries = queries ::: Query(query, consistency) :: Nil
+  def recordQuery(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[ColumnType[_]] = List()) = {
+    queries = queries ::: Query(query, consistency, variables, variableTypes) :: Nil
   }
 
   def recordConnection() = {
@@ -64,6 +64,6 @@ class ActivityLog extends LazyLogging {
   }
 }
 
-case class Query(query: String, consistency: Consistency)
+case class Query(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[ColumnType[_]] = List())
 case class Connection(result: String = "success")
 case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[ColumnType[_]])

@@ -16,7 +16,7 @@
 package org.scassandra.server.priming
 
 import org.scalatest.{BeforeAndAfter, Matchers, FunSuite}
-import org.scassandra.server.cqlmessages.types.{CqlBigint, CqlAscii}
+import org.scassandra.server.cqlmessages.types.{CqlText, CqlBigint, CqlAscii}
 import org.scassandra.server.cqlmessages.{TWO, ONE}
 
 class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
@@ -52,8 +52,8 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
     val query: String = "select * from people"
     underTest.recordQuery(query, ONE)
     underTest.retrieveQueries().size should equal(1)
-    underTest.retrieveQueries()(0).query should equal(query)
-    underTest.retrieveQueries()(0).consistency should equal(ONE)
+    underTest.retrieveQueries().head.query should equal(query)
+    underTest.retrieveQueries().head.consistency should equal(ONE)
   }
   
   test("Store primed statement and retrieve primed statement") {
@@ -67,7 +67,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
     val preparedStatementRecord = underTest.retrievePreparedStatementExecutions()
 
     preparedStatementRecord.size should equal(1)
-    preparedStatementRecord(0) should equal(PreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes))
+    preparedStatementRecord.head should equal(PreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes))
   }
 
   test("Clear prepared statement activity log") {
@@ -75,4 +75,11 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
     underTest.clearPreparedStatementExecutions()
     underTest.retrievePreparedStatementExecutions().size should equal(0)
   }
+  
+  test("Records query parameters") {
+    underTest.recordQuery("query", ONE, List("Hello"), List(CqlText))
+
+    underTest.retrieveQueries() should equal(List(Query("query", ONE, List("Hello"), List(CqlText))))
+  }
+
 }

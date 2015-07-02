@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.server
+package org.scassandra.server.actors
 
 import akka.util.ByteString
 import org.scassandra.server.cqlmessages._
@@ -26,15 +26,18 @@ object MessageHelper {
 
   import CqlProtocolHelper._
 
-  def createQueryMessage(queryString : String, stream : Byte = ResponseHeader.DefaultStreamId, consistency: Consistency = ONE, protocolVersion : Byte = ProtocolVersion.ClientProtocolVersionTwo) : List[Byte] = {
-    val bodyLength = serializeInt(queryString.size + 4 + 2 + 1)
+  def createQueryMessage(queryString : String, stream : Byte = ResponseHeader.DefaultStreamId,
+                         consistency: Consistency = ONE,
+                         protocolVersion : Byte = ProtocolVersion.ClientProtocolVersionTwo,
+                         flags: Byte = 0x00) : List[Byte] = {
+    val bodyLength = serializeInt(queryString.length + 4 + 2 + 1)
     val header = List[Byte](protocolVersion, 0x00, stream, OpCodes.Query) :::
       bodyLength
 
     val body : List[Byte] =
       serializeLongString(queryString) :::
         serializeShort(consistency.code) ::: // consistency
-        List[Byte](0x00) ::: // query flags
+        List(flags) ::: // query flags
         List[Byte]()
 
     header ::: body
