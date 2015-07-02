@@ -54,8 +54,8 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
   describe("Priming") {
     it("Should take in query") {
       val when: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"))
-      val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
-      val prime = PrimePreparedSingle(when, then)
+      val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
+      val prime = PrimePreparedSingle(when, thenDo)
       Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.OK)
         verify(primePreparedStore).record(prime)
@@ -64,8 +64,8 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
 
     it("should store a fixedDelay") {
       val when: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"))
-      val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()), fixedDelay = Some(1500l))
-      val prime = PrimePreparedSingle(when, then)
+      val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()), fixedDelay = Some(1500l))
+      val prime = PrimePreparedSingle(when, thenDo)
       Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.OK)
         verify(primePreparedStore).record(prime)
@@ -74,8 +74,8 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
 
     it("Should use the pattern store if queryPattern specified") {
       val when: WhenPreparedSingle = WhenPreparedSingle(queryPattern = Some("select * from people where name = ?"))
-      val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
-      val prime = PrimePreparedSingle(when, then)
+      val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
+      val prime = PrimePreparedSingle(when, thenDo)
       Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.OK)
         verify(primePreparedPatternStore).record(prime)
@@ -112,7 +112,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
         parsedResponse.size should equal(1)
-        parsedResponse(0).then.variable_types should equal(Some(variableTypes))
+        parsedResponse(0).thenDo.variable_types should equal(Some(variableTypes))
       }
     }
 
@@ -126,7 +126,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
         parsedResponse.size should equal(1)
-        parsedResponse(0).when.query should equal(Some(query) )
+        parsedResponse.head.when.query should equal(Some(query) )
       }
     }
 
@@ -136,12 +136,12 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map(
         PrimeCriteria(query, List()) -> PreparedPrime(List(), Prime(rows))
       )
-      when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
+      when(primePreparedStore.retrievePrimes()).thenReturn(existingPrimes)
 
       Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
         parsedResponse.size should equal(1)
-        parsedResponse(0).then.rows should equal(Some(rows))
+        parsedResponse.head.thenDo.rows should equal(Some(rows))
       }
     }
 
@@ -151,12 +151,12 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map(
         PrimeCriteria(query, List()) -> PreparedPrime(List(), Prime(columnTypes = columnTypes))
       )
-      when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
+      when(primePreparedStore.retrievePrimes()).thenReturn(existingPrimes)
 
       Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
         parsedResponse.size should equal(1)
-        parsedResponse(0).then.column_types should equal(Some(columnTypes))
+        parsedResponse(0).thenDo.column_types should equal(Some(columnTypes))
       }
     }
 
@@ -170,7 +170,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
         parsedResponse.size should equal(1)
-        parsedResponse(0).then.result should equal(Some(ReadTimeout))
+        parsedResponse.head.thenDo.result should equal(Some(ReadTimeout))
       }
     }
 
@@ -184,7 +184,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
         parsedResponse.size should equal(1)
-        parsedResponse(0).when.consistency should equal(Some(List(ONE, TWO)))
+        parsedResponse.head.when.consistency should equal(Some(List(ONE, TWO)))
       }
     }
   }
@@ -194,8 +194,8 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       when(primePreparedStore.record(any(classOf[PrimePreparedSingle]))).thenReturn(ConflictingPrimes(List()))
 
       val primeWhen: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"))
-      val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
-      val prime = PrimePreparedSingle(primeWhen, then)
+      val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
+      val prime = PrimePreparedSingle(primeWhen, thenDo)
 
       Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.BadRequest)
@@ -206,8 +206,8 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       when(primePreparedStore.record(any(classOf[PrimePreparedSingle]))).thenReturn(TypeMismatches  (List()))
 
       val primeWhen: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"))
-      val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
-      val prime = PrimePreparedSingle(primeWhen, then)
+      val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
+      val prime = PrimePreparedSingle(primeWhen, thenDo)
 
       Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.BadRequest)
@@ -216,8 +216,8 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
 
     it("Should be Bad Request if both query and queryPattern specified") {
       val primeWhen: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"), Some("Pattern as well"))
-      val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
-      val prime = PrimePreparedSingle(primeWhen, then)
+      val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
+      val prime = PrimePreparedSingle(primeWhen, thenDo)
 
       Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.BadRequest)
@@ -227,8 +227,8 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
 
     it("Should be Bad Request if neither query and queryPattern specified") {
       val primeWhen: WhenPreparedSingle = WhenPreparedSingle()
-      val then: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
-      val prime = PrimePreparedSingle(primeWhen, then)
+      val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
+      val prime = PrimePreparedSingle(primeWhen, thenDo)
 
       Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.BadRequest)

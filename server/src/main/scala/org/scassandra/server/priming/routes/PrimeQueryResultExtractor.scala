@@ -43,15 +43,15 @@ object PrimeQueryResultExtractor extends LazyLogging {
 
   def extractPrimeResult(primeRequest: PrimeQuerySingle): Prime = {
     // add the deserialized JSON request to the map of prime requests
-    val then = primeRequest.then
-    val config = then.config.getOrElse(Map())
-    val resultsAsList = then.rows.getOrElse(List())
-    val result = then.result.getOrElse(Success)
-    val fixedDelay = primeRequest.then.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+    val thenDo = primeRequest.thenDo
+    val config = thenDo.config.getOrElse(Map())
+    val resultsAsList = thenDo.rows.getOrElse(List())
+    val result = thenDo.result.getOrElse(Success)
+    val fixedDelay = primeRequest.thenDo.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
     val primeResult: PrimeResult = convertToPrimeResult(config, result)
 
-    logger.trace("Column types " + primeRequest.then.column_types)
-    val columnTypes: Map[String, ColumnType[_]] = Defaulter.defaultColumnTypesToVarchar(primeRequest.then.column_types, resultsAsList)
+    logger.trace("Column types " + primeRequest.thenDo.column_types)
+    val columnTypes: Map[String, ColumnType[_]] = Defaulter.defaultColumnTypesToVarchar(primeRequest.thenDo.column_types, resultsAsList)
     logger.trace("Incoming when {}", primeRequest.when)
 
     val keyspace = primeRequest.when.keyspace.getOrElse("")
@@ -91,9 +91,9 @@ object PrimeQueryResultExtractor extends LazyLogging {
         case r: WriteRequestTimeoutResult => WriteTimeout
       }
 
-      val then = Then(Some(prime.rows), result = Some(result), column_types = Some(prime.columnTypes))
+      val thenDo = Then(Some(prime.rows), result = Some(result), column_types = Some(prime.columnTypes))
 
-      PrimeQuerySingle(when, then)
+      PrimeQuerySingle(when, thenDo)
     })
   }
 }

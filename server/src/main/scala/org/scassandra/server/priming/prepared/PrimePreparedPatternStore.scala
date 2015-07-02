@@ -18,7 +18,6 @@ package org.scassandra.server.priming.prepared
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.scalalogging.LazyLogging
-import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
 import org.scassandra.server.priming.routes.PrimeQueryResultExtractor
@@ -30,13 +29,14 @@ class PrimePreparedPatternStore extends LazyLogging with PreparedStore with Prep
 
   override def record(incomingPrime: PrimePreparedSingle): PrimeAddResult = {
     val primeCriteria = PrimeCriteria(incomingPrime.when.queryPattern.get, incomingPrime.when.consistency.getOrElse(Consistency.all))
-    val then: ThenPreparedSingle = incomingPrime.then
-    val rows: List[Map[String, Any]] = then.rows.getOrElse(List())
-    val columnTypes = Defaulter.defaultColumnTypesToVarchar(then.column_types, rows)
-    val result = PrimeQueryResultExtractor.convertToPrimeResult(then.config.getOrElse(Map()), then.result.getOrElse(Success))
-    val fixedDelay = then.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+    val thenDo: ThenPreparedSingle = incomingPrime.thenDo
+    val rows: List[Map[String, Any]] = thenDo.rows.getOrElse(List())
+    val columnTypes = Defaulter.defaultColumnTypesToVarchar(thenDo.column_types, rows)
+    val result = PrimeQueryResultExtractor.convertToPrimeResult(thenDo.config.getOrElse(Map()), thenDo.result.getOrElse(Success))
+    val fixedDelay = thenDo.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
     val prime = Prime(rows, columnTypes = columnTypes, result = result, fixedDelay = fixedDelay)
-    val preparedPrime = PreparedPrime(then.variable_types.getOrElse(List()), prime)
+    val preparedPrime = PreparedPrime(thenDo.variable_types.getOrElse(List()), prime)
+    logger.info(s"Storing prime for prepared statement $preparedPrime with prime criteria $primeCriteria")
     state += (primeCriteria -> preparedPrime)
     PrimeAddSuccess
   }

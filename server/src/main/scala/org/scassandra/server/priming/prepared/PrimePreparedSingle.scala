@@ -19,7 +19,7 @@ import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.priming.{ResultJsonRepresentation, Success}
 import org.scassandra.server.cqlmessages.types.ColumnType
 
-case class PrimePreparedSingle(when: WhenPreparedSingle, then: ThenPreparedSingle)
+case class PrimePreparedSingle(when: WhenPreparedSingle, thenDo: ThenPreparedSingle)
 
 case class WhenPreparedSingle(query: Option[String] = None,
                               queryPattern: Option[String] = None,

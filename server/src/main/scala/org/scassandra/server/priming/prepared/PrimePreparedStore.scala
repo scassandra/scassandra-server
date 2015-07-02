@@ -31,15 +31,15 @@ class PrimePreparedStore extends LazyLogging with PreparedStore with PreparedSto
   val validator: PrimeValidator = PrimeValidator()
 
   def record(prime: PrimePreparedSingle) : PrimeAddResult= {
-    val then: ThenPreparedSingle = prime.then
-    val rows = then.rows.getOrElse(List())
+    val thenDo: ThenPreparedSingle = prime.thenDo
+    val rows = thenDo.rows.getOrElse(List())
     val query = prime.when.query
     val numberOfParameters = query.get.toCharArray.count(_ == '?')
-    val fixedDelay: Option[FiniteDuration] = then.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
-    val result = PrimeQueryResultExtractor.convertToPrimeResult(then.config.getOrElse(Map()), then.result.getOrElse(Success))
+    val fixedDelay: Option[FiniteDuration] = thenDo.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+    val result = PrimeQueryResultExtractor.convertToPrimeResult(thenDo.config.getOrElse(Map()), thenDo.result.getOrElse(Success))
 
-    val variableTypesDefaultedToVarchar: List[ColumnType[_]] = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, then.variable_types)
-    val colTypes = Defaulter.defaultColumnTypesToVarchar(then.column_types, rows)
+    val variableTypesDefaultedToVarchar: List[ColumnType[_]] = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, thenDo.variable_types)
+    val colTypes = Defaulter.defaultColumnTypesToVarchar(thenDo.column_types, rows)
 
     val primeToStore: PreparedPrime = PreparedPrime(variableTypesDefaultedToVarchar, prime = Prime(rows, columnTypes = colTypes,
       result = result, fixedDelay = fixedDelay))

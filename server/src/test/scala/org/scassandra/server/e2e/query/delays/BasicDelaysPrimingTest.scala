@@ -24,8 +24,8 @@ class BasicDelaysPrimingTest extends AbstractIntegrationTest {
     val query = "select * from people"
     val rowOne = Map("name" -> "Chris")
     val rows = List(rowOne)
-    val then = Then(Some(rows), fixedDelay = Some(2000l))
-    prime(When(query = Some(query)), then)
+    val thenDo = Then(Some(rows), fixedDelay = Some(2000l))
+    prime(When(query = Some(query)), thenDo)
 
     val timeBefore = System.currentTimeMillis()
     val result = session.execute(query)

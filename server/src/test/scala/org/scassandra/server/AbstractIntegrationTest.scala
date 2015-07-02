@@ -35,8 +35,8 @@ object PrimingHelper {
     primeQuery(when, Then(Some(rows), Some(result), Some(columnTypes)))
   }
 
-  def primeQuery(when: When, then: Then) : String = {
-    val prime = PrimeQuerySingle(when, then).toJson
+  def primeQuery(when: When, thenDo: Then) : String = {
+    val prime = PrimeQuerySingle(when, thenDo).toJson
     println("Sending JSON: " + prime.toString)
     val svc = url("http://localhost:8043/prime-query-single") <<
       prime.toString() <:<
@@ -46,8 +46,8 @@ object PrimingHelper {
     response()
   }
 
-  def primePreparedStatement(query: WhenPreparedSingle, then: ThenPreparedSingle) = {
-    val prime = PrimePreparedSingle(query, then).toJson
+  def primePreparedStatement(query: WhenPreparedSingle, thenDo: ThenPreparedSingle) = {
+    val prime = PrimePreparedSingle(query, thenDo).toJson
     println("Sending JSON: " + prime.toString)
     val svc = url("http://localhost:8043/prime-prepared-single") <<
       prime.toString <:<
@@ -76,8 +76,8 @@ abstract class AbstractIntegrationTest(clusterConnect: Boolean = true) extends F
     PrimingHelper.primeQuery(when, rows, result, columnTypes)
   }
 
-  def prime(when: When, then: Then) = {
-    PrimingHelper.primeQuery(when, then)
+  def prime(when: When, thenDo: Then) = {
+    PrimingHelper.primeQuery(when, thenDo)
   }
 
   def startServerStub() = {

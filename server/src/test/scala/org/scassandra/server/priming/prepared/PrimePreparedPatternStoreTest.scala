@@ -37,8 +37,8 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     //given
     val pattern = "select .* from people.*"
     val when = WhenPreparedSingle(None, Some(pattern), Some(List(ONE)))
-    val then = ThenPreparedSingle(Some(List()))
-    val preparedPrime = PrimePreparedSingle(when, then)
+    val thenDo = ThenPreparedSingle(Some(List()))
+    val preparedPrime = PrimePreparedSingle(when, thenDo)
 
     //when
     underTest.record(preparedPrime)
@@ -52,8 +52,8 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     //given
     val pattern = ".*"
     val when = WhenPreparedSingle(None, Some(pattern), Some(List(ONE)))
-    val then = ThenPreparedSingle(Some(List()), result = Some(WriteTimeout))
-    val preparedPrime = PrimePreparedSingle(when, then)
+    val thenDo = ThenPreparedSingle(Some(List()), result = Some(WriteTimeout))
+    val preparedPrime = PrimePreparedSingle(when, thenDo)
 
     //when
     underTest.record(preparedPrime)
@@ -67,8 +67,8 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     //given
     val pattern = ".*"
     val when = WhenPreparedSingle(None, Some(pattern), Some(List(ONE)))
-    val then = ThenPreparedSingle(Some(List()), fixedDelay = Some(2000))
-    val preparedPrime = PrimePreparedSingle(when, then)
+    val thenDo = ThenPreparedSingle(Some(List()), fixedDelay = Some(2000))
+    val preparedPrime = PrimePreparedSingle(when, thenDo)
 
     //when
     underTest.record(preparedPrime)
@@ -82,9 +82,9 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     //given
     val pattern = "select .* from people.*"
     val when = WhenPreparedSingle(None, Some(pattern), consistency = Some(List(ONE)))
-    val then = ThenPreparedSingle(Some(List()))
+    val thenDo = ThenPreparedSingle(Some(List()))
 
-    val preparedPrime = PrimePreparedSingle(when, then)
+    val preparedPrime = PrimePreparedSingle(when, thenDo)
 
     //when
     underTest.record(preparedPrime)
@@ -99,9 +99,9 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     //given
     val pattern = "select .* from people.*"
     val when = WhenPreparedSingle(None, Some(pattern), consistency = Some(List(ONE, TWO)))
-    val then = ThenPreparedSingle(Some(List()))
+    val thenDo = ThenPreparedSingle(Some(List()))
 
-    val preparedPrime = PrimePreparedSingle(when, then)
+    val preparedPrime = PrimePreparedSingle(when, thenDo)
 
     //when
     underTest.record(preparedPrime)
@@ -115,9 +115,9 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
   test("Defaults consistencies to all") {
     val pattern = "select .* from people.*"
     val when = WhenPreparedSingle(None, Some(pattern))
-    val then = ThenPreparedSingle(Some(List()))
+    val thenDo = ThenPreparedSingle(Some(List()))
 
-    val preparedPrime = PrimePreparedSingle(when, then)
+    val preparedPrime = PrimePreparedSingle(when, thenDo)
 
     //when
     underTest.record(preparedPrime)
@@ -136,9 +136,9 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     val rows: List[Map[String, String]] = List(Map(
       "col_one" -> "value"
     ))
-    val then = ThenPreparedSingle(Some(rows))
+    val thenDo = ThenPreparedSingle(Some(rows))
 
-    val preparedPrime = PrimePreparedSingle(when, then)
+    val preparedPrime = PrimePreparedSingle(when, thenDo)
 
     //when
     underTest.record(preparedPrime)
@@ -155,9 +155,9 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     val pattern = "select .* from people.*"
     val when = WhenPreparedSingle(None, Some(pattern), consistency = Some(List(ONE)))
     val rows: List[Map[String, String]] = List()
-    val then = ThenPreparedSingle(Some(rows))
+    val thenDo = ThenPreparedSingle(Some(rows))
 
-    val preparedPrime = PrimePreparedSingle(when, then)
+    val preparedPrime = PrimePreparedSingle(when, thenDo)
 
     //when
     underTest.record(preparedPrime)
@@ -172,9 +172,9 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     val pattern = "select .* from people.*"
     val when = WhenPreparedSingle(None, Some(pattern), consistency = Some(List(ONE)))
     val rows: List[Map[String, String]] = List()
-    val then = ThenPreparedSingle(Some(rows), Some(List(CqlInet)))
+    val thenDo = ThenPreparedSingle(Some(rows), Some(List(CqlInet)))
 
-    val preparedPrime = PrimePreparedSingle(when, then)
+    val preparedPrime = PrimePreparedSingle(when, thenDo)
 
     //when
     underTest.record(preparedPrime)
@@ -189,9 +189,9 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     val pattern = "select .* from people.*"
     val when = WhenPreparedSingle(None, Some(pattern), consistency = Some(List(ONE)))
     val rows: List[Map[String, String]] = List()
-    val then = ThenPreparedSingle(Some(rows), Some(List(CqlInet, CqlInt)))
+    val thenDo = ThenPreparedSingle(Some(rows), Some(List(CqlInet, CqlInt)))
 
-    val preparedPrime = PrimePreparedSingle(when, then)
+    val preparedPrime = PrimePreparedSingle(when, thenDo)
 
     //when
     underTest.record(preparedPrime)

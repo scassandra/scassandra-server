@@ -41,7 +41,7 @@ class ServerReadyAwaiterTest extends TestKit(ActorSystem("TestSystem")) with Fun
       val primingReadyListener = system.actorOf(Props(classOf[ServerReadyListener]))
       val tcpReadyListener = system.actorOf(Props(classOf[ServerReadyListener]))
 
-      future {
+      Future {
         Thread.sleep(1000)
         primingReadyListener ! ServerReady
       }
@@ -55,7 +55,7 @@ class ServerReadyAwaiterTest extends TestKit(ActorSystem("TestSystem")) with Fun
       val primingReadyListener = system.actorOf(Props(classOf[ServerReadyListener]))
       val tcpReadyListener = system.actorOf(Props(classOf[ServerReadyListener]))
 
-      future {
+      Future {
         Thread.sleep(1000)
         tcpReadyListener ! ServerReady
       }
@@ -71,7 +71,7 @@ class ServerReadyAwaiterTest extends TestKit(ActorSystem("TestSystem")) with Fun
       val primingReadyListener = system.actorOf(Props(classOf[ServerReadyListener]))
       val tcpReadyListener = system.actorOf(Props(classOf[ServerReadyListener]))
 
-      future {
+      Future {
         Thread.sleep(1000)
         primingReadyListener ! ServerReady
         Thread.sleep(500)
@@ -85,7 +85,7 @@ class ServerReadyAwaiterTest extends TestKit(ActorSystem("TestSystem")) with Fun
       val primingReadyListener = system.actorOf(Props(classOf[ServerReadyListener]))
       val tcpReadyListener = system.actorOf(Props(classOf[ServerReadyListener]))
 
-      future {
+      Future {
         Thread.sleep(1000)
         tcpReadyListener ! ServerReady
         Thread.sleep(500)
@@ -99,7 +99,7 @@ class ServerReadyAwaiterTest extends TestKit(ActorSystem("TestSystem")) with Fun
       val primingReadyListener = system.actorOf(Props(classOf[ServerReadyListener]))
       val tcpReadyListener = system.actorOf(Props(classOf[ServerReadyListener]))
 
-      future {
+      Future {
         Thread.sleep(1000)
         tcpReadyListener ! ServerReady
       }
@@ -112,7 +112,7 @@ class ServerReadyAwaiterTest extends TestKit(ActorSystem("TestSystem")) with Fun
       val primingReadyListener = system.actorOf(Props(classOf[ServerReadyListener]))
       val tcpReadyListener = system.actorOf(Props(classOf[ServerReadyListener]))
 
-      future {
+      Future {
         Thread.sleep(1000)
         primingReadyListener ! ServerReady
       }

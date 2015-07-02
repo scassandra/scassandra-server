@@ -34,8 +34,8 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
 
   test("Should default fixedDelay to None") {
     val when = When()
-    val then = Then(None, None, None, fixedDelay = None)
-    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
+    val thenDo = Then(None, None, None, fixedDelay = None)
+    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
     val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
 
@@ -45,8 +45,8 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
   test("Should record fixedDelay if present") {
     val when = When()
     val fixedDelay: Some[Long] = Some(500)
-    val then = Then(None, None, None, fixedDelay)
-    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
+    val thenDo = Then(None, None, None, fixedDelay)
+    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
     val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
 
@@ -55,8 +55,8 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
 
   test("Extracting Success result") {
     val when = When()
-    val then = Then(None, Some(Success), None, fixedDelay = None)
-    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
+    val thenDo = Then(None, Some(Success), None, fixedDelay = None)
+    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
     val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
 
@@ -69,8 +69,8 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
       ErrorConstants.ReceivedResponse -> "2",
       ErrorConstants.RequiredResponse -> "3",
       ErrorConstants.DataPresent -> "true")
-    val then = Then(None, Some(ReadTimeout), config = Some(properties))
-    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
+    val thenDo = Then(None, Some(ReadTimeout), config = Some(properties))
+    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
     val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
 
@@ -83,8 +83,8 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
       ErrorConstants.ReceivedResponse -> "2",
       ErrorConstants.RequiredResponse -> "3",
       ErrorConstants.WriteType -> "BATCH")
-    val then = Then(None, Some(WriteTimeout), config = Some(properties))
-    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
+    val thenDo = Then(None, Some(WriteTimeout), config = Some(properties))
+    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
     val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
 
@@ -96,8 +96,8 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
       ErrorConstants.Alive -> "2",
       ErrorConstants.RequiredResponse -> "3")
     val when = When()
-    val then = Then(None, Some(Unavailable), config = Some(properties))
-    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
+    val thenDo = Then(None, Some(Unavailable), config = Some(properties))
+    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
     val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
 

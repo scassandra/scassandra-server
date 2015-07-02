@@ -232,9 +232,9 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         )
       val thenColumnTypes = Map("age" -> CqlBoolean)
 
-      val then = Then(Some(thenResults), Some(Success), Some(thenColumnTypes))
+      val thenDo = Then(Some(thenResults), Some(Success), Some(thenColumnTypes))
 
-      Post(primeQuerySinglePath, PrimeQuerySingle(when, then)) ~> queryRoute ~> check {
+      Post(primeQuerySinglePath, PrimeQuerySingle(when, thenDo)) ~> queryRoute ~> check {
         status should equal(BadRequest)
         responseAs[TypeMismatches] should equal(TypeMismatches(List(TypeMismatch("99", "age", "boolean"), TypeMismatch("12", "age", "boolean"))))
       }

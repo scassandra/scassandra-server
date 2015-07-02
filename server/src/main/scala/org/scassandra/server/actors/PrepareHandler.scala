@@ -76,7 +76,7 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
     val query: String = readLongString(body.iterator).get
     val preparedPrime = primePreparedStore.findPrime(PrimeMatch(query))
 
-    val preparedResult = preparedPrime
+    val preparedResult: Result = preparedPrime
       .map(prime => msgFactory.createPreparedResult(stream, preparedStatementId, prime.variableTypes))
       .getOrElse({
       val numberOfParameters = query.toCharArray.count(_ == '?')

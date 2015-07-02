@@ -19,11 +19,11 @@ import akka.actor.ActorSystem
 import akka.io.Tcp.Write
 import akka.testkit.{TestActorRef, TestProbe, TestKit}
 import akka.util.ByteString
-import org.scalatest.FunSuiteLike
+import org.scalatest.{Matchers, FunSuiteLike}
 import org.scalatest.matchers.ShouldMatchers
 import org.scassandra.server.cqlmessages.VersionTwoMessageFactory
 
-class RegisterHandlerTest extends TestKit(ActorSystem("TestSystem")) with FunSuiteLike with ShouldMatchers {
+class RegisterHandlerTest extends TestKit(ActorSystem("TestSystem")) with FunSuiteLike with Matchers {
   test("Should send Ready message on any Register message") {
     val senderTestProbe = TestProbe()
     val cqlMessageFactory = VersionTwoMessageFactory
