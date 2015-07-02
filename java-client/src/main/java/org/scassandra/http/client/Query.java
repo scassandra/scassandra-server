@@ -51,6 +51,14 @@ public final class Query {
         return consistency;
     }
 
+    public List<Object> getVariables() {
+        return variables;
+    }
+
+    public List<CqlType> getVariableTypes() {
+        return variableTypes;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

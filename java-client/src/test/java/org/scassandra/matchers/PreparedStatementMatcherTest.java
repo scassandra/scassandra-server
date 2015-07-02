@@ -21,7 +21,6 @@ import com.google.common.collect.Sets;
 import org.junit.Test;
 import org.scassandra.http.client.ColumnTypes;
 import org.scassandra.http.client.PreparedStatementExecution;
-import scala.math.BigInt;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

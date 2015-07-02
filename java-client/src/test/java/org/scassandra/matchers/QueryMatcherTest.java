@@ -16,13 +16,18 @@
 package org.scassandra.matchers;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.junit.Test;
 import org.scassandra.http.client.Query;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Set;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.scassandra.cql.PrimitiveType.*;
+import static org.scassandra.cql.SetType.set;
 
 public class QueryMatcherTest {
 
@@ -44,6 +49,26 @@ public class QueryMatcherTest {
     }
 
     @Test
+    public void mismatchingConsistency() throws Exception {
+        //given
+        Query actualExecution = Query.builder()
+                .withQuery("some query")
+                .withConsistency("QUORUM")
+                .build();
+        Query expectedExecution = Query.builder()
+                .withQuery("some query")
+                .build();
+
+        QueryMatcher underTest = new QueryMatcher(expectedExecution);
+
+        //when
+        boolean matched = underTest.matchesSafely(Lists.newArrayList(actualExecution));
+
+        //then
+        assertFalse(matched);
+    }
+
+    @Test
     public void matchingStringVariables() throws Exception {
         //given
         Query actualExecution = Query.builder(TEXT, ASCII, VARCHAR)
@@ -58,6 +83,32 @@ public class QueryMatcherTest {
 
         //when
         boolean matched = underTest.matchesSafely(Lists.newArrayList(actualExecution));
+
+        //then
+        assertTrue(matched);
+    }
+
+    @Test
+    public void matchingTextSets() throws Exception {
+        //given
+        Set<String> setOfStrings = Sets.newHashSet("1", "2");
+        Query nonMatchingActual = Query.builder(DOUBLE)
+                .withQuery("same query")
+                .withVariables(1d)
+                .build();
+        Query actualExecution = Query.builder(set(TEXT))
+                .withQuery("same query")
+                .withVariables(new ArrayList<String>(setOfStrings))
+                .build();
+        Query expectedExecution = Query.builder()
+                .withQuery("same query")
+                .withVariables(setOfStrings)
+                .build();
+
+        QueryMatcher underTest = new QueryMatcher(expectedExecution);
+
+        //when
+        boolean matched = underTest.matchesSafely(Lists.newArrayList(nonMatchingActual, actualExecution));
 
         //then
         assertTrue(matched);

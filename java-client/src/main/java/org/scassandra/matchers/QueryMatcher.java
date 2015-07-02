@@ -16,61 +16,37 @@
 package org.scassandra.matchers;
 
 import org.hamcrest.Description;
-import org.hamcrest.TypeSafeMatcher;
 import org.scassandra.cql.CqlType;
 import org.scassandra.http.client.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-class QueryMatcher extends TypeSafeMatcher<List<Query>> {
+class QueryMatcher extends ScassandraMatcher<List<Query>, Query> {
 
-    private Query query;
+    private static final Logger LOGGER = LoggerFactory.getLogger(QueryMatcher.class);
 
-    public  QueryMatcher(Query query) {
-        if (query == null) throw new IllegalArgumentException("null query");
-        this.query = query;
+    private Query expectedQuery;
+
+    public  QueryMatcher(Query expectedQuery) {
+        if (expectedQuery == null) throw new IllegalArgumentException("null query");
+        this.expectedQuery = expectedQuery;
     }
 
     @Override
-    protected boolean matchesSafely(List<Query> queries) {
-        for (int i = 0; i < queries.size(); i++) {
-            if (matchesQuery(queries.get(0))) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean matchesQuery(Query actualQuery) {
+    protected boolean match(Query actualQuery) {
+        if (!actualQuery.getConsistency().equals(expectedQuery.getConsistency()))
+            return false;
+        if (!actualQuery.getQuery().equals(expectedQuery.getQuery()))
+            return false;
+        List<Object> expectedVariables = expectedQuery.getVariables();
 
         List<CqlType> variableTypes = actualQuery.getVariableTypes();
         List<Object> actualVariables = actualQuery.getVariables();
-        if (variableTypes.size() != actualVariables.size()) {
-            throw new IllegalArgumentException(String.format("Server has returned a different number of variables to variable types: variables %s variableTypes %s", actualVariables, variableTypes));
-        }
-
-
-        if (!actualQuery.getConsistency().equals(expectedPreparedStatementExecution.getConsistency()))
-            return false;
-        if (!actualQuery.getPreparedStatementText().equals(expectedPreparedStatementExecution.getPreparedStatementText()))
-            return false;
-        List<Object> expectedVariables = expectedPreparedStatementExecution.getVariables();
-
-        if (expectedVariables.size() != actualVariables.size()) {
-            return false;
-        }
-
-
-        for (int index = 0; index < expectedVariables.size(); index++) {
-
-            Object expectedVariable = expectedVariables.get(index);
-            Object actualVariable = actualVariables.get(index);
-            CqlType columnType = variableTypes.get(index);
-            if (!columnType.equals(expectedVariable, actualVariable)) return false;
-
-        }
-        return true;
+        return checkVariables(expectedVariables, variableTypes, actualVariables);
     }
+
 
     @Override
     public void describeMismatchSafely(List<Query> actual, Description description) {
@@ -82,6 +58,6 @@ class QueryMatcher extends TypeSafeMatcher<List<Query>> {
 
     @Override
     public void describeTo(Description description) {
-        description.appendText("Expected query " + query + " to be executed");
+        description.appendText("Expected query " + expectedQuery + " to be executed");
     }
 }
