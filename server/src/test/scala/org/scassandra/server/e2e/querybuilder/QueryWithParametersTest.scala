@@ -36,8 +36,8 @@ class QueryWithParametersTest extends AbstractIntegrationTest {
       "name" -> CqlVarchar,
       "age" -> CqlInt)
     val variableTypes = List(CqlText)
-    val then = Then(rows = Some(List(rowOne)), column_types = Some(columnTypes), variable_types = Some(variableTypes))
-    prime(When(query = Some(query)), then)
+    val thenDo = Then(rows = Some(List(rowOne)), column_types = Some(columnTypes), variable_types = Some(variableTypes))
+    prime(When(query = Some(query)), thenDo)
 
     val result = session.execute(query, "chris")
 
@@ -51,8 +51,8 @@ class QueryWithParametersTest extends AbstractIntegrationTest {
       "name" -> CqlVarchar,
       "age" -> CqlInt)
     val variableTypes = List(CqlInt)
-    val then = Then(Some(List(rowOne)), column_types = Some(columnTypes), variable_types = Some(variableTypes))
-    prime(When(query = Some(query)), then)
+    val thenDo = Then(Some(List(rowOne)), column_types = Some(columnTypes), variable_types = Some(variableTypes))
+    prime(When(query = Some(query)), thenDo)
 
     val result = session.execute(query, new Integer(15))
 

@@ -21,12 +21,15 @@ import java.util.UUID
 
 import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.server.priming.PrimingJsonImplicits._
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
 import org.scassandra.server.priming.query.{PrimeCriteria, PrimeQuerySingle, Then, When}
 import org.scassandra.server.priming.routes.Version
 import spray.httpx.SprayJsonSupport
 import spray.json._
+
+import scala.collection.Set
 
 //todo extend the prod one and override the differences
 object PrimingJsonImplicitsForTest extends DefaultJsonProtocol with SprayJsonSupport {
@@ -68,8 +71,11 @@ object PrimingJsonImplicitsForTest extends DefaultJsonProtocol with SprayJsonSup
       case bd: BigDecimal => JsNumber(bd)
       case s: String => JsString(s)
       case seq: Seq[_] => seqFormat[Any].write(seq)
-      case m: Map[String, _] => mapFormat[String, Any].write(m)
-      case set: Set[Any] => setFormat[Any].write(set)
+      case m: Map[_, _] => {
+        val keysAsString: Map[String, Any] = m.map({ case (k, v) => (k.toString, v)})
+        mapFormat[String, Any].write(keysAsString)
+      }
+      case set: Set[_] => setFormat[Any].write(set.map(s => s))
       case b: Boolean if b => JsTrue
       case b: Boolean if !b => JsFalse
       case double: Double => JsNumber(double)

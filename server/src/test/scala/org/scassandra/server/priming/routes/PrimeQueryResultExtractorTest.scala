@@ -107,8 +107,8 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
 
   test("Should extract variableTypes for prime") {
     val when = When()
-    val then = Then(None, None, None, variable_types = Some(List(CqlText)))
-    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, then)
+    val thenDo = Then(None, None, None, variable_types = Some(List(CqlText)))
+    val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
     val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
 
