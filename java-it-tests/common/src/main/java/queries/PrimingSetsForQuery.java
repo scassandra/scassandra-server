@@ -8,7 +8,6 @@ import common.CassandraRow;
 import org.junit.Test;
 import org.scassandra.http.client.ColumnTypes;
 import org.scassandra.http.client.PrimingRequest;
-import org.apache.cassandra.utils.ByteBufferUtil;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -269,7 +268,7 @@ varint	java.math.BigInteger - DONE
         assertEquals(result.size(), 1);
         CassandraRow rowOne = result.get(0);
         assertArrayEquals(new byte[]{0, 18, 52, 84, 53, 52, 83, 69, 67, 84, 53},
-                ByteBufferUtil.getArray(rowOne.getSet("list_type", ByteBuffer.class).iterator().next()));
+                getArray(rowOne.getSet("list_type", ByteBuffer.class).iterator().next()));
     }
 
     @Test

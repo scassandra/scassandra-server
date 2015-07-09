@@ -1,12 +1,19 @@
 package common;
 
+import java.nio.ByteBuffer;
+import java.util.Map;
+
+import com.google.common.base.Function;
+import com.google.common.collect.Maps;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
+import org.scassandra.cql.CqlType;
 import org.scassandra.http.client.ActivityClient;
+import org.scassandra.http.client.ColumnTypes;
 import org.scassandra.http.client.PrimingClient;
 
 abstract public class AbstractScassandraTest {
@@ -50,5 +57,20 @@ abstract public class AbstractScassandraTest {
         return cassandraExecutor;
     }
 
+    public static Map<String, CqlType> cqlTypes(Map<String, ColumnTypes> columnTypes) {
+        return Maps.transformValues(columnTypes, new Function<ColumnTypes, CqlType>() {
+            @Override
+            public CqlType apply(ColumnTypes input) {
+                return input.getType();
+            }
+        });
+    }
+
+    public static byte[] getArray(ByteBuffer buffer) {
+        int length = buffer.remaining();
+        byte[] data = new byte[length];
+        buffer.get(data);
+        return data;
+    }
 
 }
