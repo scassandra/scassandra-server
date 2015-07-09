@@ -16,20 +16,17 @@
 package org.scassandra.server.cqlmessages.types
 
 import org.scalatest.{FunSuite, Matchers}
-import akka.util.ByteString
-import org.scassandra.server.cqlmessages.VersionTwo
+import org.scassandra.server.cqlmessages.ProtocolProvider
 
-class CqlListTest extends FunSuite with Matchers {
+class CqlListTest extends FunSuite with Matchers with ProtocolProvider {
   test("Serialisation of CqlList - Varchar") {
     val underTest = CqlList(CqlVarchar)
-    underTest.writeValue(List()) should equal(Array[Byte](0,0,0,2,0,0))
+    underTest.writeValue(List()) should equal(Array[Byte](0,0))
     underTest.writeValue(List("one", "two", "three")) should equal(Array[Byte](
-      0, 0, 0, 19, // number of bytes
       0, 3,         // number of elements in the set
       0, 3,   111, 110, 101,  // one
       0, 3,   116, 119, 111,  // two
       0, 5,   116, 104, 114, 101, 101 // three
-
     ))
 
     intercept[IllegalArgumentException] {
@@ -50,15 +47,24 @@ class CqlListTest extends FunSuite with Matchers {
     intercept[IllegalArgumentException] {
       underTest.writeValue(false)
     }
-    intercept[IllegalArgumentException] {
-      underTest.writeValue(Map())
-    }
   }
 
-  test("Reading null") {
-    val bytes = ByteString(Array[Byte](-1,-1,-1,-1))
-    val deserialisedValue = CqlList(CqlVarchar).readValue(bytes.iterator, VersionTwo)
-
-    deserialisedValue should equal(None)
+  test("Serialization of CqlList<CqlList<Varchar>>") {
+    // Nested serialization test to ensure collections can be nested.
+    val underTest = CqlList(CqlList(CqlVarchar))
+    underTest.writeValue(List()) should equal(Array[Byte](0,0))
+    underTest.writeValue(List(List("one", "two", "three"), List("four", "five", "six"))) should equal(Array[Byte](
+      0, 2, // number of elements in list
+      0, 19, // byte length of first list
+      0, 3, // elements in list
+      0, 3, 111, 110, 101,  // one
+      0, 3, 116, 119, 111,  // two
+      0, 5, 116, 104, 114, 101, 101, // three
+      0, 19, // byte length of second list
+      0, 3, // elements in list
+      0, 4, 102, 111, 117, 114, // four
+      0, 4, 102, 105, 118, 101, // five
+      0, 3, 115, 105, 120 // six
+    ))
   }
 }

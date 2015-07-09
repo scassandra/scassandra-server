@@ -15,18 +15,15 @@
  */
 package org.scassandra.server.cqlmessages.types
 
+import akka.util.ByteString
+import org.scalatest.{Matchers, FunSuite}
+import org.scassandra.server.cqlmessages.ProtocolProvider
 
-import akka.util.{ByteString, ByteIterator}
-import org.scassandra.server.cqlmessages.ProtocolVersion
+class ColumnTypeTest extends FunSuite with Matchers with ProtocolProvider {
 
-case object CqlDouble extends ColumnType[Double](0x0007, "double") {
-  override def readValue(byteIterator: ByteIterator)(implicit protocolVersion: ProtocolVersion): Option[Double] = {
-    Some(byteIterator.getDouble)
-  }
-
-  override def writeValue(value: Any)(implicit protocolVersion: ProtocolVersion) = {
-    val bs = ByteString.newBuilder
-    bs.putDouble(value.toString.toDouble)
-    bs.result().toArray
+  test("Reading null") {
+    val bytes = ByteString(Array[Byte](-1,-1,-1,-1))
+    val deserialisedValue = CqlText.readValueWithLength(bytes.iterator)
+    deserialisedValue should equal(None)
   }
 }

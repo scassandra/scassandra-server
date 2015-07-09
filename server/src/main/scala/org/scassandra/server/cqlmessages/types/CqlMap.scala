@@ -15,62 +15,41 @@
  */
 package org.scassandra.server.cqlmessages.types
 
-import java.nio.ByteBuffer
-import java.util
+import akka.util.ByteIterator
+import org.scassandra.server.cqlmessages.ProtocolVersion
 
-import akka.util.{ByteString, ByteIterator}
-import org.apache.cassandra.serializers.MapSerializer
-import org.apache.cassandra.utils.ByteBufferUtil
-import org.scassandra.server.cqlmessages.{ProtocolVersion, CqlProtocolHelper}
-import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
-import scala.collection.mutable
-
-// only supports strings for now.
 //todo change this to a type class
 case class CqlMap[K, V](keyType: ColumnType[K], valueType: ColumnType[V]) extends ColumnType[Map[K, V]](0x0021, s"map<${keyType.stringRep},${valueType.stringRep}>") {
 
-  import CqlProtocolHelper._
-
-  override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[Map[K, V]] = {
-    val mapNumberOfBytes = byteIterator.getInt
-    if (mapNumberOfBytes == -1) {
-      None
-    } else {
-      val bytes = new Array[Byte](mapNumberOfBytes)
-      byteIterator.getBytes(bytes)
-      val mapDeserializer: MapSerializer[K, V] = MapSerializer.getInstance(keyType.serializer, valueType.serializer)
-      val deserializedMap : Map[K, V] = mapDeserializer.deserializeForNativeProtocol(ByteBuffer.wrap(bytes), protocolVersion.version).asScala.toMap
-      Some(deserializedMap)
-    }
+  override def readValue(byteIterator: ByteIterator)(implicit protocolVersion: ProtocolVersion): Option[Map[K, V]] = {
+    val keyDeserializer: (ByteIterator) => Option[K] = keyType.readValueWithLength(_, inCollection=true)
+    val valueDeserializer: (ByteIterator) => Option[V] = valueType.readValueWithLength(_, inCollection=true)
+    val size = protocolVersion.collectionLength.getLength(byteIterator)
+    // Deserialize each element into a list.
+    Some(List.fill(size) {
+      (keyDeserializer(byteIterator).get, valueDeserializer(byteIterator).get)
+    }.toMap)
   }
 
-  def writeValue(value: Any): Array[Byte] = {
-    logger.debug(s"Trying to write $value for $this")
-
-    if (value.isInstanceOf[Map[K, V]]) {
-      val map = value.asInstanceOf[Map[K, V]]
-
-      val mapWithCorrectTypes: Map[K, V] = map.map({
-        case (k, v) => (keyType.convertToCorrectJavaTypeForSerializer(k), valueType.convertToCorrectJavaTypeForSerializer(v))
-      })
-
-      val builder = ByteString.newBuilder
-      val size: Int = mapWithCorrectTypes.size
-      val mapDeserializer: MapSerializer[K, V] = MapSerializer.getInstance(keyType.serializer, valueType.serializer)
-      val serialized: util.List[ByteBuffer] = mapDeserializer.serializeValues(mapWithCorrectTypes)
-      val mapContents = serialized.foldLeft(new Array[Byte](0))((acc, byteBuffer) => {
-        val current: mutable.ArrayOps[Byte] = ByteBufferUtil.getArray(byteBuffer)
-        acc ++ serializeShort(current.size.toShort) ++ current
-      })
-      serializeInt(mapContents.length + 2) ++ serializeShort(map.size.toShort) ++ mapContents
-    } else {
-      logger.debug("Not a suitable map")
-      throw new IllegalArgumentException(s"Can't serialise $value as map")
+  def writeValue(value: Any)(implicit protocolVersion: ProtocolVersion): Array[Byte] = {
+    val map: Map[K, V] = value match {
+      case _: Map[K, V] =>
+        value.asInstanceOf[Map[K, V]]
+      case _ =>
+        throw new IllegalArgumentException(s"Can't serialise $value as map")
     }
-  }
 
-  override def convertToCorrectJavaTypeForSerializer(value: Any): Map[K, V] = throw new UnsupportedOperationException
+    val keySerializer: Any => Array[Byte] = keyType.writeValueWithLength(_, inCollection=true)
+    val valueSerializer: Any => Array[Byte] = valueType.writeValueWithLength(_, inCollection=true)
+
+    val entryWriter = (entry: Any) => {
+      entry match {
+        case (k, v) => keySerializer(k) ++ valueSerializer(v)
+        case _ =>  Array[Byte]() // TODO handle case where we get an unexpected value here (shouldn't happen)
+      }
+    }
+    ColumnType.serializeCqlCollection(map, entryWriter)
+  }
 }
 
 /*

@@ -17,13 +17,30 @@ package org.scassandra.server.cqlmessages.types
 
 import org.scalatest.{Matchers, FunSuite}
 import akka.util.ByteString
-import org.scassandra.server.cqlmessages.VersionTwo
+import org.scassandra.server.cqlmessages.ProtocolProvider
 
-class CqlTimestampTest extends FunSuite with Matchers {
-  test("Reading null") {
-    val bytes = ByteString(Array[Byte](-1,-1,-1,-1))
-    val deserialisedValue = CqlTimestamp.readValue(bytes.iterator, VersionTwo)
+class CqlTimestampTest extends FunSuite with Matchers with ProtocolProvider {
 
-    deserialisedValue should equal(None)
+  test("Serializing of CqlTimestamp") {
+    CqlTimestamp.writeValue("1436466253234") should equal (Array(0, 0, 1, 78, 116, 15, -115, -78))
+
+    intercept[IllegalArgumentException] {
+      CqlBigint.writeValue(BigDecimal("123.67"))
+    }
+    intercept[IllegalArgumentException] {
+      CqlBigint.writeValue("hello")
+    }
+    intercept[IllegalArgumentException] {
+      CqlBigint.writeValue(true)
+    }
+    intercept[IllegalArgumentException] {
+      CqlBigint.writeValue(false)
+    }
+    intercept[IllegalArgumentException] {
+      CqlBigint.writeValue(List())
+    }
+    intercept[IllegalArgumentException] {
+      CqlBigint.writeValue(Map())
+    }
   }
 }

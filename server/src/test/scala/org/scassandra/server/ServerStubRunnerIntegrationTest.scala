@@ -21,6 +21,7 @@ import java.util
 
 import akka.util.ByteString
 import org.scassandra.server.actors.MessageHelper
+import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 import org.scassandra.server.cqlmessages.OpCodes
 import org.scassandra.server.cqlmessages.response.ResultKinds
 
@@ -28,7 +29,6 @@ import scala.collection.immutable.IndexedSeq
 
 class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
   var connectionToServerStub: Socket = null
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
   before {
     connectionToServerStub = ConnectionToServerStub()

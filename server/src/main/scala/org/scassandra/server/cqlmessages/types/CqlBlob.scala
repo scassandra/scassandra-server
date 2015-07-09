@@ -16,21 +16,17 @@
 package org.scassandra.server.cqlmessages.types
 
 import akka.util.{ByteIterator, ByteString}
-import org.apache.cassandra.serializers.TypeSerializer
-import org.scassandra.server.cqlmessages.{CqlProtocolHelper, ProtocolVersion}
+import org.scassandra.server.cqlmessages.ProtocolVersion
 
 case object CqlBlob extends ColumnType[Array[Byte]](0x0003, "blob") {
 
-  import org.scassandra.server.cqlmessages.CqlProtocolHelper._
-
-   override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[Array[Byte]] = {
-     CqlProtocolHelper.readBlobValue(byteIterator)
+   override def readValue(byteIterator: ByteIterator)(implicit protocolVersion: ProtocolVersion): Option[Array[Byte]] = {
+     Some(byteIterator.toArray)
    }
 
-   override def writeValue(value: Any): Array[Byte] = {
+   override def writeValue(value: Any)(implicit protocolVersion: ProtocolVersion): Array[Byte] = {
      val bs = ByteString.newBuilder
      val array = hex2Bytes(value.toString)
-     bs.putInt(array.length)
      bs.putBytes(array)
      bs.result().toArray
    }
@@ -45,16 +41,4 @@ case object CqlBlob extends ColumnType[Array[Byte]](0x0003, "blob") {
        case s : Exception => throw new IllegalArgumentException(s"Not valid hex $hex")
      }
    }
-
-  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[Array[Byte]] = {
-    list.map(convertToCorrectJavaTypeForSerializer).toList
-  }
-
-  override def serializer: TypeSerializer[Array[Byte]] = CustomBytesSerializer.instance
-
-  override def convertToCorrectJavaTypeForSerializer(value: Any): Array[Byte] = value match {
-    case array: Array[Byte] => array
-    case string: String => hex2Bytes(string)
-    case _ => throw new IllegalArgumentException("Expected byte array")
-  }
 }

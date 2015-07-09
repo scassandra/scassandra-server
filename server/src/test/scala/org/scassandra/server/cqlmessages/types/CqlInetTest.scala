@@ -16,14 +16,26 @@
 package org.scassandra.server.cqlmessages.types
 
 import org.scalatest.{FunSuite, Matchers}
-import akka.util.ByteString
-import org.scassandra.server.cqlmessages.VersionTwo
+import org.scassandra.server.cqlmessages.ProtocolProvider
 
-class CqlInetTest extends FunSuite with Matchers {
-  test("Reading null") {
-    val bytes = ByteString(Array[Byte](-1,-1,-1,-1))
-    val deserialisedValue = CqlInet.readValue(bytes.iterator, VersionTwo)
+class CqlInetTest extends FunSuite with Matchers with ProtocolProvider {
+  test("Serialisation of CqlFloat") {
+    CqlInet.writeValue("127.0.0.1") should equal(Array[Byte](127, 0, 0, 1))
 
-    deserialisedValue should equal(None)
+    intercept[IllegalArgumentException] {
+      CqlInet.writeValue("hello")
+    }
+    intercept[IllegalArgumentException] {
+      CqlInet.writeValue(true)
+    }
+    intercept[IllegalArgumentException] {
+      CqlInet.writeValue(false)
+    }
+    intercept[IllegalArgumentException] {
+      CqlInet.writeValue(List())
+    }
+    intercept[IllegalArgumentException] {
+      CqlInet.writeValue(Map())
+    }
   }
 }

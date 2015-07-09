@@ -15,20 +15,22 @@
  */
 package org.scassandra.server.cqlmessages
 
-import java.net.InetAddress
-import java.util.UUID
+import java.nio.ByteOrder
 
-import akka.util.{ByteIterator, ByteString}
-import io.netty.buffer.{ByteBuf, Unpooled}
-import org.apache.cassandra.transport.CBUtil
-import org.scassandra.server.cqlmessages.types.ColumnType
+import akka.util.{ByteIterator, ByteString, ByteStringBuilder}
 
-import scala.collection.JavaConverters._
-
+/**
+ * Provides helper functions used for serializing and deserializing
+ * values defined in the Section 3 ('Notations') of the native protocol
+ * spec.
+ */
 object CqlProtocolHelper {
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
+  implicit val byteOrder : ByteOrder = ByteOrder.BIG_ENDIAN
   val NullValue: Array[Byte] = Array[Byte](-1, -1, -1, -1)
 
+  /**
+   * Serializes given [[String]] into [string] bytes.
+   */
   def serializeString(string: String) : Array[Byte] = {
     val bs = ByteString.newBuilder
     bs.putShort(string.length)
@@ -36,6 +38,9 @@ object CqlProtocolHelper {
     bs.result().toArray
   }
 
+  /**
+   * Serializes given [[String]] into [long string] bytes.
+   */
   def serializeLongString(string: String) : Array[Byte] = {
     val bs = ByteString.newBuilder
     bs.putInt(string.length)
@@ -43,116 +48,85 @@ object CqlProtocolHelper {
     bs.result().toArray
   }
 
+  /**
+   * Serializes given [[Byte]] into [byte] bytes.
+   */
   def serializeByte(byte : Byte) : Array[Byte] = {
     Array(byte)
   }
 
+  /**
+   * Serializes given [[Int]] into [int] bytes.
+   */
   def serializeInt(int: Int) : Array[Byte] = {
     val frameBuilder = ByteString.newBuilder
     frameBuilder.putInt(int)
     frameBuilder.result().toArray
   }
 
+  /**
+   * Serializes given [[Short]] into [short] bytes.
+   */
   def serializeShort(short : Short) : Array[Byte] = {
     val frameBuilder = ByteString.newBuilder
     frameBuilder.putShort(short)
     frameBuilder.result().toArray
   }
 
-  def serializeBooleanValue(bool : Boolean) : Array[Byte] = {
-    Array[Byte](0,0,0,1, if (bool) 1 else 0)
-  }
-
-  def serializeBigIntValue(value : Long) : Array[Byte] = {
+  /**
+   * Serializes the given collection into a byte array using the given serializer for encoding
+   * individual elements and size function for writing size of collection.
+   * @param sizeF Function used for writing number of collection elements.
+   * @param input Collection to serialize.
+   * @param entrySerializer Serializer function that accepts a value and encodes it into bytes.
+   * @tparam U type of elements being encoded.
+   * @return The encoded bytes.
+   */
+  def serializeCollection[U](sizeF: (ByteStringBuilder, Int) => ByteStringBuilder)(input: TraversableOnce[U], entrySerializer: U => Array[Byte]) : Array[Byte] = {
     val frameBuilder = ByteString.newBuilder
-    frameBuilder.putInt(8)
-    frameBuilder.putLong(value)
-    frameBuilder.result().toArray
-  }
-
-  def serializeDecimalValue(decimal: java.math.BigDecimal) : Array[Byte] = {
-    val scale = decimal.scale()
-    val unscaledValue = decimal.unscaledValue().toByteArray
-    val length = 4 + unscaledValue.length
-    val frameBuilder = ByteString.newBuilder
-    frameBuilder.putInt(length)
-    frameBuilder.putInt(scale)
-    frameBuilder.putBytes(unscaledValue)
-    frameBuilder.result().toArray
-  }
-
-  def serializeDoubleValue(doubleValue : Double) : Array[Byte] = {
-    val frameBuilder = ByteString.newBuilder
-    frameBuilder.putInt(8)
-    frameBuilder.putDouble(doubleValue)
-    frameBuilder.result().toArray
-  }
-
-  def serializeFloatValue(floatValue : Float) : Array[Byte] = {
-
-//    FloatSerializer.instance.serialize(floatValue)
-
-    val frameBuilder = ByteString.newBuilder
-    frameBuilder.putInt(4)
-    frameBuilder.putFloat(floatValue)
-    frameBuilder.result().toArray
-  }
-
-  def serializeTimestampValue(timestampValue : Long) : Array[Byte] = {
-    serializeBigIntValue(timestampValue)
-  }
-
-  def serializeUUIDValue(uuid : UUID) : Array[Byte] = {
-    val frameBuilder = ByteString.newBuilder
-    frameBuilder.putInt(16)
-    frameBuilder.putLong(uuid.getMostSignificantBits)
-    frameBuilder.putLong(uuid.getLeastSignificantBits)
-    frameBuilder.result().toArray
-  }
-
-  def serializeInetValue(inet : InetAddress) : Array[Byte] = {
-    val frameBuilder = ByteString.newBuilder
-    val bytes = inet.getAddress
-    frameBuilder.putInt(bytes.length)
-    frameBuilder.putBytes(bytes)
-    frameBuilder.result().toArray
-  }
-
-  def serializeVarintValue(varint : BigInt) : Array[Byte] = {
-    val frameBuilder = ByteString.newBuilder
-    val bytes = varint.toByteArray
-    frameBuilder.putInt(bytes.length)
-    frameBuilder.putBytes(bytes)
-    frameBuilder.result().toArray
-  }
-
-  def serializeSet(set : Iterable[Any], setType: ColumnType[_]) : Array[Byte] = {
-    val frameBuilder = ByteString.newBuilder
-    frameBuilder.putShort(set.size)
-    for (valueToSerialise <- set) {
-      frameBuilder.putBytes(setType.writeValueInCollection(valueToSerialise))
+    sizeF(frameBuilder, input.size)
+    for (value <- input) {
+      frameBuilder.putBytes(entrySerializer(value))
     }
-    val serialisedSet = frameBuilder.result().toArray
-    serializeInt(serialisedSet.length) ++ serialisedSet
+    frameBuilder.result().toArray
   }
 
-  def serializeCB[U](size: Int, f: (ByteBuf) => Unit) = {
-    val data = new Array[Byte](size)
-    f(Unpooled.wrappedBuffer(data).clear())
-    data
-  }
+  /**
+   * Serializes a collection of [String] into [string x].
+   * @param input Collection to serialize.
+   * @param entrySerializer Serializer function that accepts a value and encodes it into bytes.
+   * @return The encoded bytes.
+   */
+  def serializeStringCollection[String](input: TraversableOnce[String], entrySerializer: String => Array[Byte]) =
+    serializeCollection(_.putShort(_))(input, entrySerializer)
 
+  /**
+   * Serializes a list into [string list].
+   * @param input List to serialize.
+   * @return The encoded bytes.
+   */
   def serializeStringList(input: List[String]) =
-    serializeCB(CBUtil.sizeOfStringList(input.asJava), CBUtil.writeStringList(input.asJava, _))
+    serializeStringCollection(input, serializeString)
 
-  def serializeStringMap(input: Map[String,String]) =
-    serializeCB(CBUtil.sizeOfStringMap(input.asJava), CBUtil.writeStringMap(input.asJava, _))
+  /**
+   * Serializes a map into [string map].
+   * @param input Map to serialize.
+   * @return The encoded bytes.
+   */
+  def serializeStringMap(input: Map[String, String]) =
+    serializeStringCollection(input, (e: (String, String)) => serializeString(e._1) ++ serializeString(e._2))
 
-  def serializeStringMultiMap(input: Map[String, Set[String]]) = {
-    val map = input.mapValues(s => s.toList.asJava).asJava
-    serializeCB(CBUtil.sizeOfStringToStringListMap(map), CBUtil.writeStringToStringListMap(map, _))
-  }
+  /**
+   * Serializes a multi map into [string multimap].
+   * @param input Map to serialize.
+   * @return The encoded bytes.
+   */
+  def serializeStringMultiMap(input: Map[String, Set[String]]) =
+    serializeStringCollection(input, (e: (String, Set[String])) => serializeString(e._1) ++ serializeStringList(e._2.toList))
 
+  /**
+   * Reads [string] bytes into [[String]].
+   */
   def readString(iterator: ByteIterator) : String = {
     //todo handle null
     val stringLength = iterator.getShort
@@ -161,6 +135,9 @@ object CqlProtocolHelper {
     new String(stringBytes)
   }
 
+  /**
+   * Reads [long string] bytes into [[String]].
+   */
   def readLongString(iterator: ByteIterator) : Option[String] = {
     val stringLength = iterator.getInt
     if (stringLength == -1) return None
@@ -169,87 +146,18 @@ object CqlProtocolHelper {
     Some(new String(stringBytes))
   }
 
+  /**
+   * Reads [int] into [[Int]].
+   */
   def readIntValue(iterator: ByteIterator) : Option[Int] = {
     val intLength = iterator.getInt
     if (intLength == -1) return None
     Some(iterator.getInt)
   }
 
-  def readBigIntValue(iterator: ByteIterator) : Option[Long] = {
-    val intLength = iterator.getInt
-    if (intLength == -1) return None
-    Some(iterator.getLong)
-  }
-
-  def readBooleanValue(iterator: ByteIterator) : Option[Boolean] = {
-    val booleanLength = iterator.getInt
-    if (booleanLength == -1) return None
-    val boolAsByte = iterator.getByte
-    if (boolAsByte == 0) Some(false)
-    else if (boolAsByte == 1) Some(true)
-    else throw new IllegalArgumentException
-  }
-
-  def readBlobValue(iterator: ByteIterator) : Option[Array[Byte]] = {
-    val length = iterator.getInt
-    if (length == -1) return None
-    val bytes = new Array[Byte](length)
-    iterator.getBytes(bytes)
-    Some(bytes)
-  }
-
-  def readDecimalValue(iterator: ByteIterator) : Option[BigDecimal] = {
-    val length = iterator.getInt
-    if (length == -1) return None
-    val scale = iterator.getInt
-    val bytes = new Array[Byte](length - 4)
-    iterator.getBytes(bytes)
-    val unscaledValue = BigInt(bytes)
-    Some(BigDecimal(unscaledValue, scale))
-  }
-
-  def readDoubleValue(iterator: ByteIterator) : Option[Double] = {
-    val size = iterator.getInt
-    if (size == -1) None
-    else Some(iterator.getDouble)
-  }
-
-  def readFloatValue(iterator: ByteIterator) : Option[Float] = {
-    val size = iterator.getInt
-    if (size == -1) return None
-    Some(iterator.getFloat)
-  }
-
-  def readTimestampValue(iterator: ByteIterator) : Option[Long] = {
-    val size = iterator.getInt
-    if (size == -1) return None
-    Some(iterator.getLong)
-  }
-
-  def readUUIDValue(iterator: ByteIterator) : Option[UUID] = {
-    val size = iterator.getInt
-    if (size == -1) return None
-    val mostSignificantBytes = iterator.getLong
-    val leastSignificantBytes = iterator.getLong
-    Some(new UUID(mostSignificantBytes, leastSignificantBytes))
-  }
-
-  def readInetValue(iterator: ByteIterator) : Option[InetAddress] = {
-    val length = iterator.getInt
-    if (length == -1) return None
-    val bytes = new Array[Byte](length)
-    iterator.getBytes(bytes)
-    Some(InetAddress.getByAddress(bytes))
-  }
-
-  def readVarintValue(iterator: ByteIterator) : Option[BigInt] = {
-    val length = iterator.getInt
-    if (length == -1) return None
-    val bytes = new Array[Byte](length)
-    iterator.getBytes(bytes)
-    Some(BigInt(bytes))
-  }
-
+  /**
+   * Reads [short bytes] into bytes.
+   */
   def readShortBytes(iterator: ByteIterator) : Array[Byte] = {
     val length = iterator.getShort
     val bytes = new Array[Byte](length)
@@ -257,22 +165,18 @@ object CqlProtocolHelper {
     bytes
   }
 
-  def readVarcharSetValue(iterator: ByteIterator) : Option[Set[String]] = {
-    val setLength = iterator.getInt
-    if (setLength == -1) return None
-    val setSize = iterator.getShort
-      Some((0 until setSize).map(it => {
-        val bytes = readShortBytes(iterator)
-        new String(bytes)
-      }).toSet)
-  }
-
+  /**
+   * Determines whether or not into bytes represent null. (-1,-1,-1,-1 sequence)
+   */
   def readNullValue(iterator: ByteIterator) : Boolean = {
     val bytes = new Array[Byte](4)
     iterator.getBytes(bytes)
     bytes.deep == Array[Byte](-1,-1,-1,-1).deep
   }
 
+  /**
+   * Returns a [[ByteString]] of header ++ [int length of body] ++ [body].
+   */
   def combineHeaderAndLength(header: Array[Byte], body: Array[Byte]) : ByteString = {
     ByteString(header ++ serializeInt(body.length) ++ body)
   }

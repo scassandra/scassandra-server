@@ -15,11 +15,10 @@
  */
 package org.scassandra.server.cqlmessages.response
 
-import org.apache.cassandra.db.WriteType
 import org.scalatest.{Matchers, FunSuite}
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.VersionTwo
-import org.scassandra.server.priming.{UnavailableResult, WriteRequestTimeoutResult, ReadRequestTimeoutResult}
+import org.scassandra.server.priming.{WriteType, UnavailableResult, WriteRequestTimeoutResult, ReadRequestTimeoutResult}
 
 class ErrorTest extends FunSuite with Matchers {
 
@@ -99,7 +98,7 @@ class ErrorTest extends FunSuite with Matchers {
     val providedConsistency = QUORUM
     val receivedResponsesExpected: Int = 2
     val requiredResponsesExpected: Int = 3
-    val writeTypeExpected: WriteType = WriteType.CAS
+    val writeTypeExpected = WriteType.CAS
     val writeTimeoutResult = WriteRequestTimeoutResult(receivedResponsesExpected, requiredResponsesExpected, writeTypeExpected)
     val writeTimeoutBytes = WriteRequestTimeout(stream, providedConsistency, writeTimeoutResult).serialize().iterator
     // drop the header

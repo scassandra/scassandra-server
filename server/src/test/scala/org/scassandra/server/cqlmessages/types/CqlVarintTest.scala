@@ -16,14 +16,13 @@
 package org.scassandra.server.cqlmessages.types
 
 import org.scalatest.{FunSuite, Matchers}
-import akka.util.ByteString
-import org.scassandra.server.cqlmessages.VersionTwo
+import org.scassandra.server.cqlmessages.ProtocolProvider
 
-class CqlVarintTest extends FunSuite with Matchers {
+class CqlVarintTest extends FunSuite with Matchers with ProtocolProvider {
 
   test("Serialisation of CqlVarint") {
-    CqlVarint.writeValue(BigDecimal("123000000000")) should equal(Array(0, 0, 0, 5, 28, -93, 95, 14, 0))
-    CqlVarint.writeValue("123") should equal(Array(0, 0, 0, 1, 123))
+    CqlVarint.writeValue(BigDecimal("123000000000")) should equal(Array(28, -93, 95, 14, 0))
+    CqlVarint.writeValue("123") should equal(Array(123))
 
     intercept[IllegalArgumentException] {
       CqlVarint.writeValue(BigDecimal("123.67"))
@@ -43,12 +42,5 @@ class CqlVarintTest extends FunSuite with Matchers {
     intercept[IllegalArgumentException] {
       CqlVarint.writeValue(Map())
     }
-  }
-
-  test("Reading null") {
-    val bytes = ByteString(Array[Byte](-1,-1,-1,-1))
-    val deserialisedValue = CqlVarint.readValue(bytes.iterator, VersionTwo)
-
-    deserialisedValue should equal(None)
   }
 }

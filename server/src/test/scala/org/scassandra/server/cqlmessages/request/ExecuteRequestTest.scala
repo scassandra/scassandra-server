@@ -51,6 +51,7 @@ class ExecuteRequestTest extends FunSuite with Matchers {
   }
 
   test("Serialization of a execute - version 2") {
+    implicit val protoVersion= VersionTwo
     val stream : Byte = 0x01
     val protocolVersion : Byte = 0x1
     val consistency = TWO
@@ -74,8 +75,8 @@ class ExecuteRequestTest extends FunSuite with Matchers {
     val numberOfVariables = serialization.getShort
     numberOfVariables should equal(2)
 
-    CqlProtocolHelper.readBigIntValue(serialization) should equal(Some(1234))
-    CqlProtocolHelper.readDecimalValue(serialization) should equal(Some(BigDecimal("5678")))
+    CqlBigint.readValueWithLength(serialization) should equal(Some(1234))
+    CqlDecimal.readValueWithLength(serialization) should equal(Some(BigDecimal("5678")))
 
     serialization.isEmpty should equal(true)
   }
@@ -109,7 +110,7 @@ class ExecuteRequestTest extends FunSuite with Matchers {
     response.numberOfVariables should equal(7)
     response.variables.size should equal(7)
     response.variables should equal(
-      List(Some(1234l), Some(2345l), Some(new java.math.BigDecimal("1")), Some(1.5d), Some(2.5f), Some(3456), Some(new BigInteger("123")))
+      List(Some(1234l), Some(2345l), Some(BigDecimal("1")), Some(1.5d), Some(2.5f), Some(3456), Some(BigInt("123")))
     )
   }
 

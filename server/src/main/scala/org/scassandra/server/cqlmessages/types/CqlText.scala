@@ -15,32 +15,4 @@
  */
 package org.scassandra.server.cqlmessages.types
 
-import akka.util.ByteIterator
-import org.apache.cassandra.serializers.{UTF8Serializer, TypeSerializer}
-import org.scassandra.server.cqlmessages.ProtocolVersion
-
-case object CqlText extends ColumnType[String](0x000A, "text") {
-   override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[String] = {
-     CqlVarchar.readValue(byteIterator, protocolVersion)
-   }
-
-   override def writeValue(value : Any): Array[Byte] = {
-     CqlVarchar.writeValue(value)
-   }
-
-   override def writeValueInCollection(value : Any) = {
-     CqlVarchar.writeValueInCollection(value)
-   }
-
-   override def readValueInCollection(byteIterator: ByteIterator): String = {
-     CqlVarchar.readValueInCollection(byteIterator)
-   }
-
-  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[String] = {
-    list.map(_.toString).toList
-  }
-
-  override def serializer: TypeSerializer[String] = UTF8Serializer.instance
-
-  override def convertToCorrectJavaTypeForSerializer(value: Any): String = value.toString
-}
+case object CqlText extends CqlTextType(0x000A, "text")

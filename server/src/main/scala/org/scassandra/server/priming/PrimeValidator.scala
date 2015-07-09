@@ -16,6 +16,7 @@
 package org.scassandra.server.priming
 
 import com.typesafe.scalalogging.LazyLogging
+import org.scassandra.server.cqlmessages.VersionTwo
 import scala.collection.immutable.Map
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
 import org.scassandra.server.cqlmessages.types.ColumnType
@@ -80,7 +81,8 @@ class PrimeValidator extends LazyLogging {
   }
 
   private def convertValue(value: Any, columnType: ColumnType[_]): Any = {
-    columnType.writeValue(value)
+    // TODO: Find way to get protocol version, either implicitly or passed somehow.
+    columnType.writeValue(value)(VersionTwo)
   }
 }
 

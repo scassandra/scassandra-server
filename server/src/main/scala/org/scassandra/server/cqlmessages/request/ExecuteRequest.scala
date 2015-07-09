@@ -46,7 +46,7 @@ object ExecuteRequest {
     val numberOfVariables = bodyIterator.getShort
 
     val variableValues = variableTypes.map (varType => {
-      varType.readValue(bodyIterator, VersionTwo)
+      varType.readValueWithLength(bodyIterator)(VersionTwo)
     })
     ExecuteRequestV2(ProtocolVersion.ClientProtocolVersionTwo, stream, preparedStatementId, consistency, numberOfVariables, variableValues, flags)
   }
@@ -72,7 +72,7 @@ object ExecuteRequest {
 
 
     val variableValues = variableTypes.map (varType => {
-      varType.readValue(bodyIterator, VersionOne)
+      varType.readValueWithLength(bodyIterator)(VersionOne)
     } )
     val consistency = Consistency.fromCode(bodyIterator.getShort)
     ExecuteRequestV1(ProtocolVersion.ClientProtocolVersionOne, stream, preparedStatementId, consistency, numberOfVariables, variableValues)
@@ -108,7 +108,7 @@ case class ExecuteRequestV2(protocolVersion: Byte, stream: Byte, id: Int, consis
 
     variableTypes zip variables foreach  {
       case (varType, varValue) =>
-        bs.putBytes(varType.writeValue(varValue))
+        bs.putBytes(varType.writeValueWithLength(varValue)(VersionTwo))
     }
 
     val body = bs.result()

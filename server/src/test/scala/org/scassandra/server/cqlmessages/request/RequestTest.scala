@@ -20,8 +20,6 @@ import org.scassandra.server.cqlmessages._
 
 class RequestTest extends FunSuite with Matchers {
 
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
-
   test("Serialization of StartupRequest") {
     val body = StartupRequest
     body.serialize() should equal(

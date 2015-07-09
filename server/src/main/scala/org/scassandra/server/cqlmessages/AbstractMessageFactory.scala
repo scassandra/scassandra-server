@@ -16,6 +16,8 @@
 package org.scassandra.server.cqlmessages
 
 import akka.util.ByteString
+import org.scassandra.server.actors.QueryFlagParser._
+import org.scassandra.server.actors.QueryFlags._
 import org.scassandra.server.cqlmessages.request.QueryRequest
 import org.scassandra.server.cqlmessages.response._
 import org.scassandra.server.cqlmessages.response.UnavailableException
@@ -86,10 +88,15 @@ abstract class AbstractMessageFactory extends CqlMessageFactory {
     val query = CqlProtocolHelper.readLongString(iterator)
     val consistency = iterator.getShort
     val flags = iterator.getByte
-    val numberOfVariables = iterator.getShort
-    val variableValues = variableTypes.map (varType => {
-      varType.readValue(iterator, protocolVersionImp)
-    } )
+    val variableValues = hasFlag(Values, flags) match {
+      case true  => {
+        val numberOfVariables = iterator.getShort
+        variableTypes.map (varType => {
+          varType.readValueWithLength(iterator)(protocolVersionImp)
+        })
+      }
+      case false => Nil
+    }
     QueryRequest(stream, query.getOrElse("Failed to parse Query string"), consistency, flags, variableValues)
   }
 }

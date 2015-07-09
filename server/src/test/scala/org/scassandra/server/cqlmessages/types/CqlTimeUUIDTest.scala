@@ -16,13 +16,12 @@
 package org.scassandra.server.cqlmessages.types
 
 import org.scalatest.{FunSuite, Matchers}
-import akka.util.ByteString
-import org.scassandra.server.cqlmessages.VersionTwo
+import org.scassandra.server.cqlmessages.ProtocolProvider
 
-class CqlTimeUUIDTest extends FunSuite with Matchers {
+class CqlTimeUUIDTest extends FunSuite with Matchers with ProtocolProvider {
 
   test("Serialisation of CqlTimeUUID") {
-    CqlTimeUUID.writeValue("59ad61d0-c540-11e2-881e-b9e6057626c4") should equal(Array(0, 0, 0, 16, 89, -83, 97, -48, -59, 64, 17, -30, -120, 30, -71, -26, 5, 118, 38, -60))
+    CqlTimeUUID.writeValue("59ad61d0-c540-11e2-881e-b9e6057626c4") should equal(Array(89, -83, 97, -48, -59, 64, 17, -30, -120, 30, -71, -26, 5, 118, 38, -60))
 
     intercept[IllegalArgumentException] {
       CqlTimeUUID.writeValue("123")
@@ -45,12 +44,5 @@ class CqlTimeUUIDTest extends FunSuite with Matchers {
     intercept[IllegalArgumentException] {
       CqlTimeUUID.writeValue(Map())
     }
-  }
-
-  test("Reading null") {
-    val bytes = ByteString(Array[Byte](-1,-1,-1,-1))
-    val deserialisedValue = CqlTimeUUID.readValue(bytes.iterator, VersionTwo)
-
-    deserialisedValue should equal(None)
   }
 }

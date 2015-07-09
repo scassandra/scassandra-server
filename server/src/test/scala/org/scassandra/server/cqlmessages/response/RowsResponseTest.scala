@@ -22,6 +22,8 @@ import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.VersionOne
 import org.scassandra.server.cqlmessages.types.{CqlVarchar, ColumnType}
 
+import CqlProtocolHelper._
+
 class RowsResponseTest extends FunSuite with Matchers {
 
   val defaultStreamId : Byte = 1
@@ -137,7 +139,6 @@ class RowsResponseTest extends FunSuite with Matchers {
   }
 
   def serializeInt(int: Int): List[Byte] = {
-    implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
     val builder = ByteString.newBuilder
     builder.putInt(int)

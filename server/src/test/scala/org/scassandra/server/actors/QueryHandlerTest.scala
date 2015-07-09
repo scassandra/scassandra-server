@@ -235,7 +235,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     val queryFlag = QueryFlags.Values
     val someQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query, flags = queryFlag).toArray.drop(8))
     val queryParams = ByteString(CqlProtocolHelper.serializeShort(1) ++ // number of parameters
-                      CqlText.writeValue("Hello"))
+                      CqlText.writeValueWithLength("Hello"))
     when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), SuccessResult, Map(), "", "sometable", variableTypes = List(CqlText))))
 
     // when

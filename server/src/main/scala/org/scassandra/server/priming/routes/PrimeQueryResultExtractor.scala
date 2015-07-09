@@ -18,7 +18,6 @@ package org.scassandra.server.priming.routes
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.scalalogging.LazyLogging
-import org.apache.cassandra.db.WriteType
 import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeQuerySingle, Then, When}
@@ -73,7 +72,7 @@ object PrimeQueryResultExtractor extends LazyLogging {
       case WriteTimeout => WriteRequestTimeoutResult(
         config.getOrElse(ErrorConstants.ReceivedResponse, "0").toInt,
         config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
-        WriteType.valueOf(config.getOrElse(ErrorConstants.WriteType, "SIMPLE"))
+        WriteType.withName(config.getOrElse(ErrorConstants.WriteType, "SIMPLE"))
       )
       case Unavailable => UnavailableResult(
         config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
