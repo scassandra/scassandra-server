@@ -128,8 +128,8 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
   /* should not be called if there isn't at least a header */
   private def takeMessage(): Boolean = {
     val protocolVersion = currentData(0)
-    if (protocolVersion == VersionThree.clientCode) {
-      log.warning("Received a version three message, currently only one and two supported so sending an unsupported protocol error to get the driver to use an older version of the protocol.")
+    if (protocolVersion >= VersionThree.clientCode) {
+      log.warning(s"Received protocol version $protocolVersion, currently only one and two supported so sending an unsupported protocol error to get the driver to use an older version of the protocol.")
       val wrappedSender = connectionWrapperFactory(context, sender)
       // we can't really send the correct stream back as it is a different type (short rather than byte)
       wrappedSender ! UnsupportedProtocolVersion(0x0)(VersionTwo)

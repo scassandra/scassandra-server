@@ -281,12 +281,19 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     prepareHandlerTestProbe.expectMsg(PrepareHandlerMessages.Execute(ByteString(messageBody), streamId, VersionTwoMessageFactory, tcpWrapperTestProbe.ref))
   }
 
-  test("Should send unsupported version if protocol 3") {
+  test("Should send unsupported version if protocol 3+") {
     implicit val protocolVersion = VersionTwo
     val stream : Byte = 0x0 // hard coded for now
     val startupMessage = MessageHelper.createStartupMessage(VersionThree)
 
     testActorRef ! Received(ByteString(startupMessage.toArray))
+
+    tcpWrapperTestProbe.expectMsg(UnsupportedProtocolVersion(stream))
+
+    case object VersionFive extends ProtocolVersion(0x5, (0x85 & 0xFF).toByte, 5)
+    val v5StartupMessage = MessageHelper.createStartupMessage(VersionFive)
+
+    testActorRef ! Received(ByteString(v5StartupMessage.toArray))
 
     tcpWrapperTestProbe.expectMsg(UnsupportedProtocolVersion(stream))
   }
