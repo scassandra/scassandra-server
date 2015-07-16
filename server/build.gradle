@@ -8,6 +8,7 @@ buildscript {
     }
     dependencies {
         classpath "com.github.maiflai:gradle-scalatest:0.7"
+        classpath 'com.github.rholder:gradle-one-jar:1.0.4'
     }
 }
 
@@ -15,6 +16,7 @@ apply plugin: "com.github.maiflai.scalatest"
 apply plugin: 'scala'
 apply plugin: 'signing'
 apply plugin: 'maven'
+apply plugin: 'gradle-one-jar'
 
 group 'org.scassandra'
 jar.baseName = 'scassandra-server_2.11'
@@ -47,6 +49,11 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     baseName = 'scassandra-server'
     excludes = ['**/**']
     from 'build/docs/javadoc'
+}
+
+task fatJar(type: OneJar) {
+    mainClass = 'org.scassandra.server.ServerStubRunner'
+    baseName = 'scassandra-server_2.11'
 }
 
 artifacts {
