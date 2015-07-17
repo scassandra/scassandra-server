@@ -50,6 +50,7 @@ public class ActivityClient {
 
         private String host = "localhost";
         private int port = 8043;
+        private int socketTimeout = 1000;
 
         private ActivityClientBuilder() {
         }
@@ -64,8 +65,13 @@ public class ActivityClient {
             return this;
         }
 
+        public ActivityClientBuilder withSocketTimeout(int timeout) {
+            this.socketTimeout = timeout;
+            return this;
+        }
+
         public ActivityClient build() {
-            return new ActivityClient(this.host, this.port);
+            return new ActivityClient(this.host, this.port, this.socketTimeout);
         }
     }
 
@@ -84,11 +90,11 @@ public class ActivityClient {
     private final String queryUrl;
     private final String preparedStatementExecutionUrl;
 
-    private ActivityClient(String host, int port) {
+    private ActivityClient(String host, int port, int socketTimeout) {
         RequestConfig.Builder requestBuilder = RequestConfig.custom();
-        requestBuilder = requestBuilder.setConnectTimeout(500);
-        requestBuilder = requestBuilder.setConnectionRequestTimeout(500);
-        requestBuilder = requestBuilder.setSocketTimeout(500);
+        requestBuilder = requestBuilder.setConnectTimeout(socketTimeout);
+        requestBuilder = requestBuilder.setConnectionRequestTimeout(socketTimeout);
+        requestBuilder = requestBuilder.setSocketTimeout(socketTimeout);
         HttpClientBuilder builder = HttpClientBuilder.create();
         builder.setDefaultRequestConfig(requestBuilder.build());
         httpClient = builder.build();
