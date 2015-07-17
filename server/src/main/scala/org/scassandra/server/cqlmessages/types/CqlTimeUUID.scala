@@ -15,30 +15,4 @@
  */
 package org.scassandra.server.cqlmessages.types
 
-import java.util.UUID
-
-import akka.util.ByteIterator
-import org.apache.cassandra.serializers.TypeSerializer
-import org.scassandra.server.cqlmessages.{CqlProtocolHelper, ProtocolVersion}
-
-case object CqlTimeUUID extends ColumnType[UUID](0x000F, "timeuuid") {
-   override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[UUID] = {
-     CqlProtocolHelper.readUUIDValue(byteIterator)
-   }
-
-   def writeValue( value: Any) = {
-     CqlProtocolHelper.serializeUUIDValue(UUID.fromString(value.toString))
-   }
-
-  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[UUID] = {
-    list.map(convertToCorrectJavaTypeForSerializer).toList
-  }
-
-  override def serializer: TypeSerializer[UUID] = CustomUUIDSerializer.instance
-
-  override def convertToCorrectJavaTypeForSerializer(value: Any): UUID = value match {
-    case bd: String => UUID.fromString(bd)
-    case uuid: UUID => uuid
-    case _ => throw new IllegalArgumentException("Expected string representing an time uuid")
-  }
-}
+case object CqlTimeUUID extends CqlUUIDType(0x000F, "timeuuid")

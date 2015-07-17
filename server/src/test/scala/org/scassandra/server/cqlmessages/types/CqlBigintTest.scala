@@ -16,39 +16,31 @@
 package org.scassandra.server.cqlmessages.types
 
 import org.scalatest.{Matchers, FunSuite}
-import akka.util.ByteString
-import org.scassandra.server.cqlmessages.VersionTwo
+import org.scassandra.server.cqlmessages.ProtocolProvider
 
-class CqlBigintTest extends FunSuite with Matchers {
+class CqlBigintTest extends FunSuite with Matchers with ProtocolProvider {
 
   test("Serialisation of CqlBigInt") {
-    CqlBigint.writeValue(BigDecimal("123000000000")) should equal(Array(0, 0, 0, 8, 0, 0, 0, 28, -93, 95, 14, 0))
-    CqlBigint.writeValue("123") should equal(Array[Byte](0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 123))
+    CqlBigint.writeValue(BigDecimal("123000000000")) should equal(Array(0, 0, 0, 28, -93, 95, 14, 0))
+    CqlBigint.writeValue("123") should equal(Array[Byte](0, 0, 0, 0, 0, 0, 0, 123))
 
     intercept[IllegalArgumentException] {
       CqlBigint.writeValue(BigDecimal("123.67"))
     }
     intercept[IllegalArgumentException] {
-      CqlBigint.writeValue("hello") should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
+      CqlBigint.writeValue("hello")
     }
     intercept[IllegalArgumentException] {
-      CqlBigint.writeValue(true) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
+      CqlBigint.writeValue(true)
     }
     intercept[IllegalArgumentException] {
-      CqlBigint.writeValue(false) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
+      CqlBigint.writeValue(false)
     }
     intercept[IllegalArgumentException] {
-      CqlBigint.writeValue(List()) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
+      CqlBigint.writeValue(List())
     }
     intercept[IllegalArgumentException] {
-      CqlBigint.writeValue(Map()) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
+      CqlBigint.writeValue(Map())
     }
-  }
-
-  test("Reading null") {
-    val bytes = ByteString(Array[Byte](-1,-1,-1,-1))
-    val deserialisedValue = CqlBigint.readValue(bytes.iterator, VersionTwo)
-
-    deserialisedValue should equal(None)
   }
 }

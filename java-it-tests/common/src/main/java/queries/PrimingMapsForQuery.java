@@ -10,7 +10,6 @@ import org.scassandra.cql.MapType;
 import org.scassandra.http.client.ColumnTypes;
 import org.scassandra.http.client.PrimingRequest;
 import org.scassandra.http.client.types.ColumnMetadata;
-import org.apache.cassandra.utils.ByteBufferUtil;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -191,7 +190,7 @@ public class PrimingMapsForQuery extends AbstractScassandraTest {
 
         Map<ByteBuffer, ByteBuffer> actualBlobMap = rowOne.getMap("blob_map", ByteBuffer.class, ByteBuffer.class);
         Map.Entry<ByteBuffer, ByteBuffer> entry = actualBlobMap.entrySet().iterator().next();
-        assertArrayEquals(blob, ByteBufferUtil.getArray(entry.getKey()));
-        assertArrayEquals(blob, ByteBufferUtil.getArray(entry.getValue()));
+        assertArrayEquals(blob, getArray(entry.getKey()));
+        assertArrayEquals(blob, getArray(entry.getValue()));
     }
 }

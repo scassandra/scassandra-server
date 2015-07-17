@@ -16,17 +16,15 @@
 package org.scassandra.server.cqlmessages.types
 
 import org.scalatest.{FunSuite, Matchers}
-import akka.util.ByteString
-import org.scassandra.server.cqlmessages.VersionTwo
+import org.scassandra.server.cqlmessages.ProtocolProvider
 
-class CqlSetTest extends FunSuite with Matchers {
+class CqlSetTest extends FunSuite with Matchers with ProtocolProvider {
 
   test("Serialisation of CqlSet - Varchar") {
     val underTest = CqlSet(CqlVarchar)
-    underTest.writeValue(List()) should equal(Array[Byte](0, 0, 0, 2, 0, 0))
+    underTest.writeValue(List()) should equal(Array[Byte](0, 0))
 
     underTest.writeValue(List("one", "two", "three")) should equal(Array[Byte](
-      0, 0, 0, 19, // number of bytes
       0, 3, // number of elements in the set
       0, 3, 111, 110, 101, // one
       0, 3, 116, 119, 111, // two
@@ -52,17 +50,13 @@ class CqlSetTest extends FunSuite with Matchers {
     intercept[IllegalArgumentException] {
       underTest.writeValue(false)
     }
-    intercept[IllegalArgumentException] {
-      underTest.writeValue(Map())
-    }
   }
 
   test("Serialisation of CqlSet - Ascii") {
     val underTest = CqlSet(CqlAscii)
-    underTest.writeValue(List()) should equal(Array[Byte](0, 0, 0, 2, 0, 0))
+    underTest.writeValue(List()) should equal(Array[Byte](0, 0))
 
     underTest.writeValue(List("one", "two", "three")) should equal(Array[Byte](
-      0, 0, 0, 19, // number of bytes
       0, 3, // number of elements in the set
       0, 3, 111, 110, 101, // one
       0, 3, 116, 119, 111, // two
@@ -73,10 +67,9 @@ class CqlSetTest extends FunSuite with Matchers {
 
   test("Serialisation of CqlSet - CqlText") {
     val underTest = CqlSet(CqlText)
-    underTest.writeValue(List()) should equal(Array[Byte](0, 0, 0, 2, 0, 0))
+    underTest.writeValue(List()) should equal(Array[Byte](0, 0))
 
     underTest.writeValue(List("one", "two", "three")) should equal(Array[Byte](
-      0, 0, 0, 19, // number of bytes
       0, 3, // number of elements in the set
       0, 3, 111, 110, 101, // one
       0, 3, 116, 119, 111, // two
@@ -85,10 +78,22 @@ class CqlSetTest extends FunSuite with Matchers {
     ))
   }
 
-  test("Reading null") {
-    val bytes = ByteString(Array[Byte](-1, -1, -1, -1))
-    val deserialisedValue = CqlSet(CqlVarchar).readValue(bytes.iterator, VersionTwo)
-
-    deserialisedValue should equal(None)
+  test("Serialization of CqlSet<CqlSet<Varchar>>") {
+    // Nested serialization test to ensure collections can be nested.
+    val underTest = CqlSet(CqlSet(CqlVarchar))
+    underTest.writeValue(Set()) should equal(Array[Byte](0,0))
+    underTest.writeValue(Set(Set("one", "two", "three"), Set("four", "five", "six"))) should equal(Array[Byte](
+      0, 2, // number of elements in set
+      0, 19, // byte length of first set
+      0, 3, // elements in set
+      0, 3, 111, 110, 101,  // one
+      0, 3, 116, 119, 111,  // two
+      0, 5, 116, 104, 114, 101, 101, // three
+      0, 19, // byte length of second set
+      0, 3, // elements in set
+      0, 4, 102, 111, 117, 114, // four
+      0, 4, 102, 105, 118, 101, // five
+      0, 3, 115, 105, 120 // six
+    ))
   }
 }

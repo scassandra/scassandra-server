@@ -7,6 +7,7 @@ import org.scassandra.server.cqlmessages.types.CqlText
 
 class VersionOneMessageFactoryTest extends FunSuite with Matchers {
 
+  implicit val protocolVersion = VersionOne
   val underTest = VersionOneMessageFactory
 
   test("Parsing QueryRequest") {
@@ -16,7 +17,7 @@ class VersionOneMessageFactoryTest extends FunSuite with Matchers {
                 CqlProtocolHelper.serializeShort(TWO.code) ++
                 Array[Byte](QueryFlags.Values) ++
                 CqlProtocolHelper.serializeShort(1) ++ // number of params
-                CqlText.writeValue("Hello")
+                CqlText.writeValueWithLength("Hello")
 
     val queryRequest = underTest.parseQueryRequest(1, ByteString(message), List(CqlText))
 

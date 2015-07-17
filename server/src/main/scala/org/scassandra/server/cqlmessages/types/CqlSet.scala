@@ -15,56 +15,29 @@
  */
 package org.scassandra.server.cqlmessages.types
 
-import java.nio.ByteBuffer
-import java.util
-
 import akka.util.ByteIterator
-import org.apache.cassandra.serializers.SetSerializer
-import org.apache.cassandra.utils.ByteBufferUtil
-import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 import org.scassandra.server.cqlmessages.ProtocolVersion
-
-import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
-import scala.collection.mutable
 
 //todo change this to a types class
 case class CqlSet[T](setType : ColumnType[T]) extends ColumnType[Set[_]](0x0022, s"set<${setType.stringRep}>") {
-   override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[Set[T]] = {
-     val numberOfBytes = byteIterator.getInt
-     if (numberOfBytes == -1) {
-       None
-     } else {
-       val bytes = new Array[Byte](numberOfBytes)
-       byteIterator.getBytes(bytes)
-       Some(SetSerializer.getInstance(setType.serializer).deserializeForNativeProtocol(ByteBuffer.wrap(bytes), protocolVersion.version).asScala.toSet)
-     }
-   }
+  override def readValue(byteIterator: ByteIterator)(implicit protocolVersion: ProtocolVersion): Option[Set[T]] = {
+    val size = protocolVersion.collectionLength.getLength(byteIterator)
 
-  def writeValue(value: Any) : Array[Byte] = {
-    val setSerializer: SetSerializer[T] = SetSerializer.getInstance(setType.serializer)
-    val set: Set[T] = value match {
-      case s: Set[T] =>
-        s
-      case _: List[T] =>
-        value.asInstanceOf[List[T]].toSet
-      case _: Seq[T] =>
-        value.asInstanceOf[Seq[T]].toSet
-      case _ =>
-        throw new IllegalArgumentException(s"Can't serialise $value as Set of $setType")
-    }
-
-    val collectionType: util.Set[T] = setType.convertToCorrectCollectionTypeForSet(set)
-
-    val serialised: util.List[ByteBuffer] = setSerializer.serializeValues(collectionType)
-
-    val setContents = serialised.foldLeft(new Array[Byte](0))((acc, byteBuffer) => {
-      val current: mutable.ArrayOps[Byte] = ByteBufferUtil.getArray(byteBuffer)
-      acc ++ serializeShort(current.size.toShort) ++ current
-    })
-
-    serializeInt(setContents.length + 2) ++ serializeShort(set.size.toShort) ++ setContents
+    // Deserialize each element into a list.
+    Some(List.fill(size) {
+      setType.readValueWithLength(byteIterator, inCollection=true).get
+    }.toSet)
   }
 
-  override def convertToCorrectJavaTypeForSerializer(value: Any): Set[_] = throw new UnsupportedOperationException("Can't have sets in collections yet")
+  def writeValue(value: Any)(implicit protocolVersion: ProtocolVersion) : Array[Byte] = {
+    val seq: TraversableOnce[T] = value match {
+      case _: TraversableOnce[T] =>
+        value.asInstanceOf[TraversableOnce[T]]
+      case _ =>
+        throw new IllegalArgumentException(s"Can't serialise ${value} as Set of ${setType}")
+    }
+
+    val serializer: Any => Array[Byte] = setType.writeValueWithLength(_, inCollection=true)
+    ColumnType.serializeCqlCollection(seq, serializer)
+  }
 }

@@ -17,6 +17,7 @@ package org.scassandra.server.cqlmessages.response
 
 import akka.util.ByteString
 import org.scassandra.server.cqlmessages._
+import CqlProtocolHelper._
 
 object ResponseHeader {
   val FlagsNoCompressionByte = 0x00
@@ -28,7 +29,6 @@ abstract class Response(header : Header) extends CqlMessage(header)
 
 case class Ready(stream : Byte = ResponseHeader.DefaultStreamId)(implicit protocolVersion: ProtocolVersion) extends Response(new Header(protocolVersion.serverCode, opCode = OpCodes.Ready, streamId = stream)) {
 
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
   val MessageLength = 0
 
   override def serialize() : ByteString = {
@@ -41,8 +41,6 @@ case class Ready(stream : Byte = ResponseHeader.DefaultStreamId)(implicit protoc
 
 case class Supported(stream : Byte = ResponseHeader.DefaultStreamId, map: Map[String,Set[String]] = Map("CQL_VERSION" -> Set("3.0.0")))(implicit protocolVersion: ProtocolVersion)
   extends Response(new Header(protocolVersion.serverCode, opCode = OpCodes.Supported, streamId = stream)) {
-
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
   override def serialize() : ByteString = {
     val bs = ByteString.newBuilder

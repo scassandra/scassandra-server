@@ -66,7 +66,6 @@ public final class PrimingRequest {
             return this;
         }
 
-        @SafeVarargs
         public final PrimingRequestBuilder withRows(Map<String, ? extends Object>... rows) {
             this.rows = Arrays.asList(rows);
             return this;
@@ -304,29 +303,39 @@ public final class PrimingRequest {
                     '}';
         }
 
-        @Override
-        public int hashCode() {
-            return Objects.hash(query, queryPattern, consistency);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null || getClass() != obj.getClass()) {
-                return false;
-            }
-            final When other = (When) obj;
-            return Objects.equals(this.query, other.query) && Objects.equals(this.queryPattern, other.queryPattern) && Objects.equals(this.consistency, other.consistency);
-        }
-
         public String getQuery() {
             return query;
         }
 
         public List<Consistency> getConsistency() {
             return Collections.unmodifiableList(consistency);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof When))
+                return false;
+
+            When when = (When)o;
+
+            if (consistency != null ? !consistency.equals(when.consistency) : when.consistency != null)
+                return false;
+            if (query != null ? !query.equals(when.query) : when.query != null)
+                return false;
+            if (queryPattern != null ? !queryPattern.equals(when.queryPattern) : when.queryPattern != null)
+                return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = query != null ? query.hashCode() : 0;
+            result = 31 * result + (queryPattern != null ? queryPattern.hashCode() : 0);
+            result = 31 * result + (consistency != null ? consistency.hashCode() : 0);
+            return result;
         }
     }
 

@@ -48,7 +48,7 @@ case class Rows(keyspaceName: String, tableName: String, stream : Byte, columnTy
         case (colName, colType) =>
           if (row.columns.get(colName).isDefined) {
             val value = row.columns.get(colName).get
-            bodyBuilder.putBytes(colType.writeValue(value))
+            bodyBuilder.putBytes(colType.writeValueWithLength(value))
           } else {
             // serialise null value
             bodyBuilder.putBytes(NullValue)

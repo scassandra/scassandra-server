@@ -16,29 +16,20 @@
 package org.scassandra.server.cqlmessages.types
 
 import java.net.InetAddress
-import akka.util.ByteIterator
-import org.apache.cassandra.serializers.{InetAddressSerializer, TypeSerializer}
-import org.scassandra.server.cqlmessages.{ProtocolVersion, CqlProtocolHelper}
+import akka.util.{ByteString, ByteIterator}
+import org.scassandra.server.cqlmessages.ProtocolVersion
 import com.google.common.net.InetAddresses
 
 case object CqlInet extends ColumnType[InetAddress](0x0010, "inet") {
-  override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[InetAddress] = {
-    CqlProtocolHelper.readInetValue(byteIterator)
+  override def readValue(byteIterator: ByteIterator)(implicit protocolVersion: ProtocolVersion): Option[InetAddress] = {
+    val bytes = byteIterator.toArray
+    Some(InetAddress.getByAddress(bytes))
   }
 
-  def writeValue(value: Any) = {
-    CqlProtocolHelper.serializeInetValue(InetAddresses.forString(value.toString))
-  }
-
-  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[InetAddress] = {
-    list.map(convertToCorrectJavaTypeForSerializer).toList
-  }
-
-  override def serializer: TypeSerializer[InetAddress] = InetAddressSerializer.instance
-
-  override def convertToCorrectJavaTypeForSerializer(value: Any): InetAddress = value match {
-    case bd: String => InetAddresses.forString(bd)
-    case inet: InetAddress => inet
-    case _ => throw new IllegalArgumentException("Expected string representing an inet address")
+  override def writeValue(value: Any)(implicit protocolVersion: ProtocolVersion) = {
+    val bs = ByteString.newBuilder
+    val bytes = InetAddresses.forString(value.toString).getAddress
+    bs.putBytes(bytes)
+    bs.result().toArray
   }
 }

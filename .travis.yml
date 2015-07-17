@@ -2,8 +2,12 @@ language: scala
 jdk:
   - oraclejdk8
 scala:
-  - 2.11.6
+  - 2.11.7
 sudo: false
 
 install: ./gradlew assemble -x signArchives
-script: ./gradlew  check -x signArchives
+script:
+  - jdk_switcher use openjdk6
+  - ./gradlew check -x signArchives -x java-it-tests:common:check -x java-it-tests:driver20:check -x java-it-tests:driver21:check
+  - jdk_switcher use oraclejdk8
+  - ./gradlew java-it-tests:common:check java-it-tests:driver20:check java-it-tests:driver21:check -x signArchives

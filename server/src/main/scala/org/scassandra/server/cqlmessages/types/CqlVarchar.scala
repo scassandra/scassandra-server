@@ -15,38 +15,4 @@
  */
 package org.scassandra.server.cqlmessages.types
 
-
-import akka.util.ByteIterator
-import org.apache.cassandra.serializers.{UTF8Serializer, TypeSerializer}
-import org.apache.cassandra.utils.ByteBufferUtil
-import org.scassandra.server.cqlmessages.{ProtocolVersion, CqlProtocolHelper}
-
-case object CqlVarchar extends ColumnType[String](0x000D, "varchar") {
-   override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[String] = {
-     CqlProtocolHelper.readLongString(byteIterator)
-   }
-
-   override def writeValue(value : Any) = {
-     if (value.isInstanceOf[Iterable[_]] || value.isInstanceOf[Map[_,_]]) throw new IllegalArgumentException(s"Can't serialise $value as String")
-
-     val serialized = ByteBufferUtil.getArray(serializer.serialize(value.toString))
-     CqlProtocolHelper.serializeInt(serialized.length) ++ serialized
-   }
-
-   override def writeValueInCollection(value : Any) = {
-     CqlProtocolHelper.serializeString(value.toString)
-   }
-
-   override def readValueInCollection(byteIterator: ByteIterator) : String = {
-     //todo handle null
-     CqlProtocolHelper.readString(byteIterator)
-   }
-
-  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[String] = {
-    list.map(_.toString).toList
-  }
-
-   override def serializer: TypeSerializer[String] = UTF8Serializer.instance
-
-  override def convertToCorrectJavaTypeForSerializer(value: Any): String = value.toString
-}
+case object CqlVarchar extends CqlTextType(0x000D, "varchar")

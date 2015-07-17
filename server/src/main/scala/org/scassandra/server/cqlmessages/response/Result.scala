@@ -18,14 +18,14 @@ package org.scassandra.server.cqlmessages.response
 import akka.util.ByteString
 import java.util.UUID
 import com.typesafe.scalalogging.LazyLogging
-import java.nio.ByteOrder
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.types._
+
+import CqlProtocolHelper._
 
 abstract class Result(val resultKind: Int, val streamId: Byte, protocolVersion : Byte) extends Response(new Header(protocolVersion, OpCodes.Result, streamId))
 
 case class VoidResult(stream : Byte)(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.VoidResult, stream, protocolVersion.serverCode) {
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
   val Length = 4
 
   override def serialize() : ByteString = {
@@ -38,8 +38,6 @@ case class VoidResult(stream : Byte)(implicit protocolVersion: ProtocolVersion) 
 }
 
 object Result extends LazyLogging {
-
-  implicit val byteOrder : ByteOrder = ByteOrder.BIG_ENDIAN
 
   def fromByteString(byteString : ByteString) : Result = {
     // TODO: change to be based off the incoming message
@@ -126,8 +124,6 @@ object Result extends LazyLogging {
 }
 
 case class SetKeyspace(keyspaceName : String, stream : Byte = ResponseHeader.DefaultStreamId)(implicit protocolVersion: ProtocolVersion) extends Result(resultKind = ResultKinds.SetKeyspace, streamId = stream, protocolVersion.serverCode) {
-
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
 
   override def serialize() : ByteString = {
     val bs = ByteString.newBuilder

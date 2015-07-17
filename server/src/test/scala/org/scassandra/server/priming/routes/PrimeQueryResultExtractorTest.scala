@@ -17,7 +17,6 @@ package org.scassandra.server.priming.routes
 
 import java.util.concurrent.TimeUnit
 
-import org.apache.cassandra.db.WriteType
 import org.scalatest.{Matchers, FunSuite}
 import org.scassandra.server.cqlmessages.types.CqlText
 import org.scassandra.server.priming._

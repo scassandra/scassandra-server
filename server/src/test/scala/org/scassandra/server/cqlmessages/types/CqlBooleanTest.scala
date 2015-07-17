@@ -16,18 +16,17 @@
 package org.scassandra.server.cqlmessages.types
 
 import org.scalatest.{FunSuite, Matchers}
-import akka.util.ByteString
-import org.scassandra.server.cqlmessages.VersionTwo
+import org.scassandra.server.cqlmessages.ProtocolProvider
 
-class CqlBooleanTest extends FunSuite with Matchers {
+class CqlBooleanTest extends FunSuite with Matchers with ProtocolProvider {
 
   test("Serialisation of CqlBoolean") {
-    CqlBoolean.writeValue("true") should equal(Array(0, 0, 0, 1, 1))
-    CqlBoolean.writeValue("false") should equal(Array(0, 0, 0, 1, 0))
-    CqlBoolean.writeValue("TRUE") should equal(Array(0, 0, 0, 1, 1))
-    CqlBoolean.writeValue("FALSE") should equal(Array(0, 0, 0, 1, 0))
-    CqlBoolean.writeValue(true) should equal(Array(0, 0, 0, 1, 1))
-    CqlBoolean.writeValue(false) should equal(Array(0, 0, 0, 1, 0))
+    CqlBoolean.writeValue("true") should equal(Array(1))
+    CqlBoolean.writeValue("false") should equal(Array(0))
+    CqlBoolean.writeValue("TRUE") should equal(Array(1))
+    CqlBoolean.writeValue("FALSE") should equal(Array(0))
+    CqlBoolean.writeValue(true) should equal(Array(1))
+    CqlBoolean.writeValue(false) should equal(Array(0))
 
     intercept[IllegalArgumentException] {
       CqlBoolean.writeValue("123")
@@ -44,12 +43,5 @@ class CqlBooleanTest extends FunSuite with Matchers {
     intercept[IllegalArgumentException] {
       CqlUUID.writeValue(Map())
     }
-  }
-
-  test("Reading null") {
-    val bytes = ByteString(Array[Byte](-1,-1,-1,-1))
-    val deserialisedValue = CqlBoolean.readValue(bytes.iterator, VersionTwo)
-
-    deserialisedValue should equal(None)
   }
 }

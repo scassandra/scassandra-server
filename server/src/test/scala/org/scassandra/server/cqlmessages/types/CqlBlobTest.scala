@@ -17,13 +17,13 @@ package org.scassandra.server.cqlmessages.types
 
 import org.scalatest.{FunSuite, Matchers}
 import akka.util.ByteString
-import org.scassandra.server.cqlmessages.VersionTwo
+import org.scassandra.server.cqlmessages.ProtocolProvider
 
-class CqlBlobTest extends FunSuite with Matchers {
+class CqlBlobTest extends FunSuite with Matchers with ProtocolProvider {
 
-  test("Serialisation of CqlBlog") {
-    CqlBlob.writeValue("0x01") should equal(Array(0, 0, 0, 1, 1))
-    CqlBlob.writeValue("1235") should equal(Array(0, 0, 0, 2, 18, 53))
+  test("Serialisation of CqlBlob") {
+    CqlBlob.writeValue("0x01") should equal(Array(1))
+    CqlBlob.writeValue("1235") should equal(Array(18, 53))
 
     intercept[IllegalArgumentException] {
       CqlBlob.writeValue(BigDecimal("123.67"))
@@ -43,12 +43,5 @@ class CqlBlobTest extends FunSuite with Matchers {
     intercept[IllegalArgumentException] {
       CqlBlob.writeValue(Map())
     }
-  }
-
-  test("Reading null") {
-    val bytes = ByteString(Array[Byte](-1,-1,-1,-1))
-    val deserialisedValue = CqlBlob.readValue(bytes.iterator, VersionTwo)
-
-    deserialisedValue should equal(None)
   }
 }

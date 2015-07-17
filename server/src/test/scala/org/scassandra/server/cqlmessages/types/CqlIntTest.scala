@@ -16,15 +16,14 @@
 package org.scassandra.server.cqlmessages.types
 
 import org.scalatest.{FunSuite, Matchers}
-import akka.util.ByteString
-import org.scassandra.server.cqlmessages.VersionTwo
+import org.scassandra.server.cqlmessages.ProtocolProvider
 
-class CqlIntTest extends FunSuite with Matchers {
+class CqlIntTest extends FunSuite with Matchers with ProtocolProvider{
 
   test("Serialisation of CqlInt") {
-    CqlInt.writeValue(BigDecimal("123")) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
-    CqlInt.writeValue("123") should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
-    CqlInt.writeValue(123) should equal(Array[Byte](0, 0, 0, 4, 0, 0, 0, 123))
+    CqlInt.writeValue(BigDecimal("123")) should equal(Array[Byte](0, 0, 0, 123))
+    CqlInt.writeValue("123") should equal(Array[Byte](0, 0, 0, 123))
+    CqlInt.writeValue(123) should equal(Array[Byte](0, 0, 0, 123))
 
     intercept[IllegalArgumentException] {
       CqlInt.writeValue(BigDecimal("123.67"))
@@ -47,12 +46,5 @@ class CqlIntTest extends FunSuite with Matchers {
     intercept[IllegalArgumentException] {
       CqlInt.writeValue(Map())
     }
-  }
-
-  test("Reading null") {
-    val bytes = ByteString(Array[Byte](-1,-1,-1,-1))
-    val deserialisedValue = CqlInt.readValue(bytes.iterator, VersionTwo)
-
-    deserialisedValue should equal(None)
   }
 }

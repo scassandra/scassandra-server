@@ -18,11 +18,9 @@ package org.scassandra.server.cqlmessages.response
 import akka.util.{ByteIterator, ByteString}
 import org.scassandra.server.cqlmessages._
 import com.typesafe.scalalogging.LazyLogging
-import java.nio.ByteOrder
+import CqlProtocolHelper._
 
 object ResponseDeserializer extends LazyLogging {
-
-  implicit val byteOrder : ByteOrder = ByteOrder.BIG_ENDIAN
 
   val HeaderLength = 8
 

@@ -16,16 +16,14 @@
 package org.scassandra.server.actors
 
 import akka.actor.{ActorLogging, Actor, ActorRef}
-import org.scassandra.server.cqlmessages.types.CqlText
-import org.scassandra.server.cqlmessages.{Consistency, CqlMessageFactory, CqlProtocolHelper}
+import org.scassandra.server.cqlmessages.{Consistency, CqlMessageFactory}
+import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.query.{Prime, PrimeMatch, PrimeQueryStore}
 
 import scala.concurrent.duration.FiniteDuration
 
 class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, msgFactory: CqlMessageFactory, activityLog: ActivityLog) extends Actor with ActorLogging {
-
-  implicit val byteOrder = CqlProtocolHelper.byteOrder
 
   def receive = {
     case QueryHandlerMessages.Query(queryBody, stream) =>

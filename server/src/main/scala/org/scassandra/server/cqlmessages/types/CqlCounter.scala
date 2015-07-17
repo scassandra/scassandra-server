@@ -15,30 +15,4 @@
  */
 package org.scassandra.server.cqlmessages.types
 
-import java.lang
-
-import akka.util.ByteIterator
-import org.apache.cassandra.serializers.{CounterSerializer, LongSerializer, TypeSerializer}
-import org.scassandra.server.cqlmessages.{ProtocolVersion, CqlProtocolHelper}
-
-case object CqlCounter extends ColumnType[java.lang.Long](0x0005, "counter") {
-   override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[java.lang.Long] = {
-     CqlProtocolHelper.readBigIntValue(byteIterator).map(new java.lang.Long(_))
-   }
-
-   def writeValue(value: Any) = {
-     CqlProtocolHelper.serializeBigIntValue(value.toString.toLong)
-   }
-
-  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[java.lang.Long] = {
-    list.map(convertToCorrectJavaTypeForSerializer).toList
-  }
-
-  override def serializer: TypeSerializer[java.lang.Long] = LongSerializer.instance
-
-  override def convertToCorrectJavaTypeForSerializer(value: Any): lang.Long = value match {
-    case bd: BigDecimal => new java.lang.Long(bd.toLong)
-    case string: String => java.lang.Long.parseLong(string)
-    case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
-  }
-}
+case object CqlCounter extends CqlLongType(0x0005, "counter")

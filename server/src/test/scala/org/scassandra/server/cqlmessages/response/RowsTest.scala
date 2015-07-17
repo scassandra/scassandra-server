@@ -21,9 +21,9 @@ import java.util.UUID
 import java.net.InetAddress
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.types._
+import CqlProtocolHelper._
 
 class RowsTest extends FunSuite with Matchers {
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
   implicit val protocolVersion = VersionTwo
   val stream : Byte = 1
   
@@ -63,7 +63,7 @@ class RowsTest extends FunSuite with Matchers {
     val numberOfRows = rowsBytes.getInt
     numberOfRows should equal(1)
 
-    val rowValue = CqlProtocolHelper.readLongString(rowsBytes).get
+    val rowValue = CqlVarchar.readValueWithLength(rowsBytes).get
     rowValue should equal("18")
   }
 
@@ -82,7 +82,7 @@ class RowsTest extends FunSuite with Matchers {
 
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readLongString(rowsBytes).get
+    val rowValue = CqlText.readValueWithLength(rowsBytes).get
     rowValue should equal("18")
   }
 
@@ -96,7 +96,7 @@ class RowsTest extends FunSuite with Matchers {
 
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readIntValue(rowsBytes).get
+    val rowValue = CqlInt.readValueWithLength(rowsBytes).get
     rowValue should equal(18)
   }
 
@@ -110,7 +110,7 @@ class RowsTest extends FunSuite with Matchers {
 
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readIntValue(rowsBytes).get
+    val rowValue = CqlInt.readValueWithLength(rowsBytes).get
     rowValue should equal(18)
   }
 
@@ -124,7 +124,7 @@ class RowsTest extends FunSuite with Matchers {
 
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readIntValue(rowsBytes).get
+    val rowValue = CqlInt.readValueWithLength(rowsBytes).get
     rowValue should equal(18)
   }
 
@@ -137,7 +137,7 @@ class RowsTest extends FunSuite with Matchers {
     verifyPrimitiveRowTypeMetadata(rowsBytes, "booleanValue", CqlBoolean)
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readBooleanValue(rowsBytes).get
+    val rowValue = CqlBoolean.readValueWithLength(rowsBytes).get
     rowValue should equal(false)
   }
 
@@ -150,7 +150,7 @@ class RowsTest extends FunSuite with Matchers {
     verifyPrimitiveRowTypeMetadata(rowsBytes, "name", CqlAscii)
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readLongString(rowsBytes).get
+    val rowValue = CqlAscii.readValueWithLength(rowsBytes).get
     rowValue should equal("Chris Batey")
   }
 
@@ -163,7 +163,7 @@ class RowsTest extends FunSuite with Matchers {
     verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlBigint)
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readBigIntValue(rowsBytes).get
+    val rowValue = CqlBigint.readValueWithLength(rowsBytes).get
     rowValue should equal(1234)
   }
 
@@ -176,7 +176,7 @@ class RowsTest extends FunSuite with Matchers {
     verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlBigint)
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readBigIntValue(rowsBytes).get
+    val rowValue = CqlBigint.readValueWithLength(rowsBytes).get
     rowValue should equal(1234)
   }
 
@@ -189,7 +189,7 @@ class RowsTest extends FunSuite with Matchers {
     verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlCounter)
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readBigIntValue(rowsBytes).get
+    val rowValue = CqlBigint.readValueWithLength(rowsBytes).get
     rowValue should equal(1234)
   }
 
@@ -202,7 +202,7 @@ class RowsTest extends FunSuite with Matchers {
     verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlBlob)
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readBlobValue(rowsBytes).get
+    val rowValue = CqlBlob.readValueWithLength(rowsBytes).get
     rowValue should equal(Array[Byte](0x48, 0x65, 0x6c, 0x6c, 0x6f))
   }
 
@@ -215,7 +215,7 @@ class RowsTest extends FunSuite with Matchers {
     verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlDecimal)
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readDecimalValue(rowsBytes).get
+    val rowValue = CqlDecimal.readValueWithLength(rowsBytes).get
     rowValue should equal(BigDecimal("5.5456"))
   }
 
@@ -228,7 +228,7 @@ class RowsTest extends FunSuite with Matchers {
     verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlDouble)
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readDoubleValue(rowsBytes).get
+    val rowValue = CqlDouble.readValueWithLength(rowsBytes).get
     rowValue should equal(5.5456)
   }
 
@@ -241,7 +241,7 @@ class RowsTest extends FunSuite with Matchers {
     verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlFloat)
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readFloatValue(rowsBytes).get
+    val rowValue = CqlFloat.readValueWithLength(rowsBytes).get
     rowValue should equal(5.5456f)
   }
 
@@ -254,7 +254,7 @@ class RowsTest extends FunSuite with Matchers {
     verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlTimestamp)
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readTimestampValue(rowsBytes).get
+    val rowValue = CqlTimestamp.readValueWithLength(rowsBytes).get
     rowValue should equal(1368438171000l)
   }
 
@@ -268,7 +268,7 @@ class RowsTest extends FunSuite with Matchers {
     verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlUUID)
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readUUIDValue(rowsBytes).get
+    val rowValue = CqlUUID.readValueWithLength(rowsBytes).get
     rowValue should equal(uuid)
   }
 
@@ -282,7 +282,7 @@ class RowsTest extends FunSuite with Matchers {
     verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlTimeUUID)
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readUUIDValue(rowsBytes).get
+    val rowValue = CqlUUID.readValueWithLength(rowsBytes).get
     rowValue should equal(uuid)
   }
 
@@ -296,7 +296,7 @@ class RowsTest extends FunSuite with Matchers {
     verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlInet)
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readInetValue(rowsBytes).get
+    val rowValue = CqlInet.readValueWithLength(rowsBytes).get
     rowValue should equal(inet)
   }
 
@@ -310,7 +310,7 @@ class RowsTest extends FunSuite with Matchers {
     verifyPrimitiveRowTypeMetadata(rowsBytes, "field", CqlVarint)
     dropNumberOfRows(rowsBytes)
 
-    val rowValue = CqlProtocolHelper.readVarintValue(rowsBytes).get
+    val rowValue = CqlVarint.readValueWithLength(rowsBytes).get
     rowValue should equal(varint)
   }
 
@@ -334,15 +334,16 @@ class RowsTest extends FunSuite with Matchers {
     val numberOfRows = rowsBytes.getInt
     numberOfRows should equal(1)
 
-    val rowValue = CqlProtocolHelper.readVarcharSetValue(rowsBytes).get
+    val set = CqlSet(CqlVarchar)
+    val rowValue = set.readValueWithLength(rowsBytes).get
     rowValue should equal(varcharSet)
   }
 
   test("Serialization of List of varchars column type") {
-    val varcharSet = Set("one","two")
+    val varcharList = List("one","two")
     val listOfVarcharType = CqlList(CqlVarchar)
     val columnNames = Map("field" -> listOfVarcharType)
-    val rows: List[Row] = List(Row(Map("field" -> varcharSet)))
+    val rows: List[Row] = List(Row(Map("field" -> varcharList)))
     val rowsBytes = Rows("keyspaceName", "tableName", stream, columnNames, rows).serialize().iterator
     dropHeaderAndLengthAndColumnCountAndKeyspaceAndTable(rowsBytes)
 
@@ -358,8 +359,9 @@ class RowsTest extends FunSuite with Matchers {
     val numberOfRows = rowsBytes.getInt
     numberOfRows should equal(1)
 
-    val rowValue = CqlProtocolHelper.readVarcharSetValue(rowsBytes).get
-    rowValue should equal(varcharSet)
+    val list = CqlList(CqlVarchar)
+    val rowValue = list.readValueWithLength(rowsBytes).get
+    rowValue should equal(varcharList)
   }
 
   test("Serialisation of multiple rows where some columns are null") {
@@ -413,7 +415,7 @@ class RowsTest extends FunSuite with Matchers {
     rowOneColOne should equal("hello")
 
     // col - col_two, int, 2
-    val rowOneColTwo = CqlProtocolHelper.readIntValue(rowsBytes).get
+    val rowOneColTwo = CqlInt.readValueWithLength(rowsBytes).get
     rowOneColTwo should equal(2)
 
     // col - col_blob, blob, null

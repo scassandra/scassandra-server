@@ -15,30 +15,18 @@
  */
 package org.scassandra.server.cqlmessages.types
 
-import java.lang
-
 import akka.util.ByteIterator
-import org.apache.cassandra.serializers.{BooleanSerializer, TypeSerializer}
-import org.scassandra.server.cqlmessages.{ProtocolVersion, CqlProtocolHelper}
+import org.scassandra.server.cqlmessages.ProtocolVersion
 
 case object CqlBoolean extends ColumnType[java.lang.Boolean](0x0004, "boolean") {
-   override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[java.lang.Boolean] = {
-     CqlProtocolHelper.readBooleanValue(byteIterator).map(new lang.Boolean(_))
-   }
-
-   def writeValue(value: Any) = {
-     CqlProtocolHelper.serializeBooleanValue(value.toString.toBoolean)
-   }
-
-  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[java.lang.Boolean] = {
-    list.map(convertToCorrectJavaTypeForSerializer).toList
+  override def readValue(byteIterator: ByteIterator)(implicit protocolVersion: ProtocolVersion): Option[java.lang.Boolean] = {
+    val boolAsByte = byteIterator.getByte
+    if (boolAsByte == 0) Some(false)
+    else if (boolAsByte == 1) Some(true)
+    else throw new IllegalArgumentException
   }
 
-  override def serializer: TypeSerializer[java.lang.Boolean] = BooleanSerializer.instance
-
-  override def convertToCorrectJavaTypeForSerializer(value: Any): lang.Boolean = value match {
-    case bd: Boolean => new lang.Boolean(bd)
-    case string: String => new lang.Boolean(string)
-    case _ => throw new IllegalArgumentException("Expected list of Booleans")
+  override def writeValue(value: Any)(implicit protocolVersion: ProtocolVersion) = {
+    Array[Byte](if (value.toString.toBoolean) 1 else 0)
   }
 }

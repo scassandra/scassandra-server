@@ -15,30 +15,17 @@
  */
 package org.scassandra.server.cqlmessages.types
 
-import java.lang
+import akka.util.{ByteString, ByteIterator}
+import org.scassandra.server.cqlmessages.ProtocolVersion
 
-import akka.util.ByteIterator
-import org.apache.cassandra.serializers.{FloatSerializer, TypeSerializer}
-import org.scassandra.server.cqlmessages.{ProtocolVersion, CqlProtocolHelper}
-
-case object CqlFloat extends ColumnType[java.lang.Float](0x0008, "float") {
-   override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[lang.Float] = {
-     CqlProtocolHelper.readFloatValue(byteIterator).map(new lang.Float(_))
-   }
-
-   def writeValue(value: Any): Array[Byte] = {
-     CqlProtocolHelper.serializeFloatValue(value.toString.toFloat)
-   }
-
-  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[java.lang.Float] = {
-    list.map(convertToCorrectJavaTypeForSerializer).toList
+case object CqlFloat extends ColumnType[Float](0x0008, "float") {
+  override def readValue(byteIterator: ByteIterator)(implicit protocolVersion: ProtocolVersion): Option[Float] = {
+    Some(byteIterator.getFloat)
   }
 
-  override def serializer: TypeSerializer[java.lang.Float] = FloatSerializer.instance
-
-  override def convertToCorrectJavaTypeForSerializer(value: Any): lang.Float = value match {
-    case bd: BigDecimal => new java.lang.Float(bd.toFloat)
-    case string: String => java.lang.Float.parseFloat(string)
-    case _ => throw new IllegalArgumentException("Expected list of BigDecimals")
+  override def writeValue(value: Any)(implicit protocolVersion: ProtocolVersion): Array[Byte] = {
+    val bs = ByteString.newBuilder
+    bs.putFloat(value.toString.toFloat)
+    bs.result().toArray
   }
 }

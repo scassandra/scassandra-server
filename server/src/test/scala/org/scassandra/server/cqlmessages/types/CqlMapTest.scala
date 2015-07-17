@@ -15,11 +15,11 @@
  */
 package org.scassandra.server.cqlmessages.types
 
-import akka.util.{ByteIterator, ByteString}
+import akka.util.ByteString
 import org.scalatest.{FunSuite, Matchers}
-import org.scassandra.server.cqlmessages.VersionTwo
+import org.scassandra.server.cqlmessages.ProtocolProvider
 
-class CqlMapTest extends FunSuite with Matchers {
+class CqlMapTest extends FunSuite with Matchers with ProtocolProvider {
 /*
 Map: a [short] n indicating the size of the map, followed by n entries.
           Each entry is composed of two [short bytes] representing the key and
@@ -29,10 +29,9 @@ Map: a [short] n indicating the size of the map, followed by n entries.
   test("Reading a CqlMap[Varchar, Varchar] - empty") {
     val underTest = CqlMap(CqlVarchar, CqlVarchar)
     val serialisedMap = Array[Byte](
-      0, 0, 0, 2, // number of bytes
       0, 0)
 
-    val result = underTest.readValue(ByteString(serialisedMap).iterator, VersionTwo)
+    val result = underTest.readValue(ByteString(serialisedMap).iterator)
 
     result should equal(Some(Map()))
   }
@@ -40,7 +39,6 @@ Map: a [short] n indicating the size of the map, followed by n entries.
   test("Reading a CqlMap[Varchar, Varchar] - two entries") {
     val underTest = CqlMap(CqlVarchar, CqlVarchar)
     val serialisedMap = Array[Byte](
-      0, 0, 0, 25, // number of bytes
       0, 2,         // number of elements in the map
       0, 3,   111, 110, 101,  // one
       0, 3,   116, 119, 111,  // two
@@ -49,24 +47,15 @@ Map: a [short] n indicating the size of the map, followed by n entries.
 
     )
 
-    val result = underTest.readValue(ByteString(serialisedMap).iterator, VersionTwo)
+    val result = underTest.readValue(ByteString(serialisedMap).iterator)
 
     result should equal(Some(Map("one" -> "two", "three" -> "four")))
-  }
-
-  test("Reading null") {
-    val bytes = ByteString(Array[Byte](-1,-1,-1,-1))
-
-    val result = CqlMap(CqlVarchar, CqlVarchar).readValue(bytes.iterator, VersionTwo)
-
-    result should equal(None)
   }
 
   test("Serialisation of CqlMap - Varchar") {
     val underTest = CqlMap(CqlVarchar, CqlVarchar)
 
     underTest.writeValue(Map("one" -> "two", "three" -> "four")) should equal(Array[Byte](
-      0, 0, 0, 25, // number of bytes
       0, 2,         // number of elements in the map
       0, 3,   111, 110, 101,  // one
       0, 3,   116, 119, 111,  // two
@@ -97,6 +86,27 @@ Map: a [short] n indicating the size of the map, followed by n entries.
     intercept[IllegalArgumentException] {
       underTest.writeValue(false)
     }
+  }
+
+  test("Serialization of CqlMap<Varchar, CqlSet<Varchar>>") {
+    // Nested serialization test to ensure collections can be nested.
+    val underTest = CqlMap(CqlVarchar, CqlSet(CqlVarchar))
+    underTest.writeValue(Map()) should equal(Array[Byte](0,0))
+    underTest.writeValue(Map("first" -> Set("one", "two", "three"), "second" -> Set("four", "five", "six"))) should equal(Array[Byte](
+      0, 2, // number of pairs in map
+      0, 5, 102, 105, 114, 115, 116, // first (key)
+      0, 19, // byte length of set
+      0, 3, // elements in set
+      0, 3, 111, 110, 101,  // one
+      0, 3, 116, 119, 111,  // two
+      0, 5, 116, 104, 114, 101, 101, // three
+      0, 6, 115, 101, 99, 111, 110, 100,
+      0, 19, // byte length of second set
+      0, 3, // elements in set
+      0, 4, 102, 111, 117, 114, // four
+      0, 4, 102, 105, 118, 101, // five
+      0, 3, 115, 105, 120 // six
+    ))
   }
 
 }

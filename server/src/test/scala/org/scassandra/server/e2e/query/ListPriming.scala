@@ -22,7 +22,6 @@ import java.util
 import java.util.{UUID, Date}
 
 import com.datastax.driver.core.DataType
-import org.apache.cassandra.utils.ByteBufferUtil
 import org.scassandra.server.AbstractIntegrationTest
 import org.scassandra.server.cqlmessages.types._
 import org.scassandra.server.priming.Success

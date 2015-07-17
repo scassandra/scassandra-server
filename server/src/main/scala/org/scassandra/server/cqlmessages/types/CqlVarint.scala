@@ -15,32 +15,20 @@
  */
 package org.scassandra.server.cqlmessages.types
 
-import java.math.BigInteger
+import akka.util.{ByteString, ByteIterator}
+import org.scassandra.server.cqlmessages.ProtocolVersion
 
-import akka.util.ByteIterator
-import org.apache.cassandra.serializers.{IntegerSerializer, TypeSerializer}
-import org.scassandra.server.cqlmessages.{ProtocolVersion, CqlProtocolHelper}
-
-case object CqlVarint extends ColumnType[BigInteger](0x000E, "varint") {
-   override def readValue(byteIterator: ByteIterator, protocolVersion: ProtocolVersion): Option[BigInteger] = {
-     CqlProtocolHelper.readVarintValue(byteIterator).map(_.bigInteger)
-   }
-
-   def writeValue( value: Any): Array[Byte] = {
-     CqlProtocolHelper.serializeVarintValue(BigInt(value.toString))
-   }
-
-  override def convertToCorrectCollectionTypeForList(list: Iterable[_]) : List[BigInteger] = {
-    list.map(convertToCorrectJavaTypeForSerializer).toList
+case object CqlVarint extends ColumnType[BigInt](0x000E, "varint") {
+  override def readValue(byteIterator: ByteIterator)(implicit protocolVersion: ProtocolVersion): Option[BigInt] = {
+    val bytes = byteIterator.toArray
+    Some(BigInt(bytes))
   }
 
-  override def serializer: TypeSerializer[BigInteger] = IntegerSerializer.instance
-
-  override def convertToCorrectJavaTypeForSerializer(value: Any): BigInteger = value match {
-    case bd: String => new BigInteger(bd)
-    case bigInt: BigInteger => bigInt
-    case bd: BigDecimal => bd.toBigInt().bigInteger
-    case bigInt: BigInt => bigInt.bigInteger
-    case _ => throw new IllegalArgumentException("Expected string representing an BigInteger")
+  override def writeValue(value: Any)(implicit protocolVersion: ProtocolVersion): Array[Byte] = {
+    val varint = BigInt(value.toString)
+    val bs = ByteString.newBuilder
+    val bytes = varint.toByteArray
+    bs.putBytes(bytes)
+    bs.result().toArray
   }
 }

@@ -15,13 +15,13 @@
  */
 package org.scassandra.server.cqlmessages.response
 
-import org.scassandra.server.cqlmessages.{VersionTwo, CqlProtocolHelper, OpCodes}
+import org.scassandra.server.cqlmessages.{VersionTwo, OpCodes}
 import org.scalatest.{Matchers, FunSuite}
+import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 import org.scassandra.server.cqlmessages.types.CqlVarint
 
 class PreparedResultTest extends FunSuite with Matchers {
 
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
   implicit val protocolVersion = VersionTwo
   val stream : Byte = 1
 
@@ -41,7 +41,7 @@ class PreparedResultTest extends FunSuite with Matchers {
     bytes.getByte should equal(OpCodes.Result)
     val actualLength = bytes.getInt
     bytes.getInt should equal(ResultKinds.Prepared)
-    CqlProtocolHelper.readShortBytes(bytes) should equal(Array[Byte](0,0,0,preparedStatementId))
+    readShortBytes(bytes) should equal(Array[Byte](0,0,0,preparedStatementId))
 
     // flags - global key space spec
     bytes.getInt should equal(1)
@@ -49,12 +49,12 @@ class PreparedResultTest extends FunSuite with Matchers {
     bytes.getInt should equal(1)
 
     //global spec
-    val actualKeyspace = CqlProtocolHelper.readString(bytes)
+    val actualKeyspace = readString(bytes)
     actualKeyspace should equal(keyspace)
-    val actualTable = CqlProtocolHelper.readString(bytes)
+    val actualTable = readString(bytes)
     actualTable should equal(table)
 
-    val rowName = CqlProtocolHelper.readString(bytes)
+    val rowName = readString(bytes)
     rowName should equal("0")
 
     val rowType = bytes.getShort
@@ -79,7 +79,7 @@ class PreparedResultTest extends FunSuite with Matchers {
     bytes.getByte should equal(OpCodes.Result)
     val actualLength = bytes.getInt
     bytes.getInt should equal(ResultKinds.Prepared)
-    CqlProtocolHelper.readShortBytes(bytes) should equal(Array[Byte](0,0,0,preparedStatementId))
+    readShortBytes(bytes) should equal(Array[Byte](0,0,0,preparedStatementId))
 
     // flags - global key space spec
     bytes.getInt should equal(1)
@@ -87,12 +87,12 @@ class PreparedResultTest extends FunSuite with Matchers {
     bytes.getInt should equal(1)
 
     //global spec
-    val actualKeyspace = CqlProtocolHelper.readString(bytes)
+    val actualKeyspace = readString(bytes)
     actualKeyspace should equal(keyspace)
-    val actualTable = CqlProtocolHelper.readString(bytes)
+    val actualTable = readString(bytes)
     actualTable should equal(table)
 
-    val rowName = CqlProtocolHelper.readString(bytes)
+    val rowName = readString(bytes)
     rowName should equal("0")
 
     val rowType = bytes.getShort

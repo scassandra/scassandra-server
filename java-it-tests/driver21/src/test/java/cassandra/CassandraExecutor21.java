@@ -23,7 +23,8 @@ public class CassandraExecutor21 implements CassandraExecutor {
     private Session session;
 
     public CassandraExecutor21() {
-        cluster = Cluster.builder().addContactPoint("localhost").withPort(binaryPort).build();
+        cluster = Cluster.builder().addContactPoint("localhost").withPort(binaryPort).withRetryPolicy(
+            NoRetryOnUnavailablePolicy.INSTANCE).build();
         session = cluster.connect("keyspace");
     }
 

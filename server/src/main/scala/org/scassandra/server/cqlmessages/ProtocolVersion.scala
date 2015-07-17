@@ -15,6 +15,10 @@
  */
 package org.scassandra.server.cqlmessages
 
+import CqlProtocolHelper._
+
+import akka.util.{ByteStringBuilder, ByteIterator}
+
 object ProtocolVersion {
   val ServerProtocolVersionThree : Byte = (0x81 & 0xFF).toByte
   val ClientProtocolVersionThree : Byte = 0x03
@@ -35,7 +39,26 @@ object ProtocolVersion {
   }
 }
 
-abstract class ProtocolVersion(val clientCode : Byte, val serverCode: Byte, val version: Int)
+/**
+ * Defines a set of functions used to retrieve and apply length
+ * on a byte stream.
+ */
+trait CollectionLength {
+  def getLength(iterator: ByteIterator): Int
+  def putLength(bs: ByteStringBuilder, length: Int): ByteStringBuilder
+}
+
+case object ShortLength extends CollectionLength {
+  override def getLength(iterator: ByteIterator) = iterator.getShort
+  override def putLength(bs: ByteStringBuilder, length: Int) = bs.putShort(length)
+}
+
+case object IntLength extends CollectionLength {
+  override def getLength(iterator: ByteIterator) = iterator.getInt
+  override def putLength(bs: ByteStringBuilder, length: Int) = bs.putInt(length)
+}
+
+abstract class ProtocolVersion(val clientCode : Byte, val serverCode: Byte, val version: Int, val collectionLength: CollectionLength = IntLength)
 
 case object VersionThree extends ProtocolVersion(
   ProtocolVersion.ClientProtocolVersionThree,
@@ -45,9 +68,11 @@ case object VersionThree extends ProtocolVersion(
 case object VersionTwo extends ProtocolVersion(
   ProtocolVersion.ClientProtocolVersionTwo,
   ProtocolVersion.ServerProtocolVersionTwo,
-  2)
+  2,
+  collectionLength = ShortLength)
 
 case object VersionOne extends ProtocolVersion(
   ProtocolVersion.ClientProtocolVersionOne,
   ProtocolVersion.ServerProtocolVersionOne,
-  1)
+  1,
+  collectionLength = ShortLength)

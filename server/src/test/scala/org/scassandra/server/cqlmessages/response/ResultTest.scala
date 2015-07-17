@@ -15,14 +15,13 @@
  */
 package org.scassandra.server.cqlmessages.response
 
+
 import org.scalatest.{Matchers, FunSuite}
 import akka.util.ByteString
 import org.scassandra.server.cqlmessages._
-import scala.Array
 import org.scassandra.server.cqlmessages.types._
 
 class ResultTest extends FunSuite with Matchers {
-  implicit val byteOrder = java.nio.ByteOrder.BIG_ENDIAN
   implicit val protocolVersion : ProtocolVersion = VersionOne
 
   test("test rows message from real cassandra") {
