@@ -74,7 +74,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val query = "select * from something"
     val prepareBody: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
 
-    underTest ! PrepareHandlerMessages.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
     testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", List()))
   }
@@ -83,7 +83,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val stream: Byte = 0x02
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, 1).serialize().drop(8)
 
-    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
     testProbeForTcpConnection.expectMsg(VoidResult(stream))
   }
@@ -93,7 +93,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val query = "select * from something where name = ?"
     val prepareBody: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
 
-    underTest ! PrepareHandlerMessages.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
     testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", List(CqlVarchar)))
   }
@@ -105,7 +105,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val preparedPrime: PreparedPrime = PreparedPrime(primedVariableTypes)
     when(primePreparedStore.findPrime(any(classOf[PrimeMatch]))).thenReturn(Some(preparedPrime))
 
-    underTest ! PrepareHandlerMessages.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
     verify(primePreparedStore).findPrime(PrimeMatch(query))
     testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", primedVariableTypes))
@@ -116,14 +116,14 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val stream: Byte = 0x02
     val queryOne = "select * from something where name = ?"
     val prepareBodyOne: ByteString = PrepareRequest(protocolVersion, stream, queryOne).serialize().drop(8)
-    underTest ! PrepareHandlerMessages.Prepare(prepareBodyOne, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Prepare(prepareBodyOne, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
     testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", List(CqlVarchar)))
 
     emptyTestProbe
 
     val queryTwo = "select * from something where name = ? and age = ?"
     val prepareBodyTwo: ByteString = PrepareRequest(protocolVersion, stream, queryTwo).serialize().drop(8)
-    underTest ! PrepareHandlerMessages.Prepare(prepareBodyTwo, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Prepare(prepareBodyTwo, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
     testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 2.toShort, "keyspace", "table", List(CqlVarchar, CqlVarchar)))
 
   }
@@ -135,7 +135,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val consistency = THREE
 
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency).serialize().drop(8)
-    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
     verify(primePreparedStore).findPrime(PrimeMatch(query, consistency))
   }
@@ -147,7 +147,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     val consistency = THREE
 
     val executeBody: ByteString = ExecuteRequestV1(protocolVersion, stream, preparedStatementId, consistency).serialize().drop(8)
-    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionOneMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Execute(executeBody, stream, versionOneMessageFactory, testProbeForTcpConnection.ref)
 
     verify(primePreparedStore).findPrime(PrimeMatch(query, consistency))
   }
@@ -160,7 +160,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
 
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId).serialize().drop(8)
-    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
     testProbeForTcpConnection.expectMsg(Rows("" ,"" ,stream, Map(), List()))
   }
@@ -173,7 +173,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
 
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency = consistency).serialize().drop(8)
-    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
     testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream, consistency, ReadRequestTimeoutResult()))
   }
@@ -187,7 +187,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
 
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency = consistency).serialize().drop(8)
-    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
     testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream, consistency, result))
   }
@@ -201,7 +201,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
 
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency = consistency).serialize().drop(8)
-    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
     testProbeForTcpConnection.expectMsg(UnavailableException(stream, consistency, result))
   }
@@ -218,7 +218,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
 
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency, 1, variables, variableTypes = variableTypes).serialize().drop(8)
-    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
     activityLog.retrievePreparedStatementExecutions().size should equal(1)
     activityLog.retrievePreparedStatementExecutions()(0) should equal(PreparedStatementExecution(query, consistency, variables.map(Some(_)), variableTypes))
@@ -236,7 +236,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
 
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency, 1, variables, variableTypes = variableTypes).serialize().drop(8)
-    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
     activityLog.retrievePreparedStatementExecutions().size should equal(1)
     activityLog.retrievePreparedStatementExecutions()(0) should equal(PreparedStatementExecution(query, consistency, List(), List()))
@@ -254,7 +254,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(None)
 
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId, consistency, 1, variables, variableTypes = variableTypes).serialize().drop(8)
-    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
     activityLog.retrievePreparedStatementExecutions().size should equal(1)
     activityLog.retrievePreparedStatementExecutions()(0) should equal(PreparedStatementExecution(query, consistency, List(), List()))
@@ -269,7 +269,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
 
     val executeBody: ByteString = ExecuteRequestV2(protocolVersion, stream, preparedStatementId).serialize().drop(8)
-    underTest ! PrepareHandlerMessages.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
     // i wish that expect msg took a min as well as a max :(
     testProbeForTcpConnection.expectMsg(Rows("" ,"" ,stream, Map(), List()))
@@ -278,7 +278,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
 
   private def sendPrepareAndCaptureId(stream: Byte, query: String, variableTypes: List[ColumnType[_]] = List(CqlVarchar)) : Int = {
     val prepareBodyOne: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
-    underTest ! PrepareHandlerMessages.Prepare(prepareBodyOne, stream, versionTwoMessageFactory , testProbeForTcpConnection.ref)
+    underTest ! PrepareHandler.Prepare(prepareBodyOne, stream, versionTwoMessageFactory , testProbeForTcpConnection.ref)
     val preparedResponseWithId: PreparedResultV2 = testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", variableTypes))
     reset(primePreparedStore)
     when(primePreparedStore.findPrime(any(classOf[PrimeMatch]))).thenReturn(None)

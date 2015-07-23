@@ -35,11 +35,11 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
   private var preparedStatementsToId: Map[Int, String] = Map()
 
   def receive: Actor.Receive = {
-    case PrepareHandlerMessages.Prepare(body, stream, msgFactory: CqlMessageFactory, connection) =>
+    case PrepareHandler.Prepare(body, stream, msgFactory: CqlMessageFactory, connection) =>
       val preparedResult: Result = handlePrepare(body, stream, msgFactory)
       connection ! preparedResult
 
-    case PrepareHandlerMessages.Execute(body, stream, msgFactory, connection) =>
+    case PrepareHandler.Execute(body, stream, msgFactory, connection) =>
       val action: ExecuteResponse = handleExecute(body, stream, msgFactory)
       sendMessage(action.msg, connection)
       action.activity.foreach(activityLog.recordPreparedStatementExecution)
@@ -113,7 +113,7 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
   }
 }
 
-object PrepareHandlerMessages {
+object PrepareHandler {
   case class Prepare(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
   case class Execute(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
 }

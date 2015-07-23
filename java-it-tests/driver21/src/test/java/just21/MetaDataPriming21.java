@@ -19,6 +19,7 @@ import com.datastax.driver.core.Cluster;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import common.AbstractScassandraTest;
+import common.Config;
 import org.junit.Test;
 import org.scassandra.http.client.ColumnTypes;
 import org.scassandra.http.client.PrimingRequest;
@@ -56,7 +57,7 @@ public class MetaDataPriming21 extends AbstractScassandraTest {
 
         //when
         Cluster cluster = Cluster.builder().addContactPoint("localhost")
-                .withPort(binaryPort).build();
+                .withPort(Config.NATIVE_PORT).build();
         cluster.connect();
 
         //then

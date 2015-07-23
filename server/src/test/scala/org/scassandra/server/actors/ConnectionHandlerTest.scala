@@ -23,33 +23,39 @@ import org.scalatest._
 import org.scassandra.server.actors.OptionsHandlerMessages.OptionsMessage
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.response._
-import org.scassandra.server.priming.QueryHandlerMessages.Query
+import org.scassandra.server.actors.QueryHandler.Query
 import org.scassandra.server.RegisterHandlerMessages
+import scala.language.postfixOps;
+import scala.concurrent.duration._
 
-class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
+class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
 
   var testActorRef : TestActorRef[ConnectionHandler] = null
 
   var queryHandlerTestProbe : TestProbe = null
+  var batchHandlerTestProbe : TestProbe = null
   var registerHandlerTestProbe : TestProbe = null
   var optionsHandlerTestProbe : TestProbe = null
   var prepareHandlerTestProbe : TestProbe = null
-  var tcpWrapperTestProbe : TestProbe = null
 
   var lastMsgFactoryUsedForQuery : CqlMessageFactory = null
   var lastMsgFactoryUsedForRegister : CqlMessageFactory = null
   var lastMsgFactoryUsedForPrepare : CqlMessageFactory = null
 
   before {
-    tcpWrapperTestProbe = TestProbe()
     queryHandlerTestProbe = TestProbe()
     registerHandlerTestProbe = TestProbe()
     prepareHandlerTestProbe = TestProbe()
     optionsHandlerTestProbe = TestProbe()
+    batchHandlerTestProbe = TestProbe()
     testActorRef = TestActorRef(new ConnectionHandler(
       (_,_,msgFactory) => {
         lastMsgFactoryUsedForQuery = msgFactory
         queryHandlerTestProbe.ref
+      },
+      (_,_,msgFactory) => {
+        lastMsgFactoryUsedForQuery = msgFactory
+        batchHandlerTestProbe.ref
       },
       (_,_,msgFactory) => {
         lastMsgFactoryUsedForRegister = msgFactory
@@ -59,12 +65,13 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
         optionsHandlerTestProbe.ref
       },
       prepareHandlerTestProbe.ref,
-      (_,_) => {
-        tcpWrapperTestProbe.ref
+      (_,actorRef) => {
+        actorRef
       }
     ))
 
     lastMsgFactoryUsedForQuery = null
+    clear()
   }
 
   test("Should do nothing if not a full message") {
@@ -92,7 +99,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
     testActorRef ! Received(readyMessage)
 
-    tcpWrapperTestProbe.expectMsg(Ready(0x0.toByte))
+    expectMsg(Ready(0x0.toByte))
   }
 
   test("Should send ready message when startup message sent - version two") {
@@ -106,7 +113,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
     testActorRef ! Received(readyMessage)
 
-    tcpWrapperTestProbe.expectMsg(Ready(0x0.toByte))
+    expectMsg(Ready(0x0.toByte))
   }
 
   test("Should send back error if query before ready message") {
@@ -264,7 +271,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     
     testActorRef ! Received(ByteString(emptyPrepareMessage))
 
-    prepareHandlerTestProbe.expectMsg(PrepareHandlerMessages.Prepare(ByteString(), streamId, VersionTwoMessageFactory, tcpWrapperTestProbe.ref))
+    prepareHandlerTestProbe.expectMsg(PrepareHandler.Prepare(ByteString(), streamId, VersionTwoMessageFactory, self))
   }
 
   test("Should forward Execute messages to the prepare handler") {
@@ -278,7 +285,17 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
     testActorRef ! Received(ByteString(emptyPrepareMessage))
 
-    prepareHandlerTestProbe.expectMsg(PrepareHandlerMessages.Execute(ByteString(messageBody), streamId, VersionTwoMessageFactory, tcpWrapperTestProbe.ref))
+    prepareHandlerTestProbe.expectMsg(PrepareHandler.Execute(ByteString(messageBody), streamId, VersionTwoMessageFactory, self))
+  }
+
+  test("Should forward Batch messages to the batch handler") {
+    sendStartupMessage()
+    val streamId : Byte = 0x1
+    val batchMessage: Array[Byte] = MessageHelper.createBatchMessage(List("insert into something", "insert into something else"), streamId)
+
+    testActorRef ! Received(ByteString(batchMessage))
+
+    batchHandlerTestProbe.expectMsg(BatchHandler.Execute(ByteString(MessageHelper.dropHeaderAndLength(batchMessage)), streamId))
   }
 
   test("Should send unsupported version if protocol 3+") {
@@ -288,14 +305,14 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
 
     testActorRef ! Received(ByteString(startupMessage.toArray))
 
-    tcpWrapperTestProbe.expectMsg(UnsupportedProtocolVersion(stream))
+    expectMsg(UnsupportedProtocolVersion(stream))
 
     case object VersionFive extends ProtocolVersion(0x5, (0x85 & 0xFF).toByte, 5)
     val v5StartupMessage = MessageHelper.createStartupMessage(VersionFive)
 
     testActorRef ! Received(ByteString(v5StartupMessage.toArray))
 
-    tcpWrapperTestProbe.expectMsg(UnsupportedProtocolVersion(stream))
+    expectMsg(UnsupportedProtocolVersion(stream))
   }
 
   private def sendStartupMessage(protocolVersion: ProtocolVersion = VersionTwo) = {
@@ -303,4 +320,9 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("Test")) with Matchers w
     testActorRef ! Received(ByteString(startupMessage.toArray))
   }
 
+  private def clear(): Unit = {
+    receiveWhile(10 milliseconds) {
+      case msg @ _ =>
+    }
+  }
 }

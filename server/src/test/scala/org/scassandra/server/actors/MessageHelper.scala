@@ -19,6 +19,7 @@ import akka.util.ByteString
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.response.ResponseHeader
 
+//todo change this to work with arrays to be consistent with the CqlProtocolHelper
 object MessageHelper {
   def dropHeaderAndLength(bytes: Array[Byte]) : Array[Byte] = {
     bytes drop 8 // drops the header and length
@@ -30,9 +31,6 @@ object MessageHelper {
                          consistency: Consistency = ONE,
                          protocolVersion : Byte = ProtocolVersion.ClientProtocolVersionTwo,
                          flags: Byte = 0x00) : List[Byte] = {
-    val bodyLength = serializeInt(queryString.length + 4 + 2 + 1)
-    val header = List[Byte](protocolVersion, 0x00, stream, OpCodes.Query) :::
-      bodyLength
 
     val body : List[Byte] =
       serializeLongString(queryString) :::
@@ -40,7 +38,23 @@ object MessageHelper {
         List(flags) ::: // query flags
         List[Byte]()
 
+    val bodyLength = serializeInt(body.size)
+    val header = List[Byte](protocolVersion, 0x00, stream, OpCodes.Query) ::: bodyLength
+
     header ::: body
+  }
+
+  def createBatchMessage(queries: List[String], stream: Byte = ResponseHeader.DefaultStreamId,
+                          consistency: Consistency = ONE,
+                          protocolVersion: Byte = ProtocolVersion.ClientProtocolVersionTwo) : Array[Byte] = {
+    val typeAndNumber: List[Byte] = 0x00.toByte :: serializeShort(queries.size.toShort)
+    val queryBytes: List[Byte] = queries.flatMap(query => {
+        0x00.toByte :: serializeLongString(query)
+    })
+    val c: List[Byte] = serializeShort(consistency.code)
+    val header = List[Byte](protocolVersion, 0x00, stream, OpCodes.Batch) ::: serializeInt(typeAndNumber.size + queryBytes.size + c.size)
+
+    (header ::: typeAndNumber ::: queryBytes ::: c).toArray
   }
 
   def createStartupMessage(protocolVersion: ProtocolVersion = VersionTwo, stream: Byte = 0x0) : List[Byte] = {

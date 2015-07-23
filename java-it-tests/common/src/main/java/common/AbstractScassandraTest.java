@@ -3,7 +3,6 @@ package common;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Maps;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -17,7 +16,6 @@ import org.scassandra.http.client.ColumnTypes;
 import org.scassandra.http.client.PrimingClient;
 
 abstract public class AbstractScassandraTest {
-    protected static int binaryPort = 8042;
     private static Scassandra scassandra;
     protected static PrimingClient primingClient;
     protected static ActivityClient activityClient;
@@ -58,12 +56,7 @@ abstract public class AbstractScassandraTest {
     }
 
     public static Map<String, CqlType> cqlTypes(Map<String, ColumnTypes> columnTypes) {
-        return Maps.transformValues(columnTypes, new Function<ColumnTypes, CqlType>() {
-            @Override
-            public CqlType apply(ColumnTypes input) {
-                return input.getType();
-            }
-        });
+        return Maps.transformValues(columnTypes, input -> input.getType());
     }
 
     public static byte[] getArray(ByteBuffer buffer) {
