@@ -4,4 +4,5 @@ dependencies {
         exclude module: 'log4j'
         exclude module: 'slf4j-log4j12'
     }
+    compile('org.apache.cassandra:cassandra-all:1.2.15')
 }

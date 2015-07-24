@@ -34,8 +34,6 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
       iterator.getBytes(bodyAsBytes)
       val queryText = new String(bodyAsBytes)
       val consistency = Consistency.fromCode(iterator.getShort)
-      val flags = iterator.getByte
-      log.info("Query flags {}", flags)
 
       if (queryText.startsWith("use ")) {
         val keyspaceName: String = queryText.substring(4, queryLength)
