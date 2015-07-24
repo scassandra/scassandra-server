@@ -26,4 +26,5 @@ object OpCodes {
   val Result: Byte = 0x08
   val Prepare: Byte = 0x09
   val Execute: Byte = 0x0A
+  val Batch: Byte = 0x0D
 }

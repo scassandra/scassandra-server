@@ -5,22 +5,16 @@ import common.AbstractScassandraTest;
 import common.CassandraExecutor;
 import common.CassandraRow;
 import common.WhereEquals;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.scassandra.cql.CqlType;
-import org.scassandra.cql.PrimitiveType;
 import org.scassandra.http.client.PrimingRequest;
 import org.scassandra.http.client.Query;
-import org.scassandra.matchers.Matchers;
-import org.scassandra.server.cqlmessages.types.CqlAscii;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.scassandra.cql.PrimitiveType.*;
+import static org.junit.Assert.*;
+import static org.scassandra.cql.PrimitiveType.TEXT;
+import static org.scassandra.cql.PrimitiveType.UUID;
 import static org.scassandra.matchers.Matchers.containsQuery;
 
 public class QueryBuilderTest extends AbstractScassandraTest {

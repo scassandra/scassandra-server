@@ -68,7 +68,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
 
     val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(useStatement).toArray.drop(8))
 
-    underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
+    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
 
     testProbeForTcpConnection.expectMsg(SetKeyspace("keyspace", stream))
   }
@@ -78,7 +78,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query).toArray.drop(8))
     when(mockPrimedResults.get(someCqlStatement)).thenReturn(None)
 
-    underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
+    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
 
     testProbeForTcpConnection.expectMsg(Rows("","",stream, Map()))
   }
@@ -88,7 +88,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query).toArray.drop(8))
     when(mockPrimedResults.get(PrimeMatch(someCqlStatement.query, ONE))).thenReturn(Some(Prime(List())))
 
-    underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
+    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
 
     testProbeForTcpConnection.expectMsg(Rows("", "", stream, Map()))
   }
@@ -114,7 +114,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
         "age" -> CqlInt
       ))))
 
-    underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
+    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
 
     testProbeForTcpConnection.expectMsg(Rows("", "", stream, Map("name" -> CqlVarchar, "age" -> CqlInt), rows))
   }
@@ -125,7 +125,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query, stream, consistency).toArray.drop(8))
     when(mockPrimedResults.get(PrimeMatch("some cql statement", consistency))).thenReturn(Some(Prime(List(), ReadRequestTimeoutResult())))
 
-    underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
+    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
 
     testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream, consistency, ReadRequestTimeoutResult()))
   }
@@ -137,7 +137,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     val result: WriteRequestTimeoutResult = WriteRequestTimeoutResult()
     when(mockPrimedResults.get(PrimeMatch("some cql statement", consistency))).thenReturn(Some(Prime(List(), result)))
 
-    underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
+    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
 
     testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream, consistency, result))
   }
@@ -150,7 +150,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     val result: UnavailableResult = UnavailableResult()
     when(mockPrimedResults.get(PrimeMatch(query, consistency))).thenReturn(Some(Prime(List(), result)))
 
-    underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
+    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
 
     testProbeForTcpConnection.expectMsg(UnavailableException(stream, consistency, result))
   }
@@ -174,7 +174,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     )
     when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(rows, SuccessResult, colTypes)))
 
-    underTest ! QueryHandlerMessages.Query(setKeyspaceQuery, stream)
+    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
 
     testProbeForTcpConnection.expectMsg(Rows("", "", stream, Map("name" -> CqlVarchar, "age" -> CqlVarchar),
       rows.map(row => Row(row))))
@@ -190,7 +190,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     when(mockPrimedResults.get(PrimeMatch(query, consistency))).thenReturn(None)
 
     //when
-    underTest ! QueryHandlerMessages.Query(queryBody, stream)
+    underTest ! QueryHandler.Query(queryBody, stream)
 
     //then
     val recordedQueries = activityLog.retrieveQueries()
@@ -208,7 +208,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), SuccessResult, Map(), expectedKeyspace)))
 
     // when
-    underTest ! QueryHandlerMessages.Query(someQuery, stream)
+    underTest ! QueryHandler.Query(someQuery, stream)
 
     // then
     testProbeForTcpConnection.expectMsg(Rows(expectedKeyspace, "", stream, Map()))
@@ -223,7 +223,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), SuccessResult, Map(), "", expectedTable)))
 
     // when
-    underTest ! QueryHandlerMessages.Query(someQuery, stream)
+    underTest ! QueryHandler.Query(someQuery, stream)
 
     // then
     testProbeForTcpConnection.expectMsg(Rows("", expectedTable, stream, Map()))
@@ -239,7 +239,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), SuccessResult, Map(), "", "sometable", variableTypes = List(CqlText))))
 
     // when
-    underTest ! QueryHandlerMessages.Query(someQuery ++ queryParams, stream)
+    underTest ! QueryHandler.Query(someQuery ++ queryParams, stream)
 
     // then
     testProbeForTcpConnection.expectMsg(Rows("", "sometable", stream, Map()))

@@ -7,24 +7,22 @@ import com.datastax.driver.core.exceptions.WriteTimeoutException;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.base.Optional;
-import common.CassandraExecutor;
-import common.CassandraResult;
-import common.WhereEquals;
+import common.*;
 import org.scassandra.http.client.WriteTypePrime;
 
+import java.util.List;
 import java.util.function.Function;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 
 public class CassandraExecutor22 implements CassandraExecutor {
-    private static int binaryPort = 8042;
     private Cluster cluster;
     private Session session;
 
     public CassandraExecutor22() {
-        cluster = Cluster.builder().addContactPoint("localhost").withPort(binaryPort).withRetryPolicy(
+        cluster = Cluster.builder().addContactPoint(Config.NATIVE_HOST).withPort(Config.NATIVE_PORT).withRetryPolicy(
             NoRetryOnUnavailablePolicy.INSTANCE).build();
-        session = cluster.connect("keyspace");
+        session = cluster.connect(Config.KEYSPACE);
     }
 
     @Override
@@ -67,6 +65,15 @@ public class CassandraExecutor22 implements CassandraExecutor {
     @Override
     public CassandraResult executeSelectWithBuilder(String table) {
         return this.executeSelectWithBuilder(table, Optional.<WhereEquals>absent());
+    }
+
+    @Override
+    public CassandraResult executeBatch(List<CassandraQuery> queries) {
+        BatchStatement batch = new BatchStatement();
+        queries.forEach(query -> {
+            batch.add(new SimpleStatement(query.getQuery()));
+        });
+        return new CassandraResult22(session.execute(batch));
     }
 
     @Override

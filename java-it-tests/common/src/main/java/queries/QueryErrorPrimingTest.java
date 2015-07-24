@@ -10,6 +10,7 @@ import org.scassandra.http.client.UnavailableConfig;
 import org.scassandra.http.client.WriteTimeoutConfig;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.scassandra.http.client.PrimingRequest.Result.*;
 import static org.scassandra.http.client.WriteTypePrime.BATCH_LOG;
 
@@ -38,7 +39,7 @@ abstract public class QueryErrorPrimingTest extends AbstractScassandraTest {
         assertEquals(consistency, ((CassandraResult.ReadTimeoutStatus) status).getConsistency());
         assertEquals(2, ((CassandraResult.ReadTimeoutStatus) status).getReceivedAcknowledgements());
         assertEquals(3, ((CassandraResult.ReadTimeoutStatus) status).getRequiredAcknowledgements());
-        assertEquals(false, ((CassandraResult.ReadTimeoutStatus) status).WasDataRetrieved());
+        assertFalse(((CassandraResult.ReadTimeoutStatus) status).WasDataRetrieved());
     }
 
     @Test

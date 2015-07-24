@@ -16,6 +16,7 @@
 package org.scassandra.server.actors
 
 import akka.actor.{ActorLogging, Actor, ActorRef}
+import akka.util.ByteString
 import org.scassandra.server.cqlmessages.{Consistency, CqlMessageFactory}
 import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 import org.scassandra.server.priming._
@@ -26,7 +27,7 @@ import scala.concurrent.duration.FiniteDuration
 class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, msgFactory: CqlMessageFactory, activityLog: ActivityLog) extends Actor with ActorLogging {
 
   def receive = {
-    case QueryHandlerMessages.Query(queryBody, stream) =>
+    case QueryHandler.Query(queryBody, stream) =>
       val iterator = queryBody.iterator
       // the first 4 bytes are an int which is the length of the query
       val queryLength = iterator.getInt
@@ -78,6 +79,11 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
         context.system.scheduler.scheduleOnce(duration, receiver, message)(context.system.dispatcher)
     }
   }
+}
+
+
+object QueryHandler {
+  case class Query(queryBody: ByteString, stream: Byte)
 }
 
 

@@ -7,30 +7,28 @@ import com.datastax.driver.core.exceptions.WriteTimeoutException;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.base.Optional;
-import common.CassandraExecutor;
-import common.CassandraResult;
-import common.WhereEquals;
-import org.scassandra.http.client.WriteTimeoutConfig;
+import common.*;
 import org.scassandra.http.client.WriteTypePrime;
 
+import java.util.List;
 import java.util.function.Function;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static common.Config.KEYSPACE;
 
 public class CassandraExecutor21 implements CassandraExecutor {
-    private static int binaryPort = 8042;
     private Cluster cluster;
     private Session session;
 
     public CassandraExecutor21() {
-        cluster = Cluster.builder().addContactPoint("localhost").withPort(binaryPort).withRetryPolicy(
-            NoRetryOnUnavailablePolicy.INSTANCE).build();
-        session = cluster.connect("keyspace");
+        cluster = Cluster.builder().addContactPoint(Config.NATIVE_HOST).withPort(Config.NATIVE_PORT)
+                .withRetryPolicy(NoRetryOnUnavailablePolicy.INSTANCE).build();
+        session = cluster.connect(KEYSPACE);
     }
 
     @Override
     public CassandraResult executeQuery(String query) {
-        return this.execute(session::execute, query);
+        return execute(session::execute, query);
     }
 
     @Override
@@ -67,7 +65,16 @@ public class CassandraExecutor21 implements CassandraExecutor {
 
     @Override
     public CassandraResult executeSelectWithBuilder(String table) {
-        return this.executeSelectWithBuilder(table, Optional.<WhereEquals>absent());
+        return executeSelectWithBuilder(table, Optional.<WhereEquals>absent());
+    }
+
+    @Override
+    public CassandraResult executeBatch(List<CassandraQuery> queries) {
+        BatchStatement batch = new BatchStatement();
+        queries.forEach(query -> {
+            batch.add(new SimpleStatement(query.getQuery()));
+        });
+        return new CassandraResult21(session.execute(batch));
     }
 
     @Override

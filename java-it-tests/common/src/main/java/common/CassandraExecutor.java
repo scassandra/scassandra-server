@@ -2,6 +2,8 @@ package common;
 
 import com.google.common.base.Optional;
 
+import java.util.List;
+
 public interface CassandraExecutor {
     CassandraResult executeQuery(String query);
 
@@ -15,5 +17,8 @@ public interface CassandraExecutor {
 
     CassandraResult executeSelectWithBuilder(String table);
 
+    CassandraResult executeBatch(List<CassandraQuery> queries);
+
     void close();
+
 }

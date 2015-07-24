@@ -36,7 +36,7 @@ class ScassandraRunner implements Scassandra {
     private final ActivityClient activityClient;
     private final int binaryPort;
     private final int adminPort;
-    private final String versionurl;
+    private final String versionUrl;
     private final CloseableHttpClient httpClient = HttpClients.createDefault();
     private final Gson gson = new Gson();
 
@@ -46,7 +46,7 @@ class ScassandraRunner implements Scassandra {
         this.serverStubRunner = new ServerStubRunner(binaryListenAddress, binaryPort, adminListenAddress, adminPort);
         this.primingClient = PrimingClient.builder().withPort(adminPort).build();
         this.activityClient = ActivityClient.builder().withPort(adminPort).build();
-        this.versionurl = "http://" + binaryListenAddress + ":" + adminPort + "/version";
+        this.versionUrl = "http://" + binaryListenAddress + ":" + adminPort + "/version";
 
     }
 
@@ -83,7 +83,7 @@ class ScassandraRunner implements Scassandra {
 
     @Override
     public String serverVersion() {
-        HttpGet get = new HttpGet(versionurl);
+        HttpGet get = new HttpGet(versionUrl);
         try {
             Type type = new TypeToken<Map<String, String>>(){}.getType();
             Map<String, String> version = gson.fromJson(EntityUtils.toString(httpClient.execute(get).getEntity()), type);
