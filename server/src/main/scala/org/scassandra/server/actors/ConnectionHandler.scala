@@ -90,7 +90,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
     log.debug(s"Body length $bodyLength")
 
     if (currentData.length == bodyLength + ProtocolOneOrTwoHeaderLength) {
-      log.info("Received exactly the whole message")
+      log.debug("Received exactly the whole message")
       partialMessage = false
       val messageBody = currentData.drop(ProtocolOneOrTwoHeaderLength)
       cqlMessageHandler forward NativeProtocolMessageHandler.Process(opCode, stream, messageBody, protocolVersion)
