@@ -19,6 +19,8 @@ import common.*;
 import org.junit.Test;
 import org.scassandra.http.client.PrimingRequest;
 
+import java.util.Collections;
+
 import static org.junit.Assert.*;
 
 abstract public class BatchPrimingTest extends AbstractScassandraTest {
@@ -30,10 +32,12 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
     @Test
     public void executeLoggedBatch() {
         CassandraResult result = cassandra().executeBatch(Lists.newArrayList(
-                new CassandraQuery("select * from blah")
+                new CassandraQuery("select * from blah"),
+                new CassandraQuery("select * from blah2")
             )
         );
 
         assertEquals(PrimingRequest.Result.success, result.status().getResult());
+        assertEquals(Collections.emptyList(), result.rows());
     }
 }

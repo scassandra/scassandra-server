@@ -69,7 +69,6 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
       context stop self
   }
 
-
   /* should not be called if there isn't at least a header */
   private def takeMessage(): Boolean = {
     val protocolVersion = currentData(0)

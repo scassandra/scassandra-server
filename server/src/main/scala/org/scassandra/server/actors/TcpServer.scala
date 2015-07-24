@@ -53,10 +53,10 @@ class TcpServer(listenAddress: String, port: Int,
       log.debug(s"Incoming connection, creating a connection handler! $remote $local")
       activityLog.recordConnection()
       val handler = context.actorOf(Props(classOf[ConnectionHandler],
-        (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[QueryHandler], sender, primedResults, msgFactory, activityLog)),
-        (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[BatchHandler])),
-        (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[RegisterHandler], sender, msgFactory)),
-        (af: ActorRefFactory, sender: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[OptionsHandler], sender, msgFactory)),
+        (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[QueryHandler], tcpConnection, primedResults, msgFactory, activityLog)),
+        (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[BatchHandler], tcpConnection, msgFactory)),
+        (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[RegisterHandler], tcpConnection, msgFactory)),
+        (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[OptionsHandler], tcpConnection, msgFactory)),
         preparedHandler,
         (af: ActorRefFactory, tcpConnection: ActorRef) => af.actorOf(Props(classOf[TcpConnectionWrapper], tcpConnection)))
       )
