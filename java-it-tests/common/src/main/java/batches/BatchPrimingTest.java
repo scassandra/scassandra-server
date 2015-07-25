@@ -32,9 +32,9 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
     @Test
     public void executeLoggedBatch() {
         CassandraResult result = cassandra().executeBatch(Lists.newArrayList(
-                new CassandraQuery("select * from blah"),
-                new CassandraQuery("select * from blah2")
-            )
+                        new CassandraQuery("select * from blah"),
+                        new CassandraQuery("select * from blah2")
+                )
         );
 
         assertEquals(PrimingRequest.Result.success, result.status().getResult());

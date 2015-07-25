@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -42,9 +43,13 @@ import java.util.List;
  */
 public class ActivityClient {
 
-    public static final String REQUEST_FOR_QUERIES_FAILED = "Request for queries failed";
-    public static final String REQUEST_FOR_CONNECTIONS_FAILED = "Request for connections failed";
-    public static final String REQUEST_FAILED = "Request failed";
+    private static final String REQUEST_FOR_QUERIES_FAILED = "Request for queries failed";
+    private static final String REQUEST_FOR_CONNECTIONS_FAILED = "Request for connections failed";
+    private static final String REQUEST_FAILED = "Request failed";
+
+    public List<BatchExecution> retrieveBatches() {
+        return Collections.singletonList(new BatchExecution(Collections.<BatchStatement>emptyList(), "ONE"));
+    }
 
     public static class ActivityClientBuilder {
 

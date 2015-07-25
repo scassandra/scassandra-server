@@ -20,50 +20,68 @@ import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.cqlmessages.types.ColumnType
 
 class ActivityLog extends LazyLogging {
-  var connections : List[Connection] = List()
-  var queries : List[Query] = List()
-  var preparedStatementExecutions : List[PreparedStatementExecution] = List()
+
+
+  var connections: List[Connection] = List()
+  var queries: List[Query] = List()
+  var preparedStatementExecutions: List[PreparedStatementExecution] = List()
+  var batchExecutions: List[BatchExecution] = List()
 
   def recordQuery(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[ColumnType[_]] = List()) = {
     queries = queries ::: Query(query, consistency, variables, variableTypes) :: Nil
   }
 
-  def recordConnection() = {
+  def recordConnection(): Unit = {
     connections = connections ::: Connection() :: Nil
   }
 
-  def retrieveConnections() : List[Connection] = connections
+  def retrieveConnections(): List[Connection] = connections
 
-  def retrieveQueries() : List[Query] = queries
+  def retrieveQueries(): List[Query] = queries
 
-  def clearConnections() = {
+  def clearConnections(): Unit = {
     connections = List()
   }
 
-  def clearQueries() = {
+  def clearQueries(): Unit = {
     queries = List()
   }
-  
+
   def retrievePreparedStatementExecutions(): List[PreparedStatementExecution] = {
     preparedStatementExecutions
   }
 
   def recordPreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[ColumnType[_]]): Unit = {
     val execution: PreparedStatementExecution = PreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes)
-    logger.info("Recording " + execution)
+    logger.info("Recording {}",execution)
     preparedStatementExecutions = preparedStatementExecutions ::: execution :: Nil
   }
 
   def recordPreparedStatementExecution(execution: PreparedStatementExecution): Unit = {
-    logger.info("Recording " + execution)
+    logger.info("Recording {}", execution)
     preparedStatementExecutions = preparedStatementExecutions ::: execution :: Nil
   }
 
   def clearPreparedStatementExecutions() = {
     preparedStatementExecutions = List()
   }
+
+  def recordBatchExecution(batchExecution: BatchExecution): Unit = {
+    logger.info("Recording {}", batchExecutions)
+    batchExecutions = batchExecutions ::: batchExecution :: Nil
+  }
+
+  def retrieveBatchExecutions(): List[BatchExecution] = {
+    batchExecutions
+  }
+
+  def clearBatchExecution(): Unit = {
+    batchExecutions = List()
+  }
 }
 
 case class Query(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[ColumnType[_]] = List())
 case class Connection(result: String = "success")
 case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[ColumnType[_]])
+case class BatchStatement(query: String)
+case class BatchExecution(batchStatements: List[BatchStatement], consistency: Consistency)

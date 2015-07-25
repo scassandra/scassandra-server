@@ -22,20 +22,12 @@ import java.util.Collections;
 import java.util.List;
 
 public final class Query {
-    
-    public static QueryBuilder builder() {
-        return new QueryBuilder();
-    }
-
-    public static QueryBuilder builder(CqlType... variableTypes) {
-        return new QueryBuilder(Arrays.asList(variableTypes));
-    }
 
     private final String query;
-
     private final String consistency;
     private final List<Object> variables;
     private final List<CqlType> variableTypes;
+
     private Query(String query, String consistency, List<Object> variables, List<CqlType> variableTypes) {
         this.query = query;
         this.consistency = consistency;
@@ -91,6 +83,15 @@ public final class Query {
                 ", variableTypes=" + variableTypes +
                 '}';
     }
+
+    public static QueryBuilder builder() {
+        return new QueryBuilder();
+    }
+
+    public static QueryBuilder builder(CqlType... variableTypes) {
+        return new QueryBuilder(Arrays.asList(variableTypes));
+    }
+
 
     public static class QueryBuilder {
 
