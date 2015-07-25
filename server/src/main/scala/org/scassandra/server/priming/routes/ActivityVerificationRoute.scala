@@ -57,19 +57,34 @@ trait ActivityVerificationRoute extends HttpService with LazyLogging {
           }
         }
     } ~
-    path("prepared-statement-execution") {
+    path("prepared-statement-preparation") {
       get {
         complete {
-          logger.debug("Request for record prepared statement executions")
-          activityLog.retrievePreparedStatementExecutions()
+          logger.debug("Request for record prepared statement preparations")
+          activityLog.retrievePreparedStatementPreparations()
         }
       } ~
       delete {
         complete {
-          logger.debug("Deleting all recorded prepared statement executions")
-          activityLog.clearPreparedStatementExecutions()
+          logger.debug("Deleting all recorded prepared statement preparations")
+          activityLog.clearPreparedStatementPreparations()
           StatusCodes.OK
         }
       }
-    }
+    } ~
+      path("prepared-statement-execution") {
+        get {
+          complete {
+            logger.debug("Request for record prepared statement executions")
+            activityLog.retrievePreparedStatementExecutions()
+          }
+        } ~
+          delete {
+            complete {
+              logger.debug("Deleting all recorded prepared statement executions")
+              activityLog.clearPreparedStatementExecutions()
+              StatusCodes.OK
+            }
+          }
+      }
 }

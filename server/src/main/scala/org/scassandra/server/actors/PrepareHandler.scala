@@ -31,28 +31,49 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
   import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 
-  private var preparedStatementId: Int = 1
-  private var preparedStatementsToId: Map[Int, String] = Map()
+  private var nextId: Int = 1
+  private var idToStatement: Map[Int, String] = Map()
 
   def receive: Actor.Receive = {
     case PrepareHandler.Prepare(body, stream, msgFactory: CqlMessageFactory, connection) =>
-      val preparedResult: Result = handlePrepare(body, stream, msgFactory)
-      connection ! preparedResult
+      val preparedResult: PrepareResponse = handlePrepare(body, stream, msgFactory)
+      connection ! preparedResult.result
+      activityLog.recordPreparedStatementPreparation(preparedResult.activity)
 
     case PrepareHandler.Execute(body, stream, msgFactory, connection) =>
       val action: ExecuteResponse = handleExecute(body, stream, msgFactory)
       sendMessage(action.msg, connection)
       action.activity.foreach(activityLog.recordPreparedStatementExecution)
   }
-  
-  case class MessageWithDelay(msg: Any, delay: Option[FiniteDuration] = None)
-  case class ExecuteResponse(activity: Option[PreparedStatementExecution], msg: MessageWithDelay)
+
+  case class PrepareResponse(activity: PreparedStatementPreparation, result: Result)
+
+  private def handlePrepare(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory): PrepareResponse = {
+    val query: String = readLongString(body.iterator).get
+    val preparedPrime: Option[PreparedPrime] = primePreparedStore.findPrime(PrimeMatch(query))
+
+    val preparedResult: Result = preparedPrime
+      .map(prime => msgFactory.createPreparedResult(stream, nextId, prime.variableTypes))
+      .getOrElse({
+      val numberOfParameters = query.toCharArray.count(_ == '?')
+      val variableTypes = (0 until numberOfParameters).map(num => CqlVarchar).toList
+      msgFactory.createPreparedResult(stream, nextId, variableTypes)
+    })
+    idToStatement += (nextId -> query)
+    nextId = nextId + 1
+    log.info(s"Prepared Statement has been prepared: |$query|. Prepared result is: $preparedResult")
+
+    PrepareResponse(PreparedStatementPreparation(query), preparedResult)
+  }
+
+  private case class MessageWithDelay(msg: Any, delay: Option[FiniteDuration] = None)
+  private case class ExecuteResponse(activity: Option[PreparedStatementExecution], msg: MessageWithDelay)
 
   private def handleExecute(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory): ExecuteResponse = {
     val executeRequest = msgFactory.parseExecuteRequestWithoutVariables(stream, body)
     log.debug(s"Received execute message $executeRequest")
 
-    val prepStatement = preparedStatementsToId.get(executeRequest.id)
+    val prepStatement = idToStatement.get(executeRequest.id)
 
     val action = prepStatement match {
       case Some(p) =>
@@ -70,24 +91,6 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
       case None => statementNotRecognised(stream, msgFactory)
     }
     action
-  }
-
-  private def handlePrepare(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory): Result = {
-    val query: String = readLongString(body.iterator).get
-    val preparedPrime = primePreparedStore.findPrime(PrimeMatch(query))
-
-    val preparedResult: Result = preparedPrime
-      .map(prime => msgFactory.createPreparedResult(stream, preparedStatementId, prime.variableTypes))
-      .getOrElse({
-      val numberOfParameters = query.toCharArray.count(_ == '?')
-      val variableTypes = (0 until numberOfParameters).map(num => CqlVarchar).toList
-      msgFactory.createPreparedResult(stream, preparedStatementId, variableTypes)
-    })
-    preparedStatementsToId += (preparedStatementId -> query)
-    preparedStatementId = preparedStatementId + 1
-    log.info(s"Prepared Statement has been prepared: |$query|. Prepared result is: $preparedResult")
-
-    preparedResult
   }
 
   private def statementNotRecognised(stream: Byte, msgFactory: CqlMessageFactory): ExecuteResponse = {

@@ -19,15 +19,14 @@ import dispatch.Defaults._
 import dispatch._
 import org.scalatest.concurrent.ScalaFutures
 import org.scassandra.server.AbstractIntegrationTest
-import org.scassandra.server.cqlmessages.ONE
-import org.scassandra.server.priming.PreparedStatementExecution
+import org.scassandra.server.priming.{PrimingJsonImplicits, PreparedStatementPreparation}
 import spray.json._
 
-class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest with ScalaFutures {
+class PreparedStatementPreparationVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 
-  import org.scassandra.server.priming.PrimingJsonImplicits._
+  import PrimingJsonImplicits._
 
-  val primePreparedSinglePath = "http://localhost:8043/prepared-statement-execution"
+  val primePreparedSinglePath = "http://localhost:8043/prepared-statement-preparation"
 
   before {
     val svc = url(primePreparedSinglePath).DELETE
@@ -35,7 +34,7 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
     response()
   }
 
-  test("Test clearing of prepared statement executions") {
+  test("Test clearing of prepared statement preparations") {
     //todo: clean activity log
     val queryString = "select * from people where name = ?"
     val preparedStatement = session.prepare(queryString)
@@ -46,13 +45,13 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
     val deleteResponse = Http(delete OK as.String)
     deleteResponse()
 
-    val listOfPreparedStatementExecutions = Http(svc OK as.String)
-    whenReady(listOfPreparedStatementExecutions) { result =>
-      JsonParser(result).convertTo[List[PreparedStatementExecution]].size should equal(0)
+    val listOfPreparedStatementPreparations = Http(svc OK as.String)
+    whenReady(listOfPreparedStatementPreparations) { result =>
+      JsonParser(result).convertTo[List[PreparedStatementPreparation]].size should equal(0)
     }
   }
 
-  test("Test verification of a single prepared statement execution") {
+  test("Test verification of a single prepared statement preparation") {
     val queryString: String = "select * from people where name = ?"
     val preparedStatement = session.prepare(queryString)
     val boundStatement = preparedStatement.bind("Chris")
@@ -62,10 +61,9 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
     val response = Http(svc OK as.String)
 
     whenReady(response) { result =>
-      println(result)
-      val preparedStatementExecutions = JsonParser(result).convertTo[List[PreparedStatementExecution]]
-      preparedStatementExecutions.size should equal(1)
-      preparedStatementExecutions.head should equal(PreparedStatementExecution(queryString, ONE, List(), List()))
+      val preparations = JsonParser(result).convertTo[List[PreparedStatementPreparation]]
+      preparations.size should equal(1)
+      preparations.head should equal(PreparedStatementPreparation(queryString))
     }
   }
 }

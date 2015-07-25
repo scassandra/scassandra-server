@@ -20,13 +20,26 @@ import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.cqlmessages.types.ColumnType
 
 class ActivityLog extends LazyLogging {
+
   var connections : List[Connection] = List()
   var queries : List[Query] = List()
+  var preparedStatementPreparations : List[PreparedStatementPreparation] = List()
   var preparedStatementExecutions : List[PreparedStatementExecution] = List()
+
+
+  /*  Query activity logging */
+
+  def clearQueries() = {
+    queries = List()
+  }
+
+  def retrieveQueries() : List[Query] = queries
 
   def recordQuery(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[ColumnType[_]] = List()) = {
     queries = queries ::: Query(query, consistency, variables, variableTypes) :: Nil
   }
+
+  /*  Connection activity logging */
 
   def recordConnection() = {
     connections = connections ::: Connection() :: Nil
@@ -34,28 +47,39 @@ class ActivityLog extends LazyLogging {
 
   def retrieveConnections() : List[Connection] = connections
 
-  def retrieveQueries() : List[Query] = queries
 
   def clearConnections() = {
     connections = List()
   }
 
-  def clearQueries() = {
-    queries = List()
+  /*  PreparedStatementPreparation activity logging */
+
+  def clearPreparedStatementPreparations() = {
+    logger.info("Clearing prepared statement preparations")
+    preparedStatementPreparations = List()
   }
-  
-  def retrievePreparedStatementExecutions(): List[PreparedStatementExecution] = {
-    preparedStatementExecutions
+
+  def recordPreparedStatementPreparation(activity: PreparedStatementPreparation) = {
+    logger.info("Recording {}", activity)
+    preparedStatementPreparations = preparedStatementPreparations ::: activity :: Nil
   }
+
+  def retrievePreparedStatementPreparations(): List[PreparedStatementPreparation] = preparedStatementPreparations
+
+
+  /*  PreparedStatementExecution activity logging  */
+
+  def retrievePreparedStatementExecutions(): List[PreparedStatementExecution] = preparedStatementExecutions
+
 
   def recordPreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[ColumnType[_]]): Unit = {
     val execution: PreparedStatementExecution = PreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes)
-    logger.info("Recording " + execution)
+    logger.info("Recording {}", execution)
     preparedStatementExecutions = preparedStatementExecutions ::: execution :: Nil
   }
 
   def recordPreparedStatementExecution(execution: PreparedStatementExecution): Unit = {
-    logger.info("Recording " + execution)
+    logger.info("Recording {}", execution)
     preparedStatementExecutions = preparedStatementExecutions ::: execution :: Nil
   }
 
@@ -67,3 +91,4 @@ class ActivityLog extends LazyLogging {
 case class Query(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[ColumnType[_]] = List())
 case class Connection(result: String = "success")
 case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[ColumnType[_]])
+case class PreparedStatementPreparation(preparedStatementText: String)
