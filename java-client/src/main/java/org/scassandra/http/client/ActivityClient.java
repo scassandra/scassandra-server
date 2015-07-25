@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -46,20 +45,15 @@ public class ActivityClient {
     private static final String REQUEST_FOR_QUERIES_FAILED = "Request for queries failed";
     private static final String REQUEST_FOR_CONNECTIONS_FAILED = "Request for connections failed";
     private static final String REQUEST_FAILED = "Request failed";
-
-    public List<BatchExecution> retrieveBatches() {
-        return Collections.singletonList(new BatchExecution(Collections.<BatchStatement>emptyList(), "ONE"));
-    }
-
     public static class ActivityClientBuilder {
 
         private String host = "localhost";
-        private int port = 8043;
-        private int socketTimeout = 1000;
 
+        private int port = 8043;
+
+        private int socketTimeout = 1000;
         private ActivityClientBuilder() {
         }
-
         public ActivityClientBuilder withHost(String host) {
             this.host = host;
             return this;
@@ -81,7 +75,6 @@ public class ActivityClient {
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityClient.class);
-
     public static ActivityClientBuilder builder() {
         return new ActivityClientBuilder();
     }
@@ -91,9 +84,11 @@ public class ActivityClient {
             .create();
 
     private CloseableHttpClient httpClient = HttpClients.createDefault();
+
     private final String connectionUrl;
     private final String queryUrl;
     private final String preparedStatementExecutionUrl;
+    private final String batchUrl;
 
     private ActivityClient(String host, int port, int socketTimeout) {
         RequestConfig.Builder requestBuilder = RequestConfig.custom();
@@ -106,6 +101,7 @@ public class ActivityClient {
         this.connectionUrl = "http://" + host + ":" + port + "/connection";
         this.queryUrl = "http://" + host + ":" + port + "/query";
         this.preparedStatementExecutionUrl = "http://" + host + ":" + port + "/prepared-statement-execution";
+        this.batchUrl = "http://" + host + ":" + port + "/batch-execution";
     }
 
     /**
@@ -140,9 +136,9 @@ public class ActivityClient {
             CloseableHttpResponse response = httpClient.execute(get);
             String body = EntityUtils.toString(response.getEntity());
             LOGGER.debug("Received response {}", body);
-            Connection[] queries = (Connection[]) gson.fromJson(body, (Class) Connection[].class);
-            LOGGER.debug("Parsed connections {}", Arrays.toString(queries));
-            return Arrays.asList(queries);
+            Connection[] connections = (Connection[]) gson.fromJson(body, (Class) Connection[].class);
+            LOGGER.debug("Parsed connections {}", Arrays.toString(connections));
+            return Arrays.asList(connections);
         } catch (IOException e) {
             LOGGER.info(REQUEST_FOR_CONNECTIONS_FAILED, e);
             throw new ActivityRequestFailed(REQUEST_FOR_CONNECTIONS_FAILED, e);
@@ -208,6 +204,22 @@ public class ActivityClient {
         }
     }
 
+    public List<BatchExecution> retrieveBatches() {
+        HttpGet get = new HttpGet(batchUrl);
+
+        try {
+            CloseableHttpResponse response = httpClient.execute(get);
+            String body = EntityUtils.toString(response.getEntity());
+            LOGGER.debug("Received response {}", body);
+            BatchExecution[] batchExecutions = (BatchExecution[]) gson.fromJson(body, (Class) BatchExecution[].class);
+            LOGGER.debug("Parsed batch executions {}", Arrays.toString(batchExecutions));
+            return Arrays.asList(batchExecutions);
+        } catch (IOException e) {
+            LOGGER.info(REQUEST_FOR_CONNECTIONS_FAILED, e);
+            throw new ActivityRequestFailed(REQUEST_FOR_CONNECTIONS_FAILED, e);
+        }
+    }
+
     private void httpDelete(String url, String warningMessage) {
         HttpDelete delete = new HttpDelete(url);
         try {
@@ -218,6 +230,4 @@ public class ActivityClient {
             throw new ActivityRequestFailed(warningMessage, e);
         }
     }
-
-
 }

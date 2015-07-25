@@ -84,7 +84,7 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
         val response: String = responseAs[String]
         val queryList = JsonParser(response).convertTo[List[Query]]
         queryList.size should equal(1)
-        queryList(0).query should equal(query)
+        queryList.head.query should equal(query)
       }
     }
 
@@ -116,7 +116,7 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
         val response = responseAs[List[PreparedStatementExecution]]
 
         response.size should equal(1)
-        response(0).preparedStatementText should equal(preparedStatementText)
+        response.head.preparedStatementText should equal(preparedStatementText)
       }
     }
 
@@ -129,4 +129,18 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
     }
   }
 
+  describe("Batch execution") {
+    it("Should return executions from ActivityLog") {
+      activityLog.clearBatchExecutions()
+      activityLog.recordBatchExecution(BatchExecution(List(BatchStatement("Query")), ONE))
+
+      Get("/batch-execution") ~> activityVerificationRoute ~> check {
+        val response = responseAs[List[BatchExecution]]
+
+        response.size should equal(1)
+        response.head.batchStatements should equal(List(BatchStatement("Query")))
+        response.head.consistency should equal(ONE)
+      }
+    }
+  }
 }

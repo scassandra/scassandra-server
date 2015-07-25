@@ -21,6 +21,7 @@ import static org.scassandra.http.client.ActivityClient.*;
 
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -33,6 +34,7 @@ public class ActivityClientTest {
     private static final int PORT = 1235;
     private final String preparedStatementExecutionUrl = "/prepared-statement-execution";
     private final String queryUrl = "/query";
+    private final String batchUrl = "/batch-execution";
     private final String connectionUrl = "/connection";
 
     @Rule
@@ -137,7 +139,6 @@ public class ActivityClientTest {
         //when
         underTest.clearConnections();
         //then
-
     }
 
     @Test
@@ -157,7 +158,6 @@ public class ActivityClientTest {
         //when
         underTest.clearQueries();
         //then
-
     }
 
     @Test
@@ -240,5 +240,18 @@ public class ActivityClientTest {
         verify(deleteRequestedFor(urlEqualTo(preparedStatementExecutionUrl)));
         verify(deleteRequestedFor(urlEqualTo(queryUrl)));
         verify(deleteRequestedFor(urlEqualTo(connectionUrl)));
+    }
+
+    @Test
+    public void testRetrievalOfBatchExecutions() {
+        //given
+        stubFor(get(urlEqualTo(batchUrl)).willReturn(aResponse().withBody("[{\"batchStatements\":[{\"query\":\"select * from people\"}],\"consistency\":\"TWO\"}]")));
+        //when
+        List<BatchExecution> batchExecutions = underTest.retrieveBatches();
+        //then
+        assertEquals(1, batchExecutions.size());
+        final BatchExecution batchExecution = batchExecutions.get(0);
+        assertEquals(Lists.newArrayList(new BatchStatement("select * from people")), batchExecution.getBatchStatements());
+        assertEquals("TWO", batchExecution.getConsistency());
     }
 }

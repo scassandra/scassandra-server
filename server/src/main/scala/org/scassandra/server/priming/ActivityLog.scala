@@ -75,7 +75,7 @@ class ActivityLog extends LazyLogging {
     batchExecutions
   }
 
-  def clearBatchExecution(): Unit = {
+  def clearBatchExecutions(): Unit = {
     batchExecutions = List()
   }
 }

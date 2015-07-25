@@ -125,4 +125,6 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
   implicit val impPrimePreparedSingle = jsonFormat(PrimePreparedSingle, "when", "then")
   implicit val impPreparedStatementExecution = jsonFormat4(PreparedStatementExecution)
   implicit val impVersion = jsonFormat1(Version)
+  implicit val impBatchStatement = jsonFormat1(BatchStatement)
+  implicit val impBatchExecution = jsonFormat2(BatchExecution)
 }

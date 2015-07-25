@@ -96,7 +96,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
   test("Clear batch execution") {
     underTest.recordBatchExecution(BatchExecution(List(BatchStatement("select * from hello")), ONE))
 
-    underTest.clearBatchExecution()
+    underTest.clearBatchExecutions()
 
     underTest.retrieveBatchExecutions() should equal(List())
   }

@@ -4,19 +4,19 @@ import java.util.List;
 
 public final class BatchExecution {
 
-    private final List<BatchStatement> statements;
+    private final List<BatchStatement> batchStatements;
     private final String consistency;
 
-    public BatchExecution(List<BatchStatement> statements, String consistency) {
-        this.statements = statements;
+    public BatchExecution(List<BatchStatement> batchStatements, String consistency) {
+        this.batchStatements = batchStatements;
         this.consistency = consistency;
     }
 
-    private List<BatchStatement> getStatements() {
-        return statements;
+    public List<BatchStatement> getBatchStatements() {
+        return batchStatements;
     }
 
-    private String getConsistency() {
+    public String getConsistency() {
         return consistency;
     }
 
@@ -27,14 +27,14 @@ public final class BatchExecution {
 
         BatchExecution that = (BatchExecution) o;
 
-        if (statements != null ? !statements.equals(that.statements) : that.statements != null) return false;
+        if (batchStatements != null ? !batchStatements.equals(that.batchStatements) : that.batchStatements != null) return false;
         return !(consistency != null ? !consistency.equals(that.consistency) : that.consistency != null);
 
     }
 
     @Override
     public int hashCode() {
-        int result = statements != null ? statements.hashCode() : 0;
+        int result = batchStatements != null ? batchStatements.hashCode() : 0;
         result = 31 * result + (consistency != null ? consistency.hashCode() : 0);
         return result;
     }
@@ -42,7 +42,7 @@ public final class BatchExecution {
     @Override
     public String toString() {
         return "BatchExecution{" +
-                "statements=" + statements +
+                "batchStatements=" + batchStatements +
                 ", consistency='" + consistency + '\'' +
                 '}';
     }
