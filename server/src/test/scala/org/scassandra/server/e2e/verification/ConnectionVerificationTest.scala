@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.server.e2e
+package org.scassandra.server.e2e.verification
 
-import org.scassandra.server.{ConnectionToServerStub, AbstractIntegrationTest}
+import com.datastax.driver.core.{Cluster, HostDistance}
+import dispatch.Defaults._
+import dispatch._
 import org.scalatest.concurrent.ScalaFutures
-import org.scassandra.server.priming.{PrimingJsonImplicits, Connection, ActivityLog}
-import dispatch._, Defaults._
+import org.scassandra.server.priming.{Connection, PrimingJsonImplicits}
+import org.scassandra.server.{AbstractIntegrationTest, ConnectionToServerStub}
 import spray.json.JsonParser
-import com.datastax.driver.core.{Cluster, HostDistance, PoolingOptions}
 
 class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 

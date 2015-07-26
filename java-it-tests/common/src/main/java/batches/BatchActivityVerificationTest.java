@@ -32,4 +32,32 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
                         new BatchStatement("select * from blah"),
                         new BatchStatement("select * from blah2")), "ONE"), batches.get(0));
     }
+
+    @Test
+    public void clearAllRecordedActivity() {
+        cassandra().executeBatch(Lists.newArrayList(
+                        new CassandraQuery("select * from blah"),
+                        new CassandraQuery("select * from blah2")
+                )
+        );
+
+        activityClient.clearAllRecordedActivity();
+        List<BatchExecution> batches = activityClient.retrieveBatches();
+
+        assertEquals(0, batches.size());
+    }
+
+    @Test
+    public void clearJustBatchExecution() {
+        cassandra().executeBatch(Lists.newArrayList(
+                        new CassandraQuery("select * from blah"),
+                        new CassandraQuery("select * from blah2")
+                )
+        );
+
+        activityClient.clearBatchExecutions();
+        List<BatchExecution> batches = activityClient.retrieveBatches();
+
+        assertEquals(0, batches.size());
+    }
 }

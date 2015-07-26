@@ -142,5 +142,13 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
         response.head.consistency should equal(ONE)
       }
     }
+
+    it("Should clear batch executions for a delete") {
+      activityLog.recordBatchExecution(BatchExecution(List(), ONE))
+
+      Delete("/batch-execution") ~> activityVerificationRoute ~> check {
+        activityLog.retrieveBatchExecutions().size should equal(0)
+      }
+    }
   }
 }

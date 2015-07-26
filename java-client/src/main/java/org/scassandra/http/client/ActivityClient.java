@@ -45,6 +45,7 @@ public class ActivityClient {
     private static final String REQUEST_FOR_QUERIES_FAILED = "Request for queries failed";
     private static final String REQUEST_FOR_CONNECTIONS_FAILED = "Request for connections failed";
     private static final String REQUEST_FAILED = "Request failed";
+
     public static class ActivityClientBuilder {
 
         private String host = "localhost";
@@ -167,12 +168,13 @@ public class ActivityClient {
     }
 
     /**
-     * Deletes the recorded prepared statement executions, recorded queries and recorded connections.
+     * Deletes the recorded prepared statement executions, recorded batch executions, recorded queries and recorded connections.
      */
     public void clearAllRecordedActivity() {
         clearConnections();
         clearQueries();
         clearPreparedStatementExecutions();
+        clearBatchExecutions();
     }
 
     /**
@@ -206,7 +208,6 @@ public class ActivityClient {
 
     public List<BatchExecution> retrieveBatches() {
         HttpGet get = new HttpGet(batchUrl);
-
         try {
             CloseableHttpResponse response = httpClient.execute(get);
             String body = EntityUtils.toString(response.getEntity());
@@ -218,6 +219,10 @@ public class ActivityClient {
             LOGGER.info(REQUEST_FOR_CONNECTIONS_FAILED, e);
             throw new ActivityRequestFailed(REQUEST_FOR_CONNECTIONS_FAILED, e);
         }
+    }
+
+    public void clearBatchExecutions() {
+        httpDelete(batchUrl, "Clearing of batch executions failed");
     }
 
     private void httpDelete(String url, String warningMessage) {

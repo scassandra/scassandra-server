@@ -233,6 +233,8 @@ public class ActivityClientTest {
                 .willReturn(aResponse().withStatus(200)));
         stubFor(delete(urlEqualTo(connectionUrl))
                 .willReturn(aResponse().withStatus(200)));
+        stubFor(delete(urlEqualTo(batchUrl))
+                .willReturn(aResponse().withStatus(200)));
 
         //when
         underTest.clearAllRecordedActivity();
@@ -240,6 +242,7 @@ public class ActivityClientTest {
         verify(deleteRequestedFor(urlEqualTo(preparedStatementExecutionUrl)));
         verify(deleteRequestedFor(urlEqualTo(queryUrl)));
         verify(deleteRequestedFor(urlEqualTo(connectionUrl)));
+        verify(deleteRequestedFor(urlEqualTo(batchUrl)));
     }
 
     @Test
@@ -253,5 +256,16 @@ public class ActivityClientTest {
         final BatchExecution batchExecution = batchExecutions.get(0);
         assertEquals(Lists.newArrayList(new BatchStatement("select * from people")), batchExecution.getBatchStatements());
         assertEquals("TWO", batchExecution.getConsistency());
+    }
+
+    @Test
+    public void testDeletingOfRecordedBatches() {
+        //given
+        stubFor(delete(urlEqualTo(batchUrl))
+                .willReturn(aResponse().withStatus(200)));
+        //when
+        underTest.clearBatchExecutions();
+        //then
+        verify(deleteRequestedFor(urlEqualTo(batchUrl)));
     }
 }
