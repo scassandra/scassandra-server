@@ -3,7 +3,7 @@ package org.scassandra.http.client;
 public final class BatchStatement {
     private final String query;
 
-    public BatchStatement(String query) {
+    private BatchStatement(String query) {
         this.query = query;
     }
 
@@ -32,5 +32,26 @@ public final class BatchStatement {
     @Override
     public int hashCode() {
         return query != null ? query.hashCode() : 0;
+    }
+
+
+    public static BatchStatementBuilder builder() {
+        return new BatchStatementBuilder();
+    }
+
+    public static class BatchStatementBuilder {
+        private String query;
+
+        private BatchStatementBuilder() {
+        }
+
+        public BatchStatementBuilder withQuery(String query) {
+            this.query = query;
+            return this;
+        }
+
+        public BatchStatement build() {
+            return new BatchStatement(query);
+        }
     }
 }

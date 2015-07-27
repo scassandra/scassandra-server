@@ -29,9 +29,11 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
         List<BatchExecution> batches = activityClient.retrieveBatches();
 
         assertEquals(1, batches.size());
-        assertEquals(new BatchExecution(Lists.newArrayList(
-                        new BatchStatement("select * from blah"),
-                        new BatchStatement("select * from blah2")), "ONE", BatchType.UNLOGGED), batches.get(0));
+        assertEquals(BatchExecution.builder().withBatchStatements(
+                    BatchStatement.builder().withQuery("select * from blah").build(),
+                    BatchStatement.builder().withQuery("select * from blah2").build())
+                .withConsistency( "ONE")
+                .withBatchType(BatchType.UNLOGGED).build(), batches.get(0));
     }
 
     @Test
@@ -45,9 +47,10 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
         List<BatchExecution> batches = activityClient.retrieveBatches();
 
         assertEquals(1, batches.size());
-        assertEquals(new BatchExecution(Lists.newArrayList(
-                        new BatchStatement("select * from blah"),
-                        new BatchStatement("select * from blah2")), "ONE", BatchType.LOGGED), batches.get(0));
+        assertEquals(BatchExecution.builder().withBatchStatements(
+                    BatchStatement.builder().withQuery("select * from blah").build(),
+                    BatchStatement.builder().withQuery("select * from blah2").build())
+                .withConsistency("ONE").withBatchType(BatchType.LOGGED).build(), batches.get(0));
     }
 
     @Test
@@ -60,8 +63,9 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
         List<BatchExecution> batches = activityClient.retrieveBatches();
 
         assertEquals(1, batches.size());
-        assertEquals(new BatchExecution(Lists.newArrayList(
-                new BatchStatement("select * from blah where blah = ? and wah = ?")), "ONE", BatchType.LOGGED), batches.get(0));
+        assertEquals(BatchExecution.builder().withBatchStatements(
+                    BatchStatement.builder().withQuery("select * from blah where blah = ? and wah = ?").build())
+                .withConsistency("ONE").withBatchType(BatchType.LOGGED).build(), batches.get(0));
     }
 
     @Test

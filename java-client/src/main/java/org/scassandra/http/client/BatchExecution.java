@@ -1,15 +1,15 @@
 package org.scassandra.http.client;
 
+import java.util.Arrays;
 import java.util.List;
 
-//todo remove constructor to make backward compatibility easier
 public final class BatchExecution {
 
     private final List<BatchStatement> batchStatements;
     private final String consistency;
     private final BatchType batchType;
 
-    public BatchExecution(List<BatchStatement> batchStatements, String consistency, BatchType batchType) {
+    private BatchExecution(List<BatchStatement> batchStatements, String consistency, BatchType batchType) {
         this.batchStatements = batchStatements;
         this.consistency = consistency;
         this.batchType = batchType;
@@ -53,5 +53,43 @@ public final class BatchExecution {
                 ", consistency='" + consistency + '\'' +
                 ", type=" + batchType +
                 '}';
+    }
+
+    public static BatchExecutionBuilder builder() {
+        return new BatchExecutionBuilder();
+    }
+
+
+    public static class BatchExecutionBuilder {
+        private List<BatchStatement> batchStatements;
+        private String consistency;
+        private BatchType batchType;
+
+        private BatchExecutionBuilder() {
+        }
+
+        public BatchExecutionBuilder withBatchStatements(List<BatchStatement> batchStatements) {
+            this.batchStatements = batchStatements;
+            return this;
+        }
+
+        public BatchExecutionBuilder withBatchStatements(BatchStatement... batchStatements) {
+            this.batchStatements = Arrays.asList(batchStatements);
+            return this;
+        }
+
+        public BatchExecutionBuilder withConsistency(String consistency) {
+            this.consistency = consistency;
+            return this;
+        }
+
+        public BatchExecutionBuilder withBatchType(BatchType batchType) {
+            this.batchType = batchType;
+            return this;
+        }
+
+        public BatchExecution build() {
+            return new BatchExecution(batchStatements, consistency, batchType);
+        }
     }
 }
