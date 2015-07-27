@@ -7,6 +7,7 @@ import common.CassandraQuery;
 import org.junit.Test;
 import org.scassandra.http.client.BatchExecution;
 import org.scassandra.http.client.BatchStatement;
+import org.scassandra.http.client.BatchType;
 
 import java.util.List;
 
@@ -18,11 +19,11 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
     }
 
     @Test
-    public void executeLoggedBatch() {
+    public void executeUnLoggedBatch() {
         cassandra().executeBatch(Lists.newArrayList(
                         new CassandraQuery("select * from blah"),
                         new CassandraQuery("select * from blah2")
-                )
+                ), BatchType.UNLOGGED
         );
 
         List<BatchExecution> batches = activityClient.retrieveBatches();
@@ -30,7 +31,37 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
         assertEquals(1, batches.size());
         assertEquals(new BatchExecution(Lists.newArrayList(
                         new BatchStatement("select * from blah"),
-                        new BatchStatement("select * from blah2")), "ONE"), batches.get(0));
+                        new BatchStatement("select * from blah2")), "ONE", BatchType.UNLOGGED), batches.get(0));
+    }
+
+    @Test
+    public void executeLoggedBatch() {
+        cassandra().executeBatch(Lists.newArrayList(
+                        new CassandraQuery("select * from blah"),
+                        new CassandraQuery("select * from blah2")
+                ), BatchType.LOGGED
+        );
+
+        List<BatchExecution> batches = activityClient.retrieveBatches();
+
+        assertEquals(1, batches.size());
+        assertEquals(new BatchExecution(Lists.newArrayList(
+                        new BatchStatement("select * from blah"),
+                        new BatchStatement("select * from blah2")), "ONE", BatchType.LOGGED), batches.get(0));
+    }
+
+    @Test
+    public void batchWithQueryParametersUnPrimed() {
+        cassandra().executeBatch(Lists.newArrayList(
+                        new CassandraQuery("select * from blah where blah = ? and wah = ?", "Hello", 1)
+                ), BatchType.LOGGED
+        );
+
+        List<BatchExecution> batches = activityClient.retrieveBatches();
+
+        assertEquals(1, batches.size());
+        assertEquals(new BatchExecution(Lists.newArrayList(
+                new BatchStatement("select * from blah where blah = ? and wah = ?")), "ONE", BatchType.LOGGED), batches.get(0));
     }
 
     @Test
@@ -38,7 +69,7 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
         cassandra().executeBatch(Lists.newArrayList(
                         new CassandraQuery("select * from blah"),
                         new CassandraQuery("select * from blah2")
-                )
+                ), BatchType.UNLOGGED
         );
 
         activityClient.clearAllRecordedActivity();
@@ -52,7 +83,7 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
         cassandra().executeBatch(Lists.newArrayList(
                         new CassandraQuery("select * from blah"),
                         new CassandraQuery("select * from blah2")
-                )
+                ), BatchType.UNLOGGED
         );
 
         activityClient.clearBatchExecutions();

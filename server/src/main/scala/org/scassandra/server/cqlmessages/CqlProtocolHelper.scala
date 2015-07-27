@@ -181,6 +181,21 @@ object CqlProtocolHelper {
     ByteString(header ++ serializeInt(body.length) ++ body)
   }
 
+  /**
+   * Reads an int then that many bytes
+   * @param iterator
+   */
+  def consumeLongBytes(iterator: ByteIterator): Array[Byte] = {
+    val length = iterator.getInt
+    length match {
+      case -1 => Array()
+      case _  =>
+        val bytes = new Array[Byte](length)
+        iterator.getBytes(bytes)
+        bytes
+    }
+  }
+
 }
 
 // example sets

@@ -17,6 +17,7 @@ package batches;/*
 import com.google.common.collect.Lists;
 import common.*;
 import org.junit.Test;
+import org.scassandra.http.client.BatchType;
 import org.scassandra.http.client.PrimingRequest;
 
 import java.util.Collections;
@@ -34,7 +35,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
         CassandraResult result = cassandra().executeBatch(Lists.newArrayList(
                         new CassandraQuery("select * from blah"),
                         new CassandraQuery("select * from blah2")
-                )
+                ), BatchType.UNLOGGED
         );
 
         assertEquals(PrimingRequest.Result.success, result.status().getResult());

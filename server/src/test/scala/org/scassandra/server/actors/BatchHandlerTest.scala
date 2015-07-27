@@ -5,7 +5,7 @@ import akka.testkit.{TestProbe, TestKit}
 import akka.util.ByteString
 import org.scalatest.{BeforeAndAfter, Matchers, FunSuiteLike}
 import org.scassandra.server.actors.MessageHelper._
-import org.scassandra.server.cqlmessages.{ONE, VersionTwoMessageFactory}
+import org.scassandra.server.cqlmessages.{LOGGED, ONE, VersionTwoMessageFactory}
 import org.scassandra.server.priming.{BatchStatement, BatchExecution, ActivityLog}
 
 class BatchHandlerTest extends TestKit(ActorSystem("BatchHandlerTest")) with FunSuiteLike
@@ -45,7 +45,7 @@ class BatchHandlerTest extends TestKit(ActorSystem("BatchHandlerTest")) with Fun
     activityLog.retrieveBatchExecutions() should equal(List(
       BatchExecution(List(
         BatchStatement("insert into something"), BatchStatement("insert into something else")
-      ), ONE))
+      ), ONE, LOGGED))
     )
   }
 }

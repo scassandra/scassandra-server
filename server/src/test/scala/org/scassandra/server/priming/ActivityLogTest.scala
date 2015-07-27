@@ -17,7 +17,7 @@ package org.scassandra.server.priming
 
 import org.scalatest.{BeforeAndAfter, Matchers, FunSuite}
 import org.scassandra.server.cqlmessages.types.{CqlText, CqlBigint, CqlAscii}
-import org.scassandra.server.cqlmessages.{Consistency, TWO, ONE}
+import org.scassandra.server.cqlmessages.{LOGGED, Consistency, TWO, ONE}
 
 class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
 
@@ -85,7 +85,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
   test("Record batch execution") {
     val consistency: Consistency = ONE
     val statements: List[BatchStatement] = List(BatchStatement("select * from hello"))
-    val execution: BatchExecution = BatchExecution(statements, consistency)
+    val execution: BatchExecution = BatchExecution(statements, consistency, LOGGED)
     underTest.recordBatchExecution(execution)
 
     val executions: List[BatchExecution] = underTest.retrieveBatchExecutions()
@@ -94,7 +94,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Clear batch execution") {
-    underTest.recordBatchExecution(BatchExecution(List(BatchStatement("select * from hello")), ONE))
+    underTest.recordBatchExecution(BatchExecution(List(BatchStatement("select * from hello")), ONE, LOGGED))
 
     underTest.clearBatchExecutions()
 
