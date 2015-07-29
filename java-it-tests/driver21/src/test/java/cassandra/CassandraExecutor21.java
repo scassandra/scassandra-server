@@ -39,6 +39,11 @@ public class CassandraExecutor21 implements CassandraExecutor {
     }
 
     @Override
+    public void prepare(String query) {
+        session.prepare(query);
+    }
+
+    @Override
     public CassandraResult prepareAndExecute(String query, Object... variable) {
         PreparedStatement prepare = session.prepare(query);
         BoundStatement bind = prepare.bind(variable);

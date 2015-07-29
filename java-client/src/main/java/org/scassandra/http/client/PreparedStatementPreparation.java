@@ -1,8 +1,5 @@
 package org.scassandra.http.client;
 
-/**
- * Created by alexandra on 25/07/15.
- */
 public final class PreparedStatementPreparation {
 
     private final String preparedStatementText;
