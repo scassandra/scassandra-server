@@ -164,6 +164,21 @@ object CqlProtocolHelper {
     iterator.getBytes(bytes)
     bytes
   }
+  
+  /**
+   * Reads an int then that many bytes
+   * @param iterator
+   */
+  def readLongBytes(iterator: ByteIterator): Array[Byte] = {
+    val length = iterator.getInt
+    length match {
+      case -1 => Array()
+      case _  =>
+        val bytes = new Array[Byte](length)
+        iterator.getBytes(bytes)
+        bytes
+    }
+  }
 
   /**
    * Determines whether or not into bytes represent null. (-1,-1,-1,-1 sequence)
@@ -179,21 +194,6 @@ object CqlProtocolHelper {
    */
   def combineHeaderAndLength(header: Array[Byte], body: Array[Byte]) : ByteString = {
     ByteString(header ++ serializeInt(body.length) ++ body)
-  }
-
-  /**
-   * Reads an int then that many bytes
-   * @param iterator
-   */
-  def consumeLongBytes(iterator: ByteIterator): Array[Byte] = {
-    val length = iterator.getInt
-    length match {
-      case -1 => Array()
-      case _  =>
-        val bytes = new Array[Byte](length)
-        iterator.getBytes(bytes)
-        bytes
-    }
   }
 
 }

@@ -23,7 +23,7 @@ class BatchHandler(tcpConnection: ActorRef, msgFactory: CqlMessageFactory, activ
         val numVariables = iterator.getShort
         // read off the bytes for each variable, we can't parse them until priming of batches is supported
         (0 until numVariables).foreach { _ =>
-          val throwAway = consumeLongBytes(iterator)
+          val throwAway = readLongBytes(iterator)
           log.debug("throwing away bytes from batch statement variable as priming not supported yet {}", throwAway)
         }
         BatchStatement(query)
