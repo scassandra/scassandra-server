@@ -3,10 +3,10 @@ package org.scassandra.http.client;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.Test;
 
-public class BatchStatementTest {
+public class BatchQueryTest {
     @Test
     public void testEquals() throws Exception {
-        EqualsVerifier.forClass(BatchStatement.class)
+        EqualsVerifier.forClass(BatchQuery.class)
                 .allFieldsShouldBeUsed()
                 .verify();
     }

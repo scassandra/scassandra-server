@@ -132,13 +132,13 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
   describe("Batch execution") {
     it("Should return executions from ActivityLog") {
       activityLog.clearBatchExecutions()
-      activityLog.recordBatchExecution(BatchExecution(List(BatchStatement("Query")), ONE, LOGGED))
+      activityLog.recordBatchExecution(BatchExecution(List(BatchQuery("Query")), ONE, LOGGED))
 
       Get("/batch-execution") ~> activityVerificationRoute ~> check {
         val response = responseAs[List[BatchExecution]]
 
         response.size should equal(1)
-        response.head.batchStatements should equal(List(BatchStatement("Query")))
+        response.head.batchQueries should equal(List(BatchQuery("Query")))
         response.head.consistency should equal(ONE)
         response.head.batchType should equal(LOGGED)
       }

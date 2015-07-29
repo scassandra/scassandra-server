@@ -1,9 +1,9 @@
 package org.scassandra.http.client;
 
-public final class BatchStatement {
+public final class BatchQuery {
     private final String query;
 
-    private BatchStatement(String query) {
+    private BatchQuery(String query) {
         this.query = query;
     }
 
@@ -23,7 +23,7 @@ public final class BatchStatement {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        BatchStatement that = (BatchStatement) o;
+        BatchQuery that = (BatchQuery) o;
 
         return !(query != null ? !query.equals(that.query) : that.query != null);
 
@@ -35,23 +35,23 @@ public final class BatchStatement {
     }
 
 
-    public static BatchStatementBuilder builder() {
-        return new BatchStatementBuilder();
+    public static BatchQueryBuilder builder() {
+        return new BatchQueryBuilder();
     }
 
-    public static class BatchStatementBuilder {
+    public static class BatchQueryBuilder {
         private String query;
 
-        private BatchStatementBuilder() {
+        private BatchQueryBuilder() {
         }
 
-        public BatchStatementBuilder withQuery(String query) {
+        public BatchQueryBuilder withQuery(String query) {
             this.query = query;
             return this;
         }
 
-        public BatchStatement build() {
-            return new BatchStatement(query);
+        public BatchQuery build() {
+            return new BatchQuery(query);
         }
     }
 }
