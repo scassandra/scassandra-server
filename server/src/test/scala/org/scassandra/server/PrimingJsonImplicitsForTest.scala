@@ -19,9 +19,8 @@ import java.math.BigInteger
 import java.net.InetAddress
 import java.util.UUID
 
-import org.scassandra.server.cqlmessages.Consistency
+import org.scassandra.server.cqlmessages.{BatchType, Consistency}
 import org.scassandra.server.cqlmessages.types.ColumnType
-import org.scassandra.server.priming.PrimingJsonImplicits._
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
 import org.scassandra.server.priming.query.{PrimeCriteria, PrimeQuerySingle, Then, When}
@@ -40,6 +39,15 @@ object PrimingJsonImplicitsForTest extends DefaultJsonProtocol with SprayJsonSup
     def read(value: JsValue) = value match {
       case JsString(consistency) => Consistency.fromString(consistency)
       case _ => throw new IllegalArgumentException("Expected Consistency as JsString")
+    }
+  }
+
+  implicit object BatchTypeJsonFormat extends RootJsonFormat[BatchType] {
+    def write(c: BatchType) = JsString(c.string)
+
+    def read(value: JsValue) = value match {
+      case JsString(batchType) => BatchType.fromString(batchType)
+      case _ => throw new IllegalArgumentException("Expected BatchType as JsString")
     }
   }
 
@@ -117,5 +125,8 @@ object PrimingJsonImplicitsForTest extends DefaultJsonProtocol with SprayJsonSup
   implicit val impThenPreparedSingle = jsonFormat6(ThenPreparedSingle)
   implicit val impPrimePreparedSingle = jsonFormat(PrimePreparedSingle, "when", "then")
   implicit val impPreparedStatementExecution = jsonFormat4(PreparedStatementExecution)
+  implicit val impBatchQuery = jsonFormat1(BatchQuery)
+  implicit val impBatchExecution = jsonFormat3(BatchExecution)
+
   implicit val impVersion = jsonFormat1(Version)
 }

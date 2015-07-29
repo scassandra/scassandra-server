@@ -17,8 +17,8 @@ import static org.scassandra.cql.PrimitiveType.TEXT;
 import static org.scassandra.cql.PrimitiveType.UUID;
 import static org.scassandra.matchers.Matchers.containsQuery;
 
-public class QueryBuilderTest extends AbstractScassandraTest {
-    public QueryBuilderTest(CassandraExecutor cassandraExecutor) {
+public class QueryBatchStatementBatchExecutionBuilderTest extends AbstractScassandraTest {
+    public QueryBatchStatementBatchExecutionBuilderTest(CassandraExecutor cassandraExecutor) {
         super(cassandraExecutor);
     }
 

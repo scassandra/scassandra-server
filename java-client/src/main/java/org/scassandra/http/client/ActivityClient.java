@@ -42,19 +42,18 @@ import java.util.List;
  */
 public class ActivityClient {
 
-    public static final String REQUEST_FOR_QUERIES_FAILED = "Request for queries failed";
-    public static final String REQUEST_FOR_CONNECTIONS_FAILED = "Request for connections failed";
-    public static final String REQUEST_FAILED = "Request failed";
+    private static final String REQUEST_FOR_QUERIES_FAILED = "Request for queries failed";
+    private static final String REQUEST_FOR_CONNECTIONS_FAILED = "Request for connections failed";
+    private static final String REQUEST_FAILED = "Request failed";
 
     public static class ActivityClientBuilder {
 
         private String host = "localhost";
+
         private int port = 8043;
         private int socketTimeout = 1000;
-
         private ActivityClientBuilder() {
         }
-
         public ActivityClientBuilder withHost(String host) {
             this.host = host;
             return this;
@@ -86,9 +85,11 @@ public class ActivityClient {
             .create();
 
     private CloseableHttpClient httpClient = HttpClients.createDefault();
+
     private final String connectionUrl;
     private final String queryUrl;
     private final String preparedStatementExecutionUrl;
+    private final String batchUrl;
     private final String preparedStatementPreparationUrl;
 
     private ActivityClient(String host, int port, int socketTimeout) {
@@ -102,6 +103,7 @@ public class ActivityClient {
         this.connectionUrl = "http://" + host + ":" + port + "/connection";
         this.queryUrl = "http://" + host + ":" + port + "/query";
         this.preparedStatementExecutionUrl = "http://" + host + ":" + port + "/prepared-statement-execution";
+        this.batchUrl = "http://" + host + ":" + port + "/batch-execution";
         this.preparedStatementPreparationUrl = "http://" + host + ":" + port + "/prepared-statement-preparation";
     }
 
@@ -137,9 +139,9 @@ public class ActivityClient {
             CloseableHttpResponse response = httpClient.execute(get);
             String body = EntityUtils.toString(response.getEntity());
             LOGGER.debug("Received response {}", body);
-            Connection[] queries = (Connection[]) gson.fromJson(body, (Class) Connection[].class);
-            LOGGER.debug("Parsed connections {}", Arrays.toString(queries));
-            return Arrays.asList(queries);
+            Connection[] connections = (Connection[]) gson.fromJson(body, (Class) Connection[].class);
+            LOGGER.debug("Parsed connections {}", Arrays.toString(connections));
+            return Arrays.asList(connections);
         } catch (IOException e) {
             LOGGER.info(REQUEST_FOR_CONNECTIONS_FAILED, e);
             throw new ActivityRequestFailed(REQUEST_FOR_CONNECTIONS_FAILED, e);
@@ -202,12 +204,13 @@ public class ActivityClient {
     }
 
     /**
-     * Deletes the recorded prepared statement executions, recorded queries and recorded connections.
+     * Deletes the recorded prepared statement executions, recorded batch executions, recorded queries and recorded connections.
      */
     public void clearAllRecordedActivity() {
         clearConnections();
         clearQueries();
         clearPreparedStatementExecutions();
+        clearBatchExecutions();
         clearPreparedStatementPreparations();
     }
 
@@ -240,6 +243,25 @@ public class ActivityClient {
         }
     }
 
+    public List<BatchExecution> retrieveBatches() {
+        HttpGet get = new HttpGet(batchUrl);
+        try {
+            CloseableHttpResponse response = httpClient.execute(get);
+            String body = EntityUtils.toString(response.getEntity());
+            LOGGER.debug("Received response {}", body);
+            BatchExecution[] batchExecutions = (BatchExecution[]) gson.fromJson(body, (Class) BatchExecution[].class);
+            LOGGER.debug("Parsed batch executions {}", Arrays.toString(batchExecutions));
+            return Arrays.asList(batchExecutions);
+        } catch (IOException e) {
+            LOGGER.info(REQUEST_FOR_CONNECTIONS_FAILED, e);
+            throw new ActivityRequestFailed(REQUEST_FOR_CONNECTIONS_FAILED, e);
+        }
+    }
+
+    public void clearBatchExecutions() {
+        httpDelete(batchUrl, "Clearing of batch executions failed");
+    }
+
     private void httpDelete(String url, String warningMessage) {
         HttpDelete delete = new HttpDelete(url);
         try {
@@ -250,6 +272,4 @@ public class ActivityClient {
             throw new ActivityRequestFailed(warningMessage, e);
         }
     }
-
-
 }

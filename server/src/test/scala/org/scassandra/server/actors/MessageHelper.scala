@@ -49,7 +49,7 @@ object MessageHelper {
                           protocolVersion: Byte = ProtocolVersion.ClientProtocolVersionTwo) : Array[Byte] = {
     val typeAndNumber: List[Byte] = 0x00.toByte :: serializeShort(queries.size.toShort)
     val queryBytes: List[Byte] = queries.flatMap(query => {
-        0x00.toByte :: serializeLongString(query)
+        0x00.toByte :: serializeLongString(query) ::: serializeShort(0)
     })
     val c: List[Byte] = serializeShort(consistency.code)
     val header = List[Byte](protocolVersion, 0x00, stream, OpCodes.Batch) ::: serializeInt(typeAndNumber.size + queryBytes.size + c.size)

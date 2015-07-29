@@ -86,5 +86,20 @@ trait ActivityVerificationRoute extends HttpService with LazyLogging {
               StatusCodes.OK
             }
           }
+    } ~
+    path("batch-execution") {
+      get {
+        complete {
+          logger.debug("Request for recorded batch executions")
+          activityLog.retrieveBatchExecutions()
+        }
+      } ~
+      delete {
+        complete {
+          logger.debug("Deleting all recorded batch executions")
+          activityLog.clearBatchExecutions()
+          StatusCodes.OK
+        }
       }
+    }
 }

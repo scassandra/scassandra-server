@@ -15,7 +15,7 @@
  */
 package org.scassandra.server.cqlmessages
 
-abstract class Consistency {
+sealed abstract class Consistency {
   val code : Short
   val string: String = {
     val className = this.getClass.getSimpleName
@@ -26,6 +26,7 @@ abstract class Consistency {
 object ANY extends Consistency {
   val code: Short = 0
 }
+
 object ONE extends Consistency {
   val code: Short = 1
 }
@@ -65,10 +66,6 @@ object LOCAL_SERIAL extends Consistency {
 object LOCAL_ONE extends Consistency {
   val code: Short = 10
 }
-
-
-
-
 /*
                      0x0000    ANY
                      0x0001    ONE
@@ -84,7 +81,7 @@ object LOCAL_ONE extends Consistency {
  */
 
 object Consistency {
-  def fromCode(code: Short) : Consistency = {
+  def fromCode(code: Short): Consistency = {
     code match {
       case ANY.code => ANY
       case ONE.code => ONE

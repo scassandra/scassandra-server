@@ -24,7 +24,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSuite, Matchers}
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
 import org.scassandra.server.priming.query.{PrimeQuerySingle, Then, When}
-import org.scassandra.server.priming.{Query, PreparedStatementExecution, ResultJsonRepresentation, Success}
+import org.scassandra.server.priming._
 import spray.json._
 
 object PrimingHelper {
@@ -74,6 +74,13 @@ object PrimingHelper {
     JsonParser(body).convertTo[List[Query]]
   }
 
+  def getRecordedBatchExecutions(): List[BatchExecution] = {
+    val svc = url(s"${DefaultHost}batch-execution")
+    val response = Http(svc OK as.String)
+    val body: String = response()
+    JsonParser(body).convertTo[List[BatchExecution]]
+  }
+
   def clearQueryPrimes(): String = {
     val svc = url(s"${DefaultHost}prime-query-single").DELETE
     Http(svc OK as.String)(dispatch.Defaults.executor)()
@@ -81,6 +88,11 @@ object PrimingHelper {
 
   def clearRecordedQueries(): String = {
     val svc = url(s"${DefaultHost}query").DELETE
+    Http(svc OK as.String)(dispatch.Defaults.executor)()
+  }
+
+  def clearRecordedBatchExecutions(): String = {
+    val svc = url(s"${DefaultHost}batch-execution").DELETE
     Http(svc OK as.String)(dispatch.Defaults.executor)()
   }
 }

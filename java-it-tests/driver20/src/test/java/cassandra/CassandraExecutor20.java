@@ -8,6 +8,7 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.base.Optional;
 import common.*;
+import org.scassandra.http.client.BatchType;
 import org.scassandra.http.client.WriteTypePrime;
 
 import java.util.List;
@@ -71,10 +72,10 @@ public class CassandraExecutor20 implements CassandraExecutor {
     }
 
     @Override
-    public CassandraResult executeBatch(List<CassandraQuery> queries) {
-        BatchStatement batch = new BatchStatement();
+    public CassandraResult executeBatch(List<CassandraQuery> queries, BatchType batchType) {
+        BatchStatement batch = new BatchStatement(BatchStatement.Type.valueOf(batchType.name()));
         queries.forEach(query -> {
-            batch.add(new SimpleStatement(query.getQuery()));
+            batch.add(new SimpleStatement(query.getQuery(), query.getVariables()));
         });
         return new CassandraResult20(session.execute(batch));
     }
@@ -97,15 +98,15 @@ public class CassandraExecutor20 implements CassandraExecutor {
         } catch (WriteTimeoutException e) {
             return new CassandraResult20(
                     new CassandraResult.WriteTimeoutStatus(e.getConsistencyLevel().toString(),
-                    e.getReceivedAcknowledgements(),
-                    e.getRequiredAcknowledgements(),
-                    WriteTypePrime.valueOf(e.getWriteType().toString())));
-        }  catch (UnavailableException e) {
+                            e.getReceivedAcknowledgements(),
+                            e.getRequiredAcknowledgements(),
+                            WriteTypePrime.valueOf(e.getWriteType().toString())));
+        } catch (UnavailableException e) {
             return new CassandraResult20(
                     new CassandraResult.UnavailableStatus(
-                    e.getConsistencyLevel().toString(),
-                    e.getRequiredReplicas(),
-                    e.getAliveReplicas()));
+                            e.getConsistencyLevel().toString(),
+                            e.getRequiredReplicas(),
+                            e.getAliveReplicas()));
         }
         return new CassandraResult20(resultSet);
     }
