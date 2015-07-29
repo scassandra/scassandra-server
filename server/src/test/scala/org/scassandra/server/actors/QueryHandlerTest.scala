@@ -244,7 +244,6 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     // then
     testProbeForTcpConnection.expectMsg(Rows("", "sometable", stream, Map()))
     val recordedQueries = activityLog.retrieveQueries()
-    println(recordedQueries)
     recordedQueries.size should equal(1)
     val recordedQuery: Query = recordedQueries.head
     recordedQuery should equal(Query(someCqlStatement.query, someCqlStatement.consistency, List(Some("Hello")), List(CqlText)))

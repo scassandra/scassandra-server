@@ -129,7 +129,7 @@ dependencies {
     testCompile 'ch.qos.logback:logback-classic:1.1.1'
     testCompile 'org.mockito:mockito-all:1.9.5'
     testCompile 'com.github.tomakehurst:wiremock:1.46'
-    testCompile 'nl.jqno.equalsverifier:equalsverifier:1.4.1'
+    testCompile 'nl.jqno.equalsverifier:equalsverifier:1.7.3'
     testCompile "com.googlecode.jarjar:jarjar:1.3"
     testCompile('com.datastax.cassandra:cassandra-driver-core:2.0.5')
 }

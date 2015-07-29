@@ -33,6 +33,7 @@ public class ActivityClientTest {
     private static final int PORT = 1235;
     private final String preparedStatementExecutionUrl = "/prepared-statement-execution";
     private final String queryUrl = "/query";
+    private final String batchUrl = "/batch-execution";
     private final String connectionUrl = "/connection";
 
     @Rule
@@ -137,7 +138,6 @@ public class ActivityClientTest {
         //when
         underTest.clearConnections();
         //then
-
     }
 
     @Test
@@ -157,7 +157,6 @@ public class ActivityClientTest {
         //when
         underTest.clearQueries();
         //then
-
     }
 
     @Test
@@ -233,6 +232,8 @@ public class ActivityClientTest {
                 .willReturn(aResponse().withStatus(200)));
         stubFor(delete(urlEqualTo(connectionUrl))
                 .willReturn(aResponse().withStatus(200)));
+        stubFor(delete(urlEqualTo(batchUrl))
+                .willReturn(aResponse().withStatus(200)));
 
         //when
         underTest.clearAllRecordedActivity();
@@ -240,5 +241,35 @@ public class ActivityClientTest {
         verify(deleteRequestedFor(urlEqualTo(preparedStatementExecutionUrl)));
         verify(deleteRequestedFor(urlEqualTo(queryUrl)));
         verify(deleteRequestedFor(urlEqualTo(connectionUrl)));
+        verify(deleteRequestedFor(urlEqualTo(batchUrl)));
+    }
+
+    @Test
+    public void testRetrievalOfBatchExecutions() {
+        //given
+        stubFor(get(urlEqualTo(batchUrl)).willReturn(aResponse().withBody("[{\"batchStatements\":[{\"query\":\"select * from people\"}],\"consistency\":\"TWO\", \"batchType\":\"COUNTER\"}]")));
+        //when
+        List<BatchExecution> batchExecutions = underTest.retrieveBatches();
+        //then
+        assertEquals(1, batchExecutions.size());
+        final BatchExecution batchExecution = batchExecutions.get(0);
+        final BatchExecution expectedBatchExecution = BatchExecution.builder()
+                .withBatchStatements(BatchStatement.builder()
+                .withQuery("select * from people").build())
+                .withConsistency("TWO")
+                .withBatchType(BatchType.COUNTER)
+                .build();
+        assertEquals(expectedBatchExecution, batchExecution);
+    }
+
+    @Test
+    public void testDeletingOfRecordedBatches() {
+        //given
+        stubFor(delete(urlEqualTo(batchUrl))
+                .willReturn(aResponse().withStatus(200)));
+        //when
+        underTest.clearBatchExecutions();
+        //then
+        verify(deleteRequestedFor(urlEqualTo(batchUrl)));
     }
 }

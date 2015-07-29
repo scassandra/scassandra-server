@@ -1,8 +1,8 @@
-package org.scassandra.server.e2e
+package org.scassandra.server.e2e.verification
 
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy
-import com.datastax.driver.core.{HostDistance, PoolingOptions, Cluster, SocketOptions}
-import org.scassandra.server.{ConnectionToServerStub, AbstractIntegrationTest}
+import com.datastax.driver.core.{Cluster, HostDistance, PoolingOptions, SocketOptions}
+import org.scassandra.server.{AbstractIntegrationTest, ConnectionToServerStub}
 
 class HeartbeatVerificationTest extends AbstractIntegrationTest(false) {
 
