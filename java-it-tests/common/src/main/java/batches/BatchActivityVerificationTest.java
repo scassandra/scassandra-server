@@ -6,7 +6,7 @@ import common.CassandraExecutor;
 import common.CassandraQuery;
 import org.junit.Test;
 import org.scassandra.http.client.BatchExecution;
-import org.scassandra.http.client.BatchStatement;
+import org.scassandra.http.client.BatchQuery;
 import org.scassandra.http.client.BatchType;
 
 import java.util.List;
@@ -29,9 +29,9 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
         List<BatchExecution> batches = activityClient.retrieveBatches();
 
         assertEquals(1, batches.size());
-        assertEquals(BatchExecution.builder().withBatchStatements(
-                    BatchStatement.builder().withQuery("select * from blah").build(),
-                    BatchStatement.builder().withQuery("select * from blah2").build())
+        assertEquals(BatchExecution.builder().withBatchQueries(
+                BatchQuery.builder().withQuery("select * from blah").build(),
+                BatchQuery.builder().withQuery("select * from blah2").build())
                 .withConsistency( "ONE")
                 .withBatchType(BatchType.UNLOGGED).build(), batches.get(0));
     }
@@ -47,9 +47,9 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
         List<BatchExecution> batches = activityClient.retrieveBatches();
 
         assertEquals(1, batches.size());
-        assertEquals(BatchExecution.builder().withBatchStatements(
-                    BatchStatement.builder().withQuery("select * from blah").build(),
-                    BatchStatement.builder().withQuery("select * from blah2").build())
+        assertEquals(BatchExecution.builder().withBatchQueries(
+                BatchQuery.builder().withQuery("select * from blah").build(),
+                BatchQuery.builder().withQuery("select * from blah2").build())
                 .withConsistency("ONE").withBatchType(BatchType.LOGGED).build(), batches.get(0));
     }
 
@@ -63,8 +63,8 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
         List<BatchExecution> batches = activityClient.retrieveBatches();
 
         assertEquals(1, batches.size());
-        assertEquals(BatchExecution.builder().withBatchStatements(
-                    BatchStatement.builder().withQuery("select * from blah where blah = ? and wah = ?").build())
+        assertEquals(BatchExecution.builder().withBatchQueries(
+                BatchQuery.builder().withQuery("select * from blah where blah = ? and wah = ?").build())
                 .withConsistency("ONE").withBatchType(BatchType.LOGGED).build(), batches.get(0));
     }
 

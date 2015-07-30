@@ -5,18 +5,18 @@ import java.util.List;
 
 public final class BatchExecution {
 
-    private final List<BatchStatement> batchStatements;
+    private final List<BatchQuery> batchQueries;
     private final String consistency;
     private final BatchType batchType;
 
-    private BatchExecution(List<BatchStatement> batchStatements, String consistency, BatchType batchType) {
-        this.batchStatements = batchStatements;
+    private BatchExecution(List<BatchQuery> batchQueries, String consistency, BatchType batchType) {
+        this.batchQueries = batchQueries;
         this.consistency = consistency;
         this.batchType = batchType;
     }
 
-    public List<BatchStatement> getBatchStatements() {
-        return batchStatements;
+    public List<BatchQuery> getBatchQueries() {
+        return batchQueries;
     }
 
     public String getConsistency() {
@@ -31,7 +31,7 @@ public final class BatchExecution {
 
         BatchExecution that = (BatchExecution) o;
 
-        if (batchStatements != null ? !batchStatements.equals(that.batchStatements) : that.batchStatements != null)
+        if (batchQueries != null ? !batchQueries.equals(that.batchQueries) : that.batchQueries != null)
             return false;
         if (consistency != null ? !consistency.equals(that.consistency) : that.consistency != null) return false;
         return batchType == that.batchType;
@@ -40,7 +40,7 @@ public final class BatchExecution {
 
     @Override
     public int hashCode() {
-        int result = batchStatements != null ? batchStatements.hashCode() : 0;
+        int result = batchQueries != null ? batchQueries.hashCode() : 0;
         result = 31 * result + (consistency != null ? consistency.hashCode() : 0);
         result = 31 * result + (batchType != null ? batchType.hashCode() : 0);
         return result;
@@ -49,9 +49,9 @@ public final class BatchExecution {
     @Override
     public String toString() {
         return "BatchExecution{" +
-                "batchStatements=" + batchStatements +
+                "batchQueries=" + batchQueries +
                 ", consistency='" + consistency + '\'' +
-                ", type=" + batchType +
+                ", batchType=" + batchType +
                 '}';
     }
 
@@ -61,20 +61,20 @@ public final class BatchExecution {
 
 
     public static class BatchExecutionBuilder {
-        private List<BatchStatement> batchStatements;
+        private List<BatchQuery> batchQueries;
         private String consistency;
         private BatchType batchType;
 
         private BatchExecutionBuilder() {
         }
 
-        public BatchExecutionBuilder withBatchStatements(List<BatchStatement> batchStatements) {
-            this.batchStatements = batchStatements;
+        public BatchExecutionBuilder withBatchQueries(List<BatchQuery> batchQueries) {
+            this.batchQueries = batchQueries;
             return this;
         }
 
-        public BatchExecutionBuilder withBatchStatements(BatchStatement... batchStatements) {
-            this.batchStatements = Arrays.asList(batchStatements);
+        public BatchExecutionBuilder withBatchQueries(BatchQuery... batchQueries) {
+            this.batchQueries = Arrays.asList(batchQueries);
             return this;
         }
 
@@ -89,7 +89,7 @@ public final class BatchExecution {
         }
 
         public BatchExecution build() {
-            return new BatchExecution(batchStatements, consistency, batchType);
+            return new BatchExecution(batchQueries, consistency, batchType);
         }
     }
 }

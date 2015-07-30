@@ -247,15 +247,15 @@ public class ActivityClientTest {
     @Test
     public void testRetrievalOfBatchExecutions() {
         //given
-        stubFor(get(urlEqualTo(batchUrl)).willReturn(aResponse().withBody("[{\"batchStatements\":[{\"query\":\"select * from people\"}],\"consistency\":\"TWO\", \"batchType\":\"COUNTER\"}]")));
+        stubFor(get(urlEqualTo(batchUrl)).willReturn(aResponse().withBody("[{\"batchQueries\":[{\"query\":\"select * from people\"}],\"consistency\":\"TWO\", \"batchType\":\"COUNTER\"}]")));
         //when
         List<BatchExecution> batchExecutions = underTest.retrieveBatches();
         //then
         assertEquals(1, batchExecutions.size());
         final BatchExecution batchExecution = batchExecutions.get(0);
         final BatchExecution expectedBatchExecution = BatchExecution.builder()
-                .withBatchStatements(BatchStatement.builder()
-                .withQuery("select * from people").build())
+                .withBatchQueries(BatchQuery.builder()
+                        .withQuery("select * from people").build())
                 .withConsistency("TWO")
                 .withBatchType(BatchType.COUNTER)
                 .build();

@@ -4,7 +4,7 @@ import akka.actor.{ActorLogging, ActorRef, Actor}
 import akka.util.ByteString
 import org.scassandra.server.actors.BatchHandler.Execute
 import org.scassandra.server.cqlmessages.{BatchType, Consistency, CqlProtocolHelper, CqlMessageFactory}
-import org.scassandra.server.priming.{BatchExecution, BatchStatement, ActivityLog}
+import org.scassandra.server.priming.{BatchExecution, BatchQuery, ActivityLog}
 
 class BatchHandler(tcpConnection: ActorRef, msgFactory: CqlMessageFactory, activityLog: ActivityLog) extends Actor with ActorLogging {
 
@@ -16,7 +16,7 @@ class BatchHandler(tcpConnection: ActorRef, msgFactory: CqlMessageFactory, activ
       val batchType = BatchType.fromCode(iterator.getByte)
       val numStatements = iterator.getShort
 
-      val statements: List[BatchStatement] = (0 until numStatements).map(_ => {
+      val statements: List[BatchQuery] = (0 until numStatements).map(_ => {
         val kind = iterator.getByte
         assert(kind == 0) // query rather than prepared statement
         val query: String = readLongString(iterator).get
@@ -26,7 +26,7 @@ class BatchHandler(tcpConnection: ActorRef, msgFactory: CqlMessageFactory, activ
           val throwAway = readLongBytes(iterator)
           log.debug("throwing away bytes from batch statement variable as priming not supported yet {}", throwAway)
         }
-        BatchStatement(query)
+        BatchQuery(query)
       }).toList
 
       val consistency = Consistency.fromCode(iterator.getShort)

@@ -84,7 +84,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Record batch execution") {
     val consistency: Consistency = ONE
-    val statements: List[BatchStatement] = List(BatchStatement("select * from hello"))
+    val statements: List[BatchQuery] = List(BatchQuery("select * from hello"))
     val execution: BatchExecution = BatchExecution(statements, consistency, LOGGED)
     underTest.recordBatchExecution(execution)
 
@@ -94,7 +94,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Clear batch execution") {
-    underTest.recordBatchExecution(BatchExecution(List(BatchStatement("select * from hello")), ONE, LOGGED))
+    underTest.recordBatchExecution(BatchExecution(List(BatchQuery("select * from hello")), ONE, LOGGED))
 
     underTest.clearBatchExecutions()
 
