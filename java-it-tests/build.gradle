@@ -33,6 +33,11 @@ subprojects {
     test {
         reports.html.enabled = true
         reports.junitXml.enabled = false
+
+        testLogging {
+            events "failed"
+            exceptionFormat "full"
+        }
     }
 }
 
