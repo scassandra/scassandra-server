@@ -21,10 +21,10 @@ import org.scassandra.server.cqlmessages.types.ColumnType
 
 class ActivityLog extends LazyLogging {
 
-  var connections : List[Connection] = List()
-  var queries : List[Query] = List()
-  var preparedStatementPreparations : List[PreparedStatementPreparation] = List()
-  var preparedStatementExecutions : List[PreparedStatementExecution] = List()
+  var connections: List[Connection] = List()
+  var queries: List[Query] = List()
+  var preparedStatementPreparations: List[PreparedStatementPreparation] = List()
+  var preparedStatementExecutions: List[PreparedStatementExecution] = List()
   var batchExecutions: List[BatchExecution] = List()
 
   /*  Query activity logging */

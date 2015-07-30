@@ -24,13 +24,12 @@ public final class PreparedStatementPreparation {
 
         PreparedStatementPreparation that = (PreparedStatementPreparation) o;
 
-        return preparedStatementText.equals(that.preparedStatementText);
-
+        return !(preparedStatementText != null ? !preparedStatementText.equals(that.preparedStatementText) : that.preparedStatementText != null);
     }
 
     @Override
     public int hashCode() {
-        return preparedStatementText.hashCode();
+        return preparedStatementText != null ? preparedStatementText.hashCode() : 0;
     }
 
     public static PreparedStatementPreparationBuilder builder() {
