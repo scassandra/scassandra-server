@@ -15,7 +15,6 @@
  */
 package org.scassandra.server.priming.routes
 
-import org.scassandra.server.priming.prepared.PrimePreparedStore
 import spray.routing.HttpService
 import com.typesafe.scalalogging.LazyLogging
 import spray.http.StatusCodes
