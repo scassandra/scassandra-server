@@ -51,7 +51,6 @@ public class ActivityClient {
         private String host = "localhost";
 
         private int port = 8043;
-
         private int socketTimeout = 1000;
         private ActivityClientBuilder() {
         }
@@ -76,6 +75,7 @@ public class ActivityClient {
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityClient.class);
+
     public static ActivityClientBuilder builder() {
         return new ActivityClientBuilder();
     }
@@ -90,6 +90,7 @@ public class ActivityClient {
     private final String queryUrl;
     private final String preparedStatementExecutionUrl;
     private final String batchUrl;
+    private final String preparedStatementPreparationUrl;
 
     private ActivityClient(String host, int port, int socketTimeout) {
         RequestConfig.Builder requestBuilder = RequestConfig.custom();
@@ -103,6 +104,7 @@ public class ActivityClient {
         this.queryUrl = "http://" + host + ":" + port + "/query";
         this.preparedStatementExecutionUrl = "http://" + host + ":" + port + "/prepared-statement-execution";
         this.batchUrl = "http://" + host + ":" + port + "/batch-execution";
+        this.preparedStatementPreparationUrl = "http://" + host + ":" + port + "/prepared-statement-preparation";
     }
 
     /**
@@ -161,6 +163,40 @@ public class ActivityClient {
     }
 
     /**
+     * Deletes all the recorded prepared statement preparations from the configured Scassandra server.
+     */
+    public void clearPreparedStatementPreparations() {
+        httpDelete(preparedStatementPreparationUrl, "Clearing of prepared statement preparations failed");
+    }
+
+    /**
+     * Retrieves the recorded prepared statement preparations. Note this the prepare
+     * calls your applications makes, not the executions.
+     *
+     * @return PreparedStatementPreparation
+     */
+    public List<PreparedStatementPreparation>  retrievePreparedStatementPreparations() {
+        HttpGet get = new HttpGet(preparedStatementPreparationUrl);
+        try {
+            CloseableHttpResponse response = httpClient.execute(get);
+            String body = EntityUtils.toString(response.getEntity());
+            LOGGER.debug("Received response {}", body);
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != 200) {
+                String errorMessage = String.format("Non 200 status code when retrieving prepared statement preparations %s", statusCode);
+                LOGGER.info(errorMessage);
+                throw new ActivityRequestFailed(errorMessage);
+            }
+            PreparedStatementPreparation[] preparations = (PreparedStatementPreparation[]) gson.fromJson(body, (Class) PreparedStatementPreparation[].class);
+            LOGGER.debug("Parsed prepared statement preparations {}", Arrays.toString(preparations));
+            return Arrays.asList(preparations);
+        } catch (IOException e) {
+            LOGGER.info(REQUEST_FAILED, e);
+            throw new ActivityRequestFailed(REQUEST_FAILED, e);
+        }
+    }
+
+    /**
      * Deletes all the recorded prepared statement executions from the configured Scassandra server.
      */
     public void clearPreparedStatementExecutions() {
@@ -175,10 +211,11 @@ public class ActivityClient {
         clearQueries();
         clearPreparedStatementExecutions();
         clearBatchExecutions();
+        clearPreparedStatementPreparations();
     }
 
     /**
-     * Retrieves the recorded prepared statement executions. Note this the executions, not the prepare
+     * Retrieves the recorded prepared statement executions. Note this is the executions, not the prepare
      * calls your applications makes.
      *
      * If you haven't primed the prepared statement then the variable types will be empty.

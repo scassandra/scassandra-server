@@ -163,7 +163,7 @@ public final class PreparedStatementExecution {
 
         public PreparedStatementExecution build() {
             if (preparedStatementText == null) {
-                throw new IllegalStateException("Must set PreparedStatementExecutionBuilder");
+                throw new IllegalStateException("Must set preparedStatementText in PreparedStatementExecutionBuilder");
             }
             return new PreparedStatementExecution(this.preparedStatementText, this.consistency, this.variables, this.variableTypes);
         }

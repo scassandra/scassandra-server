@@ -10,6 +10,8 @@ public interface CassandraExecutor {
 
     CassandraResult executeSimpleStatement(String query, String consistency);
 
+    void prepare(String preparedStatementText);
+
     CassandraResult prepareAndExecute(String query, Object... variable);
 
     CassandraResult prepareAndExecuteWithConsistency(String query, String consistency, Object... vars);

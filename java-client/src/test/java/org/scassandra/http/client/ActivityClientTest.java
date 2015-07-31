@@ -15,23 +15,24 @@
  */
 package org.scassandra.http.client;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.junit.Assert.assertEquals;
-import static org.scassandra.http.client.ActivityClient.*;
-
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static org.scassandra.cql.PrimitiveType.*;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.junit.Assert.assertEquals;
+import static org.scassandra.cql.PrimitiveType.TEXT;
+import static org.scassandra.http.client.ActivityClient.ActivityClientBuilder;
 
 public class ActivityClientTest {
     private static final int PORT = 1235;
     private final String preparedStatementExecutionUrl = "/prepared-statement-execution";
+    private final String preparedStatementPreparationUrl = "/prepared-statement-preparation";
     private final String queryUrl = "/query";
     private final String batchUrl = "/batch-execution";
     private final String connectionUrl = "/connection";
@@ -224,8 +225,68 @@ public class ActivityClientTest {
     }
 
     @Test
+    public void retrievingPreparedStatementPreparations() throws Exception {
+        //given
+        stubFor(get(urlEqualTo(preparedStatementPreparationUrl))
+                .willReturn(aResponse().withStatus(200).withBody(
+                        "[{\n" +
+                                "  \"preparedStatementText\": \"select * from people where name = ?\"\n" +
+                                "}]"
+                )));
+        //when
+        List<PreparedStatementPreparation> preparations = underTest.retrievePreparedStatementPreparations();
+        //then
+        assertEquals(1, preparations.size());
+        PreparedStatementPreparation singlePreparation = preparations.get(0);
+        assertEquals("select * from people where name = ?", singlePreparation.getPreparedStatementText());
+    }
+
+    @Test(expected = ActivityRequestFailed.class)
+    public void retrievingPreparedStatementPreparationsFailure() throws Exception {
+        //given
+        stubFor(get(urlEqualTo(preparedStatementPreparationUrl))
+                .willReturn(aResponse().withStatus(200).withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
+        //when
+        underTest.retrievePreparedStatementPreparations();
+        //then
+    }
+
+    @Test(expected = ActivityRequestFailed.class)
+    public void retrievingPreparedStatementPreparationsNot200() throws Exception {
+        //given
+        stubFor(get(urlEqualTo(preparedStatementPreparationUrl))
+                .willReturn(aResponse().withStatus(500)));
+        //when
+        underTest.retrievePreparedStatementPreparations();
+        //then
+    }
+
+    @Test
+    public void testDeletingOfPreparationsHistory() {
+        //given
+        stubFor(delete(urlEqualTo(preparedStatementPreparationUrl))
+                .willReturn(aResponse().withStatus(200)));
+        //when
+        underTest.clearPreparedStatementPreparations();
+        //then
+        verify(deleteRequestedFor(urlEqualTo(preparedStatementPreparationUrl)));
+    }
+
+    @Test(expected = ActivityRequestFailed.class)
+    public void testDeletingOfPreparationsHistoryFailure() {
+        //given
+        stubFor(delete(urlEqualTo(preparedStatementPreparationUrl))
+                .willReturn(aResponse().withStatus(200).withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
+        //when
+        underTest.clearPreparedStatementPreparations();
+        //then
+    }
+
+    @Test
     public void testClearAllActivityHistory() {
         //given
+        stubFor(delete(urlEqualTo(preparedStatementPreparationUrl))
+                .willReturn(aResponse().withStatus(200)));
         stubFor(delete(urlEqualTo(preparedStatementExecutionUrl))
                 .willReturn(aResponse().withStatus(200)));
         stubFor(delete(urlEqualTo(queryUrl))
@@ -238,6 +299,7 @@ public class ActivityClientTest {
         //when
         underTest.clearAllRecordedActivity();
         //then
+        verify(deleteRequestedFor(urlEqualTo(preparedStatementPreparationUrl)));
         verify(deleteRequestedFor(urlEqualTo(preparedStatementExecutionUrl)));
         verify(deleteRequestedFor(urlEqualTo(queryUrl)));
         verify(deleteRequestedFor(urlEqualTo(connectionUrl)));
