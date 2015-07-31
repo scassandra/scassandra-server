@@ -21,35 +21,53 @@ import org.scassandra.server.cqlmessages.types.ColumnType
 
 class ActivityLog extends LazyLogging {
 
-
   var connections: List[Connection] = List()
   var queries: List[Query] = List()
+  var preparedStatementPreparations: List[PreparedStatementPreparation] = List()
   var preparedStatementExecutions: List[PreparedStatementExecution] = List()
   var batchExecutions: List[BatchExecution] = List()
 
+  /*  Query activity logging */
+
+  def clearQueries() = {
+    queries = List()
+  }
+
+  def retrieveQueries() : List[Query] = queries
+  
   def recordQuery(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[ColumnType[_]] = List()) = {
     queries = queries ::: Query(query, consistency, variables, variableTypes) :: Nil
   }
 
-  def recordConnection(): Unit = {
+  /*  Connection activity logging */
+
+  def recordConnection() = {
     connections = connections ::: Connection() :: Nil
   }
 
   def retrieveConnections(): List[Connection] = connections
 
-  def retrieveQueries(): List[Query] = queries
-
   def clearConnections(): Unit = {
     connections = List()
   }
 
-  def clearQueries(): Unit = {
-    queries = List()
+  /*  PreparedStatementPreparation activity logging */
+
+  def recordPreparedStatementPreparation(activity: PreparedStatementPreparation) = {
+    logger.info("Recording {}", activity)
+    preparedStatementPreparations = preparedStatementPreparations ::: activity :: Nil
   }
 
-  def retrievePreparedStatementExecutions(): List[PreparedStatementExecution] = {
-    preparedStatementExecutions
+  def retrievePreparedStatementPreparations(): List[PreparedStatementPreparation] = {
+    preparedStatementPreparations
   }
+
+  def clearPreparedStatementPreparations() = {
+    logger.info("Clearing prepared statement preparations")
+    preparedStatementPreparations = List()
+  }
+
+  /*  PreparedStatementExecution activity logging */
 
   def recordPreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[ColumnType[_]]): Unit = {
     val execution: PreparedStatementExecution = PreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes)
@@ -62,9 +80,15 @@ class ActivityLog extends LazyLogging {
     preparedStatementExecutions = preparedStatementExecutions ::: execution :: Nil
   }
 
+  def retrievePreparedStatementExecutions(): List[PreparedStatementExecution] = {
+    preparedStatementExecutions
+  }
+
   def clearPreparedStatementExecutions() = {
     preparedStatementExecutions = List()
   }
+
+  /*  BatchExecution activity logging */
 
   def recordBatchExecution(batchExecution: BatchExecution): Unit = {
     logger.info("Recording {}", batchExecutions)
@@ -85,3 +109,4 @@ case class Connection(result: String = "success")
 case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[ColumnType[_]])
 case class BatchQuery(query: String)
 case class BatchExecution(batchQueries: List[BatchQuery], consistency: Consistency, batchType: BatchType)
+case class PreparedStatementPreparation(preparedStatementText: String)

@@ -15,6 +15,7 @@
  */
 package org.scassandra.server.priming.routes
 
+import org.scassandra.server.priming.prepared.PrimePreparedStore
 import spray.routing.HttpService
 import com.typesafe.scalalogging.LazyLogging
 import spray.http.StatusCodes
@@ -56,20 +57,35 @@ trait ActivityVerificationRoute extends HttpService with LazyLogging {
           }
         }
     } ~
-    path("prepared-statement-execution") {
+    path("prepared-statement-preparation") {
       get {
         complete {
-          logger.debug("Request for recorded prepared statement executions")
-          activityLog.retrievePreparedStatementExecutions()
+          logger.debug("Request for recorded prepared statement preparations")
+          activityLog.retrievePreparedStatementPreparations()
         }
       } ~
       delete {
         complete {
-          logger.debug("Deleting all recorded prepared statement executions")
-          activityLog.clearPreparedStatementExecutions()
+          logger.debug("Deleting all recorded prepared statement preparations")
+          activityLog.clearPreparedStatementPreparations()
           StatusCodes.OK
         }
       }
+    } ~
+      path("prepared-statement-execution") {
+        get {
+          complete {
+            logger.debug("Request for recorded prepared statement executions")
+            activityLog.retrievePreparedStatementExecutions()
+          }
+        } ~
+          delete {
+            complete {
+              logger.debug("Deleting all recorded prepared statement executions")
+              activityLog.clearPreparedStatementExecutions()
+              StatusCodes.OK
+            }
+          }
     } ~
     path("batch-execution") {
       get {
@@ -85,6 +101,5 @@ trait ActivityVerificationRoute extends HttpService with LazyLogging {
           StatusCodes.OK
         }
       }
-
     }
 }

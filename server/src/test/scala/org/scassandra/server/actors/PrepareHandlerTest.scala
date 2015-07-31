@@ -206,6 +206,18 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     testProbeForTcpConnection.expectMsg(UnavailableException(stream, consistency, result))
   }
 
+  test("Should record preparation in activity log") {
+    activityLog.clearPreparedStatementPreparations()
+    val stream: Byte = 0x02
+    val query = "select * from something where name = ?"
+    val prepareBody: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
+
+    underTest ! PrepareHandler.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+
+    activityLog.retrievePreparedStatementPreparations().size should equal(1)
+    activityLog.retrievePreparedStatementPreparations().head should equal(PreparedStatementPreparation(query))
+  }
+
   test("Should record execution in activity log") {
     activityLog.clearPreparedStatementExecutions()
     val stream: Byte = 0x02
@@ -221,7 +233,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     underTest ! PrepareHandler.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
     activityLog.retrievePreparedStatementExecutions().size should equal(1)
-    activityLog.retrievePreparedStatementExecutions()(0) should equal(PreparedStatementExecution(query, consistency, variables.map(Some(_)), variableTypes))
+    activityLog.retrievePreparedStatementExecutions().head should equal(PreparedStatementExecution(query, consistency, variables.map(Some(_)), variableTypes))
   }
 
   test("Should record execution in activity log without variables when variables don't match prime") {

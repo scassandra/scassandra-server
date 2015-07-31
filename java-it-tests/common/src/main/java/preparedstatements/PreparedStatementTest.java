@@ -95,7 +95,7 @@ abstract public class PreparedStatementTest extends AbstractScassandraTest {
     }
 
     @Test
-    public void activityVerificationForPreparedPrimes() {
+    public void activityVerificationForPreparedPrimeExecutions() {
         //given
         Map<String, String> row = ImmutableMap.of("name", "Chris");
         String preparedStatementText = "select * from people where name = ?";
@@ -143,7 +143,6 @@ abstract public class PreparedStatementTest extends AbstractScassandraTest {
 
         //when
         CassandraResult cassandraResult = cassandra().prepareAndExecuteWithConsistency("select * from people where name = ?", "TWO", "Chris");
-
 
         //then
         List<CassandraRow> asList = cassandraResult.rows();

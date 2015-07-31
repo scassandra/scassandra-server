@@ -32,6 +32,7 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
 
   before {
     activityLog.clearConnections()
+    activityLog.clearPreparedStatementPreparations()
     activityLog.clearPreparedStatementExecutions()
     activityLog.clearQueries()
   }
@@ -97,6 +98,39 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
     }
   }
 
+  describe("Primed statement preparations") {
+    it("Should return prepared statement preparations from ActivityLog - no activity") {
+      activityLog.clearPreparedStatementPreparations()
+
+      Get("/prepared-statement-preparation") ~> activityVerificationRoute ~> check {
+        val response = responseAs[List[PreparedStatementPreparation]]
+        response.size should equal(0)
+      }
+    }
+
+    it("Should return prepared statement preparations from ActivityLog - single") {
+      activityLog.clearPreparedStatementPreparations()
+      val preparedStatementText = "cat"
+      activityLog.recordPreparedStatementPreparation(PreparedStatementPreparation(preparedStatementText))
+
+      Get("/prepared-statement-preparation") ~> activityVerificationRoute ~> check {
+        val response = responseAs[List[PreparedStatementPreparation]]
+
+        response.size should equal(1)
+        response.head.preparedStatementText should equal(preparedStatementText)
+      }
+    }
+
+    it("Should clear prepared statement preparations for a delete") {
+      val preparedStatementText = "dog"
+      activityLog.recordPreparedStatementPreparation(PreparedStatementPreparation(preparedStatementText))
+
+      Delete("/prepared-statement-preparation") ~> activityVerificationRoute ~> check {
+        activityLog.retrievePreparedStatementPreparations().size should equal(0)
+      }
+    }
+  }
+
   describe("Primed statement execution") {
     it("Should return prepared statement executions from ActivityLog - no activity") {
       activityLog.clearPreparedStatementExecutions()
@@ -107,7 +141,7 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
       }
     }
 
-    it("Should return queries from ActivityLog - single query") {
+    it("Should return prepared statement executions from ActivityLog - single") {
       activityLog.clearPreparedStatementExecutions()
       val preparedStatementText: String = ""
       activityLog.recordPreparedStatementExecution(preparedStatementText, ONE, List(), List())
@@ -120,7 +154,7 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
       }
     }
 
-    it("Should clear queries for a delete") {
+    it("Should clear prepared statement executions for a delete") {
       activityLog.recordPreparedStatementExecution("", ONE, List(), List())
 
       Delete("/prepared-statement-execution") ~> activityVerificationRoute ~> check {

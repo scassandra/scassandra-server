@@ -56,13 +56,13 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
     underTest.retrieveQueries().head.consistency should equal(ONE)
   }
   
-  test("Store primed statement and retrieve primed statement") {
+  test("Store primed statement and retrieve primed execution") {
     underTest.clearPreparedStatementExecutions()
     val preparedStatementText = "select * from people where name = ?"
     val variables = List("Chris")
     val consistency = ONE
     val variableTypes = List(CqlAscii, CqlBigint)
-    
+
     underTest.recordPreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes)
     val preparedStatementRecord = underTest.retrievePreparedStatementExecutions()
 
@@ -70,10 +70,28 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
     preparedStatementRecord.head should equal(PreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes))
   }
 
-  test("Clear prepared statement activity log") {
+  test("Clear prepared statement execution log") {
     underTest.recordPreparedStatementExecution("anything", TWO, List(), List())
     underTest.clearPreparedStatementExecutions()
     underTest.retrievePreparedStatementExecutions().size should equal(0)
+  }
+
+  test("Clear prepared statement preparations log") {
+    underTest.clearPreparedStatementPreparations()
+    underTest.recordPreparedStatementPreparation(PreparedStatementPreparation("anything"))
+    underTest.clearPreparedStatementPreparations()
+    underTest.retrievePreparedStatementExecutions().size should equal(0)
+  }
+
+  test("Store primed statement and retrieve prepared statements when not executed)") {
+    underTest.clearPreparedStatementPreparations()
+    val text = "select * from people where name = ?"
+
+    underTest.recordPreparedStatementPreparation(PreparedStatementPreparation(text))
+    val preparedStatementRecord = underTest.retrievePreparedStatementPreparations()
+
+    preparedStatementRecord.size should equal(1)
+    preparedStatementRecord.head should equal(PreparedStatementPreparation(text))
   }
   
   test("Records query parameters") {
