@@ -37,13 +37,13 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
   def receive: Actor.Receive = {
     case PrepareHandler.Prepare(body, stream, msgFactory: CqlMessageFactory, connection) =>
       val preparedResult: PrepareResponse = handlePrepare(body, stream, msgFactory)
-      connection ! preparedResult.result
       activityLog.recordPreparedStatementPreparation(preparedResult.activity)
+      connection ! preparedResult.result
 
     case PrepareHandler.Execute(body, stream, msgFactory, connection) =>
       val action: ExecuteResponse = handleExecute(body, stream, msgFactory)
-      sendMessage(action.msg, connection)
       action.activity.foreach(activityLog.recordPreparedStatementExecution)
+      sendMessage(action.msg, connection)
   }
 
   case class PrepareResponse(activity: PreparedStatementPreparation, result: Result)
