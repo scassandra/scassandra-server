@@ -38,6 +38,16 @@ repositories {
     }
 }
 
+compileJava {
+    sourceCompatibility = "1.6"
+    targetCompatibility = "1.6"
+}
+
+compileScala {
+    sourceCompatibility = "1.6"
+    targetCompatibility = "1.6"
+}
+
 task sourceJar(type: Jar) {
     classifier = 'sources'
     baseName = 'scassandra-server_2.11'
