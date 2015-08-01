@@ -24,7 +24,7 @@ import org.scassandra.server.cqlmessages.response.UnsupportedProtocolVersion
  * Deals with partial messages and multiple messages coming in the same Received
  */
 class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
-                        batchHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
+                        batchHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory, ActorRef) => ActorRef,
                         registerHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         optionsHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         prepareHandler: ActorRef,

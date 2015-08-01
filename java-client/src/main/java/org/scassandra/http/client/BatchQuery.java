@@ -1,20 +1,30 @@
 package org.scassandra.http.client;
 
 public final class BatchQuery {
-    private final String query;
 
-    private BatchQuery(String query) {
+    public enum BatchQueryKind {query, prepared_statement}
+
+    private final String query;
+    private final BatchQueryKind batchQueryKind;
+
+    private BatchQuery(String query, BatchQueryKind batchQueryKind) {
         this.query = query;
+        this.batchQueryKind = batchQueryKind;
     }
 
     public String getQuery() {
         return query;
     }
 
+    public BatchQueryKind getBatchQueryKind() {
+        return batchQueryKind;
+    }
+
     @Override
     public String toString() {
-        return "BatchStatement{" +
+        return "BatchQuery{" +
                 "query='" + query + '\'' +
+                ", batchQueryType=" + batchQueryKind +
                 '}';
     }
 
@@ -25,15 +35,17 @@ public final class BatchQuery {
 
         BatchQuery that = (BatchQuery) o;
 
-        return !(query != null ? !query.equals(that.query) : that.query != null);
+        if (query != null ? !query.equals(that.query) : that.query != null) return false;
+        return batchQueryKind == that.batchQueryKind;
 
     }
 
     @Override
     public int hashCode() {
-        return query != null ? query.hashCode() : 0;
+        int result = query != null ? query.hashCode() : 0;
+        result = 31 * result + (batchQueryKind != null ? batchQueryKind.hashCode() : 0);
+        return result;
     }
-
 
     public static BatchQueryBuilder builder() {
         return new BatchQueryBuilder();
@@ -41,6 +53,7 @@ public final class BatchQuery {
 
     public static class BatchQueryBuilder {
         private String query;
+        private BatchQueryKind batchQueryKind = BatchQueryKind.query;
 
         private BatchQueryBuilder() {
         }
@@ -50,8 +63,13 @@ public final class BatchQuery {
             return this;
         }
 
+        public BatchQueryBuilder withType(BatchQueryKind type) {
+            this.batchQueryKind = type;
+            return this;
+        }
+
         public BatchQuery build() {
-            return new BatchQuery(query);
+            return new BatchQuery(query, batchQueryKind);
         }
     }
 }

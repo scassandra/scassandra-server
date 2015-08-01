@@ -95,4 +95,22 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
 
         assertEquals(0, batches.size());
     }
+
+    @Test
+    public void preparedStatementsInBatches() {
+        cassandra().executeBatch(Lists.newArrayList(
+                        new CassandraQuery("query", "Hello"),
+                        new CassandraQuery("prepared statement ? ?",
+                                CassandraQuery.QueryType.PREPARED_STATEMENT, "one", "twp")
+                ), BatchType.LOGGED
+        );
+
+        List<BatchExecution> batches = activityClient.retrieveBatches();
+
+        assertEquals(1, batches.size());
+        assertEquals(BatchExecution.builder().withBatchQueries(
+                BatchQuery.builder().withQuery("query").build(),
+                BatchQuery.builder().withQuery("prepared statement ? ?").withType(BatchQuery.BatchQueryKind.prepared_statement).build())
+                .withConsistency("ONE").withBatchType(BatchType.LOGGED).build(), batches.get(0));
+    }
 }

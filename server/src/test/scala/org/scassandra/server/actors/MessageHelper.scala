@@ -18,6 +18,7 @@ package org.scassandra.server.actors
 import akka.util.ByteString
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.response.ResponseHeader
+import org.scassandra.server.priming.BatchQuery
 
 //todo change this to work with arrays to be consistent with the CqlProtocolHelper
 object MessageHelper {
@@ -44,13 +45,18 @@ object MessageHelper {
     header ::: body
   }
 
-  def createBatchMessage(queries: List[String], stream: Byte = ResponseHeader.DefaultStreamId,
+  sealed abstract class BatchQueryTemplate
+  case class SimpleQuery(text: String) extends BatchQueryTemplate
+  case class PreparedStatement(id: Int) extends BatchQueryTemplate
+
+  def createBatchMessage(queries: List[BatchQueryTemplate], stream: Byte = ResponseHeader.DefaultStreamId,
                           consistency: Consistency = ONE,
                           protocolVersion: Byte = ProtocolVersion.ClientProtocolVersionTwo) : Array[Byte] = {
     val typeAndNumber: List[Byte] = 0x00.toByte :: serializeShort(queries.size.toShort)
-    val queryBytes: List[Byte] = queries.flatMap(query => {
-        0x00.toByte :: serializeLongString(query) ::: serializeShort(0)
-    })
+    val queryBytes: List[Byte] = queries.flatMap {
+        case SimpleQuery(text) => QueryKind.kind :: serializeLongString(text) ::: serializeShort(0)
+        case PreparedStatement(id) => PreparedStatementKind.kind :: serializeShort(4) ::: serializeInt(id) ::: serializeShort(0)
+    }
     val c: List[Byte] = serializeShort(consistency.code)
     val header = List[Byte](protocolVersion, 0x00, stream, OpCodes.Batch) ::: serializeInt(typeAndNumber.size + queryBytes.size + c.size)
 

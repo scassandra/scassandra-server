@@ -83,7 +83,7 @@ abstract class AbstractMessageFactory extends CqlMessageFactory {
     VoidResult(stream)
   }
 
-  override def parseQueryRequest(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): QueryRequest = {
+  def parseQueryRequest(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): QueryRequest = {
     val iterator = byteString.iterator
     val query = CqlProtocolHelper.readLongString(iterator)
     val consistency = iterator.getShort

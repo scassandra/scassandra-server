@@ -30,15 +30,22 @@
 */
 package org.scassandra.server.actors
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{TestActorRef, TestKitBase, TestProbe}
-import akka.util.ByteString
+import akka.util.{Timeout, ByteString}
+import akka.pattern.ask
+
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scassandra.server.actors.PrepareHandler.{PreparedStatementResponse, PreparedStatementQuery}
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.request.{ExecuteRequestV2, PrepareRequest, _}
 import org.scassandra.server.cqlmessages.response.{PreparedResultV2, ReadRequestTimeout, Rows, UnavailableException, VoidResult, WriteRequestTimeout}
@@ -47,7 +54,6 @@ import org.scassandra.server.priming.prepared.{PreparedPrime, PrimePreparedStore
 import org.scassandra.server.priming.query.{Prime, PrimeMatch}
 import org.scassandra.server.priming.{PreparedStatementExecution, _}
 
-import scala.concurrent.duration.{Duration, FiniteDuration}
 
 class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with BeforeAndAfter with MockitoSugar {
   implicit lazy val system = ActorSystem()
@@ -62,6 +68,9 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
   val primePreparedStore = mock[PrimePreparedStore]
   val stream: Byte = 0x3
 
+  implicit val atMost: Duration = 1 seconds
+  implicit val timeout: Timeout = 1 seconds
+
   before {
     reset(primePreparedStore)
     when(primePreparedStore.findPrime(any(classOf[PrimeMatch]))).thenReturn(None)
@@ -69,7 +78,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     underTest = TestActorRef(new PrepareHandler(primePreparedStore, activityLog))
   }
 
-  test("Should return result prepared message - no params") {
+  test("Should return prepared message on prepare - no params") {
     val stream: Byte = 0x02
     val query = "select * from something"
     val prepareBody: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
@@ -88,7 +97,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     testProbeForTcpConnection.expectMsg(VoidResult(stream))
   }
 
-  test("Should return result prepared message - single param") {
+  test("Should return  prepared message on prepare - single param") {
     val stream: Byte = 0x02
     val query = "select * from something where name = ?"
     val prepareBody: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
@@ -111,6 +120,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", primedVariableTypes))
   }
 
+  //todo may as well make these UUIDs
   test("Should use incrementing IDs") {
     underTest = TestActorRef(new PrepareHandler(primePreparedStore, activityLog))
     val stream: Byte = 0x02
@@ -285,6 +295,22 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
 
     // i wish that expect msg took a min as well as a max :(
     testProbeForTcpConnection.expectMsg(Rows("" ,"" ,stream, Map(), List()))
+  }
+
+  test("Should answer queries for prepared statement - exists") {
+    val query = "select * from something"
+    val prepareBody: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
+    underTest ! PrepareHandler.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+
+    val response = (underTest ? PreparedStatementQuery(List(1))).mapTo[PreparedStatementResponse]
+
+    Await.result(response, atMost) should equal(PreparedStatementResponse(Map(1 -> Some(query))))
+  }
+
+  test("Should answer queries for prepared statement - not exist") {
+    val response = (underTest ? PreparedStatementQuery(List(1))).mapTo[PreparedStatementResponse]
+
+    Await.result(response, atMost) should equal(PreparedStatementResponse(Map(1 -> None)))
   }
 
 

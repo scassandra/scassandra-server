@@ -77,7 +77,14 @@ public class CassandraExecutor22 implements CassandraExecutor {
     public CassandraResult executeBatch(List<CassandraQuery> queries, BatchType batchType) {
         BatchStatement batch = new BatchStatement(BatchStatement.Type.valueOf(batchType.name()));
         queries.forEach(query -> {
-            batch.add(new SimpleStatement(query.getQuery(), query.getVariables()));
+            switch (query.getQueryType()) {
+                case QUERY:
+                    batch.add(new SimpleStatement(query.getQuery(), query.getVariables()));
+                    break;
+                case PREPARED_STATEMENT:
+                    batch.add(session.prepare(query.getQuery()).bind(query.getVariables()));
+                    break;
+            }
         });
         return new CassandraResult22(session.execute(batch));
     }

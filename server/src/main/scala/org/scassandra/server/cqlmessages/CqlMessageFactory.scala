@@ -15,13 +15,17 @@
  */
 package org.scassandra.server.cqlmessages
 
-import akka.util.ByteString
+import akka.util.{ByteIterator, ByteString}
 import org.scassandra.server.cqlmessages.request.{QueryRequest, ExecuteRequest}
 import org.scassandra.server.cqlmessages.response.{QueryBeforeReadyMessage, ReadRequestTimeout, Ready, Rows, SetKeyspace, UnavailableException, VoidResult, WriteRequestTimeout, _}
 import org.scassandra.server.cqlmessages.types.ColumnType
-import org.scassandra.server.priming.{UnavailableResult, WriteRequestTimeoutResult, ReadRequestTimeoutResult}
+import org.scassandra.server.priming.{BatchQuery, UnavailableResult, WriteRequestTimeoutResult, ReadRequestTimeoutResult}
 import org.scassandra.server.priming.query.Prime
 
+/*
+Will need renaming. Aim to slowly move all protocol parsing through this
+trait so that we can isolate the differences between protocols.
+ */
 trait CqlMessageFactory {
   def createReadyMessage(stream : Byte) : Ready
   def createQueryBeforeErrorMessage() : QueryBeforeReadyMessage
@@ -39,4 +43,7 @@ trait CqlMessageFactory {
   def parseExecuteRequestWithVariables(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): ExecuteRequest
 
   def parseQueryRequest(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): QueryRequest
+
+  def parseBatchQuery(byteString: ByteIterator): String
+  def readVariables(iterator: ByteIterator): List[Array[Byte]]
 }
