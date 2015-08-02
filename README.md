@@ -2,7 +2,7 @@
 
 ![TravisCI](https://travis-ci.org/scassandra/scassandra-server.svg?branch=master) Scassandra Server
 
-Datastax Java 2.2, 2.1 and 2.0 support. Version 0.7.0 onward do not support version 1.0 of the driver.
+Datastax Java 2.2, 2.1, 2.0 and 1.0 support. 
 
 Stubbed Cassandra runs as a separate process that your application will believe is a real Cassandra node. 
 It does this by implementing the server side of the binary protocol. 
