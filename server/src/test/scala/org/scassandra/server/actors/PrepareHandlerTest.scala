@@ -48,11 +48,11 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementResponse, PreparedStatementQuery}
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.request.{ExecuteRequestV2, PrepareRequest, _}
-import org.scassandra.server.cqlmessages.response.{PreparedResultV2, ReadRequestTimeout, Rows, UnavailableException, VoidResult, WriteRequestTimeout}
+import org.scassandra.server.cqlmessages.response._
 import org.scassandra.server.cqlmessages.types.{ColumnType, CqlBigint, CqlInt, CqlVarchar}
+import org.scassandra.server.priming._
 import org.scassandra.server.priming.prepared.{PreparedPrime, PrimePreparedStore}
 import org.scassandra.server.priming.query.{Prime, PrimeMatch}
-import org.scassandra.server.priming.{PreparedStatementExecution, _}
 
 
 class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with BeforeAndAfter with MockitoSugar {
@@ -62,7 +62,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
   var testProbeForTcpConnection: TestProbe = null
   val versionTwoMessageFactory = VersionTwoMessageFactory
   val versionOneMessageFactory = VersionOneMessageFactory
-  val protocolVersion: Byte = ProtocolVersion.ServerProtocolVersionTwo
+  val protocolByte : Byte = ProtocolVersion.ServerProtocolVersionTwo
   implicit val impProtocolVersion = VersionTwo
   val activityLog: ActivityLog = new ActivityLog
   val primePreparedStore = mock[PrimePreparedStore]
@@ -81,7 +81,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
   test("Should return prepared message on prepare - no params") {
     val stream: Byte = 0x02
     val query = "select * from something"
-    val prepareBody: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
+    val prepareBody: ByteString = PrepareRequest(protocolByte, stream, query).serialize().drop(8)
 
     underTest ! PrepareHandler.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
@@ -91,7 +91,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
   test("Should return  prepared message on prepare - single param") {
     val stream: Byte = 0x02
     val query = "select * from something where name = ?"
-    val prepareBody: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
+    val prepareBody: ByteString = PrepareRequest(protocolByte, stream, query).serialize().drop(8)
 
     underTest ! PrepareHandler.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
@@ -100,7 +100,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
 
   test("Priming variable types - Should use types from PreparedPrime") {
     val query = "select * from something where name = ?"
-    val prepareBody: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
+    val prepareBody: ByteString = PrepareRequest(protocolByte, stream, query).serialize().drop(8)
     val primedVariableTypes = List(CqlInt)
     val preparedPrime: PreparedPrime = PreparedPrime(primedVariableTypes)
     when(primePreparedStore.findPrime(any(classOf[PrimeMatch]))).thenReturn(Some(preparedPrime))
@@ -116,14 +116,14 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     underTest = TestActorRef(new PrepareHandler(primePreparedStore, activityLog))
     val stream: Byte = 0x02
     val queryOne = "select * from something where name = ?"
-    val prepareBodyOne: ByteString = PrepareRequest(protocolVersion, stream, queryOne).serialize().drop(8)
+    val prepareBodyOne: ByteString = PrepareRequest(protocolByte, stream, queryOne).serialize().drop(8)
     underTest ! PrepareHandler.Prepare(prepareBodyOne, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
     testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", List(CqlVarchar)))
 
     emptyTestProbe
 
     val queryTwo = "select * from something where name = ? and age = ?"
-    val prepareBodyTwo: ByteString = PrepareRequest(protocolVersion, stream, queryTwo).serialize().drop(8)
+    val prepareBodyTwo: ByteString = PrepareRequest(protocolByte, stream, queryTwo).serialize().drop(8)
     underTest ! PrepareHandler.Prepare(prepareBodyTwo, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
     testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 2.toShort, "keyspace", "table", List(CqlVarchar, CqlVarchar)))
 
@@ -133,7 +133,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     activityLog.clearPreparedStatementPreparations()
     val stream: Byte = 0x02
     val query = "select * from something where name = ?"
-    val prepareBody: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
+    val prepareBody: ByteString = PrepareRequest(protocolByte, stream, query).serialize().drop(8)
 
     underTest ! PrepareHandler.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
 
@@ -148,7 +148,7 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
   }
 
   private def sendPrepareAndCaptureId(stream: Byte, query: String, variableTypes: List[ColumnType[_]] = List(CqlVarchar)) : Int = {
-    val prepareBodyOne: ByteString = PrepareRequest(protocolVersion, stream, query).serialize().drop(8)
+    val prepareBodyOne: ByteString = PrepareRequest(protocolByte, stream, query).serialize().drop(8)
     underTest ! PrepareHandler.Prepare(prepareBodyOne, stream, versionTwoMessageFactory , testProbeForTcpConnection.ref)
     val preparedResponseWithId: PreparedResultV2 = testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", variableTypes))
     reset(primePreparedStore)

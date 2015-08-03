@@ -18,6 +18,7 @@ package org.scassandra.server.priming
 import java.math.BigInteger
 
 import com.typesafe.scalalogging.LazyLogging
+import org.scassandra.server.priming.json.ResultJsonRepresentation
 import spray.json._
 import spray.httpx.SprayJsonSupport
 import org.scassandra.server.cqlmessages.{BatchQueryKind, BatchType, Consistency}

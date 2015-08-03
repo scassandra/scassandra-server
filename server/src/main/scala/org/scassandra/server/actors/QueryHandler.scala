@@ -51,12 +51,7 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
               case SuccessResult =>
                 log.info(s"Found matching prime $prime for query $queryText")
                 msgFactory.createRowsMessage(prime, stream)
-              case result: ReadRequestTimeoutResult =>
-                msgFactory.createReadTimeoutMessage(stream, consistency, result)
-              case result: UnavailableResult =>
-                msgFactory.createUnavailableMessage(stream, consistency, result)
-              case result: WriteRequestTimeoutResult =>
-                msgFactory.createWriteTimeoutMessage(stream, consistency, result)
+              case result: ErrorResult => msgFactory.createErrorMessage(result, stream, consistency)
             }
             sendMessage(prime.fixedDelay, tcpConnection, message)
             val queryRequest = msgFactory.parseQueryRequest(stream, queryBody, prime.variableTypes)

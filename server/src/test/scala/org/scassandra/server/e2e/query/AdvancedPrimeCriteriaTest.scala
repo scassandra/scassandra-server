@@ -21,7 +21,7 @@ import com.datastax.driver.core.{ConsistencyLevel, SimpleStatement}
 import dispatch._, Defaults._
 import org.scassandra.server.priming.query.When
 import org.scassandra.server.cqlmessages._
-import org.scassandra.server.priming.Success
+import org.scassandra.server.priming.json.Success
 
 class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFutures {
 

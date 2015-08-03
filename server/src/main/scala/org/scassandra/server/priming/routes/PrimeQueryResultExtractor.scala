@@ -19,7 +19,9 @@ import java.util.concurrent.TimeUnit
 
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.cqlmessages.Consistency
+import org.scassandra.server.cqlmessages.CqlProtocolHelper.hex2Bytes
 import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeQuerySingle, Then, When}
 import org.scassandra.server.priming._
 
@@ -64,6 +66,45 @@ object PrimeQueryResultExtractor extends LazyLogging {
   def convertToPrimeResult(config: Map[String, String], result: ResultJsonRepresentation): PrimeResult = {
     val primeResult: PrimeResult = result match {
       case Success => SuccessResult
+      case ServerError => ServerErrorResult(
+        config.getOrElse(ErrorConstants.Message, "Server Error")
+      )
+      case ProtocolError => ProtocolErrorResult(
+        config.getOrElse(ErrorConstants.Message, "Protocol Error")
+      )
+      case BadCredentials => BadCredentialsResult(
+        config.getOrElse(ErrorConstants.Message, "Bad Credentials")
+      )
+      case Overloaded => OverloadedResult(
+        config.getOrElse(ErrorConstants.Message, "Overloaded")
+      )
+      case IsBootstrapping => IsBootstrappingResult(
+        config.getOrElse(ErrorConstants.Message, "Bootstrapping")
+      )
+      case TruncateError => TruncateErrorResult(
+        config.getOrElse(ErrorConstants.Message, "Truncate Error")
+      )
+      case SyntaxError => SyntaxErrorResult(
+        config.getOrElse(ErrorConstants.Message, "Syntax Error")
+      )
+      case Unauthorized => UnauthorizedResult(
+        config.getOrElse(ErrorConstants.Message, "Unauthorized")
+      )
+      case Invalid => InvalidResult(
+        config.getOrElse(ErrorConstants.Message, "Invalid")
+      )
+      case ConfigError => ConfigErrorResult(
+        config.getOrElse(ErrorConstants.Message, "Config Error")
+      )
+      case AlreadyExists => AlreadyExistsResult(
+        config.getOrElse(ErrorConstants.Message, "Already Exists"),
+        config.getOrElse(ErrorConstants.Keyspace, "keyspace"),
+        config.getOrElse(ErrorConstants.Table, "")
+      )
+      case Unprepared => UnpreparedResult(
+        config.getOrElse(ErrorConstants.Message, "Unprepared"),
+        hex2Bytes(config.getOrElse(ErrorConstants.PrepareId, "0x"))
+      )
       case ReadTimeout => ReadRequestTimeoutResult(
         config.getOrElse(ErrorConstants.ReceivedResponse, "0").toInt,
         config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
@@ -89,6 +130,18 @@ object PrimeQueryResultExtractor extends LazyLogging {
         case SuccessResult => Success
         case r: ReadRequestTimeoutResult => ReadTimeout
         case r: WriteRequestTimeoutResult => WriteTimeout
+        case r: ServerErrorResult => ServerError
+        case r: ProtocolErrorResult => ProtocolError
+        case r: BadCredentialsResult => BadCredentials
+        case r: OverloadedResult => Overloaded
+        case r: IsBootstrappingResult => IsBootstrapping
+        case r: TruncateErrorResult => TruncateError
+        case r: SyntaxErrorResult => SyntaxError
+        case r: UnauthorizedResult => Unauthorized
+        case r: InvalidResult => Invalid
+        case r: ConfigErrorResult => ConfigError
+        case r: AlreadyExistsResult => AlreadyExists
+        case r: UnpreparedResult => Unprepared
       }
 
       val thenDo = Then(Some(prime.rows), result = Some(result), column_types = Some(prime.columnTypes))

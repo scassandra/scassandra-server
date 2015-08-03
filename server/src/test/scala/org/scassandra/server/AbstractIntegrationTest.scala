@@ -22,6 +22,7 @@ import dispatch.Defaults._
 import dispatch._
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSuite, Matchers}
 import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
 import org.scassandra.server.priming.query.{PrimeQuerySingle, Then, When}
 import org.scassandra.server.priming._
@@ -126,6 +127,10 @@ abstract class AbstractIntegrationTest(clusterConnect: Boolean = true) extends F
     serverThread.primedResults
   }
 
+  def builder() = {
+    Cluster.builder().addContactPoint(ConnectionToServerStub.ServerHost).withPort(ConnectionToServerStub.ServerPort)
+  }
+
   override def beforeAll() {
     println("Trying to start server")
     // First ensure nothing else is running on the port we are trying to connect to
@@ -149,7 +154,7 @@ abstract class AbstractIntegrationTest(clusterConnect: Boolean = true) extends F
     startServerStub()
 
     if (clusterConnect) {
-      cluster = Cluster.builder().addContactPoint(ConnectionToServerStub.ServerHost).withPort(ConnectionToServerStub.ServerPort).build()
+      cluster = builder().build()
       session = cluster.connect("mykeyspace")
     }
   }

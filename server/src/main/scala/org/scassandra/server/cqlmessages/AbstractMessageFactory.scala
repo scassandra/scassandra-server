@@ -27,7 +27,9 @@ import org.scassandra.server.cqlmessages.response.WriteRequestTimeout
 import org.scassandra.server.cqlmessages.response.VoidResult
 import org.scassandra.server.cqlmessages.response.Rows
 import org.scassandra.server.cqlmessages.response.Ready
-import org.scassandra.server.priming.{UnavailableResult, WriteRequestTimeoutResult, ReadRequestTimeoutResult}
+import org.scassandra.server.priming.{UnavailableResult, WriteRequestTimeoutResult, ReadRequestTimeoutResult, ServerErrorResult, ProtocolErrorResult,
+  BadCredentialsResult, OverloadedResult, IsBootstrappingResult, TruncateErrorResult, SyntaxErrorResult, UnauthorizedResult, InvalidResult, ConfigErrorResult,
+  AlreadyExistsResult, UnpreparedResult}
 import org.scassandra.server.priming.query.Prime
 import org.scassandra.server.cqlmessages.response.Row
 import org.scassandra.server.cqlmessages.response.SetKeyspace
@@ -78,6 +80,42 @@ abstract class AbstractMessageFactory extends CqlMessageFactory {
     // TODO: If compression is ever supported include 'COMPRESSION' options.
     Supported(stream)
   }
+
+  def createServerErrorMessage(stream: Byte, serverErrorResult: ServerErrorResult): ServerError =
+    ServerError(stream, serverErrorResult.message)
+
+  def createProtocolErrorMessage(stream: Byte, protocolErrorResult: ProtocolErrorResult): ProtocolError =
+    ProtocolError(stream, protocolErrorResult.message)
+
+  def createBadCredentialsMessage(stream: Byte, badCredentialsResult: BadCredentialsResult): BadCredentials =
+    BadCredentials(stream, badCredentialsResult.message)
+
+  def createOverloadedMessage(stream: Byte, overloadedResult: OverloadedResult): Overloaded =
+    Overloaded(stream, overloadedResult.message)
+
+  def createIsBootstrappingMessage(stream: Byte, isBootstrappingResult: IsBootstrappingResult): IsBootstrapping =
+    IsBootstrapping(stream, isBootstrappingResult.message)
+
+  def createTruncateErrorMessage(stream: Byte, truncateErrorResult: TruncateErrorResult): TruncateError =
+    TruncateError(stream, truncateErrorResult.message)
+
+  def createSyntaxErrorMessage(stream: Byte, syntaxErrorResult: SyntaxErrorResult): SyntaxError =
+    SyntaxError(stream, syntaxErrorResult.message)
+
+  def createUnauthorizedMessage(stream: Byte, unauthorizedResult: UnauthorizedResult): Unauthorized =
+    Unauthorized(stream, unauthorizedResult.message)
+
+  def createInvalidMessage(stream: Byte, invalidResult: InvalidResult): Invalid =
+    Invalid(stream, invalidResult.message)
+
+  def createConfigErrorMessage(stream: Byte, configErrorResult: ConfigErrorResult): ConfigError =
+    ConfigError(stream, configErrorResult.message)
+
+  def createAlreadyExistsMessage(stream: Byte, alreadyExistsResult: AlreadyExistsResult): AlreadyExists =
+    AlreadyExists(stream, alreadyExistsResult.message, alreadyExistsResult.keyspace, alreadyExistsResult.table)
+
+  def createdUnpreparedMessage(stream: Byte, unpreparedResult: UnpreparedResult): Unprepared =
+    Unprepared(stream, unpreparedResult.message, unpreparedResult.id)
 
   def createVoidMessage(stream: Byte): VoidResult = {
     VoidResult(stream)

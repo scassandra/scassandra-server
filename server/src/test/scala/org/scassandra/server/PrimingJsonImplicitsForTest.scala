@@ -23,6 +23,7 @@ import org.scassandra.server.cqlmessages.{BatchQueryKind, BatchType, Consistency
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.Query
 import org.scassandra.server.priming._
+import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
 import org.scassandra.server.priming.query.{PrimeCriteria, PrimeQuerySingle, Then, When}
 import org.scassandra.server.priming.routes.Version

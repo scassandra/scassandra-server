@@ -22,6 +22,7 @@ import dispatch._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
 import org.scassandra.server.priming._
+import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle}
 import org.scassandra.server.{AbstractIntegrationTest, PrimingHelper}
 

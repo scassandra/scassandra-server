@@ -19,7 +19,7 @@ import akka.util.{ByteIterator, ByteString}
 import org.scassandra.server.cqlmessages.request.{QueryRequest, ExecuteRequest}
 import org.scassandra.server.cqlmessages.response.{QueryBeforeReadyMessage, ReadRequestTimeout, Ready, Rows, SetKeyspace, UnavailableException, VoidResult, WriteRequestTimeout, _}
 import org.scassandra.server.cqlmessages.types.ColumnType
-import org.scassandra.server.priming.{BatchQuery, UnavailableResult, WriteRequestTimeoutResult, ReadRequestTimeoutResult}
+import org.scassandra.server.priming._
 import org.scassandra.server.priming.query.Prime
 
 /*
@@ -35,6 +35,18 @@ trait CqlMessageFactory {
   def createReadTimeoutMessage(stream: Byte, consistency: Consistency, readRequestTimeoutResult: ReadRequestTimeoutResult): ReadRequestTimeout
   def createWriteTimeoutMessage(stream: Byte, consistency: Consistency, writeRequestTimeoutResult: WriteRequestTimeoutResult): WriteRequestTimeout
   def createUnavailableMessage(stream: Byte, consistency: Consistency, unavailableResult: UnavailableResult): UnavailableException
+  def createServerErrorMessage(stream: Byte, serverErrorResult: ServerErrorResult): ServerError
+  def createProtocolErrorMessage(stream: Byte, protocolErrorResult: ProtocolErrorResult): ProtocolError
+  def createBadCredentialsMessage(stream: Byte, badCredentialsResult: BadCredentialsResult): BadCredentials
+  def createOverloadedMessage(stream: Byte, overloadedResult: OverloadedResult): Overloaded
+  def createIsBootstrappingMessage(stream: Byte, isBootstrappingResult: IsBootstrappingResult): IsBootstrapping
+  def createTruncateErrorMessage(stream: Byte, truncateErrorResult: TruncateErrorResult): TruncateError
+  def createSyntaxErrorMessage(stream: Byte, syntaxErrorResult: SyntaxErrorResult): SyntaxError
+  def createUnauthorizedMessage(stream: Byte, unauthorizedResult: UnauthorizedResult): Unauthorized
+  def createInvalidMessage(stream: Byte, invalidResult: InvalidResult): Invalid
+  def createConfigErrorMessage(stream: Byte, configErrorResult: ConfigErrorResult): ConfigError
+  def createAlreadyExistsMessage(stream: Byte, alreadyExistsResult: AlreadyExistsResult): AlreadyExists
+  def createdUnpreparedMessage(stream: Byte, unpreparedResult: UnpreparedResult): Unprepared
   def createVoidMessage(stream: Byte): VoidResult
   def createPreparedResult(stream: Byte, id: Int, variableTypes: List[ColumnType[_]]): Result
   def createSupportedMessage(stream: Byte): Supported
@@ -46,4 +58,37 @@ trait CqlMessageFactory {
 
   def parseBatchQuery(byteString: ByteIterator): String
   def readVariables(iterator: ByteIterator): List[Array[Byte]]
+
+  def createErrorMessage(result: ErrorResult, stream: Byte, consistency: Consistency): Response = result match {
+    case result: ReadRequestTimeoutResult =>
+      createReadTimeoutMessage(stream, consistency, result)
+    case result: UnavailableResult =>
+      createUnavailableMessage(stream, consistency, result)
+    case result: WriteRequestTimeoutResult =>
+      createWriteTimeoutMessage(stream, consistency, result)
+    case result: ServerErrorResult =>
+      createServerErrorMessage(stream, result)
+    case result: ProtocolErrorResult =>
+      createProtocolErrorMessage(stream, result)
+    case result: BadCredentialsResult =>
+      createBadCredentialsMessage(stream, result)
+    case result: OverloadedResult =>
+      createOverloadedMessage(stream, result)
+    case result: IsBootstrappingResult =>
+      createIsBootstrappingMessage(stream, result)
+    case result: TruncateErrorResult =>
+      createTruncateErrorMessage(stream, result)
+    case result: SyntaxErrorResult =>
+      createSyntaxErrorMessage(stream, result)
+    case result: UnauthorizedResult =>
+      createUnauthorizedMessage(stream, result)
+    case result: InvalidResult =>
+      createInvalidMessage(stream, result)
+    case result: ConfigErrorResult =>
+      createConfigErrorMessage(stream, result)
+    case result: AlreadyExistsResult =>
+      createAlreadyExistsMessage(stream, result)
+    case result: UnpreparedResult =>
+      createdUnpreparedMessage(stream, result)
+  }
 }

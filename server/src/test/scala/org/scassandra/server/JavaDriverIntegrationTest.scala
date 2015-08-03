@@ -15,11 +15,13 @@
  */
 package org.scassandra.server
 
+import com.datastax.driver.core.exceptions.{SyntaxError => SyntaxErrorDriver, _}
 import org.scalatest.concurrent.ScalaFutures
-import dispatch._, Defaults._
-import com.datastax.driver.core.exceptions.{WriteTimeoutException, UnavailableException, ReadTimeoutException}
-import org.scassandra.server.priming.query.When
-import org.scassandra.server.priming._
+import org.scassandra.server.priming.ErrorConstants
+import org.scassandra.server.priming.json._
+import org.scassandra.server.priming.query.{Then, When}
+
+import scala.reflect.Manifest
 
 class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -59,33 +61,84 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
     results.get(1).getString("age") should equal("24")
   }
 
-  test("Test read timeout on query") {
-    // priming
-    val whenQuery = "read timeout query"
-    prime(When(query = Some(whenQuery)), List(), ReadTimeout)
+  def expectException[T <: AnyRef](result: ResultJsonRepresentation, config: Option[Map[String, String]] = None)(implicit manifest: Manifest[T]): Unit = {
+    // create a temporary cluster, since these queries may change the behavior of how the driver
+    // sees a host.
+    val cluster = builder().build()
+    try {
+      val session = cluster.connect()
+      val whenQuery = "read timeout query"
+      prime(When(query = Some(whenQuery)), Then(None, result = Some(result), config = config))
 
-    intercept[ReadTimeoutException] {
-      session.execute(whenQuery)
+      intercept[T] {
+        session.execute(whenQuery)
+      }
+    } finally {
+      cluster.close()
     }
+  }
+
+  test("Test read timeout on query") {
+    expectException[ReadTimeoutException](ReadTimeout)
   }
 
   test("Test unavailable exception on query") {
-    // priming
-    val whenQuery = "unavailable exception query"
-    prime(When(query = Some(whenQuery)), List(), Unavailable)
-
-    intercept[UnavailableException] {
-      session.execute(whenQuery)
-    }
+    expectException[UnavailableException](Unavailable)
   }
 
   test("Test write timeout on query") {
-    // priming
-    val whenQuery = "some write query"
-    prime(When(query = Some(whenQuery)), List(), WriteTimeout)
+    expectException[WriteTimeoutException](WriteTimeout)
+  }
 
-    intercept[WriteTimeoutException] {
-      session.execute(whenQuery)
-    }
+  test("Test server error on query") {
+    // Expect a NHAE as this indicates that there was a server problem
+    // and there were no other hosts to try.
+    expectException[NoHostAvailableException](ServerError)
+  }
+
+  test("Test protocol error on query") {
+    expectException[DriverInternalError](ProtocolError)
+  }
+
+  test("Test bad credentials on query") {
+    expectException[AuthenticationException](BadCredentials)
+  }
+
+  test("Test overloaded on query") {
+    expectException[NoHostAvailableException](Overloaded)
+  }
+
+  test("Test is bootstrapping on query") {
+    expectException[NoHostAvailableException](IsBootstrapping)
+  }
+
+  test("Test truncate error on query") {
+    expectException[TruncateException](TruncateError)
+  }
+
+  test("Test syntax error on query") {
+    expectException[SyntaxErrorDriver](SyntaxError)
+  }
+
+  test("Test unauthorized error on query") {
+    expectException[UnauthorizedException](Unauthorized)
+  }
+
+  test("Test invalid error on query") {
+    expectException[InvalidQueryException](Invalid)
+  }
+
+  ignore("Test config error on query") {
+    // Ignored since this is a bug in the java driver as it returns
+    // the wrong exception.
+    expectException[InvalidConfigurationInQueryException](ConfigError)
+  }
+
+  test("Test already exists error on query") {
+    expectException[AlreadyExistsException](AlreadyExists, Some(Map(ErrorConstants.Keyspace -> "Keyspace")))
+  }
+
+  test("Test unprepared on query") {
+    expectException[DriverInternalError](Unprepared, Some(Map(ErrorConstants.PrepareId -> "0x8675")))
   }
 }

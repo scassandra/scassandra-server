@@ -24,7 +24,7 @@ import java.util.{UUID, Date}
 import com.datastax.driver.core.DataType
 import org.scassandra.server.AbstractIntegrationTest
 import org.scassandra.server.cqlmessages.types._
-import org.scassandra.server.priming.Success
+import org.scassandra.server.priming.json.Success
 import org.scassandra.server.priming.query.When
 
 class ListPriming extends AbstractIntegrationTest {

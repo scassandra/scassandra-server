@@ -21,6 +21,7 @@ import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming._
+import org.scassandra.server.priming.json.Success
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
 import org.scassandra.server.priming.routes.PrimeQueryResultExtractor
 

@@ -72,9 +72,7 @@ class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
   private def createMessage(preparedPrime: PreparedPrime, executeRequest: ExecuteRequest ,stream: Byte, msgFactory: CqlMessageFactory) = {
     preparedPrime.prime.result match {
       case SuccessResult => msgFactory.createRowsMessage(preparedPrime.prime, stream)
-      case result: ReadRequestTimeoutResult => msgFactory.createReadTimeoutMessage(stream, executeRequest.consistency, result)
-      case result: WriteRequestTimeoutResult => msgFactory.createWriteTimeoutMessage(stream, executeRequest.consistency, result)
-      case result: UnavailableResult => msgFactory.createUnavailableMessage(stream, executeRequest.consistency, result)
+      case result: ErrorResult => msgFactory.createErrorMessage(result, stream, executeRequest.consistency)
     }
   }
 

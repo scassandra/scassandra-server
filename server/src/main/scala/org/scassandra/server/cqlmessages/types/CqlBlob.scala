@@ -17,6 +17,7 @@ package org.scassandra.server.cqlmessages.types
 
 import akka.util.{ByteIterator, ByteString}
 import org.scassandra.server.cqlmessages.ProtocolVersion
+import org.scassandra.server.cqlmessages.CqlProtocolHelper.hex2Bytes
 
 case object CqlBlob extends ColumnType[Array[Byte]](0x0003, "blob") {
 
@@ -29,16 +30,5 @@ case object CqlBlob extends ColumnType[Array[Byte]](0x0003, "blob") {
      val array = hex2Bytes(value.toString)
      bs.putBytes(array)
      bs.result().toArray
-   }
-
-   private def hex2Bytes(hex: String): Array[Byte] = {
-     try {
-       (for {i <- 0 to hex.length - 1 by 2 if i > 0 || !hex.startsWith("0x")}
-       yield hex.substring(i, i + 2))
-         .map(hexValue => Integer.parseInt(hexValue, 16).toByte).toArray
-     }
-     catch {
-       case s : Exception => throw new IllegalArgumentException(s"Not valid hex $hex")
-     }
    }
 }

@@ -21,4 +21,8 @@ object ErrorConstants {
   val DataPresent = "error.data_present"
   val WriteType = "error.write_type"
   val Alive = "error.alive"
+  var Keyspace = "error.keyspace"
+  var Table = "error.table"
+  val Message = "error.message"
+  var PrepareId = "error.prepare_id"
 }

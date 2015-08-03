@@ -20,7 +20,7 @@ import dispatch._, Defaults._
 import java.util
 import org.scassandra.server.cqlmessages.types.{CqlMap, CqlVarchar, CqlSet}
 import org.scassandra.server.priming.query.When
-import org.scassandra.server.priming.Success
+import org.scassandra.server.priming.json.Success
 import com.datastax.driver.core.DataType
 
 class MapPriming extends AbstractIntegrationTest {
