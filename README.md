@@ -1,6 +1,6 @@
 # Scassandra - Making testing Cassandra easy
 
-![TravisCI](https://travis-ci.org/scassandra/scassandra-server.svg?branch=master) Scassandra Server
+![TravisCI](https://travis-ci.org/scassandra/scassandra-server.svg?branch=master) 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/scassandra/scassandra-server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Datastax Java 2.2, 2.1, 2.0 and 1.0 support. 
