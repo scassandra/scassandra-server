@@ -64,7 +64,7 @@ class BatchHandler(tcpConnection: ActorRef,
       log.debug("Received batch to finish {}", inFlight)
       val statements: Seq[BatchQuery] = inFlight.map( {
         case NormalQuery(text) => BatchQuery(text, QueryKind)
-        case IncompletePreparedStatement(id, _) => BatchQuery(ids(id).get, PreparedStatementKind)
+        case IncompletePreparedStatement(id, _) => BatchQuery(ids.getOrElse(id, "A prepared statement was in the batch but couldn't be found - did you prepare against a different  session?"), PreparedStatementKind)
       })
       activityLog.recordBatchExecution(BatchExecution(statements, consistency, batchType))
       tcpConnection ! msgFactory.createVoidMessage(stream)
@@ -81,6 +81,6 @@ private case class IncompletePreparedStatement(id: Int, variables: List[Array[By
 
 object BatchHandler {
   //todo stop this being a map of options lol
-  private case class BatchToFinish(inFlightBatchQuery: Seq[InFlightBatchQuery], idsToText: Map[Int, Option[String]], consistency: Consistency, batchType: BatchType, stream: Byte)
+  private case class BatchToFinish(inFlightBatchQuery: Seq[InFlightBatchQuery], idsToText: Map[Int, String], consistency: Consistency, batchType: BatchType, stream: Byte)
   case class Execute(body: ByteString, stream: Byte)
 }

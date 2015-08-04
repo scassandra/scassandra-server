@@ -62,11 +62,29 @@ class BatchHandlerTest extends TestKit(ActorSystem("BatchHandlerTest")) with Fun
     underTest ! BatchHandler.Execute(ByteString(batchMessage), streamId)
 
     prepareHandlerProbe.expectMsg(PreparedStatementQuery(List(1)))
-    prepareHandlerProbe.reply(PreparedStatementResponse(Map(1 -> Some("insert into something"))))
+    prepareHandlerProbe.reply(PreparedStatementResponse(Map(1 -> "insert into something")))
     connectionTestProbe.expectMsg(cqlMessageFactory.createVoidMessage(streamId))
     activityLog.retrieveBatchExecutions() should equal(List(
       BatchExecution(List(
         BatchQuery("insert into something", PreparedStatementKind)
+      ), ONE, LOGGED))
+    )
+  }
+
+  // this isn't expected to happen byt let's do something better than a NoSuchElementException if it does
+  test("Records batch statement with ActivityLog - prepared statement not exist") {
+    val batchMessage: Array[Byte] = dropHeaderAndLength(createBatchMessage(
+      List(PreparedStatement(1)),
+      streamId))
+
+    underTest ! BatchHandler.Execute(ByteString(batchMessage), streamId)
+
+    prepareHandlerProbe.expectMsg(PreparedStatementQuery(List(1)))
+    prepareHandlerProbe.reply(PreparedStatementResponse(Map()))
+    connectionTestProbe.expectMsg(cqlMessageFactory.createVoidMessage(streamId))
+    activityLog.retrieveBatchExecutions() should equal(List(
+      BatchExecution(List(
+        BatchQuery("A prepared statement was in the batch but couldn't be found - did you prepare against a different  session?", PreparedStatementKind)
       ), ONE, LOGGED))
     )
   }

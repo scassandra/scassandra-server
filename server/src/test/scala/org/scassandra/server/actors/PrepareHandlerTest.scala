@@ -304,13 +304,13 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
 
     val response = (underTest ? PreparedStatementQuery(List(1))).mapTo[PreparedStatementResponse]
 
-    Await.result(response, atMost) should equal(PreparedStatementResponse(Map(1 -> Some(query))))
+    Await.result(response, atMost) should equal(PreparedStatementResponse(Map(1 -> query)))
   }
 
   test("Should answer queries for prepared statement - not exist") {
     val response = (underTest ? PreparedStatementQuery(List(1))).mapTo[PreparedStatementResponse]
 
-    Await.result(response, atMost) should equal(PreparedStatementResponse(Map(1 -> None)))
+    Await.result(response, atMost) should equal(PreparedStatementResponse(Map()))
   }
 
 

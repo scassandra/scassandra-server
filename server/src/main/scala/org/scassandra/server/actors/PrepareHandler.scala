@@ -49,7 +49,10 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
       sendMessage(action.msg, connection)
 
     case PreparedStatementQuery(ids) =>
-      sender() ! PreparedStatementResponse(ids.map(id => id -> idToStatement.get(id)) toMap)
+      sender() ! PreparedStatementResponse(ids.flatMap(id => idToStatement.get(id) match {
+        case Some(text) => Seq(id -> text)
+        case None => Seq()
+      }) toMap)
   }
 
   case class PrepareResponse(activity: PreparedStatementPreparation, result: Result)
@@ -126,5 +129,5 @@ object PrepareHandler {
   case class Prepare(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
   case class Execute(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
   case class PreparedStatementQuery(id: List[Int])
-  case class PreparedStatementResponse(preparedStatementText: Map[Int, Option[String]])
+  case class PreparedStatementResponse(preparedStatementText: Map[Int, String])
 }
