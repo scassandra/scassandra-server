@@ -196,6 +196,15 @@ object CqlProtocolHelper {
     ByteString(header ++ serializeInt(body.length) ++ body)
   }
 
+  /*
+   * The spec says any short bytes but SCassandra always uses an int which
+   * has a fixed length of 4 bytes
+   */
+  def readPreparedStatementId(iterator: ByteIterator): Int = {
+    iterator.drop(2) // short representing the length of the id
+    iterator.getInt
+  }
+
 }
 
 // example sets

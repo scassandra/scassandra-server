@@ -34,19 +34,13 @@ class BatchHandler(tcpConnection: ActorRef,
           case QueryKind =>
             NormalQuery(msgFactory.parseBatchQuery(iterator))
           case PreparedStatementKind =>
-            iterator.drop(2) // short representing the length of the id
-            val id = iterator.getInt
+            val id = readPreparedStatementId(iterator)
             val variables = msgFactory.readVariables(iterator)
             IncompletePreparedStatement(id, variables)
         }
       })
       val consistency = Consistency.fromCode(iterator.getShort)
-
-      val ids: List[Int] = statements.foldLeft(List[Int]())((acc, next) => next match {
-        case IncompletePreparedStatement(id, _) => id :: acc
-        case _ => acc
-      })
-
+      val ids: List[Int] = statements.collect { case IncompletePreparedStatement(id, _) => id }.toList
       log.debug("Prepared statement ids {}", ids)
 
       if (ids.isEmpty) {

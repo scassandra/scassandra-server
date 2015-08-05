@@ -25,9 +25,7 @@ object ExecuteRequest {
 
   def versionTwoWithoutTypes(stream: Byte, byteString: ByteString) : ExecuteRequestV2 = {
     val bodyIterator: ByteIterator = byteString.iterator
-    // length of the id - this is a short
-    bodyIterator.drop(2)
-    val preparedStatementId = bodyIterator.getInt
+    val preparedStatementId = readPreparedStatementId(bodyIterator)
     val consistency = Consistency.fromCode(bodyIterator.getShort)
     val flags = bodyIterator.getByte
     val numberOfVariables = bodyIterator.getShort
@@ -35,13 +33,9 @@ object ExecuteRequest {
   }
 
   def versionTwoWithTypes(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]) : ExecuteRequestV2 = {
-
     val bodyIterator: ByteIterator = byteString.iterator
-    // length of the id - this is a short
-    bodyIterator.drop(2)
-    val preparedStatementId = bodyIterator.getInt
+    val preparedStatementId = readPreparedStatementId(bodyIterator)
     val consistency = Consistency.fromCode(bodyIterator.getShort)
-
     val flags = bodyIterator.getByte
     val numberOfVariables = bodyIterator.getShort
 
