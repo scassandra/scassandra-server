@@ -24,7 +24,8 @@ public class CassandraExecutor20 implements CassandraExecutor {
     private Session session;
 
     public CassandraExecutor20() {
-        cluster = Cluster.builder().addContactPoint(Config.NATIVE_HOST).withPort(Config.NATIVE_PORT).build();
+        cluster = Cluster.builder().addContactPoint(Config.NATIVE_HOST)
+            .withPort(Config.NATIVE_PORT).withRetryPolicy(NoRetryOnUnavailablePolicy.INSTANCE).build();
         session = cluster.connect(Config.KEYSPACE);
     }
 

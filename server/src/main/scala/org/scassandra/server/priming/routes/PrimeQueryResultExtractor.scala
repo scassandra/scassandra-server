@@ -128,20 +128,20 @@ object PrimeQueryResultExtractor extends LazyLogging {
 
       val result = prime.result match {
         case SuccessResult => Success
-        case r: ReadRequestTimeoutResult => ReadTimeout
-        case r: WriteRequestTimeoutResult => WriteTimeout
-        case r: ServerErrorResult => ServerError
-        case r: ProtocolErrorResult => ProtocolError
-        case r: BadCredentialsResult => BadCredentials
-        case r: OverloadedResult => Overloaded
-        case r: IsBootstrappingResult => IsBootstrapping
-        case r: TruncateErrorResult => TruncateError
-        case r: SyntaxErrorResult => SyntaxError
-        case r: UnauthorizedResult => Unauthorized
-        case r: InvalidResult => Invalid
-        case r: ConfigErrorResult => ConfigError
-        case r: AlreadyExistsResult => AlreadyExists
-        case r: UnpreparedResult => Unprepared
+        case _: ReadRequestTimeoutResult => ReadTimeout
+        case _: WriteRequestTimeoutResult => WriteTimeout
+        case _: ServerErrorResult => ServerError
+        case _: ProtocolErrorResult => ProtocolError
+        case _: BadCredentialsResult => BadCredentials
+        case _: OverloadedResult => Overloaded
+        case _: IsBootstrappingResult => IsBootstrapping
+        case _: TruncateErrorResult => TruncateError
+        case _: SyntaxErrorResult => SyntaxError
+        case _: UnauthorizedResult => Unauthorized
+        case _: InvalidResult => Invalid
+        case _: ConfigErrorResult => ConfigError
+        case _: AlreadyExistsResult => AlreadyExists
+        case _: UnpreparedResult => Unprepared
       }
 
       val thenDo = Then(Some(prime.rows), result = Some(result), column_types = Some(prime.columnTypes))
