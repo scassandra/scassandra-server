@@ -20,12 +20,13 @@ import akka.io.Tcp.{Received, Write}
 import akka.testkit._
 import akka.util.ByteString
 import org.scalatest._
+import org.scassandra.server.actors.MessageHelper.SimpleQuery
 import org.scassandra.server.actors.OptionsHandlerMessages.OptionsMessage
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.response._
 import org.scassandra.server.actors.QueryHandler.Query
 import org.scassandra.server.RegisterHandlerMessages
-import scala.language.postfixOps;
+import scala.language.postfixOps
 import scala.concurrent.duration._
 
 class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
@@ -53,7 +54,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
         lastMsgFactoryUsedForQuery = msgFactory
         queryHandlerTestProbe.ref
       },
-      (_,_,msgFactory) => {
+      (_,_,msgFactory, _) => {
         lastMsgFactoryUsedForQuery = msgFactory
         batchHandlerTestProbe.ref
       },
@@ -291,7 +292,8 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
   test("Should forward Batch messages to the batch handler") {
     sendStartupMessage()
     val streamId : Byte = 0x1
-    val batchMessage: Array[Byte] = MessageHelper.createBatchMessage(List("insert into something", "insert into something else"), streamId)
+    val batchMessage: Array[Byte] = MessageHelper.createBatchMessage(
+      List(SimpleQuery("insert into something"), SimpleQuery("insert into something else")), streamId)
 
     testActorRef ! Received(ByteString(batchMessage))
 

@@ -15,20 +15,15 @@
  */
 package org.scassandra.server.cqlmessages
 
+import scala.language.postfixOps
+
+import akka.util.{ByteIterator, ByteString}
+
+import org.scassandra.server.cqlmessages.CqlProtocolHelper._
+import org.scassandra.server.cqlmessages.request.ExecuteRequest
 import org.scassandra.server.cqlmessages.response._
-import org.scassandra.server.cqlmessages.response.UnavailableException
-import org.scassandra.server.cqlmessages.response.QueryBeforeReadyMessage
-import org.scassandra.server.cqlmessages.response.ReadRequestTimeout
-import org.scassandra.server.cqlmessages.response.WriteRequestTimeout
-import org.scassandra.server.cqlmessages.response.VoidResult
-import org.scassandra.server.cqlmessages.response.Rows
-import org.scassandra.server.cqlmessages.response.Ready
-import org.scassandra.server.priming.query.Prime
-import org.scassandra.server.cqlmessages.response.Row
-import org.scassandra.server.cqlmessages.response.SetKeyspace
-import akka.util.ByteString
-import org.scassandra.server.cqlmessages.request.{ExecuteRequest}
 import org.scassandra.server.cqlmessages.types.ColumnType
+
 
 object VersionTwoMessageFactory extends AbstractMessageFactory {
 
@@ -45,5 +40,24 @@ object VersionTwoMessageFactory extends AbstractMessageFactory {
 
   def parseExecuteRequestWithVariables(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): ExecuteRequest = {
     ExecuteRequest.versionTwoWithTypes(stream, byteString, variableTypes)
+  }
+
+  def parseBatchQuery(iterator: ByteIterator): String = {
+    val query: String = readLongString(iterator).get
+    val numVariables = iterator.getShort
+    // read off the bytes for each variable, we can't parse them until priming of batches is supported
+    (0 until numVariables).foreach { _ => readLongBytes(iterator) }
+    query
+  }
+
+  /**
+   * Reads a short to determine how many variables there are then reads that many
+   * short bytes
+   * @param iterator To read from
+   * @return A list of variables as raw bytes
+   */
+  def readVariables(iterator: ByteIterator): List[Array[Byte]] = {
+    val numVariables = iterator.getShort
+    (0 until numVariables).map { _ => readLongBytes(iterator) } toList
   }
 }

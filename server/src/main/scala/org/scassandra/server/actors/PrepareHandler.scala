@@ -17,6 +17,7 @@ package org.scassandra.server.actors
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.util.ByteString
+import org.scassandra.server.actors.PrepareHandler.{PreparedStatementResponse, PreparedStatementQuery}
 import org.scassandra.server.cqlmessages.CqlMessageFactory
 import org.scassandra.server.cqlmessages.request.ExecuteRequest
 import org.scassandra.server.cqlmessages.response.Result
@@ -27,6 +28,8 @@ import org.scassandra.server.priming.query.PrimeMatch
 
 import scala.concurrent.duration.FiniteDuration
 
+//todo move execute handling into a new actor and have it query
+//like the batch handler does
 class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActivityLog) extends Actor with ActorLogging {
 
   import org.scassandra.server.cqlmessages.CqlProtocolHelper._
@@ -44,6 +47,12 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
       val action: ExecuteResponse = handleExecute(body, stream, msgFactory)
       action.activity.foreach(activityLog.recordPreparedStatementExecution)
       sendMessage(action.msg, connection)
+
+    case PreparedStatementQuery(ids) =>
+      sender() ! PreparedStatementResponse(ids.flatMap(id => idToStatement.get(id) match {
+        case Some(text) => Seq(id -> text)
+        case None => Seq()
+      }) toMap)
   }
 
   case class PrepareResponse(activity: PreparedStatementPreparation, result: Result)
@@ -119,4 +128,6 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 object PrepareHandler {
   case class Prepare(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
   case class Execute(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
+  case class PreparedStatementQuery(id: List[Int])
+  case class PreparedStatementResponse(preparedStatementText: Map[Int, String])
 }

@@ -16,9 +16,10 @@
 package org.scassandra.server.cqlmessages
 
 import org.scassandra.server.cqlmessages.response.PreparedResultV1
-import akka.util.ByteString
+import akka.util.{ByteIterator, ByteString}
 import org.scassandra.server.cqlmessages.request.{ExecuteRequest}
 import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.server.priming.BatchQuery
 
 object VersionOneMessageFactory extends AbstractMessageFactory {
 
@@ -36,4 +37,8 @@ object VersionOneMessageFactory extends AbstractMessageFactory {
   def parseExecuteRequestWithVariables(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): ExecuteRequest = {
     ExecuteRequest.versionOneWithTypes(stream, byteString, variableTypes)
   }
+
+  def parseBatchQuery(byteString: ByteIterator): String  = throw new UnsupportedOperationException("Batches not supported at v1 of the protocol")
+
+  def readVariables(iterator: ByteIterator): List[Array[Byte]] = throw new UnsupportedOperationException("Batches not supported at v1 of the protocol")
 }

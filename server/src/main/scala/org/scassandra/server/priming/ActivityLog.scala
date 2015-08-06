@@ -16,7 +16,7 @@
 package org.scassandra.server.priming
 
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.cqlmessages.{BatchType, Consistency}
+import org.scassandra.server.cqlmessages.{BatchQueryKind, BatchType, Consistency}
 import org.scassandra.server.cqlmessages.types.ColumnType
 
 class ActivityLog extends LazyLogging {
@@ -107,6 +107,6 @@ class ActivityLog extends LazyLogging {
 case class Query(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[ColumnType[_]] = List())
 case class Connection(result: String = "success")
 case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[ColumnType[_]])
-case class BatchQuery(query: String)
-case class BatchExecution(batchQueries: List[BatchQuery], consistency: Consistency, batchType: BatchType)
+case class BatchQuery(query: String, batchQueryKind: BatchQueryKind)
+case class BatchExecution(batchQueries: Seq[BatchQuery], consistency: Consistency, batchType: BatchType)
 case class PreparedStatementPreparation(preparedStatementText: String)

@@ -29,7 +29,7 @@ import org.scassandra.server.cqlmessages._
  * TODO: unit test separately
  */
 class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
-                        batchHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
+                        batchHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory, ActorRef) => ActorRef,
                         registerHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         optionsHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         prepareHandler: ActorRef,
@@ -51,7 +51,7 @@ class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory, ActorR
           initialiseMessageFactory(protocolVersion)
           val wrappedSender = connectionWrapperFactory(context, sender())
           queryHandler = queryHandlerFactory(context, wrappedSender, messageFactory)
-          batchHandler = batchHandlerFactory(context, wrappedSender, messageFactory)
+          batchHandler = batchHandlerFactory(context, wrappedSender, messageFactory, prepareHandler)
           registerHandler = registerHandlerFactory(context, wrappedSender, messageFactory)
           optionsHandler = optionsHandlerFactory(context, wrappedSender, messageFactory)
           wrappedSender ! messageFactory.createReadyMessage(stream)

@@ -19,7 +19,7 @@ import org.scalatest.{Matchers, BeforeAndAfter, FunSpec}
 import spray.testkit.ScalatestRouteTest
 import org.scassandra.server.priming._
 import spray.json.JsonParser
-import org.scassandra.server.cqlmessages.{UNLOGGED, LOGGED, ONE}
+import org.scassandra.server.cqlmessages.{QueryKind, UNLOGGED, LOGGED, ONE}
 import org.scassandra.server.priming.Connection
 import org.scassandra.server.priming.Query
 
@@ -166,13 +166,13 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
   describe("Batch execution") {
     it("Should return executions from ActivityLog") {
       activityLog.clearBatchExecutions()
-      activityLog.recordBatchExecution(BatchExecution(List(BatchQuery("Query")), ONE, LOGGED))
+      activityLog.recordBatchExecution(BatchExecution(List(BatchQuery("Query", QueryKind)), ONE, LOGGED))
 
       Get("/batch-execution") ~> activityVerificationRoute ~> check {
         val response = responseAs[List[BatchExecution]]
 
         response.size should equal(1)
-        response.head.batchQueries should equal(List(BatchQuery("Query")))
+        response.head.batchQueries should equal(List(BatchQuery("Query", QueryKind)))
         response.head.consistency should equal(ONE)
         response.head.batchType should equal(LOGGED)
       }

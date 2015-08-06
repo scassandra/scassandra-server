@@ -54,7 +54,7 @@ class TcpServer(listenAddress: String, port: Int,
       activityLog.recordConnection()
       val handler = context.actorOf(Props(classOf[ConnectionHandler],
         (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[QueryHandler], tcpConnection, primedResults, msgFactory, activityLog)),
-        (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[BatchHandler], tcpConnection, msgFactory, activityLog)),
+        (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory, prepareHandler: ActorRef) => af.actorOf(Props(classOf[BatchHandler], tcpConnection, msgFactory, activityLog, prepareHandler)),
         (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[RegisterHandler], tcpConnection, msgFactory)),
         (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[OptionsHandler], tcpConnection, msgFactory)),
         preparedHandler,

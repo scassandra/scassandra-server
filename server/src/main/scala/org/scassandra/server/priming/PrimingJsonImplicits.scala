@@ -20,7 +20,7 @@ import java.math.BigInteger
 import com.typesafe.scalalogging.LazyLogging
 import spray.json._
 import spray.httpx.SprayJsonSupport
-import org.scassandra.server.cqlmessages.{BatchType, Consistency}
+import org.scassandra.server.cqlmessages.{BatchQueryKind, BatchType, Consistency}
 import org.scassandra.server.priming.query.PrimeCriteria
 import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
 import org.scassandra.server.priming.query.PrimeQuerySingle
@@ -40,6 +40,15 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
     def read(value: JsValue) = value match {
       case JsString(consistency) => Consistency.fromString(consistency)
       case _ => throw new IllegalArgumentException("Expected Consistency as JsString")
+    }
+  }
+
+  implicit object BatchQueryKindJsonFormat extends RootJsonFormat[BatchQueryKind] {
+    def write(c: BatchQueryKind) = JsString(c.string)
+
+    def read(value: JsValue) = value match {
+      case JsString(v) => BatchQueryKind.fromString(v)
+      case _ => throw new IllegalArgumentException("Expected BatchQueryKind as JsString")
     }
   }
 
@@ -135,6 +144,6 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
   implicit val impPreparedStatementExecution = jsonFormat4(PreparedStatementExecution)
   implicit val impPreparedStatementPreparation = jsonFormat1(PreparedStatementPreparation)
   implicit val impVersion = jsonFormat1(Version)
-  implicit val impBatchQuery = jsonFormat1(BatchQuery)
+  implicit val impBatchQuery = jsonFormat2(BatchQuery)
   implicit val impBatchExecution = jsonFormat3(BatchExecution)
 }
