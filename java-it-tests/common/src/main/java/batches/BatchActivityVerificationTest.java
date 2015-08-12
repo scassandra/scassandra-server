@@ -7,6 +7,7 @@ import common.CassandraQuery;
 import org.junit.Test;
 import org.scassandra.http.client.BatchExecution;
 import org.scassandra.http.client.BatchQuery;
+import org.scassandra.http.client.BatchQueryKind;
 import org.scassandra.http.client.BatchType;
 
 import java.util.List;
@@ -110,7 +111,7 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
         assertEquals(1, batches.size());
         assertEquals(BatchExecution.builder().withBatchQueries(
                 BatchQuery.builder().withQuery("query").build(),
-                BatchQuery.builder().withQuery("prepared statement ? ?").withType(BatchQuery.BatchQueryKind.prepared_statement).build())
+                BatchQuery.builder().withQuery("prepared statement ? ?").withType(BatchQueryKind.prepared_statement).build())
                 .withConsistency("ONE").withBatchType(BatchType.LOGGED).build(), batches.get(0));
     }
 }
