@@ -2,8 +2,6 @@ package org.scassandra.http.client;
 
 public final class BatchQuery {
 
-    public enum BatchQueryKind {query, prepared_statement}
-
     private final String query;
     private final BatchQueryKind batchQueryKind;
 

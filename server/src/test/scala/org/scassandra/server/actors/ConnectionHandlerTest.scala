@@ -38,6 +38,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
   var registerHandlerTestProbe : TestProbe = null
   var optionsHandlerTestProbe : TestProbe = null
   var prepareHandlerTestProbe : TestProbe = null
+  var executeHandlerTestProbe : TestProbe = null
 
   var lastMsgFactoryUsedForQuery : CqlMessageFactory = null
   var lastMsgFactoryUsedForRegister : CqlMessageFactory = null
@@ -47,6 +48,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
     queryHandlerTestProbe = TestProbe()
     registerHandlerTestProbe = TestProbe()
     prepareHandlerTestProbe = TestProbe()
+    executeHandlerTestProbe = TestProbe()
     optionsHandlerTestProbe = TestProbe()
     batchHandlerTestProbe = TestProbe()
     testActorRef = TestActorRef(new ConnectionHandler(
@@ -66,6 +68,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
         optionsHandlerTestProbe.ref
       },
       prepareHandlerTestProbe.ref,
+      executeHandlerTestProbe.ref,
       (_,actorRef) => {
         actorRef
       }
@@ -275,7 +278,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
     prepareHandlerTestProbe.expectMsg(PrepareHandler.Prepare(ByteString(), streamId, VersionTwoMessageFactory, self))
   }
 
-  test("Should forward Execute messages to the prepare handler") {
+  test("Should forward Execute messages to the execute handler") {
     sendStartupMessage()
     val streamId : Byte = 0x1
     val headerForPrepareMessage = new Header(ProtocolVersion.ClientProtocolVersionTwo,
@@ -286,7 +289,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
 
     testActorRef ! Received(ByteString(emptyPrepareMessage))
 
-    prepareHandlerTestProbe.expectMsg(PrepareHandler.Execute(ByteString(messageBody), streamId, VersionTwoMessageFactory, self))
+    executeHandlerTestProbe.expectMsg(ExecuteHandler.Execute(ByteString(messageBody), streamId, VersionTwoMessageFactory, self))
   }
 
   test("Should forward Batch messages to the batch handler") {

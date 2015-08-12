@@ -38,6 +38,7 @@ class TcpServer(listenAddress: String, port: Int,
 
   IO(Tcp) ! Bind(self, new InetSocketAddress(listenAddress, port))
   val preparedHandler = context.actorOf(Props(classOf[PrepareHandler], primePrepareStore, activityLog))
+  val executeHandler = context.actorOf(Props(classOf[ExecuteHandler], primePrepareStore, activityLog, preparedHandler))
 
   def receive = {
     case b @ Bound(localAddress) =>
@@ -58,6 +59,7 @@ class TcpServer(listenAddress: String, port: Int,
         (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[RegisterHandler], tcpConnection, msgFactory)),
         (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[OptionsHandler], tcpConnection, msgFactory)),
         preparedHandler,
+        executeHandler,
         (af: ActorRefFactory, tcpConnection: ActorRef) => af.actorOf(Props(classOf[TcpConnectionWrapper], tcpConnection)))
       )
       log.debug(s"Sending register with connection handler $handler")

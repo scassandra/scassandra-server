@@ -18,6 +18,7 @@ class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory, ActorR
                         registerHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         optionsHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         prepareHandler: ActorRef,
+                        executeHandler: ActorRef,
                         connectionWrapperFactory: (ActorRefFactory, ActorRef) => ActorRef) extends Actor with ActorLogging {
 
   var messageFactory: CqlMessageFactory = _
@@ -65,7 +66,7 @@ class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory, ActorR
         case OpCodes.Execute =>
           log.debug("Received execute message. Sending to ExecuteHandler")
           val wrappedSender = connectionWrapperFactory(context, sender())
-          prepareHandler ! PrepareHandler.Execute(messageBody, stream, messageFactory, wrappedSender)
+          executeHandler ! ExecuteHandler.Execute(messageBody, stream, messageFactory, wrappedSender)
         case opCode @ _ =>
           log.warning(s"Received unknown opcode $opCode this probably means this feature is yet to be implemented the message body is $messageBody")
       }

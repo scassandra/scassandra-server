@@ -28,6 +28,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
                         registerHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         optionsHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         prepareHandler: ActorRef,
+                        executeHandler: ActorRef,
                         connectionWrapperFactory: (ActorRefFactory, ActorRef) => ActorRef) extends Actor with ActorLogging {
 
   import akka.io.Tcp._
@@ -46,6 +47,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
     registerHandlerFactory,
     optionsHandlerFactory,
     prepareHandler,
+    executeHandler,
     connectionWrapperFactory
   ))
 
