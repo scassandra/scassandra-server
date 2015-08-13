@@ -26,20 +26,17 @@ class VersionOneMessageFactoryTest extends FunSuite with Matchers {
   val underTest = VersionOneMessageFactory
 
   test("Parsing QueryRequest") {
-    val query: String = "select * from blah where name = ?"
+    val query: String = "select * from blah where name = 'Hello'"
     val message: Array[Byte] =
                 CqlProtocolHelper.serializeLongString(query) ++
-                CqlProtocolHelper.serializeShort(TWO.code) ++
-                Array[Byte](QueryFlags.Values) ++
-                CqlProtocolHelper.serializeShort(1) ++ // number of params
-                CqlText.writeValueWithLength("Hello")
+                CqlProtocolHelper.serializeShort(TWO.code)
 
-    val queryRequest = underTest.parseQueryRequest(1, ByteString(message), List(CqlText))
+    val queryRequest = underTest.parseQueryRequest(1, ByteString(message))
 
     queryRequest.query should equal(query)
     queryRequest.consistency should equal(TWO.code)
-    queryRequest.flags should equal(QueryFlags.Values)
-    queryRequest.parameters should equal(List(Some("Hello")))
+    queryRequest.flags should equal(0x00.toByte)
+    queryRequest.parameters should equal(Nil)
 
   }
 }
