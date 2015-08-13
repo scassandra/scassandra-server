@@ -3,7 +3,7 @@ package org.scassandra.server.actors
 import java.util.concurrent.TimeUnit
 
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementResponse, PreparedStatementQuery}
-import org.scassandra.server.cqlmessages.request.{ExecuteRequestV2}
+import org.scassandra.server.cqlmessages.request.ExecuteRequestV2
 import org.scassandra.server.cqlmessages.response._
 import org.scassandra.server.cqlmessages.types.{CqlVarchar, CqlBigint}
 
@@ -145,6 +145,29 @@ class ExecuteHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     prepareHandlerTestProbe.reply(PreparedStatementResponse(Map(preparedStatementId -> query)))
     activityLog.retrievePreparedStatementExecutions().size should equal(1)
     activityLog.retrievePreparedStatementExecutions().head should equal(PreparedStatementExecution(query, consistency, List(), List()))
+
+  }
+
+  test("Should return unprepared response if not prepared statement not found") {
+    activityLog.clearPreparedStatementExecutions()
+    val stream: Byte = 0x02
+    val preparedStatementId = 8675
+    val errMsg = "Could not find prepared statement with id: 0x000021e3"
+    val consistency = TWO
+    val variableTypes = List(CqlBigint)
+    val variables: List[Int] = List(10)
+
+    val executeBody: ByteString = ExecuteRequestV2(protocolByte, stream, preparedStatementId, consistency, 1, variables, variableTypes = variableTypes).serialize().drop(8)
+    underTest ! ExecuteHandler.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+
+    prepareHandlerTestProbe.expectMsg(PreparedStatementQuery(List(preparedStatementId)))
+    prepareHandlerTestProbe.reply(PreparedStatementResponse(Map()))
+    activityLog.retrievePreparedStatementExecutions().size should equal(1)
+    activityLog.retrievePreparedStatementExecutions().head should equal(PreparedStatementExecution(errMsg, consistency, List(), List()))
+
+    testProbeForTcpConnection.expectMsgPF() {
+      case Unprepared(`stream`, `errMsg`, _) => true
+    }
   }
 
   test("Should delay message if fixedDelay primed") {

@@ -1,20 +1,20 @@
 package org.scassandra.server.actors
 
 
-import scala.concurrent.duration._
-import scala.language.postfixOps
-
-import akka.actor.{ActorLogging, ActorRef, Actor}
-import akka.util.{Timeout, ByteString}
+import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.pattern.{ask, pipe}
-
+import akka.util.{ByteString, Timeout}
 import org.scassandra.server.actors.ExecuteHandler.DeserializedExecute
-import org.scassandra.server.actors.PrepareHandler.{PreparedStatementResponse, PreparedStatementQuery}
-import org.scassandra.server.cqlmessages.CqlMessageFactory
+import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
+import org.scassandra.server.cqlmessages.{CqlProtocolHelper, CqlMessageFactory}
+import org.scassandra.server.cqlmessages.CqlProtocolHelper.{bytes2Hex, serializeInt, serializeShortBytes}
 import org.scassandra.server.cqlmessages.request.ExecuteRequest
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.prepared.{PreparedPrime, PreparedStoreLookup}
 import org.scassandra.server.priming.query.PrimeMatch
+
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 
 class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActivityLog, prepareHandler: ActorRef) extends Actor with ActorLogging {
@@ -48,15 +48,18 @@ class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
         lazy val defaultAction = ExecuteResponse(Some(PreparedStatementExecution(p, executeRequest.consistency, List(), List())),
           MessageWithDelay(msgFactory.createVoidMessage(stream)))
-
         matchingPrimedAction.getOrElse(defaultAction)
-      case None => statementNotRecognised(stream, msgFactory)
+      case None =>
+        statementNotRecognised(stream, msgFactory, executeRequest)
     }
     action
   }
 
-  private def statementNotRecognised(stream: Byte, msgFactory: CqlMessageFactory): ExecuteResponse = {
-    ExecuteResponse(None, MessageWithDelay(msgFactory.createVoidMessage(stream)))
+  private def statementNotRecognised(stream: Byte, msgFactory: CqlMessageFactory, executeRequest: ExecuteRequest): ExecuteResponse = {
+    val id = serializeInt(executeRequest.id)
+    val errMsg = s"Could not find prepared statement with id: ${bytes2Hex(id)}"
+    ExecuteResponse(Some(PreparedStatementExecution(errMsg, executeRequest.consistency, List(), List())),
+      MessageWithDelay(msgFactory.createErrorMessage(UnpreparedResult(errMsg, id), stream, executeRequest.consistency)))
   }
 
 

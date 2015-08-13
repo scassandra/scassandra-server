@@ -228,6 +228,13 @@ object CqlProtocolHelper {
       case s : Exception => throw new IllegalArgumentException(s"Not valid hex $hex")
     }
   }
+
+  /**
+   * Converts a byte array to hex string.
+   */
+  def bytes2Hex(bytes: Array[Byte]): String = {
+    "0x" + bytes.map("%02x".format(_)).mkString
+  }
 }
 
 // example sets
