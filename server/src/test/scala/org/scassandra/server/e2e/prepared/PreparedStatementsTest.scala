@@ -16,6 +16,7 @@
 package org.scassandra.server.e2e.prepared
 
 import org.scalatest.concurrent.ScalaFutures
+import org.scassandra.server.priming.json.PrimingJsonImplicits
 import org.scassandra.server.{PrimingHelper, AbstractIntegrationTest}
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
@@ -40,7 +41,7 @@ import org.scassandra.server.priming.prepared.PrimePreparedSingle
 
 class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
 
-  import org.scassandra.server.priming.PrimingJsonImplicits._
+  import PrimingJsonImplicits._
 
   before {
     val svc = url("http://localhost:8043/prime-prepared-single").DELETE

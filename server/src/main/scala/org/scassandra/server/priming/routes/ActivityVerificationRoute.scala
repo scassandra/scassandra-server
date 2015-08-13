@@ -15,10 +15,11 @@
  */
 package org.scassandra.server.priming.routes
 
+import org.scassandra.server.priming.json.PrimingJsonImplicits
 import spray.routing.HttpService
 import com.typesafe.scalalogging.LazyLogging
 import spray.http.StatusCodes
-import org.scassandra.server.priming.{ActivityLog, PrimingJsonImplicits}
+import org.scassandra.server.priming.ActivityLog
 
 trait ActivityVerificationRoute extends HttpService with LazyLogging {
 

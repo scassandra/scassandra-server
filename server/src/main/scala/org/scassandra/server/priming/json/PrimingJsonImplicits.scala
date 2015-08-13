@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.server.priming
+package org.scassandra.server.priming.json
 
 import java.math.BigInteger
+import java.net.InetAddress
+import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.priming.json.ResultJsonRepresentation
-import spray.json._
-import spray.httpx.SprayJsonSupport
-import org.scassandra.server.cqlmessages.{BatchQueryKind, BatchType, Consistency}
-import org.scassandra.server.priming.query.PrimeCriteria
-import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle, PrimePreparedSingle}
-import org.scassandra.server.priming.query.PrimeQuerySingle
-import org.scassandra.server.priming.query.When
-import org.scassandra.server.priming.query.Then
-import java.util.UUID
-import java.net.InetAddress
 import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.server.cqlmessages.{BatchQueryKind, BatchType, Consistency}
+import org.scassandra.server.priming._
+import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
+import org.scassandra.server.priming.query.{PrimeCriteria, PrimeQuerySingle, Then, When}
 import org.scassandra.server.priming.routes.Version
+import spray.httpx.SprayJsonSupport
+import spray.json._
+
 import scala.collection.Set
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport with LazyLogging {

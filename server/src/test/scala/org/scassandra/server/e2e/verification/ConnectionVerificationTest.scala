@@ -19,7 +19,8 @@ import com.datastax.driver.core.{Cluster, HostDistance}
 import dispatch.Defaults._
 import dispatch._
 import org.scalatest.concurrent.ScalaFutures
-import org.scassandra.server.priming.{Connection, PrimingJsonImplicits}
+import org.scassandra.server.priming.Connection
+import org.scassandra.server.priming.json.PrimingJsonImplicits
 import org.scassandra.server.{AbstractIntegrationTest, ConnectionToServerStub}
 import spray.json.JsonParser
 

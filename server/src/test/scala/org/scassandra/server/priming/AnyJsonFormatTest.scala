@@ -16,7 +16,8 @@
 package org.scassandra.server.priming
 
 import org.scalatest.{Matchers, FunSuite}
-import org.scassandra.server.priming.PrimingJsonImplicits.AnyJsonFormat
+import org.scassandra.server.priming.json.PrimingJsonImplicits
+import PrimingJsonImplicits.AnyJsonFormat
 import java.util.UUID
 import spray.json.{JsNull, JsNumber, JsString}
 import java.net.InetAddress

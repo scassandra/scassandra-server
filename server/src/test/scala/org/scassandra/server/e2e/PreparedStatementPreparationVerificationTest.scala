@@ -19,7 +19,8 @@ import dispatch.Defaults._
 import dispatch._
 import org.scalatest.concurrent.ScalaFutures
 import org.scassandra.server.AbstractIntegrationTest
-import org.scassandra.server.priming.{PrimingJsonImplicits, PreparedStatementPreparation}
+import org.scassandra.server.priming.PreparedStatementPreparation
+import org.scassandra.server.priming.json.PrimingJsonImplicits
 import spray.json._
 
 class PreparedStatementPreparationVerificationTest extends AbstractIntegrationTest with ScalaFutures {

@@ -15,12 +15,13 @@
  */
 package org.scassandra.server.priming.routes
 
+import org.scassandra.server.priming.json.PrimingJsonImplicits
 import spray.routing.HttpService
 import com.typesafe.scalalogging.LazyLogging
 
 trait VersionRoute extends HttpService with LazyLogging {
 
-  import org.scassandra.server.priming.PrimingJsonImplicits._
+  import PrimingJsonImplicits._
 
   val versionRoute =
     path("version") {

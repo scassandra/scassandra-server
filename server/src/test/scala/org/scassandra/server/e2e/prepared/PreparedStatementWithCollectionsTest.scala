@@ -20,6 +20,7 @@ import java.util
 import com.datastax.driver.core.Row
 import dispatch._, Defaults._
 import org.scassandra.server.cqlmessages.types._
+import org.scassandra.server.priming.json.PrimingJsonImplicits
 import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle}
 import spray.json._
 import org.scalatest.BeforeAndAfter
@@ -28,7 +29,7 @@ import org.scassandra.server.{PrimingHelper, AbstractIntegrationTest}
 
 class PreparedStatementWithCollectionsTest  extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
 
-  import org.scassandra.server.priming.PrimingJsonImplicits._
+  import PrimingJsonImplicits._
 
   before {
     val svc = url("http://localhost:8043/prime-prepared-single").DELETE
