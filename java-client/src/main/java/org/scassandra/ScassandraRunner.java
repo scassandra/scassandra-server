@@ -22,6 +22,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.scassandra.http.client.ActivityClient;
+import org.scassandra.http.client.CurrentClient;
 import org.scassandra.http.client.PrimingClient;
 import org.scassandra.server.ServerStubRunner;
 
@@ -34,6 +35,7 @@ class ScassandraRunner implements Scassandra {
     private final ServerStubRunner serverStubRunner;
     private final PrimingClient primingClient;
     private final ActivityClient activityClient;
+    private final CurrentClient currentClient;
     private final int binaryPort;
     private final int adminPort;
     private final String versionUrl;
@@ -44,8 +46,9 @@ class ScassandraRunner implements Scassandra {
         this.binaryPort = binaryPort;
         this.adminPort = adminPort;
         this.serverStubRunner = new ServerStubRunner(binaryListenAddress, binaryPort, adminListenAddress, adminPort);
-        this.primingClient = PrimingClient.builder().withPort(adminPort).build();
-        this.activityClient = ActivityClient.builder().withPort(adminPort).build();
+        this.primingClient = PrimingClient.builder().withHost(adminListenAddress).withPort(adminPort).build();
+        this.activityClient = ActivityClient.builder().withHost(adminListenAddress).withPort(adminPort).build();
+        this.currentClient = CurrentClient.builder().withHost(adminListenAddress).withPort(adminPort).build();
         this.versionUrl = "http://" + binaryListenAddress + ":" + adminPort + "/version";
 
     }
@@ -58,6 +61,11 @@ class ScassandraRunner implements Scassandra {
     @Override
     public ActivityClient activityClient() {
         return this.activityClient;
+    }
+
+    @Override
+    public CurrentClient currentClient() {
+        return currentClient;
     }
 
     @Override

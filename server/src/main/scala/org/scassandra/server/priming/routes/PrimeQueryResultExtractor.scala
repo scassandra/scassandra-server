@@ -130,6 +130,7 @@ object PrimeQueryResultExtractor extends LazyLogging {
         case SuccessResult => Success
         case _: ReadRequestTimeoutResult => ReadTimeout
         case _: WriteRequestTimeoutResult => WriteTimeout
+        case _: UnavailableResult => Unavailable
         case _: ServerErrorResult => ServerError
         case _: ProtocolErrorResult => ProtocolError
         case _: BadCredentialsResult => BadCredentials

@@ -16,6 +16,7 @@
 package org.scassandra;
 
 import org.scassandra.http.client.ActivityClient;
+import org.scassandra.http.client.CurrentClient;
 import org.scassandra.http.client.PrimingClient;
 
 /**
@@ -35,6 +36,13 @@ public interface Scassandra {
      * @return ActivityClient
      */
     ActivityClient activityClient();
+
+    /**
+     * Retrieves a Current client that is configured with the same admin port
+     * as Scassandra.
+     * @return CurrentClient
+     */
+    CurrentClient currentClient();
 
     /**
      * Start Scassandra. This will result in both the binary port for Cassandra to be opened

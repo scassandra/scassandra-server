@@ -15,26 +15,32 @@
  */
 package org.scassandra.server.priming
 
-import akka.io.{IO, Tcp}
-import org.scassandra.server.priming.batch.PrimeBatchStore
-import spray.can.Http
-import spray.routing.{RejectionHandler, ExceptionHandler, RoutingSettings, HttpService}
-import spray.util.LoggingContext
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.event.Logging
+import akka.io.{IO, Tcp}
+import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import akka.actor.{ActorSystem, ActorRef, Props, Actor}
-import org.scassandra.server.priming.routes._
-import org.scassandra.server.priming.query.PrimeQueryStore
-import org.scassandra.server.priming.prepared.{PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.ServerReady
+import org.scassandra.server.priming.batch.PrimeBatchStore
+import org.scassandra.server.priming.prepared.{PrimePreparedPatternStore, PrimePreparedStore}
+import org.scassandra.server.priming.query.PrimeQueryStore
+import org.scassandra.server.priming.routes._
+import spray.can.Http
+import spray.routing.{ExceptionHandler, HttpService, RejectionHandler, RoutingSettings}
+import spray.util.LoggingContext
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 trait AllRoutes extends HttpService with PrimingPreparedRoute with
   PrimingQueryRoute with ActivityVerificationRoute with VersionRoute with
-  PrimingBatchRoute with LazyLogging {
+  PrimingBatchRoute with CurrentRoute with LazyLogging {
 
   val allRoutes = routeForPreparedPriming ~
     queryRoute ~ activityVerificationRoute ~
-    versionRoute ~ batchRoute
+    versionRoute ~ batchRoute ~ currentRoute
+
 }
 
 class PrimingServer(listenAddress: String, port: Int,
@@ -43,7 +49,8 @@ class PrimingServer(listenAddress: String, port: Int,
                     implicit val primePreparedPatternStore: PrimePreparedPatternStore,
                     implicit val primeBatchStore: PrimeBatchStore,
                     serverReadyListener: ActorRef,
-                    implicit val activityLog: ActivityLog) extends Actor with LazyLogging {
+                    implicit val activityLog: ActivityLog,
+                    tcpServer: ActorRef) extends Actor with LazyLogging {
 
   import Tcp._
 
@@ -52,7 +59,7 @@ class PrimingServer(listenAddress: String, port: Int,
   logger.info(s"Opening port $port for priming")
 
   val routing = context.actorOf(Props(classOf[PrimingServerHttpService], primeQueryStore, primePreparedStore,
-    primePreparedPatternStore, primeBatchStore, activityLog))
+    primePreparedPatternStore, primeBatchStore, activityLog, tcpServer))
 
   IO(Http) ! Http.Bind(self, listenAddress, port)
 
@@ -73,9 +80,14 @@ class PrimingServerHttpService(implicit val primeQueryStore: PrimeQueryStore,
                                implicit val primePreparedStore: PrimePreparedStore,
                                implicit val primePreparedPatternStore: PrimePreparedPatternStore,
                                implicit val primeBatchStore: PrimeBatchStore,
-                               implicit val activityLog: ActivityLog) extends Actor with AllRoutes with LazyLogging {
+                               implicit val activityLog: ActivityLog,
+                               override val tcpServer: ActorRef) extends Actor with AllRoutes with LazyLogging {
 
   implicit def actorRefFactory: ActorSystem = context.system
+
+  implicit val dispatcher: ExecutionContext = context.dispatcher
+
+  val timeout = Timeout(5 seconds)
 
   // some default spray initialisation
   val routingSettings = RoutingSettings default context

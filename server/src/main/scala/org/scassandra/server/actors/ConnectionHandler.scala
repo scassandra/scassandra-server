@@ -15,23 +15,32 @@
  */
 package org.scassandra.server.actors
 
+import akka.pattern.{ask, pipe}
 import akka.actor._
-import akka.util.ByteString
+import akka.io.Tcp
+import akka.util.{Timeout, ByteString}
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.response.UnsupportedProtocolVersion
+
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 /*
  * Deals with partial messages and multiple messages coming in the same Received
  */
-class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
+class ConnectionHandler(tcpConnection: ActorRef,
+                        queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         batchHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory, ActorRef) => ActorRef,
                         registerHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         optionsHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         prepareHandler: ActorRef,
-                        executeHandler: ActorRef,
-                        connectionWrapperFactory: (ActorRefFactory, ActorRef) => ActorRef) extends Actor with ActorLogging {
+                        executeHandler: ActorRef) extends Actor with ActorLogging {
 
   import akka.io.Tcp._
+  implicit val timeout: Timeout = 1 seconds
+
+  val system = context.system
+  import system.dispatcher
 
   var ready = false
   var partialMessage = false
@@ -47,9 +56,10 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
     registerHandlerFactory,
     optionsHandlerFactory,
     prepareHandler,
-    executeHandler,
-    connectionWrapperFactory
+    executeHandler
   ))
+
+  override def preStart(): Unit = tcpConnection ! ResumeReading
 
   def receive = {
     case Received(data: ByteString) =>
@@ -66,9 +76,21 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
         dataFromPreviousMessage = currentData
         currentData = ByteString()
       }
-    case PeerClosed =>
-      log.info("Client disconnected.")
+      tcpConnection ! ResumeReading
+    case c: ConnectionClosed =>
+      log.info(s"Client disconnected: $c")
       context stop self
+
+    case msg: CqlMessage =>
+      tcpConnection ! Write(msg.serialize())
+
+    // Forward any TCP commands to the underlying connection.
+    // This allows those with a reference to this actor to perform
+    // commands such as Close (immediate close), ConfirmedClose (half close),
+    // and Abort (RST) the connection.
+    case command: Tcp.Command => {
+      (tcpConnection ? command).pipeTo(sender())
+    }
   }
 
   /* should not be called if there isn't at least a header */
@@ -76,9 +98,8 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
     val protocolVersion = currentData(0)
     if (protocolVersion >= VersionThree.clientCode) {
       log.warning(s"Received protocol version $protocolVersion, currently only one and two supported so sending an unsupported protocol error to get the driver to use an older version of the protocol.")
-      val wrappedSender = connectionWrapperFactory(context, sender())
       // we can't really send the correct stream back as it is a different type (short rather than byte)
-      wrappedSender ! UnsupportedProtocolVersion(0x0)(VersionTwo)
+      self ! UnsupportedProtocolVersion(0x0)(VersionTwo)
       currentData = ByteString()
       return false
     }
@@ -95,7 +116,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
       log.debug("Received exactly the whole message")
       partialMessage = false
       val messageBody = currentData.drop(ProtocolOneOrTwoHeaderLength)
-      cqlMessageHandler forward NativeProtocolMessageHandler.Process(opCode, stream, messageBody, protocolVersion)
+      cqlMessageHandler ! NativeProtocolMessageHandler.Process(opCode, stream, messageBody, protocolVersion)
       currentData = ByteString()
       false
     } else if (currentData.length > (bodyLength + ProtocolOneOrTwoHeaderLength)) {
@@ -103,7 +124,7 @@ class ConnectionHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMess
       log.debug("Received a larger message than the length specifies - assume the rest is another message")
       val messageBody = currentData.drop(ProtocolOneOrTwoHeaderLength).take(bodyLength)
       log.debug(s"Message received ${messageBody.utf8String}")
-      cqlMessageHandler forward NativeProtocolMessageHandler.Process(opCode, stream, messageBody, protocolVersion)
+      cqlMessageHandler ! NativeProtocolMessageHandler.Process(opCode, stream, messageBody, protocolVersion)
       currentData = currentData.drop(ProtocolOneOrTwoHeaderLength + bodyLength)
       true
     } else {
