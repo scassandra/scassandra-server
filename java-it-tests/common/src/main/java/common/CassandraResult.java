@@ -43,6 +43,19 @@ public interface CassandraResult {
         }
     }
 
+    public static class ErrorMessageStatus extends ErrorStatus {
+        private final String message;
+
+        public ErrorMessageStatus(PrimingRequest.Result result, String message) {
+            super(result, null);
+            this.message = message;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+    }
+
     public static class ReadTimeoutStatus extends ErrorStatus {
         private final int receivedAcknowledgements;
         private final int requiredAcknowledgements;

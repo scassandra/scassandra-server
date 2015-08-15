@@ -1,21 +1,23 @@
 package cassandra;
 
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.ReadTimeoutException;
-import com.datastax.driver.core.exceptions.UnavailableException;
-import com.datastax.driver.core.exceptions.WriteTimeoutException;
+import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.google.common.base.Optional;
 import common.*;
 import org.scassandra.http.client.BatchType;
+import org.scassandra.http.client.PrimingRequest;
 import org.scassandra.http.client.WriteTypePrime;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.function.Function;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static common.Config.KEYSPACE;
+import static org.scassandra.http.client.PrimingRequest.Result.*;
+import static org.scassandra.http.client.PrimingRequest.Result.already_exists;
 
 public class CassandraExecutor21 implements CassandraExecutor {
     private Cluster cluster;
@@ -116,6 +118,49 @@ public class CassandraExecutor21 implements CassandraExecutor {
                     new CassandraResult.UnavailableStatus(e.getConsistencyLevel().toString(),
                             e.getRequiredReplicas(),
                             e.getAliveReplicas()));
+        } catch (NoHostAvailableException e) {
+            PrimingRequest.Result error = server_error;
+            String message = "";
+            InetSocketAddress addr = e.getErrors().keySet().iterator().next();
+            Throwable e1 = e.getErrors().get(addr);
+            try {
+                throw e1;
+            } catch(DriverException de) {
+                message = de.getMessage();
+                // These errors are thrown in NHAE as the driver considers them host-specific errors and
+                // tries another host.
+                if(message.contains("protocol error")) {
+                    error = protocol_error;
+                } else if(message.contains("Host overloaded")) {
+                    error = overloaded;
+                } else if(message.contains("Host is bootstrapping")) {
+                    error = is_bootstrapping;
+                }
+            } catch(Throwable t) {} // unknown error we can handle later.
+            return new CassandraResult21(new CassandraResult.ErrorMessageStatus(error, message));
+        } catch(DriverInternalError e) {
+            PrimingRequest.Result error = protocol_error;
+            String message = e.getMessage();
+            // Unprepared is thrown as a DriverInternalError if the Driver doesn't know about the query either
+            // as this is unexpected behavior.
+            if(message.startsWith("Tried to execute unknown prepared query")) {
+                error = unprepared;
+            }
+            return new CassandraResult21(new CassandraResult.ErrorMessageStatus(error, message));
+        } catch(AuthenticationException e) {
+            return new CassandraResult21(new CassandraResult.ErrorMessageStatus(bad_credentials, e.getMessage()));
+        } catch(TruncateException e) {
+            return new CassandraResult21(new CassandraResult.ErrorMessageStatus(truncate_error, e.getMessage()));
+        } catch(SyntaxError e) {
+            return new CassandraResult21(new CassandraResult.ErrorMessageStatus(syntax_error, e.getMessage()));
+        } catch(UnauthorizedException e) {
+            return new CassandraResult21(new CassandraResult.ErrorMessageStatus(unauthorized, e.getMessage()));
+        } catch(InvalidConfigurationInQueryException e) {
+            return new CassandraResult21(new CassandraResult.ErrorMessageStatus(config_error, e.getMessage()));
+        } catch(InvalidQueryException e) {
+            return new CassandraResult21(new CassandraResult.ErrorMessageStatus(invalid, e.getMessage()));
+        } catch(AlreadyExistsException e) {
+            return new CassandraResult21(new CassandraResult.ErrorMessageStatus(already_exists, e.getMessage()));
         }
         return new CassandraResult21(resultSet);
     }

@@ -16,8 +16,8 @@
 package org.scassandra.server.priming.query
 
 import org.scassandra.server.cqlmessages.Consistency
-import org.scassandra.server.priming.ResultJsonRepresentation
 import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.server.priming.json.ResultJsonRepresentation
 
 /*
   These case classes are for parsing the incoming JSON for /prime-query-single

@@ -1,19 +1,13 @@
 package preparedstatements;
 
-import common.AbstractScassandraTest;
-import common.CassandraExecutor;
-import common.CassandraResult;
+import common.*;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.scassandra.http.client.PrimingRequest;
-import org.scassandra.http.client.ReadTimeoutConfig;
-import org.scassandra.http.client.UnavailableConfig;
-import org.scassandra.http.client.WriteTimeoutConfig;
+import org.scassandra.http.client.*;
+import org.scassandra.http.client.Config;
 
 import static org.junit.Assert.assertEquals;
 import static org.scassandra.http.client.PrimingRequest.Result.*;
-import static org.scassandra.http.client.WriteTypePrime.BATCH_LOG;
-import static org.scassandra.http.client.WriteTypePrime.CAS;
 import static org.scassandra.http.client.WriteTypePrime.SIMPLE;
 
 abstract public class PreparedStatementErrorPrimingTest extends AbstractScassandraTest {
@@ -85,5 +79,115 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
         assertEquals(consistency, ((CassandraResult.UnavailableStatus) status).getConsistency());
         assertEquals(4, ((CassandraResult.UnavailableStatus) status).getRequiredAcknowledgements());
         assertEquals(3, ((CassandraResult.UnavailableStatus) status).getAlive());
+    }
+
+    @Test
+    public void testPrimingServerError() {
+        String errorMessage = "Arbitrary Server Error";
+        ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
+        assertErrorMessageStatus(server_error, config, "Host replied with server error: " + errorMessage);
+    }
+
+    @Test
+    public void testPrimingProtocolError() {
+        String errorMessage = "Arbitrary Protocol Error";
+        ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
+        assertErrorMessageStatus(protocol_error, config, "An unexpected protocol error occurred. This is a bug in this library, please report: " + errorMessage);
+    }
+
+    @Test
+    public void testBadCredentials() {
+        String errorMessage = "Bad Credentials";
+        ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
+        assertErrorMessageStatus(bad_credentials, config, "Authentication error on host localhost/127.0.0.1:8042: " + errorMessage);
+    }
+
+    @Test
+    public void testOverloadedError() {
+        ErrorMessageConfig config = new ErrorMessageConfig("");
+        assertErrorMessageStatus(overloaded, config, "Host overloaded");
+    }
+
+    @Test
+    public void testIsBootstrapping() {
+        String errorMessage = "Lay off, i'm bootstrapping.";
+        ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
+        assertErrorMessageStatus(is_bootstrapping, config, "Host is bootstrapping");
+    }
+
+    @Test
+    public void testTruncateError() {
+        String errorMessage = "Truncate Failure";
+        ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
+        assertErrorMessageStatus(truncate_error, config, errorMessage);
+    }
+
+    @Test
+    public void testSyntaxError() {
+        String errorMessage = "Bad Syntax";
+        ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
+        assertErrorMessageStatus(syntax_error, config, errorMessage);
+    }
+
+    @Test
+    public void testUnauthorized() {
+        String errorMessage = "Not allowed to do that";
+        ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
+        assertErrorMessageStatus(unauthorized, config, errorMessage);
+    }
+
+    @Test
+    public void testInvalid() {
+        String errorMessage = "Invalid query";
+        ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
+        assertErrorMessageStatus(invalid, config, errorMessage);
+    }
+
+    @Test
+    @Ignore
+    // Ignore as this is a legitimate bug in the driver (returns InvalidQueryException instead of
+    // InvalidConfigurationInQueryException.
+    public void testConfigError() {
+        String errorMessage = "Configuration Error 12345";
+        ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
+        assertErrorMessageStatus(config_error, config, errorMessage);
+    }
+
+    @Test
+    public void testAlreadyExists() {
+        // This would never really happen as result of a prepared statement
+        // but still worthwhile to test to see what happens.
+        String keyspace = "hello";
+        String table = "world";
+        AlreadyExistsConfig config = new AlreadyExistsConfig(keyspace, table);
+        assertErrorMessageStatus(already_exists, config, "Table hello.world already exists");
+
+        // keyspace only
+        assertErrorMessageStatus(already_exists, new AlreadyExistsConfig(keyspace), "Keyspace hello already exists");
+    }
+
+    @Test
+    public void testUnprepared() {
+        String prepareId = "0x86753090";
+        UnpreparedConfig config = new UnpreparedConfig(prepareId);
+        assertErrorMessageStatus(unprepared, config, "Tried to execute unknown prepared query " + prepareId);
+    }
+
+    private CassandraResult assertErrorMessageStatus(PrimingRequest.Result result, Config config, String expectedMsg) {
+        String query = "select * from people";
+        String consistency = "LOCAL_ONE";
+        PrimingRequest prime = PrimingRequest.preparedStatementBuilder()
+            .withQuery(query)
+            .withResult(result)
+            .withConfig(config)
+            .build();
+        primingClient.prime(prime);
+
+        CassandraResult cassandraResult = cassandra().prepareAndExecuteWithConsistency(query, consistency);
+
+        CassandraResult.ResponseStatus status = cassandraResult.status();
+        assertEquals(result, status.getResult());
+        assertEquals(expectedMsg, ((CassandraResult.ErrorMessageStatus) status).getMessage());
+        return cassandraResult;
     }
 }

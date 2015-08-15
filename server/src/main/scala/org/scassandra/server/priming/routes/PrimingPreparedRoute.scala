@@ -15,10 +15,12 @@
  */
 package org.scassandra.server.priming.routes
 
+import org.scassandra.server.priming._
+import org.scassandra.server.priming.json.WriteTimeout
 import spray.routing.HttpService
 import com.typesafe.scalalogging.LazyLogging
 import spray.http.StatusCodes
-import org.scassandra.server.priming._
+import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.prepared._
 import scala.collection.immutable.Iterable
 

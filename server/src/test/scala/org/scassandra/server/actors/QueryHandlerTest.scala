@@ -43,7 +43,7 @@ import org.scassandra.server.cqlmessages.types.{CqlInt, CqlVarchar, CqlText}
 import org.scassandra.server.priming.query.{Prime, PrimeMatch, PrimeQueryStore}
 import org.scassandra.server.priming.{Query, _}
 
-class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with TestKitBase with MockitoSugar {
+class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with TestKitBase with MockitoSugar with ErrorHandlingBehaviors {
   implicit lazy val system = ActorSystem()
 
   var underTest: ActorRef = null
@@ -51,7 +51,7 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
   val mockPrimedResults = mock[PrimeQueryStore]
   val someCqlStatement = PrimeMatch("some cql statement", ONE)
   val cqlMessageFactory = VersionTwoMessageFactory
-  val protocolVersion: Byte = ProtocolVersion.ServerProtocolVersionTwo
+  val protocolByte: Byte = ProtocolVersion.ServerProtocolVersionTwo
   val activityLog = new ActivityLog
   implicit val impProtocolVersion = VersionTwo
 
@@ -117,42 +117,6 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
 
     testProbeForTcpConnection.expectMsg(Rows("", "", stream, Map("name" -> CqlVarchar, "age" -> CqlInt), rows))
-  }
-
-  test("Should return ReadRequestTimeout if result is ReadTimeout") {
-    val stream: Byte = 0x05
-    val consistency = LOCAL_QUORUM
-    val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query, stream, consistency).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch("some cql statement", consistency))).thenReturn(Some(Prime(List(), ReadRequestTimeoutResult())))
-
-    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
-
-    testProbeForTcpConnection.expectMsg(ReadRequestTimeout(stream, consistency, ReadRequestTimeoutResult()))
-  }
-
-  test("Should return WriteRequestTimeout if result is WriteTimeout") {
-    val stream: Byte = 0x05
-    val consistency = LOCAL_ONE
-    val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query, consistency = consistency).toArray.drop(8))
-    val result: WriteRequestTimeoutResult = WriteRequestTimeoutResult()
-    when(mockPrimedResults.get(PrimeMatch("some cql statement", consistency))).thenReturn(Some(Prime(List(), result)))
-
-    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
-
-    testProbeForTcpConnection.expectMsg(WriteRequestTimeout(stream, consistency, result))
-  }
-
-  test("Should return Unavailable Exception if result is UnavailableException") {
-    val query = "some cql statement"
-    val stream: Byte = 0x05
-    val consistency: Consistency = LOCAL_ONE
-    val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(query, consistency = consistency).toArray.drop(8))
-    val result: UnavailableResult = UnavailableResult()
-    when(mockPrimedResults.get(PrimeMatch(query, consistency))).thenReturn(Some(Prime(List(), result)))
-
-    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
-
-    testProbeForTcpConnection.expectMsg(UnavailableException(stream, consistency, result))
   }
 
   test("Test multiple rows") {
@@ -247,5 +211,16 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     recordedQueries.size should equal(1)
     val recordedQuery: Query = recordedQueries.head
     recordedQuery should equal(Query(someCqlStatement.query, someCqlStatement.consistency, List(Some("Hello")), List(CqlText)))
+  }
+
+  override def executeWithError(result: ErrorResult, expectedError: (Byte, Consistency) => Error): Unit = {
+    val stream: Byte = 0x05
+    val consistency = LOCAL_ONE
+    val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query, consistency = consistency).toArray.drop(8))
+    when(mockPrimedResults.get(PrimeMatch("some cql statement", consistency))).thenReturn(Some(Prime(List(), result)))
+
+    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
+
+    testProbeForTcpConnection.expectMsg(expectedError(stream, consistency))
   }
 }

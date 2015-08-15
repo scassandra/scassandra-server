@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 import org.scalatest.{Matchers, FunSuite}
 import org.scassandra.server.cqlmessages.types.CqlText
 import org.scassandra.server.priming._
+import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.query.{Prime, Then, When, PrimeQuerySingle}
 
 import scala.concurrent.duration.FiniteDuration

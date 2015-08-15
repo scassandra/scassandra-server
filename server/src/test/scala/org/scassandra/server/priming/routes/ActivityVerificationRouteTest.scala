@@ -16,6 +16,7 @@
 package org.scassandra.server.priming.routes
 
 import org.scalatest.{Matchers, BeforeAndAfter, FunSpec}
+import org.scassandra.server.priming.json.PrimingJsonImplicits
 import spray.testkit.ScalatestRouteTest
 import org.scassandra.server.priming._
 import spray.json.JsonParser

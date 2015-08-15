@@ -37,6 +37,7 @@ import org.scalatest.{FunSpec, Matchers}
 import org.scassandra.server.cqlmessages.types.{CqlInt, CqlVarchar}
 import org.scassandra.server.cqlmessages.{ONE, TWO}
 import org.scassandra.server.priming._
+import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle, _}
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
 import spray.http.StatusCodes

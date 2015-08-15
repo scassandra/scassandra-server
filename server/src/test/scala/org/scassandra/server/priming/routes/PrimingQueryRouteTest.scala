@@ -34,6 +34,7 @@ import org.scalatest._
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.types._
 import org.scassandra.server.priming.{ConflictingPrimes, TypeMismatch, TypeMismatches, _}
+import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch, PrimeQuerySingle, Then, When, _}
 import spray.http.StatusCodes.{BadRequest, OK}
 import spray.testkit.ScalatestRouteTest

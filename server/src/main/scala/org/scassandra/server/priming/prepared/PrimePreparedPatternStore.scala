@@ -21,7 +21,8 @@ import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
 import org.scassandra.server.priming.routes.PrimeQueryResultExtractor
-import org.scassandra.server.priming.{Defaulter, PrimeAddResult, PrimeAddSuccess, Success}
+import org.scassandra.server.priming.{Defaulter, PrimeAddResult, PrimeAddSuccess}
+import org.scassandra.server.priming.json.Success
 
 import scala.concurrent.duration.FiniteDuration
 

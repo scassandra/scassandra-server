@@ -24,8 +24,23 @@ object WriteType extends Enumeration {
  * serialisation of prime JSON.
  */
 abstract class PrimeResult
+abstract class ErrorResult extends PrimeResult
 
 case object SuccessResult extends PrimeResult
-case class ReadRequestTimeoutResult(receivedResponses: Int = 0, requiredResponses: Int = 1, dataPresent: Boolean = false) extends PrimeResult
-case class WriteRequestTimeoutResult(receivedResponses: Int = 0, requiredResponses: Int = 1, writeType: WriteType.Value = WriteType.SIMPLE) extends PrimeResult
-case class UnavailableResult(requiredResponses: Int = 1, alive: Int = 0) extends PrimeResult
+
+case class ServerErrorResult(message: String) extends ErrorResult
+case class ProtocolErrorResult(message: String) extends ErrorResult
+case class BadCredentialsResult(message: String) extends ErrorResult
+case class OverloadedResult(message: String) extends ErrorResult
+case class IsBootstrappingResult(message: String) extends ErrorResult
+case class TruncateErrorResult(message: String) extends ErrorResult
+case class SyntaxErrorResult(message: String) extends ErrorResult
+case class UnauthorizedResult(message: String) extends ErrorResult
+case class InvalidResult(message: String) extends ErrorResult
+case class ConfigErrorResult(message: String) extends ErrorResult
+case class AlreadyExistsResult(message: String, keyspace: String, table: String) extends ErrorResult
+case class UnpreparedResult(message: String, id: Array[Byte]) extends ErrorResult
+
+case class ReadRequestTimeoutResult(receivedResponses: Int = 0, requiredResponses: Int = 1, dataPresent: Boolean = false) extends ErrorResult
+case class WriteRequestTimeoutResult(receivedResponses: Int = 0, requiredResponses: Int = 1, writeType: WriteType.Value = WriteType.SIMPLE) extends ErrorResult
+case class UnavailableResult(requiredResponses: Int = 1, alive: Int = 0) extends ErrorResult

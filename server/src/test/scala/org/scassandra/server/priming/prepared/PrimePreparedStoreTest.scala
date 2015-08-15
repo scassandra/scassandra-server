@@ -36,7 +36,8 @@ import org.scalatest.{FunSuite, Matchers}
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.types.{CqlInet, CqlText, CqlVarchar}
 import org.scassandra.server.priming.query.{Prime, PrimeMatch}
-import org.scassandra.server.priming.{ConflictingPrimes, PrimeAddSuccess, ReadRequestTimeoutResult, ReadTimeout}
+import org.scassandra.server.priming.{ConflictingPrimes, PrimeAddSuccess, ReadRequestTimeoutResult}
+import org.scassandra.server.priming.json.ReadTimeout
 
 import scala.concurrent.duration.FiniteDuration
 

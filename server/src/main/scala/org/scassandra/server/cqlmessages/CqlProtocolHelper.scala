@@ -74,6 +74,16 @@ object CqlProtocolHelper {
   }
 
   /**
+   * Serializes given [[Array]] into [short bytes] bytes.
+   */
+  def serializeShortBytes(bytes: Array[Byte]) = {
+    val frameBuilder = ByteString.newBuilder
+    frameBuilder.putShort(bytes.length)
+    frameBuilder.putBytes(bytes)
+    frameBuilder.result().toArray
+  }
+
+  /**
    * Serializes the given collection into a byte array using the given serializer for encoding
    * individual elements and size function for writing size of collection.
    * @param sizeF Function used for writing number of collection elements.
@@ -205,6 +215,26 @@ object CqlProtocolHelper {
     iterator.getInt
   }
 
+  /**
+   * Converts a hex string to byte array.
+   */
+  def hex2Bytes(hex: String): Array[Byte] = {
+    try {
+      (for {i <- 0 to hex.length - 1 by 2 if i > 0 || !hex.startsWith("0x")}
+        yield hex.substring(i, i + 2))
+        .map(hexValue => Integer.parseInt(hexValue, 16).toByte).toArray
+    }
+    catch {
+      case s : Exception => throw new IllegalArgumentException(s"Not valid hex $hex")
+    }
+  }
+
+  /**
+   * Converts a byte array to hex string.
+   */
+  def bytes2Hex(bytes: Array[Byte]): String = {
+    "0x" + bytes.map("%02x".format(_)).mkString
+  }
 }
 
 // example sets

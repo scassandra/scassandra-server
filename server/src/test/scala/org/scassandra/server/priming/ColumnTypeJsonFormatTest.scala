@@ -16,7 +16,8 @@
 package org.scassandra.server.priming
 
 import org.scalatest.{FunSuite, Matchers}
-import org.scassandra.server.priming.PrimingJsonImplicits.ColumnTypeJsonFormat
+import org.scassandra.server.priming.json.PrimingJsonImplicits
+import PrimingJsonImplicits.ColumnTypeJsonFormat
 import spray.json.JsString
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.types._

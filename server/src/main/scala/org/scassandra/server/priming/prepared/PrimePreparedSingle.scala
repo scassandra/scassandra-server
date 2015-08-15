@@ -16,8 +16,8 @@
 package org.scassandra.server.priming.prepared
 
 import org.scassandra.server.cqlmessages.Consistency
-import org.scassandra.server.priming.{ResultJsonRepresentation, Success}
 import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.server.priming.json.{Success, ResultJsonRepresentation}
 
 case class PrimePreparedSingle(when: WhenPreparedSingle, thenDo: ThenPreparedSingle)
 

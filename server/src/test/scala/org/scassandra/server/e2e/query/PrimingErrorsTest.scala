@@ -18,7 +18,8 @@ package org.scassandra.server.e2e.query
 import com.datastax.driver.core.exceptions.{WriteTimeoutException, ReadTimeoutException, UnavailableException}
 import com.datastax.driver.core.{WriteType, ConsistencyLevel, SimpleStatement}
 import org.scassandra.server.AbstractIntegrationTest
-import org.scassandra.server.priming.{ErrorConstants, Unavailable, WriteTimeout, ReadTimeout}
+import org.scassandra.server.priming.ErrorConstants
+import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.query.{Then, When}
 
 class PrimingErrorsTest extends AbstractIntegrationTest {

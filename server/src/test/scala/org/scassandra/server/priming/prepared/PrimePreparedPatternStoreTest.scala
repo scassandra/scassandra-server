@@ -21,7 +21,8 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.types.{CqlInet, CqlInt, CqlVarchar}
 import org.scassandra.server.priming.query.{Prime, PrimeMatch}
-import org.scassandra.server.priming.{WriteRequestTimeoutResult, WriteTimeout}
+import org.scassandra.server.priming.WriteRequestTimeoutResult
+import org.scassandra.server.priming.json.WriteTimeout
 
 import scala.concurrent.duration.FiniteDuration
 
