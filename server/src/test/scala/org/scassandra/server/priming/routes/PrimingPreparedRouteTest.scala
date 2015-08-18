@@ -50,7 +50,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
   implicit val primePreparedPatternStore : PrimePreparedPatternStore = mock[PrimePreparedPatternStore]
   val primePreparedSinglePath = "/prime-prepared-single"
 
-  import PrimingJsonImplicits._
+  import org.scassandra.server.PrimingJsonImplicitsForTest._
 
   describe("Priming") {
     it("Should take in query") {

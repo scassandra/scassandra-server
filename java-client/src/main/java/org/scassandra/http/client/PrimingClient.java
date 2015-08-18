@@ -42,12 +42,11 @@ public class PrimingClient {
 
     public static final String DELETING_OF_PRIMES_FAILED = "Deleting of primes failed";
     public static final String PRIMING_FAILED = "Priming failed";
-
     public static class PrimingClientBuilder {
 
         private String host = "localhost";
-        private int port = 8043;
 
+        private int port = 8043;
         private PrimingClientBuilder() {
         }
 
@@ -64,8 +63,8 @@ public class PrimingClient {
         public PrimingClient build() {
             return new PrimingClient(this.host, this.port);
         }
-    }
 
+    }
     private static final Logger LOGGER = LoggerFactory.getLogger(PrimingClient.class);
 
     public static PrimingClientBuilder builder() {
@@ -80,13 +79,15 @@ public class PrimingClient {
             .create();
 
     private CloseableHttpClient httpClient = HttpClients.createDefault();
-    private String primeQueryUrl;
-    private String primePreparedUrl;
+
+    private final String primeQueryUrl;
+    private final String primePreparedUrl;
+    private final String primeBatchUrl;
 
     private PrimingClient(String host, int port) {
-
         this.primeQueryUrl = "http://" + host + ":" + port + "/prime-query-single";
         this.primePreparedUrl = "http://" + host + ":" + port + "/prime-prepared-single";
+        this.primeBatchUrl = "http://" + host + ":" + port + "/prime-batch-single";
     }
 
     public void prime(PrimingRequest prime) throws PrimeFailedException {
@@ -96,6 +97,11 @@ public class PrimingClient {
             this.primePreparedStatement(prime);
         }
     }
+
+    public void primeBatch(BatchPrimingRequest batchPrimingRequest) throws PrimeFailedException {
+        prime(batchPrimingRequest, primeBatchUrl);
+    }
+
 
     /**
      * @param primeRequest The Prime
@@ -185,7 +191,7 @@ public class PrimingClient {
         }
     }
 
-    private void prime(PrimingRequest primeRequest, String url) {
+    private void prime(Object primeRequest, String url) {
         HttpPost httpPost = new HttpPost(url);
         String jsonAsString = gson.toJson(primeRequest);
         LOGGER.info("Sending {} to url {}", jsonAsString, url);

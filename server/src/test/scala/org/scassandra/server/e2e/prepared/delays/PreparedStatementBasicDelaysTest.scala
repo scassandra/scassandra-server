@@ -15,28 +15,13 @@
  */
 package org.scassandra.server.e2e.prepared.delays
 
+import dispatch.Defaults._
+import dispatch._
+import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
 import org.scassandra.server.priming.json.PrimingJsonImplicits
-import org.scassandra.server.{PrimingHelper, AbstractIntegrationTest}
-import org.scassandra.server.cqlmessages._
-import scala.Some
-import java.nio.ByteBuffer
-import akka.util.ByteString
-import java.util.{UUID, Date}
-import com.datastax.driver.core.utils.UUIDs
-import java.net.InetAddress
-import java.util
-import com.datastax.driver.core.{ConsistencyLevel, Row}
-import org.scassandra.server.priming._
-import com.datastax.driver.core.exceptions.{UnavailableException, WriteTimeoutException, ReadTimeoutException}
-import org.scalatest.BeforeAndAfter
-import dispatch._, Defaults._
-import spray.json._
-import org.scassandra.server.cqlmessages.types._
-import org.scassandra.server.priming.ConflictingPrimes
-import org.scassandra.server.priming.prepared.ThenPreparedSingle
-import org.scassandra.server.priming.prepared.WhenPreparedSingle
-import org.scassandra.server.priming.prepared.PrimePreparedSingle
+import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle}
+import org.scassandra.server.{AbstractIntegrationTest, PrimingHelper}
 
 class PreparedStatementBasicDelaysTest extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
 

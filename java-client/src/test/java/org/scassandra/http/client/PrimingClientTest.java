@@ -18,6 +18,7 @@ package org.scassandra.http.client;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.scassandra.http.client.BatchQueryPrime.batchQueryPrime;
 
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
@@ -34,6 +35,7 @@ public class PrimingClientTest {
 
     public static final String PRIME_PREPARED_PATH = "/prime-prepared-single";
     public static final String PRIME_QUERY_PATH = "/prime-query-single";
+    public static final String PRIME_BATCH_PATH = "/prime-batch-single";
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(PORT);
@@ -686,6 +688,30 @@ public class PrimingClientTest {
                         "\"result\":\"success\"," +
                         "\"column_types\":{\"map_type\":\"map<varchar,varchar>\"}}}"
                 )));
+
+    }
+
+    @Test
+    public void testPrimeBatchWithQuery() throws Exception {
+        //given
+        stubFor(post(urlEqualTo(PRIME_BATCH_PATH)).willReturn(aResponse().withStatus(200)));
+
+        //when
+        underTest.primeBatch(BatchPrimingRequest.batchPrimingRequest()
+                .withThen(BatchPrimingRequest
+                        .then()
+                        .withResult(PrimingRequest.Result.read_request_timeout)
+                        .build())
+                .withQueries(
+                        batchQueryPrime("select * from blah", BatchQueryKind.prepared_statement))
+                .build());
+
+        //then
+        verify(postRequestedFor(urlEqualTo(PRIME_BATCH_PATH))
+                .withHeader("Content-Type", equalTo("application/json; charset=UTF-8"))
+                .withRequestBody(equalToJson("{\"when\": {\"queries\": [{\"text\":\"select * from blah\", " +
+                        "\"kind\":\"prepared_statement\"}] }," +
+                        "\"then\":{\"result\":\"read_request_timeout\"}}")));
 
     }
 }

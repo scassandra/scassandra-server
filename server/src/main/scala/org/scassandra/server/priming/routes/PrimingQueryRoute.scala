@@ -15,8 +15,8 @@
  */
 package org.scassandra.server.priming.routes
 
-import org.scassandra.server.priming.json.PrimingJsonImplicits
-import spray.routing.HttpService
+import org.scassandra.server.priming.json._
+import spray.routing.{Route, HttpService}
 import com.typesafe.scalalogging.LazyLogging
 import spray.http.StatusCodes
 import org.scassandra.server.priming._
@@ -32,7 +32,7 @@ trait PrimingQueryRoute extends HttpService with LazyLogging {
 
   implicit val primeQueryStore: PrimeQueryStore
 
-  val queryRoute = {
+  val queryRoute: Route = {
       path("prime-query-sequence") {
         post {
           complete {

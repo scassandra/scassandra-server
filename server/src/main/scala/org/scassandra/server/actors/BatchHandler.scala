@@ -22,7 +22,8 @@ import akka.pattern.{ask, pipe}
 import org.scassandra.server.actors.BatchHandler.{BatchToFinish, Execute}
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementResponse, PreparedStatementQuery}
 import org.scassandra.server.cqlmessages._
-import org.scassandra.server.priming.{BatchExecution, BatchQuery, ActivityLog}
+import org.scassandra.server.priming.batch.{BatchPrime, PrimeBatchStore}
+import org.scassandra.server.priming._
 
 import scala.collection.immutable.IndexedSeq
 import scala.concurrent.Future
@@ -32,7 +33,8 @@ import scala.language.postfixOps
 class BatchHandler(tcpConnection: ActorRef,
                    msgFactory: CqlMessageFactory,
                    activityLog: ActivityLog,
-                   prepareHandler: ActorRef) extends Actor with ActorLogging {
+                   prepareHandler: ActorRef,
+                   primeStore: PrimeBatchStore) extends Actor with ActorLogging {
 
   import CqlProtocolHelper._
   import context.dispatcher
@@ -60,8 +62,9 @@ class BatchHandler(tcpConnection: ActorRef,
 
       if (ids.isEmpty) {
         val justQueries = statements.map(q => BatchQuery(q.asInstanceOf[NormalQuery].text, QueryKind))
-        activityLog.recordBatchExecution(BatchExecution(justQueries.toList, consistency, batchType))
-        tcpConnection ! msgFactory.createVoidMessage(stream)
+        val execution: BatchExecution = BatchExecution(justQueries.toList, consistency, batchType)
+        activityLog.recordBatchExecution(execution)
+        sendResponse(execution, stream, consistency)
       } else {
         val ps: Future[BatchToFinish] = (prepareHandler ? PreparedStatementQuery(ids)).mapTo[PreparedStatementResponse]
           .map(result => BatchToFinish(statements, result.preparedStatementText, consistency, batchType, stream))
@@ -75,10 +78,21 @@ class BatchHandler(tcpConnection: ActorRef,
         case NormalQuery(text) => BatchQuery(text, QueryKind)
         case IncompletePreparedStatement(id, _) => BatchQuery(ids.getOrElse(id, "A prepared statement was in the batch but couldn't be found - did you prepare against a different  session?"), PreparedStatementKind)
       })
-      activityLog.recordBatchExecution(BatchExecution(statements, consistency, batchType))
-      tcpConnection ! msgFactory.createVoidMessage(stream)
+      val execution: BatchExecution = BatchExecution(statements, consistency, batchType)
+      activityLog.recordBatchExecution(execution)
+      sendResponse(execution, stream, consistency)
 
     case msg @ _ => log.warning("Unknown msg {}", msg)
+  }
+
+  private def sendResponse(execution: BatchExecution, stream: Byte, consistency: Consistency): Unit = {
+    val prime: Option[BatchPrime] = primeStore.findPrime(execution)
+    log.info("Found prime {} for batch execution {}", prime, execution)
+    prime match {
+      case Some(BatchPrime(SuccessResult)) => tcpConnection ! msgFactory.createVoidMessage(stream)
+      case Some(BatchPrime(errorResult: ErrorResult)) => tcpConnection ! msgFactory.createErrorMessage(errorResult, stream, consistency)
+      case None => tcpConnection ! msgFactory.createVoidMessage(stream)
+    }
   }
 
 }

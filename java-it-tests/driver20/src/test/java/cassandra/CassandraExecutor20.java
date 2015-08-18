@@ -88,7 +88,7 @@ public class CassandraExecutor20 implements CassandraExecutor {
                     break;
             }
         });
-        return new CassandraResult20(session.execute(batch));
+        return execute(session::execute, batch);
     }
 
     @Override

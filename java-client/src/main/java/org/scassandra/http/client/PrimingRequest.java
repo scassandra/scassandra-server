@@ -22,6 +22,19 @@ import java.util.*;
 
 public final class PrimingRequest {
 
+
+    public static PrimingRequestBuilder queryBuilder() {
+        return new PrimingRequestBuilder(PrimingRequestBuilder.PrimeType.QUERY);
+    }
+
+    public static PrimingRequestBuilder preparedStatementBuilder() {
+        return new PrimingRequestBuilder(PrimingRequestBuilder.PrimeType.PREPARED);
+    }
+
+    public static Then.ThenBuilder then() {
+        return new Then.ThenBuilder();
+    }
+
     transient PrimingRequestBuilder.PrimeType primeType;
 
     public static class PrimingRequestBuilder {
@@ -140,14 +153,6 @@ public final class PrimingRequest {
             }
             return new PrimingRequest(type, query, queryPattern, consistencies, rowsDefaultedToEmptyForSuccess, result, columnTypesMeta, variableTypesMeta, fixedDelay, config);
         }
-    }
-
-    public static PrimingRequestBuilder queryBuilder() {
-        return new PrimingRequestBuilder(PrimingRequestBuilder.PrimeType.QUERY);
-    }
-
-    public static PrimingRequestBuilder preparedStatementBuilder() {
-        return new PrimingRequestBuilder(PrimingRequestBuilder.PrimeType.PREPARED);
     }
 
     private final When when;
@@ -280,6 +285,53 @@ public final class PrimingRequest {
 
         public long getFixedDelay() {
             return fixedDelay;
+        }
+
+        public static class ThenBuilder {
+            private List<CqlType> variable_types;
+            private List<Map<String, ? extends Object>> rows;
+            private Result result;
+            private Long fixedDelay;
+            private Map<String, Object> config = new HashMap<String, Object>();
+            private List<ColumnMetadata> columnTypesMeta;
+
+            ThenBuilder() {
+            }
+
+            public ThenBuilder withVariableTypes(List<CqlType> variable_types) {
+                this.variable_types = variable_types;
+                return this;
+            }
+
+            public ThenBuilder withRows(List<Map<String, ? extends Object>> rows) {
+                this.rows = rows;
+                return this;
+            }
+
+            public ThenBuilder withResult(Result result) {
+                this.result = result;
+                return this;
+            }
+
+            public ThenBuilder withColumnTypes(ColumnMetadata... columnMetadata) {
+                this.columnTypesMeta = Arrays.asList(columnMetadata);
+                return this;
+            }
+
+            public ThenBuilder withFixedDelay(Long fixedDelay) {
+                this.fixedDelay = fixedDelay;
+                return this;
+            }
+
+            public ThenBuilder withConfig(Map<String, Object> config) {
+                this.config = config;
+                return this;
+            }
+
+            public Then build() {
+                return new Then(rows, result, columnTypesMeta,
+                        variable_types, fixedDelay, config);
+            }
         }
     }
 

@@ -37,7 +37,7 @@ class PrimeQueryStore extends LazyLogging {
     logger.info(s"Adding prime with criteria $criteria and prime result $prime")
 
     validator.validate(criteria, prime, queryPrimes) match {
-      case PrimeAddSuccess => {
+      case PrimeAddSuccess =>
         if (criteria.patternMatch) {
           queryPatternPrimes += (criteria -> prime)
           PrimeAddSuccess
@@ -45,11 +45,8 @@ class PrimeQueryStore extends LazyLogging {
           queryPrimes += (criteria -> prime)
           PrimeAddSuccess
         }
-
-      }
-      case notSuccess: PrimeAddResult => {
+      case notSuccess: PrimeAddResult =>
         notSuccess
-      }
     }
   }
 

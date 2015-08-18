@@ -89,7 +89,7 @@ public class CassandraExecutor22 implements CassandraExecutor {
                     break;
             }
         });
-        return new CassandraResult22(session.execute(batch));
+        return execute(session::execute, batch);
     }
 
     @Override

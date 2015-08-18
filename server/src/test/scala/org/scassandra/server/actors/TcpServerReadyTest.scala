@@ -20,6 +20,7 @@ import akka.testkit._
 import org.scalatest.{FunSpecLike, Matchers}
 import org.scassandra.server.ServerReady
 import org.scassandra.server.priming.ActivityLog
+import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.PrimePreparedStore
 import org.scassandra.server.priming.query.PrimeQueryStore
 
@@ -32,7 +33,7 @@ class TcpServerReadyTest extends TestKit(ActorSystem("TestSystem")) with FunSpec
       val tcpReadyListener = TestProbe()
 
       // when
-      TestActorRef(new TcpServer("localhost", 8046, PrimeQueryStore(), PrimePreparedStore(), tcpReadyListener.ref, new ActivityLog))
+      TestActorRef(new TcpServer("localhost", 8046, PrimeQueryStore(), PrimePreparedStore(), new PrimeBatchStore(), tcpReadyListener.ref, new ActivityLog))
 
       // then
       tcpReadyListener.expectMsg(ServerReady)

@@ -20,13 +20,12 @@ import dispatch.Defaults._
 import dispatch._
 import org.scalatest.concurrent.ScalaFutures
 import org.scassandra.server.priming.Connection
-import org.scassandra.server.priming.json.PrimingJsonImplicits
-import org.scassandra.server.{AbstractIntegrationTest, ConnectionToServerStub}
+import org.scassandra.server.{PrimingJsonImplicitsForTest, AbstractIntegrationTest, ConnectionToServerStub}
 import spray.json.JsonParser
 
 class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 
-  import PrimingJsonImplicits._
+  import PrimingJsonImplicitsForTest._
 
   before {
     val svc = url("http://localhost:8043/prime-query-single").DELETE
