@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Priming Cluster Name - Stubbed Cassandra</title>
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script>
+  <script src="../../js/theme.js"></script>
+
+  <style>
+    body {font-size: 90%;}
+    pre, code {font-size: 100%;}
+    h3, h4, h5, h6 {color: #2980b9; font-weight: 300}
+  </style> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Stubbed Cassandra</a>
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+      <ul class="current">
+    
+        
+            <li class="toctree-l1 ">
+                <a class="" href="../../about">About</a>
+            </li>
+        
+
+    
+        
+        <span>Java Client</span>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/overview">Overview</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/priming-query">Priming Queries</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/priming-ps">Priming Prepared Statements</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/priming-delays">Priming Delays</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/priming-collections">Priming Collections</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/hamcrest-matchers">Hamcest Matchers</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/activity">Activity Verification</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/column-types">Column Types</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/troubleshooting">Troubleshooting</a>
+                    
+                </li>
+            
+        
+
+    
+        
+        <span>Standlone</span>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../overview">Overview</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../activity">Activity Verification</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../priming-query">Priming Queries</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../priming-ps">Priming Prepared Statements</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 current">
+                    <a class="current" href=".">Priming Cluster Name</a>
+                    
+                        <ul>
+                        
+                            <li class="toctree-l2"><a href="#priming-cluster-name">Priming cluster name</a></li>
+                            
+                                <li><a class="toctree-l3" href="#java-datastax-version-2">Java Datastax Version 2.*</a></li>
+                            
+                                <li><a class="toctree-l3" href="#java-datastax-driver-version-1">Java Datastax Driver Version 1.*</a></li>
+                            
+                        
+                        </ul>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../priming-errors">Priming Errors</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../using-python">Python Driver</a>
+                    
+                </li>
+            
+        
+
+    
+</ul>
+
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="icon icon-reorder"></i>
+        <a href="../.."></a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    <li>Priming Cluster Name</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              <h2 id="priming-cluster-name">Priming cluster name</h2>
+<p>If your application verifies the cluster name on connection you'll need to prime the cluster name.
+The Java Datastax Driver looks in the system.local table for the cluster_name. This method has been tested with the Java Datastax drivers version 1 and 2. If you're using a different driver and want to see how it discovers the cluster_name so you can mock it you can see the queries it makes on startup by getting the recorded queries from Scassandra.</p>
+<h4 id="java-datastax-version-2">Java Datastax Version 2.*</h4>
+<pre><code class="json">{
+  &quot;when&quot;: {
+    &quot;query&quot;: &quot;SELECT * FROM system.local WHERE key='local'&quot;
+  },
+  &quot;then&quot;: {
+    &quot;rows&quot;: [
+      {
+        &quot;cluster_name&quot;: &quot;custom cluster name&quot;,
+        &quot;partitioner&quot;: &quot;org.apache.cassandra.dht.Murmur3Partitioner&quot;,
+        &quot;data_center&quot;: &quot;dc1&quot;,
+        &quot;rack&quot;: &quot;rc1&quot;,
+        &quot;tokens&quot;: [
+          &quot;1743244960790844724&quot;
+        ],
+        &quot;release_version&quot;: &quot;2.0.1&quot;
+      }
+    ],
+    &quot;result&quot;: &quot;success&quot;,
+    &quot;column_types&quot;: {
+      &quot;tokens&quot;: &quot;set&quot;
+    }
+  }
+}
+
+</code></pre>
+
+<h4 id="java-datastax-driver-version-1">Java Datastax Driver Version 1.*</h4>
+<p>The 1.* driver executes a different query;</p>
+<pre><code class="json">{
+  &quot;when&quot;: {
+    &quot;query&quot;: &quot;SELECT cluster_name, data_center, rack, tokens, partitioner FROM system.local WHERE key='local'&quot;
+  },
+  &quot;then&quot;: {
+    &quot;rows&quot;: [
+      {
+        &quot;cluster_name&quot;: &quot;custom cluster name&quot;,
+        &quot;rack&quot;: &quot;rc1&quot;,
+        &quot;partitioner&quot;: &quot;org.apache.cassandra.dht.Murmur3Partitioner&quot;,
+        &quot;data_center&quot;: &quot;dc1&quot;,
+        &quot;tokens&quot;: [
+          &quot;1743244960790844724&quot;
+        ]
+      }
+    ],
+    &quot;result&quot;: &quot;success&quot;,
+    &quot;column_types&quot;: {
+      &quot;tokens&quot;: &quot;Set&quot;
+    }
+  }
+}
+</code></pre>
+
+<p>The reason you need to prime more than just the cluster_name is that the Java Driver expects these fields to be there if there is a row in the system.local table and throws an IllegalArgumentException is they are missing.</p>
+<p>To get the value of cluster with the Java driver you call the following on your cluster:</p>
+<pre><code class="java">cluster.getMetadata().getClusterName()
+</code></pre>
+
+<p>Don't be fooled by the getClusterName on the cluster object. That is the name you built the object with.</p>
+<p>If you're using the Scassandra java client you'll need something like:</p>
+<pre><code class="java"> Map&lt;String, ColumnTypes&gt; columnTypes = ImmutableMap.of(&quot;tokens&quot;,ColumnTypes.Set);
+        String query = &quot;SELECT cluster_name, data_center, rack, tokens, partitioner FROM system.local WHERE key='local'&quot;;
+        Map&lt;String, Object&gt; row = new HashMap&lt;&gt;();
+        row.put(&quot;cluster_name&quot;, CUSTOM_CLUSTER_NAME);
+        row.put(&quot;partitioner&quot;,&quot;org.apache.cassandra.dht.Murmur3Partitioner&quot;);
+        row.put(&quot;data_center&quot;,&quot;dc1&quot;);
+        row.put(&quot;tokens&quot;, Sets.newHashSet(&quot;1743244960790844724&quot;));
+        row.put(&quot;rack&quot;,&quot;rc1&quot;);
+        PrimingRequest prime = PrimingRequest.queryBuilder()
+                .withQuery(query)
+                .withColumnTypes(columnTypes)
+                .withRows(row)
+                .build();
+        primingClient.primeQuery(prime);
+</code></pre>
+
+
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../priming-errors" class="btn btn-neutral float-right" title="Priming Errors"/>Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../priming-ps" class="btn btn-neutral" title="Priming Prepared Statements"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+    <!-- Copyright etc -->
+    </p>
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+        
+      <span><a href="../priming-ps" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      <span style="margin-left: 15px"><a href="../priming-errors" style="color: #fcfcfc">Next &raquo;</a></span>
+    </span>
+</div>
+</body>
+</html>

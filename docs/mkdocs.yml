@@ -1,0 +1,23 @@
+site_name: Stubbed Cassandra
+pages:
+- [index.md, Home]
+- [about.md, About]
+- [java/overview.md, Java Client, Overview]
+- [java/priming-query.md, Java Client, Priming Queries]
+- [java/priming-ps.md, Java Client, Priming Prepared Statements]
+- [java/batches.md, Java Client, Batches]
+- [java/priming-delays.md, Java Client, Priming Delays]
+- [java/priming-collections.md, Java Client, Priming Collections]
+- [java/hamcrest-matchers.md, Java Client, Hamcest Matchers]
+- [java/activity.md, Java Client, Activity Verification]
+- [java/column-types.md, Java Client, Column Types]
+- [java/troubleshooting.md, Java Client, Troubleshooting]
+- [standalone/overview.md, Standlone, Overview]
+- [standalone/activity.md, Standlone, Activity Verification]
+- [standalone/priming-query.md, Standlone, Priming Queries]
+- [standalone/priming-ps.md, Standlone, Priming Prepared Statements]
+- [standalone/batches.md, Standlone, Batches]
+- [standalone/priming-cluster-name.md, Standlone, Priming Cluster Name]
+- [standalone/priming-errors.md, Standlone, Priming Errors]
+- [standalone/using-python.md, Standlone, Python Driver]
+theme: readthedocs

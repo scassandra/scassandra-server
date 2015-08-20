@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Priming Prepared Statements - Stubbed Cassandra</title>
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/highlight.css">
+
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
+  <script type="text/javascript" src="../../js/highlight.pack.js"></script>
+  <script src="../../js/theme.js"></script>
+
+  <style>
+    body {font-size: 90%;}
+    pre, code {font-size: 100%;}
+    h3, h4, h5, h6 {color: #2980b9; font-weight: 300}
+  </style> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Stubbed Cassandra</a>
+        
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+      <ul class="current">
+    
+        
+            <li class="toctree-l1 ">
+                <a class="" href="../../about">About</a>
+            </li>
+        
+
+    
+        
+        <span>Java Client</span>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/overview">Overview</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/priming-query">Priming Queries</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/priming-ps">Priming Prepared Statements</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/priming-delays">Priming Delays</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/priming-collections">Priming Collections</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/hamcrest-matchers">Hamcest Matchers</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/activity">Activity Verification</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/column-types">Column Types</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../../java/troubleshooting">Troubleshooting</a>
+                    
+                </li>
+            
+        
+
+    
+        
+        <span>Standlone</span>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../overview">Overview</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../activity">Activity Verification</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../priming-query">Priming Queries</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 current">
+                    <a class="current" href=".">Priming Prepared Statements</a>
+                    
+                        <ul>
+                        
+                            <li class="toctree-l2"><a href="#priming-prepared-statements">Priming Prepared Statements</a></li>
+                            
+                                <li><a class="toctree-l3" href="#successful-response">Successful response</a></li>
+                            
+                                <li><a class="toctree-l3" href="#unsuccessful-response">Unsuccessful response:</a></li>
+                            
+                                <li><a class="toctree-l3" href="#seeing-your-existing-primes">Seeing your existing primes</a></li>
+                            
+                                <li><a class="toctree-l3" href="#deleting-all-prepared-statement-primes">Deleting all prepared statement primes</a></li>
+                            
+                        
+                        </ul>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../priming-cluster-name">Priming Cluster Name</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../priming-errors">Priming Errors</a>
+                    
+                </li>
+            
+                <li class="toctree-l1 ">
+                    <a class="" href="../using-python">Python Driver</a>
+                    
+                </li>
+            
+        
+
+    
+</ul>
+
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="icon icon-reorder"></i>
+        <a href="../.."></a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    <li>Priming Prepared Statements</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              <h3 id="priming-prepared-statements">Priming Prepared Statements</h3>
+<p>Endpoint for priming prepared statements:</p>
+<pre><code>POST on http://[host]:[admin-port]/prime-prepared-single
+</code></pre>
+
+<p>Priming prepared statements is more complex than queries as the types of the variables need to be defined and the types of the columns in the result. If you fail to provide either the variable_types or column_types everything defaults to varchar.</p>
+<p>It is currently not possible to prime based on variable values when the prepared statement is executed.</p>
+<h4 id="successful-response">Successful response</h4>
+<p>Here is an example of priming both the types of the variables (the ?s) and the column types in the result.</p>
+<pre><code class="json">{
+   &quot;when&quot;:{
+      &quot;query&quot;:&quot;insert into people(ascii_column, blob_column, boolean_column, timestamp_column,
+uuid_column, varchar_column, timeuuid_column, inet_column) = (?,?,?,?,?,?,?,?,?)&quot;
+   },
+   &quot;then&quot;:{
+      &quot;variable_types&quot;:[
+         &quot;ascii&quot;,
+         &quot;blob&quot;,
+         &quot;boolean&quot;,
+         &quot;timestamp&quot;,
+         &quot;uuid&quot;,
+         &quot;varchar&quot;,
+         &quot;timeuuid&quot;,
+         &quot;inet&quot;
+      ]
+   }
+}
+</code></pre>
+
+<p>Here is an example of the priming the variable_types and the column_types of the rows that you prime:</p>
+<pre><code class="json">{
+  &quot;when&quot;: {
+    &quot;query&quot;: &quot;select * from people&quot;
+  },
+  &quot;then&quot;: {
+    &quot;variable_types&quot;: [
+      &quot;varchar&quot;
+    ],
+    &quot;rows&quot;: [
+      {
+        &quot;name&quot;: &quot;Chris&quot;
+      }
+    ],
+    &quot;result&quot;: &quot;success&quot;,
+    &quot;column_types&quot;: {
+      &quot;name&quot;: &quot;varchar&quot;
+    }
+  }
+}
+</code></pre>
+
+<p>Drivers will use the variable_type information to process it when you come to execute your preparaed statement. The Java Driver will throw an exception if what you pass to bind fails to match the types of what Cassandra indicated the ?s types were.</p>
+<p>The order if the types in the variable_types array should match the order of the ?s in the query.</p>
+<h4 id="unsuccessful-response">Unsuccessful response:</h4>
+<p>Just like queries you can prime unsuccessful responses for prepared statements.</p>
+<pre><code class="json"> {
+   &quot;when&quot;: {
+     &quot;query&quot; :&quot;select * from people where name = ?&quot;
+   },
+   &quot;then&quot;: {
+     &quot;result&quot; : &quot;read_request_timeout&quot;
+   }
+}
+</code></pre>
+
+<p>Where result can be:</p>
+<pre><code>read_request_timeout
+write_request_timeout
+unavailable
+</code></pre>
+
+<h4 id="seeing-your-existing-primes">Seeing your existing primes</h4>
+<pre><code>GET on http://[host]:[admin-port]/prime-prepared-single
+</code></pre>
+
+<h4 id="deleting-all-prepared-statement-primes">Deleting all prepared statement primes</h4>
+<pre><code>DELETE on http://[host]:[admin-port]/prime-prepared-single
+</code></pre>
+
+
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../priming-cluster-name" class="btn btn-neutral float-right" title="Priming Cluster Name"/>Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../priming-query" class="btn btn-neutral" title="Priming Queries"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+    <!-- Copyright etc -->
+    </p>
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+	  
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+<div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+        
+      <span><a href="../priming-query" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      <span style="margin-left: 15px"><a href="../priming-cluster-name" style="color: #fcfcfc">Next &raquo;</a></span>
+    </span>
+</div>
+</body>
+</html>
