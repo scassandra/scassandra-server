@@ -18,14 +18,15 @@ package org.scassandra.server.e2e.verification
 import dispatch.Defaults._
 import dispatch._
 import org.scalatest.concurrent.ScalaFutures
-import org.scassandra.server.{PrimingJsonImplicitsForTest, AbstractIntegrationTest}
+import org.scassandra.server.priming.json.PrimingJsonImplicits
+import org.scassandra.server.AbstractIntegrationTest
 import org.scassandra.server.cqlmessages.ONE
 import org.scassandra.server.priming.PreparedStatementExecution
 import spray.json._
 
 class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 
-  import PrimingJsonImplicitsForTest._
+  import PrimingJsonImplicits._
 
   val primePreparedSinglePath = "http://localhost:8043/prepared-statement-execution"
 

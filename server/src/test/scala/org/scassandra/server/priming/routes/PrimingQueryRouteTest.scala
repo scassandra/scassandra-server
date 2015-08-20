@@ -42,7 +42,7 @@ import spray.testkit.ScalatestRouteTest
 
 class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with PrimingQueryRoute {
 
-  import org.scassandra.server.PrimingJsonImplicitsForTest._
+  import PrimingJsonImplicits._
 
   implicit def actorRefFactory = system
 
@@ -343,19 +343,6 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
         primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenRows, SuccessResult, columnTypes = thenColumnTypes))
-      }
-    }
-
-    it("Should handle floats as JSON numbers") {
-      val query = "select * from users"
-      val whenQuery = When(query = Some(query))
-      val thenRows = List(Map("age" -> 7.7))
-      val thenRowsStorageFormat = List(Map("age" -> BigDecimal("7.7")))
-      val thenColumnTypes = Map("age" -> CqlFloat)
-      val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
-
-      Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenRowsStorageFormat, SuccessResult, columnTypes = thenColumnTypes))
       }
     }
 

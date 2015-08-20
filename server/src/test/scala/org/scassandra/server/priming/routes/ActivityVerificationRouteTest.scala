@@ -16,7 +16,7 @@
 package org.scassandra.server.priming.routes
 
 import org.scalatest.{Matchers, BeforeAndAfter, FunSpec}
-import org.scassandra.server.PrimingJsonImplicitsForTest
+import org.scassandra.server.priming.json.PrimingJsonImplicits
 import spray.testkit.ScalatestRouteTest
 import org.scassandra.server.priming._
 import spray.json.JsonParser
@@ -29,7 +29,7 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
   implicit def actorRefFactory = system
   implicit val activityLog = new ActivityLog
 
-  import PrimingJsonImplicitsForTest._
+  import PrimingJsonImplicits._
 
   before {
     activityLog.clearConnections()

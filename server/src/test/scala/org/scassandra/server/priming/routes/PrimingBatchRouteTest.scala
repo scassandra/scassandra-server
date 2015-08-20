@@ -4,15 +4,14 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{Matchers, FunSpec}
 import org.scassandra.server.priming.batch.{BatchWhen, BatchPrimeSingle, PrimeBatchStore}
-import org.scassandra.server.priming.json.Success
+import org.scassandra.server.priming.json.{PrimingJsonImplicits, Success}
 import org.scassandra.server.priming.query.Then
-import org.scassandra.server._
 import spray.http.StatusCodes
 import spray.testkit.ScalatestRouteTest
 
 class PrimingBatchRouteTest extends FunSpec with Matchers with ScalatestRouteTest with PrimingBatchRoute with MockitoSugar {
 
-  import PrimingJsonImplicitsForTest._
+  import PrimingJsonImplicits._
 
   implicit def actorRefFactory = system
   implicit val primeBatchStore: PrimeBatchStore = mock[PrimeBatchStore]

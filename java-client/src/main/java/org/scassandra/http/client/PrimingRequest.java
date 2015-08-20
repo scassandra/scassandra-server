@@ -41,15 +41,16 @@ public final class PrimingRequest {
 
         PrimeType type;
 
-        static enum PrimeType {
-            QUERY, PREPARED
-        }
 
+        static enum PrimeType {
+            QUERY, PREPARED;
+        }
         private PrimingRequestBuilder(PrimeType type) {
             this.type = type;
         }
 
         private Consistency[] consistency;
+
         private List<ColumnMetadata> columnTypesMeta;
         private List<CqlType> variableTypesMeta;
         private String query;
@@ -58,34 +59,10 @@ public final class PrimingRequest {
         private Result result = Result.success;
         private Long fixedDelay;
         private Map<String, Object> config = new HashMap<String, Object>();
+        private Then then;
 
         public PrimingRequestBuilder withQuery(String query) {
             this.query = query;
-            return this;
-        }
-
-        public PrimingRequestBuilder withQueryPattern(String queryPattern) {
-            this.queryPattern = queryPattern;
-            return this;
-        }
-
-        public PrimingRequestBuilder withFixedDelay(long fixedDelay) {
-            this.fixedDelay = fixedDelay;
-            return this;
-        }
-
-        public PrimingRequestBuilder withRows(List<Map<String, ?>> rows) {
-            this.rows = rows;
-            return this;
-        }
-
-        public final PrimingRequestBuilder withRows(Map<String, ? extends Object>... rows) {
-            this.rows = Arrays.asList(rows);
-            return this;
-        }
-
-        public PrimingRequestBuilder withResult(Result result) {
-            this.result = result;
             return this;
         }
 
@@ -94,11 +71,72 @@ public final class PrimingRequest {
             return this;
         }
 
+        public PrimingRequestBuilder withQueryPattern(String queryPattern) {
+            this.queryPattern = queryPattern;
+            return this;
+        }
+
+        /**
+         * If this method is used on the builder any call to the deprecated withThen methods
+         * will be ignored.
+         * @param then The action to take if the prime matches
+         * @return this
+         */
+        public PrimingRequestBuilder withThen(Then then) {
+            this.then = then;
+            return this;
+        }
+
+        /**
+         * @deprecated Use ThenBuilder instead.
+         */
+        @Deprecated
+        public PrimingRequestBuilder withFixedDelay(long fixedDelay) {
+            this.fixedDelay = fixedDelay;
+            return this;
+        }
+
+        /**
+         * @deprecated Use ThenBuilder instead.
+         */
+        @Deprecated
+        public PrimingRequestBuilder withRows(List<Map<String, ?>> rows) {
+            this.rows = rows;
+            return this;
+        }
+
+        /**
+         * @deprecated Use ThenBuilder instead.
+         */
+        @Deprecated
+        @SafeVarargs
+        public final PrimingRequestBuilder withRows(Map<String, ? extends Object>... rows) {
+            this.rows = Arrays.asList(rows);
+            return this;
+        }
+
+        /**
+         * @deprecated Use ThenBuilder instead.
+         */
+        @Deprecated
+        public PrimingRequestBuilder withResult(Result result) {
+            this.result = result;
+            return this;
+        }
+
+        /**
+         * @deprecated Use ThenBuilder instead.
+         */
+        @Deprecated
         public PrimingRequestBuilder withColumnTypes(ColumnMetadata... columnMetadata) {
             this.columnTypesMeta = Arrays.asList(columnMetadata);
             return this;
         }
 
+        /**
+         * @deprecated Use ThenBuilder instead.
+         */
+        @Deprecated
         public PrimingRequestBuilder withConfig(Config readTimeoutConfig) {
             this.config.putAll(readTimeoutConfig.getProperties());
             return this;
@@ -130,6 +168,10 @@ public final class PrimingRequest {
             return this;
         }
 
+        /**
+         * @deprecated Use ThenBuilder instead.
+         */
+        @Deprecated
         public PrimingRequestBuilder withVariableTypes(CqlType... variableTypes) {
             this.variableTypesMeta = Arrays.asList(variableTypes);
             return this;
@@ -144,14 +186,19 @@ public final class PrimingRequest {
                 throw new IllegalStateException("Must set either query or queryPattern for PrimingRequest");
             }
 
-            List<Consistency> consistencies = this.consistency == null ? null : Arrays.asList(this.consistency);
+            List<Consistency> consistencies = consistency == null ? null : Arrays.asList(consistency);
 
-            List<Map<String, ? extends Object>> rowsDefaultedToEmptyForSuccess = this.rows;
 
-            if (result == Result.success && rows == null) {
-                rowsDefaultedToEmptyForSuccess = Collections.emptyList();
+            if (then == null) {
+                List<Map<String, ? extends Object>> rowsDefaultedToEmptyForSuccess = this.rows;
+
+                if (result == Result.success && rows == null) {
+                    rowsDefaultedToEmptyForSuccess = Collections.emptyList();
+                }
+                return new PrimingRequest(type, query, queryPattern, consistencies, rowsDefaultedToEmptyForSuccess, result, columnTypesMeta, variableTypesMeta, fixedDelay, config);
+            } else {
+                return new PrimingRequest(type, query, queryPattern, consistencies, then);
             }
-            return new PrimingRequest(type, query, queryPattern, consistencies, rowsDefaultedToEmptyForSuccess, result, columnTypesMeta, variableTypesMeta, fixedDelay, config);
         }
     }
 
@@ -159,9 +206,13 @@ public final class PrimingRequest {
     private final Then then;
 
     private PrimingRequest(PrimingRequestBuilder.PrimeType primeType, String query, String queryPattern, List<Consistency> consistency, List<Map<String, ?>> rows, Result result, List<ColumnMetadata> columnTypes, List<CqlType> variableTypes, Long fixedDelay, Map<String, Object> config) {
+        this(primeType, query, queryPattern, consistency, new Then(rows, result, columnTypes, variableTypes, fixedDelay, config));
+    }
+
+    private PrimingRequest(PrimingRequestBuilder.PrimeType primeType, String query, String queryPattern, List<Consistency> consistency, Then then) {
         this.primeType = primeType;
         this.when = new When(query, queryPattern, consistency);
-        this.then = new Then(rows, result, columnTypes, variableTypes, fixedDelay, config);
+        this.then = then;
     }
 
     public When getWhen() {
@@ -308,6 +359,12 @@ public final class PrimingRequest {
                 return this;
             }
 
+            @SafeVarargs
+            public final ThenBuilder withRows(Map<String, ? extends Object>... rows) {
+                this.rows = Arrays.asList(rows);
+                return this;
+            }
+
             public ThenBuilder withResult(Result result) {
                 this.result = result;
                 return this;
@@ -329,7 +386,13 @@ public final class PrimingRequest {
             }
 
             public Then build() {
-                return new Then(rows, result, columnTypesMeta,
+                List<Map<String, ? extends Object>> rowsDefaultedToEmptyForSuccess = this.rows;
+
+                if (result == Result.success && rows == null) {
+                    rowsDefaultedToEmptyForSuccess = Collections.emptyList();
+                }
+
+                return new Then(rowsDefaultedToEmptyForSuccess, result, columnTypesMeta,
                         variable_types, fixedDelay, config);
             }
         }

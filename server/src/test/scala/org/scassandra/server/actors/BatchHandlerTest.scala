@@ -16,20 +16,23 @@
 package org.scassandra.server.actors
 
 import akka.actor.{Props, ActorRef, ActorSystem}
-import akka.testkit.{TestProbe, TestKit}
+import akka.testkit.{TestKitBase, TestProbe, TestKit}
 import akka.util.ByteString
 import org.mockito.Mockito._
 import org.mockito.Matchers._
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{BeforeAndAfter, Matchers, FunSuiteLike}
+import org.scalatest.{FunSuite, BeforeAndAfter, Matchers}
 import org.scassandra.server.actors.MessageHelper._
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
 import org.scassandra.server.cqlmessages._
+import org.scassandra.server.cqlmessages.response.Error
 import org.scassandra.server.priming.batch.{BatchPrime, PrimeBatchStore}
-import org.scassandra.server.priming.{ReadRequestTimeoutResult, BatchQuery, BatchExecution, ActivityLog}
+import org.scassandra.server.priming._
 
-class BatchHandlerTest extends TestKit(ActorSystem("BatchHandlerTest")) with FunSuiteLike with MockitoSugar
-  with Matchers with BeforeAndAfter {
+class BatchHandlerTest extends FunSuite with TestKitBase with MockitoSugar
+  with Matchers with BeforeAndAfter with ErrorHandlingBehaviors {
+
+  implicit lazy val system = ActorSystem()
 
   var underTest: ActorRef = _
   var connectionTestProbe: TestProbe = _
@@ -123,14 +126,14 @@ class BatchHandlerTest extends TestKit(ActorSystem("BatchHandlerTest")) with Fun
     connectionTestProbe.expectMsg(cqlMessageFactory.createErrorMessage(errorResult, streamId, ONE))
   }
 
-  test("Prime for read time out exception - query") {
+  override def executeWithError(result: ErrorResult, expectedError: (Byte, Consistency) => Error): Unit = {
     val batchMessage: Array[Byte] = dropHeaderAndLength(createBatchMessage(
       List(SimpleQuery("super simple query")),
       streamId))
-    val errorResult: ReadRequestTimeoutResult = ReadRequestTimeoutResult()
-    when(primeBatchStore.findPrime(any(classOf[BatchExecution]))).thenReturn(Some(BatchPrime(errorResult)))
+    when(primeBatchStore.findPrime(any(classOf[BatchExecution]))).thenReturn(Some(BatchPrime(result)))
 
     underTest ! BatchHandler.Execute(ByteString(batchMessage), streamId)
-    connectionTestProbe.expectMsg(cqlMessageFactory.createErrorMessage(errorResult, streamId, ONE))
+
+    connectionTestProbe.expectMsg(expectedError(streamId, ONE))
   }
 }
