@@ -98,8 +98,16 @@ public class PrimingClient {
         }
     }
 
+    public void prime(PrimingRequest.PrimingRequestBuilder prime) throws PrimeFailedException {
+        prime(prime.build());
+    }
+
     public void primeBatch(BatchPrimingRequest batchPrimingRequest) throws PrimeFailedException {
         prime(batchPrimingRequest, primeBatchUrl);
+    }
+
+    public void primeBatch(BatchPrimingRequest.BatchPrimingRequestBuilder batchPrimingRequest) throws PrimeFailedException {
+        primeBatch(batchPrimingRequest.build());
     }
 
 

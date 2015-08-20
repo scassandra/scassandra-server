@@ -22,7 +22,12 @@ import org.scassandra.http.client.*;
 import java.util.Collections;
 
 import static org.junit.Assert.*;
+import static org.scassandra.cql.PrimitiveType.*;
+import static org.scassandra.http.client.BatchQueryKind.prepared_statement;
+import static org.scassandra.http.client.BatchQueryKind.query;
 import static org.scassandra.http.client.BatchQueryPrime.batchQueryPrime;
+import static org.scassandra.http.client.PrimingRequest.Result.read_request_timeout;
+import static org.scassandra.http.client.PrimingRequest.then;
 
 abstract public class BatchPrimingTest extends AbstractScassandraTest {
 
@@ -43,11 +48,39 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
     }
 
     @Test
+    public void primeBatchWithPreparedStatement() {
+        // prime the prepared statements
+        primingClient.prime(PrimingRequest.preparedStatementBuilder()
+                        .withQuery("insert ? ?")
+                        .withThen(then().withVariableTypes(ASCII, INT))
+        );
+        primingClient.primeBatch(
+                BatchPrimingRequest.batchPrimingRequest()
+                        .withQueries(
+                                batchQueryPrime("insert something else", query),
+                                batchQueryPrime("insert ? ?", prepared_statement))
+                        .withThen(then().withResult(read_request_timeout))
+
+        );
+
+        CassandraResult result = cassandra().executeBatch(Lists.newArrayList(
+                        new CassandraQuery("insert something else"),
+                        new CassandraQuery("insert ? ?",
+                                CassandraQuery.QueryType.PREPARED_STATEMENT, "one", 2)
+                ), BatchType.LOGGED
+        );
+
+        assertEquals(read_request_timeout, result.status().getResult());
+        System.out.println(activityClient.retrieveBatches());
+    }
+
+    @Test
     public void primeBatchWithReadTimeout() {
+
         primingClient.primeBatch(BatchPrimingRequest.batchPrimingRequest()
                 .withThen(BatchPrimingRequest
                         .then()
-                        .withResult(PrimingRequest.Result.read_request_timeout)
+                        .withResult(read_request_timeout)
                         .build())
                 .withQueries(
                         batchQueryPrime("select * from blah", BatchQueryKind.query))
@@ -58,7 +91,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
                 ), BatchType.UNLOGGED
         );
 
-        assertEquals(PrimingRequest.Result.read_request_timeout, result.status().getResult());
+        assertEquals(read_request_timeout, result.status().getResult());
     }
 
     @Test

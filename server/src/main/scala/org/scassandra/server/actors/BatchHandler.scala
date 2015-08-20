@@ -75,6 +75,7 @@ class BatchHandler(tcpConnection: ActorRef,
     case BatchToFinish(inFlight, ids, consistency, batchType, stream) =>
       log.debug("Received batch to finish {}", inFlight)
       val statements: Seq[BatchQuery] = inFlight.map( {
+        //todo support capturing of variables
         case NormalQuery(text) => BatchQuery(text, QueryKind)
         case IncompletePreparedStatement(id, _) => BatchQuery(ids.getOrElse(id, "A prepared statement was in the batch but couldn't be found - did you prepare against a different  session?"), PreparedStatementKind)
       })
@@ -96,7 +97,6 @@ class BatchHandler(tcpConnection: ActorRef,
   }
 
 }
-
 
 private sealed trait InFlightBatchQuery
 private case class NormalQuery(text: String) extends InFlightBatchQuery

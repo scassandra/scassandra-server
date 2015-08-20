@@ -88,6 +88,17 @@ public final class PrimingRequest {
         }
 
         /**
+         * If this method is used on the builder any call to the deprecated withThen methods
+         * will be ignored.
+         * @param then The action to take if the prime matches
+         * @return this
+         */
+        public PrimingRequestBuilder withThen(Then.ThenBuilder then) {
+            this.then = then.build();
+            return this;
+        }
+
+        /**
          * @deprecated Use ThenBuilder instead.
          */
         @Deprecated
@@ -351,6 +362,11 @@ public final class PrimingRequest {
 
             public ThenBuilder withVariableTypes(List<CqlType> variable_types) {
                 this.variable_types = variable_types;
+                return this;
+            }
+
+            public ThenBuilder withVariableTypes(CqlType... variableTypes) {
+                this.variable_types = Arrays.asList(variableTypes);
                 return this;
             }
 

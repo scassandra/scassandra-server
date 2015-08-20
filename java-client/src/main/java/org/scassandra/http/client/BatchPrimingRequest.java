@@ -48,7 +48,15 @@ public final class BatchPrimingRequest {
             return this;
         }
 
+        public BatchPrimingRequestBuilder withThen(PrimingRequest.Then.ThenBuilder then) {
+            this.then = then.build();
+            return this;
+        }
+
         public BatchPrimingRequest build() {
+            if (then == null) {
+                throw new IllegalStateException("Must provide withThen before building");
+            }
             return new BatchPrimingRequest(new BatchWhen(consistency, queries), then);
         }
     }
