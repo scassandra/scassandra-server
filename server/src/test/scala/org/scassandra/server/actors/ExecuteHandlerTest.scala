@@ -22,7 +22,7 @@ import org.scassandra.server.priming._
 import org.scassandra.server.priming.prepared.{PreparedPrime, PrimePreparedStore}
 import org.scassandra.server.priming.query.{Prime, PrimeMatch}
 
-class ExecuteHandlerTest extends FunSuite with Matchers with TestKitBase with BeforeAndAfter with MockitoSugar with ErrorHandlingBehaviors{
+class ExecuteHandlerTest extends FunSuite with Matchers with TestKitBase with BeforeAndAfter with MockitoSugar with ErrorHandlingBehaviors {
   implicit lazy val system = ActorSystem()
 
   implicit val impProtocolVersion = VersionTwo

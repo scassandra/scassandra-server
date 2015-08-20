@@ -21,6 +21,7 @@ import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import org.scalatest.{BeforeAndAfter, FunSuiteLike, Matchers}
 import org.scassandra.server.ServerReadyListener
 import org.scassandra.server.priming.ActivityLog
+import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.PrimePreparedStore
 import org.scassandra.server.priming.query.PrimeQueryStore
 
@@ -33,7 +34,7 @@ class TcpServerTest extends TestKit(ActorSystem("TcpServerTest")) with Matchers 
   test("Should record a connection with the ActivityLog") {
     //given
     val activityLog = new ActivityLog
-    val underTest = TestActorRef(new TcpServer("localhost", 8044, new PrimeQueryStore, new PrimePreparedStore, system.actorOf(Props(classOf[ServerReadyListener])), activityLog))
+    val underTest = TestActorRef(new TcpServer("localhost", 8044, new PrimeQueryStore, new PrimePreparedStore, new PrimeBatchStore(), system.actorOf(Props(classOf[ServerReadyListener])), activityLog))
     //when
     underTest ! Connected(null, null)
     //then

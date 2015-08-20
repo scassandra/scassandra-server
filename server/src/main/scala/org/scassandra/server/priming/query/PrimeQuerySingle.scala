@@ -34,7 +34,7 @@ case class When(query: Option[String] = None,
                 table: Option[String] = None
                  )
 
-case class Then(rows: Option[List[Map[String, Any]]],
+case class Then(rows: Option[List[Map[String, Any]]] = None,
                 result: Option[ResultJsonRepresentation] = None,
                 column_types: Option[Map[String, ColumnType[_]]] = None,
                 fixedDelay: Option[Long] = None,

@@ -15,7 +15,7 @@
  */
 package org.scassandra.server.priming.routes
 
-import org.scassandra.server.priming.json.PrimingJsonImplicits
+import org.scassandra.server.priming.json.{PrimingJsonImplicits}
 import spray.routing.HttpService
 import com.typesafe.scalalogging.LazyLogging
 

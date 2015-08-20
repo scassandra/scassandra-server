@@ -16,29 +16,38 @@
 package org.scassandra.server.actors
 
 import akka.actor.{Props, ActorRef, ActorSystem}
-import akka.testkit.{TestProbe, TestKit}
+import akka.testkit.{TestKitBase, TestProbe, TestKit}
 import akka.util.ByteString
-import org.scalatest.{BeforeAndAfter, Matchers, FunSuiteLike}
+import org.mockito.Mockito._
+import org.mockito.Matchers._
+import org.scalatest.mock.MockitoSugar
+import org.scalatest.{FunSuite, BeforeAndAfter, Matchers}
 import org.scassandra.server.actors.MessageHelper._
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
 import org.scassandra.server.cqlmessages._
-import org.scassandra.server.priming.{BatchQuery, BatchExecution, ActivityLog}
+import org.scassandra.server.cqlmessages.response.Error
+import org.scassandra.server.priming.batch.{BatchPrime, PrimeBatchStore}
+import org.scassandra.server.priming._
 
-class BatchHandlerTest extends TestKit(ActorSystem("BatchHandlerTest")) with FunSuiteLike
-  with Matchers with BeforeAndAfter {
+class BatchHandlerTest extends FunSuite with TestKitBase with MockitoSugar
+  with Matchers with BeforeAndAfter with ErrorHandlingBehaviors {
+
+  implicit lazy val system = ActorSystem()
 
   var underTest: ActorRef = _
   var connectionTestProbe: TestProbe = _
   var prepareHandlerProbe: TestProbe = _
   val cqlMessageFactory = VersionTwoMessageFactory
   val activityLog = new ActivityLog
+  val primeBatchStore = mock[PrimeBatchStore]
 
   before {
     connectionTestProbe = TestProbe()
     prepareHandlerProbe = TestProbe()
     underTest = system.actorOf(Props(classOf[BatchHandler], connectionTestProbe.ref,
-      cqlMessageFactory, activityLog, prepareHandlerProbe.ref))
+      cqlMessageFactory, activityLog, prepareHandlerProbe.ref, primeBatchStore))
     activityLog.clearBatchExecutions()
+    when(primeBatchStore.findPrime(any(classOf[BatchExecution]))).thenReturn(None)
   }
 
   val streamId: Byte = 0x01
@@ -86,7 +95,7 @@ class BatchHandlerTest extends TestKit(ActorSystem("BatchHandlerTest")) with Fun
     )
   }
 
-  // this isn't expected to happen byt let's do something better than a NoSuchElementException if it does
+  // this isn't expected to happen but let's do something better than a NoSuchElementException if it does
   test("Records batch statement with ActivityLog - prepared statement not exist") {
     val batchMessage: Array[Byte] = dropHeaderAndLength(createBatchMessage(
       List(PreparedStatement(1)),
@@ -102,5 +111,29 @@ class BatchHandlerTest extends TestKit(ActorSystem("BatchHandlerTest")) with Fun
         BatchQuery("A prepared statement was in the batch but couldn't be found - did you prepare against a different  session?", PreparedStatementKind)
       ), ONE, LOGGED))
     )
+  }
+
+  test("Prime for read time out exception - prepared statement") {
+    val batchMessage: Array[Byte] = dropHeaderAndLength(createBatchMessage(
+      List(PreparedStatement(1)),
+      streamId))
+    val errorResult: ReadRequestTimeoutResult = ReadRequestTimeoutResult()
+    when(primeBatchStore.findPrime(any(classOf[BatchExecution]))).thenReturn(Some(BatchPrime(errorResult)))
+
+    underTest ! BatchHandler.Execute(ByteString(batchMessage), streamId)
+    prepareHandlerProbe.expectMsg(PreparedStatementQuery(List(1)))
+    prepareHandlerProbe.reply(PreparedStatementResponse(Map(1 -> "insert into something")))
+    connectionTestProbe.expectMsg(cqlMessageFactory.createErrorMessage(errorResult, streamId, ONE))
+  }
+
+  override def executeWithError(result: ErrorResult, expectedError: (Byte, Consistency) => Error): Unit = {
+    val batchMessage: Array[Byte] = dropHeaderAndLength(createBatchMessage(
+      List(SimpleQuery("super simple query")),
+      streamId))
+    when(primeBatchStore.findPrime(any(classOf[BatchExecution]))).thenReturn(Some(BatchPrime(result)))
+
+    underTest ! BatchHandler.Execute(ByteString(batchMessage), streamId)
+
+    connectionTestProbe.expectMsg(expectedError(streamId, ONE))
   }
 }

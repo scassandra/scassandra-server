@@ -23,7 +23,7 @@ object WriteType extends Enumeration {
  * Represents the result of the prime in the system. See ResultJsonRepresentation for
  * serialisation of prime JSON.
  */
-abstract class PrimeResult
+sealed abstract class PrimeResult
 abstract class ErrorResult extends PrimeResult
 
 case object SuccessResult extends PrimeResult

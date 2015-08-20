@@ -1,20 +1,15 @@
 package preparedstatements;
 
-import com.google.common.collect.ImmutableMap;
 import common.AbstractScassandraTest;
 import common.CassandraExecutor;
 import common.CassandraResult;
-import common.CassandraRow;
 import org.junit.Test;
-import org.scassandra.http.client.PrimingRequest;
-
-import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.scassandra.http.client.PrimingRequest.Result.success;
 import static org.scassandra.http.client.PrimingRequest.preparedStatementBuilder;
+import static org.scassandra.http.client.PrimingRequest.then;
 
 abstract public class PreparedStatementDelayTest extends AbstractScassandraTest {
 
@@ -28,7 +23,7 @@ abstract public class PreparedStatementDelayTest extends AbstractScassandraTest 
         String query = "select * from people where name = ?";
         long primedDelay = 500;
         primingClient.prime(preparedStatementBuilder()
-                .withFixedDelay(primedDelay)
+                .withThen(then().withFixedDelay(primedDelay).build())
                 .withQuery(query)
                 .build());
 

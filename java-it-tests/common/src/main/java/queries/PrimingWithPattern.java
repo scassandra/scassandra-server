@@ -11,6 +11,7 @@ import org.scassandra.http.client.PrimingRequest;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.scassandra.http.client.PrimingRequest.then;
 
 public class PrimingWithPattern extends AbstractScassandraTest {
 
@@ -23,9 +24,9 @@ public class PrimingWithPattern extends AbstractScassandraTest {
         //given
         PrimingRequest primingRequest = PrimingRequest.queryBuilder()
                 .withQueryPattern("select name from people where name = .*")
-                .withRows(ImmutableMap.of("name", "Chris"))
+                .withThen(then().withRows(ImmutableMap.of("name", "Chris")).build())
                 .build();
-        primingClient.primeQuery(primingRequest);
+        primingClient.prime(primingRequest);
 
         //when
         CassandraResult results = cassandra().executeQuery("select name from people where name = 'Chris'");

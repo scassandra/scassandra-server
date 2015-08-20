@@ -37,9 +37,9 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
         entity(as[PrimePreparedSingle]) { prime =>
           complete {
 
-            val storeToUse = if (prime.when.query.isDefined && !prime.when.queryPattern.isDefined) {
+            val storeToUse = if (prime.when.query.isDefined && prime.when.queryPattern.isEmpty) {
               Some(primePreparedStore)
-            } else if (prime.when.queryPattern.isDefined && !prime.when.query.isDefined) {
+            } else if (prime.when.queryPattern.isDefined && prime.when.query.isEmpty) {
               Some(primePreparedPatternStore)
             } else {
               None

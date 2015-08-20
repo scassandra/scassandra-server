@@ -21,6 +21,7 @@ import akka.actor._
 import akka.io.{IO, Tcp}
 import org.scassandra.server.cqlmessages.CqlMessageFactory
 import org.scassandra.server.priming.ActivityLog
+import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import org.scassandra.server.priming.query.PrimeQueryStore
 import org.scassandra.server.{RegisterHandler, ServerReady}
@@ -28,6 +29,7 @@ import org.scassandra.server.{RegisterHandler, ServerReady}
 class TcpServer(listenAddress: String, port: Int,
                 primedResults: PrimeQueryStore,
                 primePrepareStore: PreparedStoreLookup,
+                primeBatchStore: PrimeBatchStore,
                 serverReadyListener: ActorRef,
                 activityLog: ActivityLog) extends Actor with ActorLogging {
 
@@ -55,7 +57,7 @@ class TcpServer(listenAddress: String, port: Int,
       activityLog.recordConnection()
       val handler = context.actorOf(Props(classOf[ConnectionHandler],
         (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[QueryHandler], tcpConnection, primedResults, msgFactory, activityLog)),
-        (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory, prepareHandler: ActorRef) => af.actorOf(Props(classOf[BatchHandler], tcpConnection, msgFactory, activityLog, prepareHandler)),
+        (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory, prepareHandler: ActorRef) => af.actorOf(Props(classOf[BatchHandler], tcpConnection, msgFactory, activityLog, prepareHandler, primeBatchStore)),
         (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[RegisterHandler], tcpConnection, msgFactory)),
         (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[OptionsHandler], tcpConnection, msgFactory)),
         preparedHandler,

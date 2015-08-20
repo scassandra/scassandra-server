@@ -30,7 +30,7 @@ import spray.json._
 
 object PrimingHelper {
 
-  import PrimingJsonImplicitsForTest._
+  import PrimingJsonImplicits._
   val DefaultHost = "http://localhost:8043/"
 
   def primeQuery(when: When, rows: List[Map[String, Any]], result: ResultJsonRepresentation = Success, columnTypes: Map[String, ColumnType[_]] = Map()): String = {

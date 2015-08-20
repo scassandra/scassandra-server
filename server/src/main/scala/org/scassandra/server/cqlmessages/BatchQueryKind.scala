@@ -5,12 +5,12 @@ sealed abstract class BatchQueryKind {
   val string: String
 }
 
-object QueryKind extends BatchQueryKind {
+case object QueryKind extends BatchQueryKind {
   val kind: Byte = 0
   val string: String = "query"
 }
 
-object PreparedStatementKind extends BatchQueryKind {
+case object PreparedStatementKind extends BatchQueryKind {
   val kind: Byte = 1
   val string: String = "prepared_statement"
 }

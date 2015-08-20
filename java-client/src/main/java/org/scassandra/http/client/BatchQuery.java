@@ -37,7 +37,7 @@ public final class BatchQuery {
     public String toString() {
         return "BatchQuery{" +
                 "query='" + query + '\'' +
-                ", batchQueryType=" + batchQueryKind +
+                ", batchQueryKind=" + batchQueryKind +
                 '}';
     }
 
