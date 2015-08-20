@@ -14,19 +14,21 @@ package batches;/*
  * limitations under the License.
  */
 
-import com.google.common.collect.Lists;
 import common.*;
 import org.junit.Test;
 import org.scassandra.http.client.*;
 
 import java.util.Collections;
+import java.util.List;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.junit.Assert.*;
 import static org.scassandra.cql.PrimitiveType.*;
 import static org.scassandra.http.client.BatchQueryKind.prepared_statement;
 import static org.scassandra.http.client.BatchQueryKind.query;
 import static org.scassandra.http.client.BatchQueryPrime.batchQueryPrime;
 import static org.scassandra.http.client.PrimingRequest.Result.read_request_timeout;
+import static org.scassandra.http.client.PrimingRequest.Result.success;
 import static org.scassandra.http.client.PrimingRequest.then;
 
 abstract public class BatchPrimingTest extends AbstractScassandraTest {
@@ -37,7 +39,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
 
     @Test
     public void executeLoggedBatch() {
-        CassandraResult result = cassandra().executeBatch(Lists.newArrayList(
+        CassandraResult result = cassandra().executeBatch(newArrayList(
                         new CassandraQuery("select * from blah"),
                         new CassandraQuery("select * from blah2")
                 ), BatchType.UNLOGGED
@@ -63,7 +65,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
 
         );
 
-        CassandraResult result = cassandra().executeBatch(Lists.newArrayList(
+        CassandraResult result = cassandra().executeBatch(newArrayList(
                         new CassandraQuery("insert something else"),
                         new CassandraQuery("insert ? ?",
                                 CassandraQuery.QueryType.PREPARED_STATEMENT, "one", 2)
@@ -71,7 +73,33 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
         );
 
         assertEquals(read_request_timeout, result.status().getResult());
-        System.out.println(activityClient.retrieveBatches());
+    }
+
+    @Test
+    public void capturesPreparedStatementVariables() {
+        // prime the prepared statements
+        primingClient.prime(PrimingRequest.preparedStatementBuilder()
+                        .withQuery("insert ? ?")
+                        .withThen(then().withVariableTypes(ASCII, INT))
+        );
+        primingClient.primeBatch(
+                BatchPrimingRequest.batchPrimingRequest()
+                        .withQueries(
+                                batchQueryPrime("insert ? ?", prepared_statement))
+                        .withThen(then().withResult(success))
+
+        );
+
+        cassandra().executeBatch(newArrayList(
+                        new CassandraQuery("insert ? ?",
+                                CassandraQuery.QueryType.PREPARED_STATEMENT, "one", 2)
+                ), BatchType.LOGGED
+        );
+
+        List<BatchExecution> recordedBatchExecutions = activityClient.retrieveBatches();
+        assertEquals(1, recordedBatchExecutions.size());
+        List<BatchQuery> queries = recordedBatchExecutions.get(0).getBatchQueries();
+        assertEquals(newArrayList("one", 2.0), queries.get(0).getVariables());
     }
 
     @Test
@@ -86,7 +114,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
                         batchQueryPrime("select * from blah", BatchQueryKind.query))
                 .build());
 
-        CassandraResult result = cassandra().executeBatch(Lists.newArrayList(
+        CassandraResult result = cassandra().executeBatch(newArrayList(
                         new CassandraQuery("select * from blah")
                 ), BatchType.UNLOGGED
         );
@@ -105,7 +133,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
                         batchQueryPrime("select * from blah", BatchQueryKind.query))
                 .build());
 
-        CassandraResult result = cassandra().executeBatch(Lists.newArrayList(
+        CassandraResult result = cassandra().executeBatch(newArrayList(
                         new CassandraQuery("select * from blah")
                 ), BatchType.UNLOGGED
         );
@@ -123,7 +151,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
                         batchQueryPrime("select * from blah", BatchQueryKind.query))
                 .build());
 
-        CassandraResult result = cassandra().executeBatch(Lists.newArrayList(
+        CassandraResult result = cassandra().executeBatch(newArrayList(
                         new CassandraQuery("select * from blah")
                 ), BatchType.UNLOGGED
         );

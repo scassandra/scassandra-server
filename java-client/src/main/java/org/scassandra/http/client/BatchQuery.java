@@ -15,14 +15,20 @@
  */
 package org.scassandra.http.client;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public final class BatchQuery {
 
     private final String query;
     private final BatchQueryKind batchQueryKind;
+    private final List<Object> variables;
 
-    private BatchQuery(String query, BatchQueryKind batchQueryKind) {
+    private BatchQuery(String query, BatchQueryKind batchQueryKind, List<Object> variables) {
         this.query = query;
         this.batchQueryKind = batchQueryKind;
+        this.variables = variables;
     }
 
     public String getQuery() {
@@ -33,11 +39,16 @@ public final class BatchQuery {
         return batchQueryKind;
     }
 
+    public List<Object> getVariables() {
+        return variables;
+    }
+
     @Override
     public String toString() {
         return "BatchQuery{" +
                 "query='" + query + '\'' +
                 ", batchQueryKind=" + batchQueryKind +
+                ", variables=" + variables +
                 '}';
     }
 
@@ -49,7 +60,8 @@ public final class BatchQuery {
         BatchQuery that = (BatchQuery) o;
 
         if (query != null ? !query.equals(that.query) : that.query != null) return false;
-        return batchQueryKind == that.batchQueryKind;
+        if (batchQueryKind != that.batchQueryKind) return false;
+        return !(variables != null ? !variables.equals(that.variables) : that.variables != null);
 
     }
 
@@ -57,6 +69,7 @@ public final class BatchQuery {
     public int hashCode() {
         int result = query != null ? query.hashCode() : 0;
         result = 31 * result + (batchQueryKind != null ? batchQueryKind.hashCode() : 0);
+        result = 31 * result + (variables != null ? variables.hashCode() : 0);
         return result;
     }
 
@@ -67,6 +80,7 @@ public final class BatchQuery {
     public static class BatchQueryBuilder {
         private String query;
         private BatchQueryKind batchQueryKind = BatchQueryKind.query;
+        private List<Object> variables = new ArrayList<Object>();
 
         private BatchQueryBuilder() {
         }
@@ -81,8 +95,13 @@ public final class BatchQuery {
             return this;
         }
 
+        public BatchQueryBuilder withVariables(Object... variables) {
+            this.variables = Arrays.asList(variables);
+            return this;
+        }
+
         public BatchQuery build() {
-            return new BatchQuery(query, batchQueryKind);
+            return new BatchQuery(query, batchQueryKind, variables);
         }
     }
 }

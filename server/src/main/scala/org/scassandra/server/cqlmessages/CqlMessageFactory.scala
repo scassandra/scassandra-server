@@ -27,6 +27,8 @@ Will need renaming. Aim to slowly move all protocol parsing through this
 trait so that we can isolate the differences between protocols.
  */
 trait CqlMessageFactory {
+
+  val protocolVersion: ProtocolVersion
   def createReadyMessage(stream : Byte) : Ready
   def createQueryBeforeErrorMessage() : QueryBeforeReadyMessage
   def createSetKeyspaceMessage(keyspaceName: String, stream: Byte): SetKeyspace

@@ -96,6 +96,7 @@ class ActivityLog extends LazyLogging {
   }
 
   def retrieveBatchExecutions(): List[BatchExecution] = {
+    logger.info("Retrieving batch executions {}", batchExecutions)
     batchExecutions
   }
 
@@ -107,6 +108,6 @@ class ActivityLog extends LazyLogging {
 case class Query(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[ColumnType[_]] = List())
 case class Connection(result: String = "success")
 case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[ColumnType[_]])
-case class BatchQuery(query: String, batchQueryKind: BatchQueryKind)
+case class BatchQuery(query: String, batchQueryKind: BatchQueryKind, variables: List[Any] = List())
 case class BatchExecution(batchQueries: Seq[BatchQuery], consistency: Consistency, batchType: BatchType)
 case class PreparedStatementPreparation(preparedStatementText: String)

@@ -41,8 +41,7 @@ import org.scassandra.server.cqlmessages.types.ColumnType
  */
 abstract class AbstractMessageFactory extends CqlMessageFactory {
 
-  val protocolVersion : Byte
-  implicit val protocolVersionImp : ProtocolVersion
+  implicit val protocolVersion : ProtocolVersion
   import CqlProtocolHelper._
 
   override def createReadyMessage(stream: Byte): Ready = {
@@ -130,7 +129,7 @@ abstract class AbstractMessageFactory extends CqlMessageFactory {
       case true  => {
         val numberOfVariables = iterator.getShort
         variableTypes.map (varType => {
-          varType.readValueWithLength(iterator)(protocolVersionImp)
+          varType.readValueWithLength(iterator)(protocolVersion)
         })
       }
       case false => Nil

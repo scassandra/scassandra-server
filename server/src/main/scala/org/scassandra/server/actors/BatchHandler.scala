@@ -24,6 +24,8 @@ import org.scassandra.server.actors.PrepareHandler.{PreparedStatementResponse, P
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.priming.batch.{BatchPrime, PrimeBatchStore}
 import org.scassandra.server.priming._
+import org.scassandra.server.priming.prepared.{PreparedPrime, PreparedStoreLookup}
+import org.scassandra.server.priming.query.PrimeMatch
 
 import scala.collection.immutable.IndexedSeq
 import scala.concurrent.Future
@@ -34,11 +36,13 @@ class BatchHandler(tcpConnection: ActorRef,
                    msgFactory: CqlMessageFactory,
                    activityLog: ActivityLog,
                    prepareHandler: ActorRef,
-                   primeStore: PrimeBatchStore) extends Actor with ActorLogging {
+                   batchPrimeStore: PrimeBatchStore,
+                   preparedStore: PreparedStoreLookup) extends Actor with ActorLogging {
 
   import CqlProtocolHelper._
   import context.dispatcher
-  implicit val timeout: Timeout = 1 second
+  private implicit val timeout: Timeout = 1 second
+  private implicit val protocolVersion = msgFactory.protocolVersion
 
   def receive: Receive = {
     case Execute(body, stream) =>
@@ -75,9 +79,17 @@ class BatchHandler(tcpConnection: ActorRef,
     case BatchToFinish(inFlight, ids, consistency, batchType, stream) =>
       log.debug("Received batch to finish {}", inFlight)
       val statements: Seq[BatchQuery] = inFlight.map( {
-        //todo support capturing of variables
+        //todo support capturing of variables for queries
         case NormalQuery(text) => BatchQuery(text, QueryKind)
-        case IncompletePreparedStatement(id, _) => BatchQuery(ids.getOrElse(id, "A prepared statement was in the batch but couldn't be found - did you prepare against a different  session?"), PreparedStatementKind)
+        case IncompletePreparedStatement(id, variables: List[Array[Byte]]) =>
+          val queryText: String = ids.getOrElse(id, "A prepared statement was in the batch but couldn't be found - did you prepare against a different  session?")
+          preparedStore.findPrime(PrimeMatch(queryText, consistency)) match {
+            case Some(PreparedPrime(variableTypes, _)) =>
+              val parsedVariables = variables.zip(variableTypes).map { case (bytes, colType) => colType.readValue(ByteString(bytes).iterator) }
+              BatchQuery(queryText, PreparedStatementKind, parsedVariables)
+            case None => BatchQuery(queryText, PreparedStatementKind)
+          }
+
       })
       val execution: BatchExecution = BatchExecution(statements, consistency, batchType)
       activityLog.recordBatchExecution(execution)
@@ -87,7 +99,7 @@ class BatchHandler(tcpConnection: ActorRef,
   }
 
   private def sendResponse(execution: BatchExecution, stream: Byte, consistency: Consistency): Unit = {
-    val prime: Option[BatchPrime] = primeStore.findPrime(execution)
+    val prime: Option[BatchPrime] = batchPrimeStore.findPrime(execution)
     log.info("Found prime {} for batch execution {}", prime, execution)
     prime match {
       case Some(BatchPrime(SuccessResult)) => tcpConnection ! msgFactory.createVoidMessage(stream)
@@ -103,7 +115,6 @@ private case class NormalQuery(text: String) extends InFlightBatchQuery
 private case class IncompletePreparedStatement(id: Int, variables: List[Array[Byte]]) extends InFlightBatchQuery
 
 object BatchHandler {
-  //todo stop this being a map of options lol
   private case class BatchToFinish(inFlightBatchQuery: Seq[InFlightBatchQuery], idsToText: Map[Int, String], consistency: Consistency, batchType: BatchType, stream: Byte)
   case class Execute(body: ByteString, stream: Byte)
 }

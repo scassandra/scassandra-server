@@ -19,12 +19,10 @@ import org.scassandra.server.cqlmessages.response.PreparedResultV1
 import akka.util.{ByteIterator, ByteString}
 import org.scassandra.server.cqlmessages.request.{QueryRequest, ExecuteRequest}
 import org.scassandra.server.cqlmessages.types.ColumnType
-import org.scassandra.server.priming.BatchQuery
 
 object VersionOneMessageFactory extends AbstractMessageFactory {
 
-  val protocolVersion = ProtocolVersion.ServerProtocolVersionOne
-  implicit val protocolVersionImp = VersionOne
+  implicit val protocolVersion = VersionOne
   import CqlProtocolHelper._
 
   def createPreparedResult(stream: Byte, id : Int, variableTypes: List[ColumnType[_]]): PreparedResultV1 = {

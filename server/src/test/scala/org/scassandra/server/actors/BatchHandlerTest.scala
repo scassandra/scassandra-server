@@ -16,7 +16,7 @@
 package org.scassandra.server.actors
 
 import akka.actor.{Props, ActorRef, ActorSystem}
-import akka.testkit.{TestKitBase, TestProbe, TestKit}
+import akka.testkit.{TestKitBase, TestProbe}
 import akka.util.ByteString
 import org.mockito.Mockito._
 import org.mockito.Matchers._
@@ -28,6 +28,8 @@ import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.response.Error
 import org.scassandra.server.priming.batch.{BatchPrime, PrimeBatchStore}
 import org.scassandra.server.priming._
+import org.scassandra.server.priming.prepared.{PreparedStoreLookup}
+import org.scassandra.server.priming.query.PrimeMatch
 
 class BatchHandlerTest extends FunSuite with TestKitBase with MockitoSugar
   with Matchers with BeforeAndAfter with ErrorHandlingBehaviors {
@@ -40,14 +42,16 @@ class BatchHandlerTest extends FunSuite with TestKitBase with MockitoSugar
   val cqlMessageFactory = VersionTwoMessageFactory
   val activityLog = new ActivityLog
   val primeBatchStore = mock[PrimeBatchStore]
+  val primePreparedStore = mock[PreparedStoreLookup]
 
   before {
     connectionTestProbe = TestProbe()
     prepareHandlerProbe = TestProbe()
     underTest = system.actorOf(Props(classOf[BatchHandler], connectionTestProbe.ref,
-      cqlMessageFactory, activityLog, prepareHandlerProbe.ref, primeBatchStore))
+      cqlMessageFactory, activityLog, prepareHandlerProbe.ref, primeBatchStore, primePreparedStore))
     activityLog.clearBatchExecutions()
     when(primeBatchStore.findPrime(any(classOf[BatchExecution]))).thenReturn(None)
+    when(primePreparedStore.findPrime(any(classOf[PrimeMatch]))).thenReturn(None)
   }
 
   val streamId: Byte = 0x01
@@ -113,18 +117,6 @@ class BatchHandlerTest extends FunSuite with TestKitBase with MockitoSugar
     )
   }
 
-  test("Prime for read time out exception - prepared statement") {
-    val batchMessage: Array[Byte] = dropHeaderAndLength(createBatchMessage(
-      List(PreparedStatement(1)),
-      streamId))
-    val errorResult: ReadRequestTimeoutResult = ReadRequestTimeoutResult()
-    when(primeBatchStore.findPrime(any(classOf[BatchExecution]))).thenReturn(Some(BatchPrime(errorResult)))
-
-    underTest ! BatchHandler.Execute(ByteString(batchMessage), streamId)
-    prepareHandlerProbe.expectMsg(PreparedStatementQuery(List(1)))
-    prepareHandlerProbe.reply(PreparedStatementResponse(Map(1 -> "insert into something")))
-    connectionTestProbe.expectMsg(cqlMessageFactory.createErrorMessage(errorResult, streamId, ONE))
-  }
 
   override def executeWithError(result: ErrorResult, expectedError: (Byte, Consistency) => Error): Unit = {
     val batchMessage: Array[Byte] = dropHeaderAndLength(createBatchMessage(

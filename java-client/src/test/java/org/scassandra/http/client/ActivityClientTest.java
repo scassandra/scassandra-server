@@ -310,7 +310,7 @@ public class ActivityClientTest {
     public void testRetrievalOfBatchExecutions() {
         //given
         stubFor(get(urlEqualTo(batchUrl)).willReturn(aResponse()
-                .withBody("[{\"batchQueries\":[{\"query\":\"select * from people\", \"batchQueryKind\":\"query\"}],\"consistency\":\"TWO\", \"batchType\":\"COUNTER\"}]")));
+                .withBody("[{\"batchQueries\":[{\"query\":\"select * from people\", \"batchQueryKind\":\"query\", \"variables\": []}],\"consistency\":\"TWO\", \"batchType\":\"COUNTER\"}]")));
         //when
         List<BatchExecution> batchExecutions = underTest.retrieveBatches();
         //then

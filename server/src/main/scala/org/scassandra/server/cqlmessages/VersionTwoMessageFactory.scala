@@ -27,8 +27,7 @@ import org.scassandra.server.cqlmessages.types.ColumnType
 
 object VersionTwoMessageFactory extends AbstractMessageFactory {
 
-  val protocolVersion = ProtocolVersion.ServerProtocolVersionTwo
-  implicit val protocolVersionImp = VersionTwo
+  implicit val protocolVersion = VersionTwo
 
   def createPreparedResult(stream: Byte, id : Int, variableTypes: List[ColumnType[_]]) = {
     PreparedResultV2(stream, id, "keyspace", "table", variableTypes)
