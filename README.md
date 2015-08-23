@@ -41,4 +41,4 @@ deprecated APIs.
 * Squash your commits so that each commit is fully functional and passes all tests, including any new API exposed via the Java client
 * Any format changes please put in a separate commit
 * All features should be unit tested in the server and have an integration test
-* Raise a separate PR for the [docs](https://github.com/scassandra/scassandra-docs) 
+* Add docs for any new features
