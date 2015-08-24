@@ -21,3 +21,4 @@ pages:
 - [standalone/priming-errors.md, Standlone, Priming Errors]
 - [standalone/using-python.md, Standlone, Python Driver]
 theme: readthedocs
+docs_dir: .
