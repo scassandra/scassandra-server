@@ -15,6 +15,7 @@
  */
 package org.scassandra.http.client;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -90,6 +91,14 @@ public final class BatchExecution {
 
         public BatchExecutionBuilder withBatchQueries(BatchQuery... batchQueries) {
             this.batchQueries = Arrays.asList(batchQueries);
+            return this;
+        }
+
+        public BatchExecutionBuilder withBatchQueries(BatchQuery.BatchQueryBuilder... batchQueries) {
+            this.batchQueries = new ArrayList<BatchQuery>();
+            for (BatchQuery.BatchQueryBuilder bq : batchQueries) {
+                this.batchQueries.add(bq.build());
+            }
             return this;
         }
 
