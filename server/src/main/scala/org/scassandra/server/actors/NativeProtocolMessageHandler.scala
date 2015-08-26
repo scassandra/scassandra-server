@@ -33,8 +33,7 @@ class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory, ActorR
                         registerHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         optionsHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         prepareHandler: ActorRef,
-                        executeHandler: ActorRef,
-                        connectionWrapperFactory: (ActorRefFactory, ActorRef) => ActorRef) extends Actor with ActorLogging {
+                        executeHandler: ActorRef) extends Actor with ActorLogging {
 
   var messageFactory: CqlMessageFactory = _
 
@@ -50,12 +49,11 @@ class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory, ActorR
         case OpCodes.Startup =>
           log.info(s"Sending ready message to ${sender()}")
           initialiseMessageFactory(protocolVersion)
-          val wrappedSender = connectionWrapperFactory(context, sender())
-          queryHandler = queryHandlerFactory(context, wrappedSender, messageFactory)
-          batchHandler = batchHandlerFactory(context, wrappedSender, messageFactory, prepareHandler)
-          registerHandler = registerHandlerFactory(context, wrappedSender, messageFactory)
-          optionsHandler = optionsHandlerFactory(context, wrappedSender, messageFactory)
-          wrappedSender ! messageFactory.createReadyMessage(stream)
+          queryHandler = queryHandlerFactory(context, sender(), messageFactory)
+          batchHandler = batchHandlerFactory(context, sender(), messageFactory, prepareHandler)
+          registerHandler = registerHandlerFactory(context, sender(), messageFactory)
+          optionsHandler = optionsHandlerFactory(context, sender(), messageFactory)
+          sender ! messageFactory.createReadyMessage(stream)
           ready = true
         case OpCodes.Query =>
           if (!ready) {
@@ -76,12 +74,10 @@ class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory, ActorR
           optionsHandler ! OptionsHandlerMessages.OptionsMessage(stream)
         case OpCodes.Prepare =>
           log.debug("Received prepare message. Sending to PrepareHandler")
-          val wrappedSender = connectionWrapperFactory(context, sender())
-          prepareHandler ! PrepareHandler.Prepare(messageBody, stream, messageFactory, wrappedSender)
+          prepareHandler ! PrepareHandler.Prepare(messageBody, stream, messageFactory, sender())
         case OpCodes.Execute =>
           log.debug("Received execute message. Sending to ExecuteHandler")
-          val wrappedSender = connectionWrapperFactory(context, sender())
-          executeHandler ! ExecuteHandler.Execute(messageBody, stream, messageFactory, wrappedSender)
+          executeHandler ! ExecuteHandler.Execute(messageBody, stream, messageFactory, sender())
         case opCode @ _ =>
           log.warning(s"Received unknown opcode $opCode this probably means this feature is yet to be implemented the message body is $messageBody")
       }

@@ -6,3 +6,4 @@ _site
 *.swp
 *.iml
 build
+docs/site

@@ -16,7 +16,7 @@
 package org.scassandra.server.actors
 
 import akka.actor.ActorSystem
-import akka.io.Tcp.{Received, Write}
+import akka.io.Tcp.{ResumeReading, Received, Write}
 import akka.testkit._
 import akka.util.ByteString
 import org.scalatest._
@@ -33,6 +33,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
 
   var testActorRef : TestActorRef[ConnectionHandler] = null
 
+  var tcpConnectionTestProbe : TestProbe = null
   var queryHandlerTestProbe : TestProbe = null
   var batchHandlerTestProbe : TestProbe = null
   var registerHandlerTestProbe : TestProbe = null
@@ -45,6 +46,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
   var lastMsgFactoryUsedForPrepare : CqlMessageFactory = null
 
   before {
+    tcpConnectionTestProbe = TestProbe()
     queryHandlerTestProbe = TestProbe()
     registerHandlerTestProbe = TestProbe()
     prepareHandlerTestProbe = TestProbe()
@@ -52,6 +54,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
     optionsHandlerTestProbe = TestProbe()
     batchHandlerTestProbe = TestProbe()
     testActorRef = TestActorRef(new ConnectionHandler(
+      self,
       (_,_,msgFactory) => {
         lastMsgFactoryUsedForQuery = msgFactory
         queryHandlerTestProbe.ref
@@ -68,11 +71,14 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
         optionsHandlerTestProbe.ref
       },
       prepareHandlerTestProbe.ref,
-      executeHandlerTestProbe.ref,
-      (_,actorRef) => {
-        actorRef
-      }
+      executeHandlerTestProbe.ref
     ))
+
+    // Ignore all 'ResumeReading' messages.
+    ignoreMsg {
+      case ResumeReading => true
+      case _ => false
+    }
 
     lastMsgFactoryUsedForQuery = null
     clear()
@@ -103,7 +109,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
 
     testActorRef ! Received(readyMessage)
 
-    expectMsg(Ready(0x0.toByte))
+    expectMsg(Write(Ready(0x0.toByte).serialize()))
   }
 
   test("Should send ready message when startup message sent - version two") {
@@ -117,7 +123,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
 
     testActorRef ! Received(readyMessage)
 
-    expectMsg(Ready(0x0.toByte))
+    expectMsg(Write(Ready(0x0.toByte).serialize()))
   }
 
   test("Should send back error if query before ready message") {
@@ -275,7 +281,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
     
     testActorRef ! Received(ByteString(emptyPrepareMessage))
 
-    prepareHandlerTestProbe.expectMsg(PrepareHandler.Prepare(ByteString(), streamId, VersionTwoMessageFactory, self))
+    prepareHandlerTestProbe.expectMsg(PrepareHandler.Prepare(ByteString(), streamId, VersionTwoMessageFactory, testActorRef))
   }
 
   test("Should forward Execute messages to the execute handler") {
@@ -289,7 +295,7 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
 
     testActorRef ! Received(ByteString(emptyPrepareMessage))
 
-    executeHandlerTestProbe.expectMsg(ExecuteHandler.Execute(ByteString(messageBody), streamId, VersionTwoMessageFactory, self))
+    executeHandlerTestProbe.expectMsg(ExecuteHandler.Execute(ByteString(messageBody), streamId, VersionTwoMessageFactory, testActorRef))
   }
 
   test("Should forward Batch messages to the batch handler") {
@@ -310,14 +316,14 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
 
     testActorRef ! Received(ByteString(startupMessage.toArray))
 
-    expectMsg(UnsupportedProtocolVersion(stream))
+    expectMsg(Write(UnsupportedProtocolVersion(stream).serialize()))
 
     case object VersionFive extends ProtocolVersion(0x5, (0x85 & 0xFF).toByte, 5)
     val v5StartupMessage = MessageHelper.createStartupMessage(VersionFive)
 
     testActorRef ! Received(ByteString(v5StartupMessage.toArray))
 
-    expectMsg(UnsupportedProtocolVersion(stream))
+    expectMsg(Write(UnsupportedProtocolVersion(stream).serialize()))
   }
 
   private def sendStartupMessage(protocolVersion: ProtocolVersion = VersionTwo) = {

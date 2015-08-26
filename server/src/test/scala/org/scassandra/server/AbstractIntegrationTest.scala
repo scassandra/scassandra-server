@@ -21,6 +21,7 @@ import com.datastax.driver.core.{Cluster, Session}
 import dispatch.Defaults._
 import dispatch._
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSuite, Matchers}
+import org.scassandra.server.actors._
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
@@ -96,6 +97,30 @@ object PrimingHelper {
     val svc = url(s"${DefaultHost}batch-execution").DELETE
     Http(svc OK as.String)(dispatch.Defaults.executor)()
   }
+
+  def enableListener(): Boolean = {
+    val svc = url(s"${DefaultHost}current/listener").PUT
+    val response = Http(svc OK as.String)(dispatch.Defaults.executor)()
+    JsonParser(response).convertTo[AcceptNewConnectionsEnabled].changed
+  }
+
+  def disableListener(after: Int = 0): Boolean = {
+    val svc = url(s"${DefaultHost}current/listener?after=$after").DELETE
+    val response = Http(svc OK as.String)(dispatch.Defaults.executor)()
+    JsonParser(response).convertTo[RejectNewConnectionsEnabled].changed
+  }
+
+  def getConnections(): List[ClientConnection] = {
+    val svc = url(s"${DefaultHost}current/connections").GET
+    val response = Http(svc OK as.String)(dispatch.Defaults.executor)()
+    JsonParser(response).convertTo[ClientConnections].connections
+  }
+
+  def closeConnection(connection: ClientConnection, operation: String): ClosedConnections = {
+    val svc = url(s"${DefaultHost}current/connections/${connection.host}/${connection.port}?type=$operation").DELETE
+    val response = Http(svc OK as.String)(dispatch.Defaults.executor)()
+    JsonParser(response).convertTo[ClosedConnections]
+  }
 }
 
 abstract class AbstractIntegrationTest(clusterConnect: Boolean = true) extends FunSuite with Matchers with BeforeAndAfter with BeforeAndAfterAll {
@@ -147,7 +172,7 @@ abstract class AbstractIntegrationTest(clusterConnect: Boolean = true) extends F
     }
 
     if (somethingAlreadyRunning) {
-      fail("There must not be any server already running")
+      fail("There must be a server already running")
     }
 
     // Then start the server

@@ -5,6 +5,7 @@ import java.net.InetAddress
 import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
+import org.scassandra.server.actors._
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.cqlmessages.{BatchType, BatchQueryKind, Consistency}
 import org.scassandra.server.priming._
@@ -134,4 +135,9 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
   implicit val impBatchQueryPrime = jsonFormat2(BatchQueryPrime)
   implicit val impBatchWhen = jsonFormat2(BatchWhen)
   implicit val impBatchPrimeSingle = jsonFormat(BatchPrimeSingle, "when", "then")
+  implicit val impClientConnection = jsonFormat2(ClientConnection)
+  implicit val impClientConnections = jsonFormat1(ClientConnections)
+  implicit val impClosedConnections = jsonFormat(ClosedConnections, "closed_connections", "operation")
+  implicit val impAcceptNewConnectionsEnabled = jsonFormat1(AcceptNewConnectionsEnabled)
+  implicit val impRejectNewConnectionsEnabled = jsonFormat1(RejectNewConnectionsEnabled)
 }

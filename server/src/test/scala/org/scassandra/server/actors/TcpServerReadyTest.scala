@@ -15,7 +15,10 @@
  */
 package org.scassandra.server.actors
 
+import java.net.InetSocketAddress
+
 import akka.actor.ActorSystem
+import akka.io.Tcp.{Bound, Bind}
 import akka.testkit._
 import org.scalatest.{FunSpecLike, Matchers}
 import org.scassandra.server.ServerReady
@@ -31,9 +34,14 @@ class TcpServerReadyTest extends TestKit(ActorSystem("TestSystem")) with FunSpec
       // given
       // TODO [DN] Do test probes shut down their own actor systems?
       val tcpReadyListener = TestProbe()
+      val manager = TestProbe()
+      val remote = new InetSocketAddress("127.0.0.1", 8046)
 
       // when
-      TestActorRef(new TcpServer("localhost", 8046, PrimeQueryStore(), PrimePreparedStore(), new PrimeBatchStore(), tcpReadyListener.ref, new ActivityLog))
+      TestActorRef(new TcpServer(manager.ref, "localhost", 8046, PrimeQueryStore(), PrimePreparedStore(), new PrimeBatchStore(), tcpReadyListener.ref, new ActivityLog))
+      val tcpServer = TestActorRef(new TcpServer(manager.ref, "localhost", 8046, PrimeQueryStore(), PrimePreparedStore(), new PrimeBatchStore(), tcpReadyListener.ref, new ActivityLog))
+      manager.expectMsgType[Bind]
+      manager.send(tcpServer, Bound(remote))
 
       // then
       tcpReadyListener.expectMsg(ServerReady)

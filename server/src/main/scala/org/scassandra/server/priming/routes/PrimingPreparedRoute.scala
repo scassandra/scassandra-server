@@ -69,8 +69,21 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
           val preparedPrimes: Iterable[PrimePreparedSingle] = primePreparedStore.retrievePrimes().map({case (primeCriteria, preparedPrime) =>
             val result = preparedPrime.prime.result match {
               case SuccessResult => Success
-              case r:ReadRequestTimeoutResult => ReadTimeout
-              case r:WriteRequestTimeoutResult => WriteTimeout
+              case _: ReadRequestTimeoutResult => ReadTimeout
+              case _: WriteRequestTimeoutResult => WriteTimeout
+              case _: UnavailableResult => Unavailable
+              case _: ServerErrorResult => ServerError
+              case _: ProtocolErrorResult => ProtocolError
+              case _: BadCredentialsResult => BadCredentials
+              case _: OverloadedResult => Overloaded
+              case _: IsBootstrappingResult => IsBootstrapping
+              case _: TruncateErrorResult => TruncateError
+              case _: SyntaxErrorResult => SyntaxError
+              case _: UnauthorizedResult => Unauthorized
+              case _: InvalidResult => Invalid
+              case _: ConfigErrorResult => ConfigError
+              case _: AlreadyExistsResult => AlreadyExists
+              case _: UnpreparedResult => Unprepared
             }
             PrimePreparedSingle(
               WhenPreparedSingle(

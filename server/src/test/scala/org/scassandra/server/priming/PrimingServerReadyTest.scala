@@ -30,9 +30,10 @@ class PrimingServerReadyTest extends TestKit(ActorSystem("TestSystem")) with Fun
       // given
       // TODO [DN] Do test probes shut down their own actor systems?
       val primingReadyListener = TestProbe()
+      val tcpServer = TestProbe()
 
       // when
-      TestActorRef(new PrimingServer("localhost", 8045, PrimeQueryStore(), PrimePreparedStore(), new PrimePreparedPatternStore(), new PrimeBatchStore(), primingReadyListener.ref, new ActivityLog))
+      TestActorRef(new PrimingServer("localhost", 8045, PrimeQueryStore(), PrimePreparedStore(), new PrimePreparedPatternStore(), new PrimeBatchStore(), primingReadyListener.ref, new ActivityLog, tcpServer.ref))
 
       // then
       primingReadyListener.expectMsg(ServerReady)

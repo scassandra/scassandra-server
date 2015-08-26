@@ -24,7 +24,7 @@ object WriteType extends Enumeration {
  * serialisation of prime JSON.
  */
 sealed abstract class PrimeResult
-abstract class ErrorResult extends PrimeResult
+sealed abstract class ErrorResult extends PrimeResult
 
 case object SuccessResult extends PrimeResult
 

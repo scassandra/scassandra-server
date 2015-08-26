@@ -16,6 +16,7 @@
 package org.scassandra.server
 
 import akka.actor._
+import akka.io.{Tcp, IO}
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.actors.TcpServer
 import org.scassandra.server.priming.batch.PrimeBatchStore
@@ -58,10 +59,11 @@ class ServerStubRunner( val binaryListenAddress: String = "localhost",
 
   def start() = {
     system = ActorSystem(s"CassandraServerStub-$binaryPortNumber-$adminPortNumber")
+    val manager = IO(Tcp)(system)
     primingReadyListener = system.actorOf(Props(classOf[ServerReadyListener]), "PrimingReadyListener")
     tcpReadyListener = system.actorOf(Props(classOf[ServerReadyListener]), "TcpReadyListener")
-    system.actorOf(Props(classOf[TcpServer], binaryListenAddress, binaryPortNumber, primedResults, preparedLookup, primeBatchStore, tcpReadyListener, activityLog), "BinaryTcpListener")
-    system.actorOf(Props(classOf[PrimingServer], adminListenAddress, adminPortNumber, primedResults, primePreparedStore, primePreparedPatternStore, primeBatchStore,  primingReadyListener, activityLog), "PrimingServer")
+    val tcpServer = system.actorOf(Props(classOf[TcpServer], manager, binaryListenAddress, binaryPortNumber, primedResults, preparedLookup, primeBatchStore, tcpReadyListener, activityLog), "BinaryTcpListener")
+    system.actorOf(Props(classOf[PrimingServer], adminListenAddress, adminPortNumber, primedResults, primePreparedStore, primePreparedPatternStore, primeBatchStore, primingReadyListener, activityLog, tcpServer), "PrimingServer")
   }
 
   def awaitTermination() = {
