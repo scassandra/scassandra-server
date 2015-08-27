@@ -75,5 +75,17 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
 
       prime should equal(None)
     }
+
+    it("Should match on batch type - no match") {
+      val underTest = new PrimeBatchStore()
+
+      underTest.record(BatchPrimeSingle(
+        BatchWhen(List(BatchQueryPrime("select * blah", QueryKind)), batchType = Some(COUNTER)),
+        Then(result = Some(Success))))
+
+      val prime = underTest.findPrime(BatchExecution(Seq(BatchQuery("select * blah", QueryKind)), ONE, LOGGED))
+
+      prime should equal(None)
+    }
   }
 }

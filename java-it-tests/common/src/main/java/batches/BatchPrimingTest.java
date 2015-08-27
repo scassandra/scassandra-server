@@ -22,11 +22,16 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.google.common.collect.Lists.newArrayList;
+import static common.CassandraQuery.QueryType.PREPARED_STATEMENT;
 import static org.junit.Assert.*;
 import static org.scassandra.cql.PrimitiveType.*;
 import static org.scassandra.http.client.BatchQueryKind.prepared_statement;
 import static org.scassandra.http.client.BatchQueryKind.query;
 import static org.scassandra.http.client.BatchQueryPrime.batchQueryPrime;
+import static org.scassandra.http.client.BatchType.COUNTER;
+import static org.scassandra.http.client.BatchType.LOGGED;
+import static org.scassandra.http.client.BatchType.UNLOGGED;
+import static org.scassandra.http.client.PrimingRequest.Consistency.ONE;
 import static org.scassandra.http.client.PrimingRequest.Result.read_request_timeout;
 import static org.scassandra.http.client.PrimingRequest.Result.success;
 import static org.scassandra.http.client.PrimingRequest.then;
@@ -42,7 +47,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
         CassandraResult result = cassandra().executeBatch(newArrayList(
                         new CassandraQuery("select * from blah"),
                         new CassandraQuery("select * from blah2")
-                ), BatchType.UNLOGGED
+                ), UNLOGGED
         );
 
         assertEquals(PrimingRequest.Result.success, result.status().getResult());
@@ -68,7 +73,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
         CassandraResult result = cassandra().executeBatch(newArrayList(
                         new CassandraQuery("insert something else"),
                         new CassandraQuery("insert ? ?",
-                                CassandraQuery.QueryType.PREPARED_STATEMENT, "one", 2)
+                                PREPARED_STATEMENT, "one", 2)
                 ), BatchType.LOGGED
         );
 
@@ -92,7 +97,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
 
         cassandra().executeBatch(newArrayList(
                         new CassandraQuery("insert ? ?",
-                                CassandraQuery.QueryType.PREPARED_STATEMENT, "one", 2)
+                                PREPARED_STATEMENT, "one", 2)
                 ), BatchType.LOGGED
         );
 
@@ -116,7 +121,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
 
         CassandraResult result = cassandra().executeBatch(newArrayList(
                         new CassandraQuery("select * from blah")
-                ), BatchType.UNLOGGED
+                ), LOGGED
         );
 
         assertEquals(read_request_timeout, result.status().getResult());
@@ -125,17 +130,15 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
     @Test
     public void primeBatchWithWriteTimeout() {
         primingClient.primeBatch(BatchPrimingRequest.batchPrimingRequest()
-                .withThen(BatchPrimingRequest
-                        .then()
-                        .withResult(PrimingRequest.Result.write_request_timeout)
-                        .build())
+                .withThen(BatchPrimingRequest.then()
+                        .withResult(PrimingRequest.Result.write_request_timeout))
                 .withQueries(
                         batchQueryPrime("select * from blah", BatchQueryKind.query))
                 .build());
 
         CassandraResult result = cassandra().executeBatch(newArrayList(
                         new CassandraQuery("select * from blah")
-                ), BatchType.UNLOGGED
+                ), BatchType.LOGGED
         );
 
         assertEquals(PrimingRequest.Result.write_request_timeout, result.status().getResult());
@@ -145,17 +148,36 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
     public void primeBatchWithUnavailable() {
         primingClient.primeBatch(BatchPrimingRequest.batchPrimingRequest()
                 .withThen(BatchPrimingRequest.then()
-                        .withResult(PrimingRequest.Result.unavailable)
-                        .build())
+                        .withResult(PrimingRequest.Result.unavailable))
                 .withQueries(
                         batchQueryPrime("select * from blah", BatchQueryKind.query))
+                .withType(COUNTER)
                 .build());
 
         CassandraResult result = cassandra().executeBatch(newArrayList(
                         new CassandraQuery("select * from blah")
-                ), BatchType.UNLOGGED
+                ), COUNTER
         );
 
         assertEquals(PrimingRequest.Result.unavailable, result.status().getResult());
+    }
+
+    @Test
+    public void primeBatchBasedOnTypeNoMatch() {
+        final String query = "insert into blah";
+        primingClient.primeBatch(BatchPrimingRequest.batchPrimingRequest()
+                        .withConsistency(ONE)
+                        .withType(BatchType.COUNTER)
+                        .withQueries(BatchQueryPrime.batchQueryPrime(query, BatchQueryKind.query))
+                        .withThen(
+                                then().withResult(PrimingRequest.Result.read_request_timeout))
+        );
+
+        CassandraResult result = cassandra().executeBatch(newArrayList(
+                new CassandraQuery(query)
+        ), UNLOGGED);
+
+        // prime should be ignored as it was for a counter batch
+        assertEquals(success, result.status().getResult());
     }
 }

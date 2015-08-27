@@ -710,7 +710,7 @@ public class PrimingClientTest {
         verify(postRequestedFor(urlEqualTo(PRIME_BATCH_PATH))
                 .withHeader("Content-Type", equalTo("application/json; charset=UTF-8"))
                 .withRequestBody(equalToJson("{\"when\": {\"queries\": [{\"text\":\"select * from blah\", " +
-                        "\"kind\":\"prepared_statement\"}] }," +
+                        "\"kind\":\"prepared_statement\"}], \"batchType\":\"LOGGED\"  }," +
                         "\"then\":{\"result\":\"read_request_timeout\"}}")));
 
     }

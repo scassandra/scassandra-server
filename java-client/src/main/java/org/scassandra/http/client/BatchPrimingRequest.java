@@ -29,6 +29,7 @@ public final class BatchPrimingRequest {
         private PrimingRequest.Then then;
         private List<BatchQueryPrime> queries;
         private List<PrimingRequest.Consistency> consistency;
+        private BatchType type = BatchType.LOGGED;
 
         private BatchPrimingRequestBuilder() {
         }
@@ -53,30 +54,41 @@ public final class BatchPrimingRequest {
             return this;
         }
 
+        public BatchPrimingRequestBuilder withType(BatchType type) {
+            this.type = type;
+            return this;
+        }
+
         public BatchPrimingRequest build() {
             if (then == null) {
                 throw new IllegalStateException("Must provide withThen before building");
             }
-            return new BatchPrimingRequest(new BatchWhen(consistency, queries), then);
+            return new BatchPrimingRequest(new BatchWhen(consistency, queries, type), then);
         }
     }
 
     public final static class BatchWhen {
         private final List<PrimingRequest.Consistency> consistency;
         private final List<BatchQueryPrime> queries;
+        private final BatchType batchType;
 
-        private BatchWhen(List<PrimingRequest.Consistency> consistency, List<BatchQueryPrime> queries) {
+        private BatchWhen(List<PrimingRequest.Consistency> consistency, List<BatchQueryPrime> queries, BatchType batchType) {
             this.consistency = consistency;
             this.queries = queries;
+            this.batchType = batchType;
         }
 
         public List<PrimingRequest.Consistency> getConsistency() {
             return Collections.unmodifiableList(consistency);
         }
+
         public List<BatchQueryPrime> getQueries() {
             return Collections.unmodifiableList(queries);
         }
 
+        public BatchType getBatchType() {
+            return batchType;
+        }
     }
 
 }

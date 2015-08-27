@@ -133,7 +133,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
   implicit val impBatchQuery = jsonFormat3(BatchQuery)
   implicit val impBatchExecution = jsonFormat3(BatchExecution)
   implicit val impBatchQueryPrime = jsonFormat2(BatchQueryPrime)
-  implicit val impBatchWhen = jsonFormat2(BatchWhen)
+  implicit val impBatchWhen = jsonFormat3(BatchWhen)
   implicit val impBatchPrimeSingle = jsonFormat(BatchPrimeSingle, "when", "then")
   implicit val impClientConnection = jsonFormat2(ClientConnection)
   implicit val impClientConnections = jsonFormat1(ClientConnections)
