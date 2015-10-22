@@ -49,7 +49,7 @@ abstract public class PreparedStatementPrimitiveVariableWithMatcherTypes extends
 
     @Test
     public void testTimeUUIDasVariableType() {
-        UUID uuid = UUID.randomUUID();
+        UUID uuid = cassandra().currentTimeUUID();
         String query = "select * from blah where id = ?";
         PrimingRequest primingRequest = PrimingRequest.preparedStatementBuilder()
                 .withQuery(query)
