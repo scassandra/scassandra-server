@@ -500,7 +500,8 @@ public final class PrimingRequest {
         invalid,
         config_error,
         already_exists,
-        unprepared
+        unprepared,
+        closed_connection
     }
 
 }

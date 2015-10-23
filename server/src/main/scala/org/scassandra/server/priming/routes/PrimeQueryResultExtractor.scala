@@ -118,6 +118,10 @@ object PrimeQueryResultExtractor extends LazyLogging {
       case Unavailable => UnavailableResult(
         config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
         config.getOrElse(ErrorConstants.Alive, "0").toInt)
+
+      case ClosedConnection => ClosedConnectionResult(
+        config.getOrElse(ErrorConstants.CloseType, "close")
+      )
     }
     primeResult
   }
@@ -143,6 +147,7 @@ object PrimeQueryResultExtractor extends LazyLogging {
         case _: ConfigErrorResult => ConfigError
         case _: AlreadyExistsResult => AlreadyExists
         case _: UnpreparedResult => Unprepared
+        case _: ClosedConnectionResult => ClosedConnection
       }
 
       val thenDo = Then(Some(prime.rows), result = Some(result), column_types = Some(prime.columnTypes))

@@ -31,12 +31,12 @@ class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
       prepStatement.pipeTo(self)
 
     case DeserializedExecute(request, text, body, stream, msgFactory, connection) =>
-      val action = handleExecute(body, stream, msgFactory, text, request)
+      val action = handleExecute(body, stream, msgFactory, text, request, connection)
       action.activity.foreach(activityLog.recordPreparedStatementExecution)
       sendMessage(action.msg, connection)
   }
 
-  private def handleExecute(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, prepStatement: Option[String], executeRequest: ExecuteRequest): ExecuteResponse = {
+  private def handleExecute(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, prepStatement: Option[String], executeRequest: ExecuteRequest, connection: ActorRef): ExecuteResponse = {
     val action = prepStatement match {
       case Some(p) =>
         val matchingPrimedAction = for {
@@ -44,7 +44,7 @@ class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
           if executeRequest.numberOfVariables == prime.variableTypes.size
           parsed = msgFactory.parseExecuteRequestWithVariables(stream, body, prime.variableTypes)
           pse = PreparedStatementExecution(p, parsed.consistency, parsed.variables, prime.variableTypes)
-        } yield ExecuteResponse(Some(pse), MessageWithDelay(createMessage(prime, executeRequest, stream, msgFactory), prime.prime.fixedDelay))
+        } yield ExecuteResponse(Some(pse), MessageWithDelay(createMessage(prime, executeRequest, stream, msgFactory, connection), prime.prime.fixedDelay))
 
         lazy val defaultAction = ExecuteResponse(Some(PreparedStatementExecution(p, executeRequest.consistency, List(), List())),
           MessageWithDelay(msgFactory.createVoidMessage(stream)))
@@ -72,10 +72,11 @@ class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
     }
   }
 
-  private def createMessage(preparedPrime: PreparedPrime, executeRequest: ExecuteRequest ,stream: Byte, msgFactory: CqlMessageFactory) = {
+  private def createMessage(preparedPrime: PreparedPrime, executeRequest: ExecuteRequest ,stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef) = {
     preparedPrime.prime.result match {
       case SuccessResult => msgFactory.createRowsMessage(preparedPrime.prime, stream)
       case result: ErrorResult => msgFactory.createErrorMessage(result, stream, executeRequest.consistency)
+      case result: FatalResult => result.produceFatalError(connection)
     }
   }
 

@@ -84,6 +84,7 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
               case _: ConfigErrorResult => ConfigError
               case _: AlreadyExistsResult => AlreadyExists
               case _: UnpreparedResult => Unprepared
+              case _: ClosedConnectionResult => ClosedConnection
             }
             PrimePreparedSingle(
               WhenPreparedSingle(

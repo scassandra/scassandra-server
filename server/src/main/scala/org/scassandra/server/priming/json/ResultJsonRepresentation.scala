@@ -52,6 +52,8 @@ case object AlreadyExists extends ResultJsonRepresentation("already_exists")
 
 case object Unprepared extends ResultJsonRepresentation("unprepared")
 
+case object ClosedConnection extends ResultJsonRepresentation("closed_connection")
+
 object ResultJsonRepresentation {
   def fromString(string: String): ResultJsonRepresentation = {
     string match {
@@ -70,6 +72,7 @@ object ResultJsonRepresentation {
       case ConfigError.string => ConfigError
       case AlreadyExists.string => AlreadyExists
       case Unprepared.string => Unprepared
+      case ClosedConnection.string => ClosedConnection
       case Success.string => Success
       case _ => Success
     }

@@ -59,7 +59,7 @@ abstract public class QueryErrorPrimingTest extends AbstractScassandraTest {
         assertEquals(consistency, ((CassandraResult.WriteTimeoutStatus) status).getConsistency());
         assertEquals(2, ((CassandraResult.WriteTimeoutStatus) status).getReceivedAcknowledgements());
         assertEquals(3, ((CassandraResult.WriteTimeoutStatus) status).getRequiredAcknowledgements());
-        assertEquals(BATCH_LOG, ((CassandraResult.WriteTimeoutStatus) status).getWriteTypePrime());
+        assertEquals(BATCH_LOG, ((CassandraResult.WriteTimeoutStatus)status).getWriteTypePrime());
     }
 
     @Test
@@ -175,7 +175,19 @@ abstract public class QueryErrorPrimingTest extends AbstractScassandraTest {
         assertErrorMessageStatus(unprepared, config, "Tried to execute unknown prepared query " + prepareId);
     }
 
+    @Test
+    public void testClosedOnRequest() {
+        ClosedConnectionConfig config = new ClosedConnectionConfig(ClosedConnectionConfig.CloseType.RESET);
+        assertErrorMessageStatus(closed_connection, config,
+            "All host(s) tried for query failed (tried: localhost/127.0.0.1:8042 (com.datastax.driver.core.TransportException: [localhost/127.0.0.1:8042] Connection has been closed))",
+            server_error);
+    }
+
     private CassandraResult assertErrorMessageStatus(PrimingRequest.Result result, Config config, String expectedMsg) {
+        return assertErrorMessageStatus(result, config, expectedMsg, result);
+    }
+
+    private CassandraResult assertErrorMessageStatus(PrimingRequest.Result result, Config config, String expectedMsg, PrimingRequest.Result expectedResult) {
         String query = "select * from people";
         String consistency = "LOCAL_ONE";
         PrimingRequest prime = PrimingRequest.queryBuilder()
@@ -188,7 +200,7 @@ abstract public class QueryErrorPrimingTest extends AbstractScassandraTest {
         CassandraResult cassandraResult = cassandra().executeSimpleStatement(query, consistency);
 
         CassandraResult.ResponseStatus status = cassandraResult.status();
-        assertEquals(result, status.getResult());
+        assertEquals(expectedResult, status.getResult());
         assertEquals(expectedMsg, ((CassandraResult.ErrorMessageStatus) status).getMessage());
         return cassandraResult;
     }

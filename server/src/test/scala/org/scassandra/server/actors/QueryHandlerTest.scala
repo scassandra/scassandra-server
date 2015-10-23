@@ -31,6 +31,7 @@
 package org.scassandra.server.actors
 
 import akka.actor.{ActorRef, ActorSystem}
+import akka.io.Tcp.CloseCommand
 import akka.testkit._
 import akka.util.ByteString
 import org.mockito.Mockito._
@@ -43,7 +44,7 @@ import org.scassandra.server.cqlmessages.types.{CqlInt, CqlVarchar, CqlText}
 import org.scassandra.server.priming.query.{Prime, PrimeMatch, PrimeQueryStore}
 import org.scassandra.server.priming.{Query, _}
 
-class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with TestKitBase with MockitoSugar with ErrorHandlingBehaviors {
+class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with TestKitBase with MockitoSugar with ErrorHandlingBehaviors with FatalHandlingBehaviors {
   implicit lazy val system = ActorSystem()
 
   var underTest: ActorRef = null
@@ -222,5 +223,15 @@ class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with T
     underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
 
     testProbeForTcpConnection.expectMsg(expectedError(stream, consistency))
+  }
+
+  override def executeWithFatal(result: FatalResult, expectedCommand: CloseCommand): Unit = {
+    val stream: Byte = 0x05
+    val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query).toArray.drop(8))
+    when(mockPrimedResults.get(PrimeMatch("some cql statement"))).thenReturn(Some(Prime(List(), result)))
+
+    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
+
+    testProbeForTcpConnection.expectMsg(expectedCommand)
   }
 }
