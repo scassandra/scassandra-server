@@ -67,6 +67,7 @@ task fatJar(type: OneJar) {
 }
 
 artifacts {
+    archives fatJar
     archives jar
     archives javadocJar
     archives sourceJar
