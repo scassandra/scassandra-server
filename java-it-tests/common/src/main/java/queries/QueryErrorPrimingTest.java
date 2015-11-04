@@ -94,7 +94,7 @@ abstract public class QueryErrorPrimingTest extends AbstractScassandraTest {
     public void testPrimingProtocolError() {
         String errorMessage = "Arbitrary Protocol Error";
         ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
-        assertErrorMessageStatus(protocol_error, config, "An unexpected protocol error occurred. This is a bug in this library, please report: " + errorMessage);
+        assertErrorMessageStatus(protocol_error, config, "An unexpected protocol error occurred on host localhost/127.0.0.1:8042. This is a bug in this library, please report: " + errorMessage);
     }
 
     @Test

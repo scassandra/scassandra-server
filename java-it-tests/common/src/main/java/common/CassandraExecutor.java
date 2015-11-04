@@ -4,6 +4,7 @@ import com.google.common.base.Optional;
 import org.scassandra.http.client.BatchType;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface CassandraExecutor {
     CassandraResult executeQuery(String query);
@@ -21,6 +22,8 @@ public interface CassandraExecutor {
     CassandraResult executeSelectWithBuilder(String table);
 
     CassandraResult executeBatch(List<CassandraQuery> queries, BatchType type);
+
+    UUID currentTimeUUID();
 
     void close();
 

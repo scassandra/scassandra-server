@@ -2,6 +2,7 @@ package cassandra;
 
 import java.net.InetSocketAddress;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 
 import com.google.common.base.Optional;
@@ -16,6 +17,7 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
+import com.datastax.driver.core.utils.UUIDs;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 
@@ -25,7 +27,7 @@ public class CassandraExecutor20 implements CassandraExecutor {
 
     public CassandraExecutor20() {
         cluster = Cluster.builder().addContactPoint(Config.NATIVE_HOST)
-            .withPort(Config.NATIVE_PORT).withRetryPolicy(NoRetryOnUnavailablePolicy.INSTANCE).build();
+            .withPort(Config.NATIVE_PORT).build();
         session = cluster.connect(Config.KEYSPACE);
     }
 
@@ -92,6 +94,11 @@ public class CassandraExecutor20 implements CassandraExecutor {
     }
 
     @Override
+    public UUID currentTimeUUID() {
+        return UUIDs.timeBased();
+    }
+
+    @Override
     public void close() {
         cluster.close();
     }
@@ -125,6 +132,13 @@ public class CassandraExecutor20 implements CassandraExecutor {
             Throwable e1 = e.getErrors().get(addr);
             try {
                 throw e1;
+            } catch (UnavailableException ue) {
+                // NHAE is raised when first node is unavailable and there are no remaining hosts.
+                return new CassandraResult20(
+                    new CassandraResult.UnavailableStatus(
+                        ue.getConsistencyLevel().toString(),
+                        ue.getRequiredReplicas(),
+                        ue.getAliveReplicas()));
             } catch(DriverException de) {
                 message = de.getMessage();
                 // These errors are thrown in NHAE as the driver considers them host-specific errors and

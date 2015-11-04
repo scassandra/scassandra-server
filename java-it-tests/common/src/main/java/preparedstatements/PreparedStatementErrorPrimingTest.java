@@ -92,7 +92,7 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
     public void testPrimingProtocolError() {
         String errorMessage = "Arbitrary Protocol Error";
         ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
-        assertErrorMessageStatus(protocol_error, config, "An unexpected protocol error occurred. This is a bug in this library, please report: " + errorMessage);
+        assertErrorMessageStatus(protocol_error, config, "An unexpected protocol error occurred on host localhost/127.0.0.1:8042. This is a bug in this library, please report: " + errorMessage);
     }
 
     @Test
@@ -144,9 +144,6 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
     }
 
     @Test
-    @Ignore
-    // Ignore as this is a legitimate bug in the driver (returns InvalidQueryException instead of
-    // InvalidConfigurationInQueryException.
     public void testConfigError() {
         String errorMessage = "Configuration Error 12345";
         ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
