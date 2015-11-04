@@ -141,4 +141,8 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   test("Test unprepared on query") {
     expectException[DriverInternalError](Unprepared, Some(Map(ErrorConstants.PrepareId -> "0x8675")))
   }
+
+  test("Test closed connection on query") {
+    expectException[NoHostAvailableException](ClosedConnection, Some(Map(ErrorConstants.CloseType -> "close")))
+  }
 }

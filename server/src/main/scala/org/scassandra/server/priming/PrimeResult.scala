@@ -15,6 +15,9 @@
  */
 package org.scassandra.server.priming
 
+import akka.actor.ActorRef
+import akka.io.Tcp
+
 object WriteType extends Enumeration {
   val SIMPLE, BATCH, UNLOGGED_BATCH, COUNTER, BATCH_LOG, CAS = Value
 }
@@ -25,6 +28,9 @@ object WriteType extends Enumeration {
  */
 sealed abstract class PrimeResult
 sealed abstract class ErrorResult extends PrimeResult
+sealed abstract class FatalResult extends PrimeResult {
+  def produceFatalError(tcpConnection: ActorRef)
+}
 
 case object SuccessResult extends PrimeResult
 
@@ -44,3 +50,14 @@ case class UnpreparedResult(message: String, id: Array[Byte]) extends ErrorResul
 case class ReadRequestTimeoutResult(receivedResponses: Int = 0, requiredResponses: Int = 1, dataPresent: Boolean = false) extends ErrorResult
 case class WriteRequestTimeoutResult(receivedResponses: Int = 0, requiredResponses: Int = 1, writeType: WriteType.Value = WriteType.SIMPLE) extends ErrorResult
 case class UnavailableResult(requiredResponses: Int = 1, alive: Int = 0) extends ErrorResult
+
+case class ClosedConnectionResult(command: String) extends FatalResult {
+
+  private lazy val closeCommand: Tcp.CloseCommand = command match {
+    case "reset"      => Tcp.Abort
+    case "halfclose"  => Tcp.ConfirmedClose
+    case "close" | _  => Tcp.Close
+  }
+
+  override def produceFatalError(tcpConnection: ActorRef) = tcpConnection ! closeCommand
+}

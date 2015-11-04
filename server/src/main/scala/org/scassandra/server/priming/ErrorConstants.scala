@@ -25,4 +25,5 @@ object ErrorConstants {
   var Table = "error.table"
   val Message = "error.message"
   var PrepareId = "error.prepare_id"
+  var CloseType = "error.close_type"
 }

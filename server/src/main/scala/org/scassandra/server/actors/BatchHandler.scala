@@ -104,6 +104,7 @@ class BatchHandler(tcpConnection: ActorRef,
     prime match {
       case Some(BatchPrime(SuccessResult)) => tcpConnection ! msgFactory.createVoidMessage(stream)
       case Some(BatchPrime(errorResult: ErrorResult)) => tcpConnection ! msgFactory.createErrorMessage(errorResult, stream, consistency)
+      case Some(BatchPrime(fatalResult: FatalResult)) => fatalResult.produceFatalError(tcpConnection)
       case None => tcpConnection ! msgFactory.createVoidMessage(stream)
     }
   }

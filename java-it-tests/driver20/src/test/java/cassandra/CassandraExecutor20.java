@@ -127,7 +127,7 @@ public class CassandraExecutor20 implements CassandraExecutor {
                             e.getAliveReplicas()));
         } catch (NoHostAvailableException e) {
             PrimingRequest.Result error = server_error;
-            String message = "";
+            String message = e.getMessage();
             InetSocketAddress addr = e.getErrors().keySet().iterator().next();
             Throwable e1 = e.getErrors().get(addr);
             try {

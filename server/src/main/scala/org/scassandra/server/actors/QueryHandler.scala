@@ -50,6 +50,7 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
                 log.info(s"Found matching prime $prime for query $queryText")
                 msgFactory.createRowsMessage(prime, stream)
               case result: ErrorResult => msgFactory.createErrorMessage(result, stream, consistency)
+              case result: FatalResult => result.produceFatalError(tcpConnection)
             }
             sendMessage(prime.fixedDelay, tcpConnection, message)
             val queryRequest = msgFactory.parseQueryRequest(stream, queryBody, prime.variableTypes)

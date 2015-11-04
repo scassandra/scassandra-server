@@ -2,6 +2,7 @@ package org.scassandra.server.actors
 
 import java.util.concurrent.TimeUnit
 
+import akka.io.Tcp.CloseCommand
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementResponse, PreparedStatementQuery}
 import org.scassandra.server.cqlmessages.request.ExecuteRequestV2
 import org.scassandra.server.cqlmessages.response._
@@ -22,7 +23,7 @@ import org.scassandra.server.priming._
 import org.scassandra.server.priming.prepared.{PreparedPrime, PrimePreparedStore}
 import org.scassandra.server.priming.query.{Prime, PrimeMatch}
 
-class ExecuteHandlerTest extends FunSuite with Matchers with TestKitBase with BeforeAndAfter with MockitoSugar with ErrorHandlingBehaviors {
+class ExecuteHandlerTest extends FunSuite with Matchers with TestKitBase with BeforeAndAfter with MockitoSugar with ErrorHandlingBehaviors with FatalHandlingBehaviors {
   implicit lazy val system = ActorSystem()
 
   implicit val impProtocolVersion = VersionTwo
@@ -202,4 +203,18 @@ class ExecuteHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     testProbeForTcpConnection.expectMsg(expectedError(stream, consistency))
   }
 
+  override def executeWithFatal(result: FatalResult, expectedCommand: CloseCommand): Unit = {
+    val query = "select * from something where name = ?"
+    val consistency = QUORUM
+    val preparedStatementId = 1
+    val primeMatch = Some(PreparedPrime(prime = Prime(result = result)))
+    when(primePreparedStore.findPrime(any[PrimeMatch])).thenReturn(primeMatch)
+
+    val executeBody: ByteString = ExecuteRequestV2(protocolByte, stream, preparedStatementId, consistency = consistency).serialize().drop(8)
+    underTest ! ExecuteHandler.Execute(executeBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+
+    prepareHandlerTestProbe.expectMsg(PreparedStatementQuery(List(preparedStatementId)))
+    prepareHandlerTestProbe.reply(PreparedStatementResponse(Map(preparedStatementId -> query)))
+    testProbeForTcpConnection.expectMsg(expectedCommand)
+  }
 }

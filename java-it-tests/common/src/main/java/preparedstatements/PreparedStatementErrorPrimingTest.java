@@ -170,7 +170,19 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
         assertErrorMessageStatus(unprepared, config, "Tried to execute unknown prepared query " + prepareId);
     }
 
+    @Test
+    public void testClosedOnRequest() {
+        ClosedConnectionConfig config = new ClosedConnectionConfig(ClosedConnectionConfig.CloseType.CLOSE);
+        assertErrorMessageStatus(closed_connection, config,
+            "All host(s) tried for query failed (tried: localhost/127.0.0.1:8042 (com.datastax.driver.core.TransportException: [localhost/127.0.0.1:8042] Connection has been closed))",
+            server_error);
+    }
+
     private CassandraResult assertErrorMessageStatus(PrimingRequest.Result result, Config config, String expectedMsg) {
+        return assertErrorMessageStatus(result, config, expectedMsg, result);
+    }
+
+    private CassandraResult assertErrorMessageStatus(PrimingRequest.Result result, Config config, String expectedMsg, PrimingRequest.Result expectedResult) {
         String query = "select * from people";
         String consistency = "LOCAL_ONE";
         PrimingRequest prime = PrimingRequest.preparedStatementBuilder()
@@ -183,7 +195,7 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
         CassandraResult cassandraResult = cassandra().prepareAndExecuteWithConsistency(query, consistency);
 
         CassandraResult.ResponseStatus status = cassandraResult.status();
-        assertEquals(result, status.getResult());
+        assertEquals(expectedResult, status.getResult());
         assertEquals(expectedMsg, ((CassandraResult.ErrorMessageStatus) status).getMessage());
         return cassandraResult;
     }
