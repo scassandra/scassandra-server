@@ -15,14 +15,21 @@
  */
 package org.scassandra.server
 
+import akka.util.Timeout
+
+import scala.concurrent.duration._
+
 import akka.actor._
 import akka.io.{Tcp, IO}
+
 import com.typesafe.scalalogging.LazyLogging
+
 import org.scassandra.server.actors.TcpServer
 import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.{CompositePreparedPrimeStore, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.priming.query.PrimeQueryStore
 import org.scassandra.server.priming.{ActivityLog, PrimingServer}
+
 
 object ServerStubRunner extends LazyLogging {
   def main(args: Array[String]) {
@@ -31,19 +38,20 @@ object ServerStubRunner extends LazyLogging {
     val adminListenAddress = ScassandraConfig.adminListenAddress
     val adminPortNumber = ScassandraConfig.adminPort
     logger.info(s"Using binary port to $binaryPortNumber and admin port to $adminPortNumber")
-    val ss = new ServerStubRunner(binaryListenAddress, binaryPortNumber, adminListenAddress, adminPortNumber)
+    val ss = new ServerStubRunner(binaryListenAddress, binaryPortNumber, adminListenAddress, adminPortNumber, ScassandraConfig.startupTimeout)
     ss.start()
     ss.awaitTermination()
   }
 }
 
 /**
- * Constructor used by the Java Client so if you change it update the Java Client as well.
+ * Constructor used by the Java Client so not using any Scala types like Duration.
  */
 class ServerStubRunner( val binaryListenAddress: String = "localhost",
                         val binaryPortNumber: Int = 8042,
                         val adminListenAddress: String = "localhost",
-                        val adminPortNumber: Int = 8043) extends LazyLogging {
+                        val adminPortNumber: Int = 8043,
+                        val startupTimeoutSeconds: Long = 10) extends LazyLogging {
 
   var system: ActorSystem = _
 
@@ -77,7 +85,7 @@ class ServerStubRunner( val binaryListenAddress: String = "localhost",
   }
 
   def awaitStartup() = {
-    ServerReadyAwaiter.run(primingReadyListener, tcpReadyListener)
+    ServerReadyAwaiter.run(primingReadyListener, tcpReadyListener)(Timeout(startupTimeoutSeconds.seconds))
   }
 }
 

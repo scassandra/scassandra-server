@@ -17,29 +17,26 @@
 package org.scassandra.server
 
 import akka.actor.ActorRef
-import scala.concurrent.{ExecutionContext, Await}
+import com.typesafe.scalalogging.LazyLogging
+import scala.concurrent.{Await, Future, ExecutionContext}
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-object ServerReadyAwaiter {
+object ServerReadyAwaiter extends LazyLogging {
 
   import ExecutionContext.Implicits.global
 
-  // awaitStartup() : timeout used implicitly by the ask pattern
-  implicit val timeout = Timeout(10 seconds)
+  def run(primingReadyListener: ActorRef, tcpReadyListener: ActorRef)(implicit timeout: Timeout): Unit = {
+    val primingServer = primingReadyListener ? OnServerReady
+    val nativeServer = tcpReadyListener ? OnServerReady
+    val allReady = Future.sequence(List(primingServer, nativeServer))
 
-  def run(primingReadyListener: ActorRef, tcpReadyListener: ActorRef) = {
+    allReady.onFailure {
+      case t: Throwable => logger.error("Either the priming http server or the native server did not start in time, check the ports are free")
+    }
 
-    //todo produce a better error message if this times out.
-    //This is probably because a port is in use.
-    val allReady = for {
-      _ <- primingReadyListener ? OnServerReady
-      _ <- tcpReadyListener ? OnServerReady
-    } yield ServerReady // just need to yield something
-
-    // This timeout should be greater than the one used by the ask pattern above
-    Await.result(allReady, Timeout(12 seconds).duration)
+    Await.result(allReady, timeout.duration + 2.seconds)
   }
 }

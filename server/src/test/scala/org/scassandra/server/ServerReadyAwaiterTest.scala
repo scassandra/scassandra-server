@@ -16,16 +16,23 @@
 
 package org.scassandra.server
 
-import org.scalatest.{Matchers, FunSpecLike}
+import scala.concurrent._
+import scala.concurrent.duration._
+
+import akka.util.Timeout
 import akka.testkit.TestKit
 import akka.actor.{ActorRef, Props, ActorSystem}
 import akka.pattern.AskTimeoutException
-import scala.concurrent._
 
-// todo re-write this class, bad sleeping :(
-class ServerReadyAwaiterTest extends TestKit(ActorSystem("TestSystem")) with FunSpecLike with Matchers {
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.{Matchers, FunSpecLike}
+
+
+class ServerReadyAwaiterTest extends TestKit(ActorSystem("TestSystem")) with FunSpecLike with Matchers with ScalaFutures {
 
   import ExecutionContext.Implicits.global
+
+  implicit val timeout: Timeout = Timeout.apply(10.seconds)
 
   describe("timeout") {
     it("should timeout if no server ready quickly enough") {

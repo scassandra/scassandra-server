@@ -25,7 +25,7 @@ public class ScassandraFactory {
      * @return An instance of Scassandra configured with the given ports.
      */
     public static Scassandra createServer(int binaryPort, int adminPort) {
-        return new ScassandraRunner("localhost", binaryPort, "localhost", adminPort);
+        return createServer("localhost", binaryPort, "localhost", adminPort);
     }
 
     /**
@@ -36,7 +36,7 @@ public class ScassandraFactory {
      * @return An instance of Scassandra configured with the given ports.
      */
     public static Scassandra createServer(String binaryListenAddress, int binaryPort, String adminListenAddress, int adminPort) {
-        return new ScassandraRunner(binaryListenAddress, binaryPort, adminListenAddress, adminPort);
+        return createServer(binaryListenAddress, binaryPort, adminListenAddress, adminPort, 10);
     }
 
     /**
@@ -44,6 +44,18 @@ public class ScassandraFactory {
      * @return Scassandra
      */
     public static Scassandra createServer() {
-        return new ScassandraRunner("localhost", 8042, "localhost", 8043);
+        return createServer("localhost", 8042, "localhost", 8043);
+    }
+
+    /**
+     * @param binaryListenAddress Defaults to localhost, override for example to 0.0.0.0
+     * @param binaryPort Cassandra binary port
+     * @param adminListenAddress Defaults to localhost, override for example to 0.0.0.0
+     * @param adminPort Scassandra admin port
+     * @param startupTimeout Number of seconds to wait for SCassandra to start up
+     * @return An instance of Scassandra configured with the given ports.
+     */
+    public static Scassandra createServer(String binaryListenAddress, int binaryPort, String adminListenAddress, int adminPort, long startupTimeout) {
+        return new ScassandraRunner(binaryListenAddress, binaryPort, adminListenAddress, adminPort, startupTimeout);
     }
 }

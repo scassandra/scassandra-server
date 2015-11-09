@@ -42,10 +42,10 @@ class ScassandraRunner implements Scassandra {
     private final CloseableHttpClient httpClient = HttpClients.createDefault();
     private final Gson gson = new Gson();
 
-    ScassandraRunner(String binaryListenAddress, int binaryPort, String adminListenAddress, int adminPort) {
+    ScassandraRunner(String binaryListenAddress, int binaryPort, String adminListenAddress, int adminPort, long startupTimeout) {
         this.binaryPort = binaryPort;
         this.adminPort = adminPort;
-        this.serverStubRunner = new ServerStubRunner(binaryListenAddress, binaryPort, adminListenAddress, adminPort);
+        this.serverStubRunner = new ServerStubRunner(binaryListenAddress, binaryPort, adminListenAddress, adminPort, startupTimeout);
         this.primingClient = PrimingClient.builder().withHost(adminListenAddress).withPort(adminPort).build();
         this.activityClient = ActivityClient.builder().withHost(adminListenAddress).withPort(adminPort).build();
         this.currentClient = CurrentClient.builder().withHost(adminListenAddress).withPort(adminPort).build();

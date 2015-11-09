@@ -16,13 +16,16 @@
 
 package org.scassandra.server
 
+import java.util.concurrent.TimeUnit
+
 import com.typesafe.config.ConfigFactory
 
 object ScassandraConfig {
   private val config =  ConfigFactory.load()
 
-  val binaryPort =             config.getInt("scassandra.binary.port")
+  val binaryPort          = config.getInt("scassandra.binary.port")
   val binaryListenAddress = config.getString("scassandra.binary.listen-address")
-  val adminPort =              config.getInt("scassandra.admin.port")
-  val adminListenAddress =  config.getString("scassandra.admin.listen-address")
+  val adminPort           = config.getInt("scassandra.admin.port")
+  val adminListenAddress  = config.getString("scassandra.admin.listen-address")
+  val startupTimeout      = config.getDuration("scassandra.startup-timeout-ms", TimeUnit.SECONDS)
 }
