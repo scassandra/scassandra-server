@@ -11,8 +11,6 @@ It allows you to create scenarios like read time outs, write time outs and unava
 
 [See web site for documentation](http://www.scassandra.org/).
 
-For feature requests and bug reports send an email to: Christopher.batey@gmail.com or on twitter: @chbatey
-
 ## Contributing
 
 We'd love to have more contributors so get stuck in!
