@@ -9,7 +9,7 @@ import org.scassandra.http.client.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.scassandra.http.client.PrimingRequest.Result.*;
+import static org.scassandra.http.client.Result.*;
 import static org.scassandra.http.client.WriteTypePrime.BATCH_LOG;
 
 abstract public class QueryErrorPrimingTest extends AbstractScassandraTest {
@@ -183,11 +183,11 @@ abstract public class QueryErrorPrimingTest extends AbstractScassandraTest {
             server_error);
     }
 
-    private CassandraResult assertErrorMessageStatus(PrimingRequest.Result result, Config config, String expectedMsg) {
+    private CassandraResult assertErrorMessageStatus(Result result, Config config, String expectedMsg) {
         return assertErrorMessageStatus(result, config, expectedMsg, result);
     }
 
-    private CassandraResult assertErrorMessageStatus(PrimingRequest.Result result, Config config, String expectedMsg, PrimingRequest.Result expectedResult) {
+    private CassandraResult assertErrorMessageStatus(Result result, Config config, String expectedMsg, Result expectedResult) {
         String query = "select * from people";
         String consistency = "LOCAL_ONE";
         PrimingRequest prime = PrimingRequest.queryBuilder()

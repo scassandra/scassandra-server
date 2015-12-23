@@ -1,0 +1,396 @@
+/*
+ * Copyright (C) 2014 Christopher Batey
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.scassandra.http.client;
+
+import org.scassandra.cql.CqlType;
+
+import java.util.*;
+
+public final class MultiPrimeRequest {
+
+    public static MultiPrimeRequestBuilder request() {
+        return new MultiPrimeRequestBuilder();
+    }
+
+    public static Then.Builder then() { return new Then.Builder(); }
+    public static When.Builder when() { return new When.Builder(); }
+    public static Match.Builder match() { return new Match.Builder(); }
+    public static Action.Builder action() { return new Action.Builder(); }
+    public static Outcome outcome(Match.Builder match, Action.Builder action) {
+        return new Outcome(match.build(), action.build());
+    }
+    public static VariableMatch.Builder variableMatch() { return new VariableMatch.Builder(); }
+
+    private final When when;
+    private final Then then;
+
+    private MultiPrimeRequest(When when, Then then) {
+        this.when = when;
+        this.then = then;
+    }
+
+    public When getWhen() {
+        return when;
+    }
+
+    public Then getThen() {
+        return then;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        MultiPrimeRequest that = (MultiPrimeRequest) o;
+
+        if (when != null ? !when.equals(that.when) : that.when != null) return false;
+        return then != null ? then.equals(that.then) : that.then == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = when != null ? when.hashCode() : 0;
+        result = 31 * result + (then != null ? then.hashCode() : 0);
+        return result;
+    }
+
+    public final static class Action {
+        private final List<Map<String, ? extends Object>> rows;
+        private final Result result;
+        private final Map<String, CqlType> column_types;
+        private final Long fixedDelay;
+        private final Map<String, Object> config;
+
+        private Action(List<Map<String, ? extends Object>> rows, Result result, Map<String, CqlType> column_types, Long fixedDelay, Map<String, Object> config) {
+            this.rows = rows;
+            this.result = result;
+            this.column_types = column_types;
+            this.fixedDelay = fixedDelay;
+            this.config = config;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Action aAction = (Action) o;
+
+            if (rows != null ? !rows.equals(aAction.rows) : aAction.rows != null) return false;
+            if (result != aAction.result) return false;
+            if (column_types != null ? !column_types.equals(aAction.column_types) : aAction.column_types != null)
+                return false;
+            if (fixedDelay != null ? !fixedDelay.equals(aAction.fixedDelay) : aAction.fixedDelay != null) return false;
+            return config != null ? config.equals(aAction.config) : aAction.config == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result1 = rows != null ? rows.hashCode() : 0;
+            result1 = 31 * result1 + (result != null ? result.hashCode() : 0);
+            result1 = 31 * result1 + (column_types != null ? column_types.hashCode() : 0);
+            result1 = 31 * result1 + (fixedDelay != null ? fixedDelay.hashCode() : 0);
+            result1 = 31 * result1 + (config != null ? config.hashCode() : 0);
+            return result1;
+        }
+
+
+        public static class Builder {
+            private List<Map<String, ? extends Object>> rows;
+            private Result result;
+            private Map<String, CqlType> column_types;
+            private Long fixedDelay;
+            private Map<String, Object> config;
+
+            private Builder() {
+            }
+
+            public Builder withRows(List<Map<String, ? extends Object>> rows) {
+                this.rows = rows;
+                return this;
+            }
+
+            public Builder withResult(Result result) {
+                this.result = result;
+                return this;
+            }
+
+            public Builder withColumn_types(Map<String, CqlType> column_types) {
+                this.column_types = column_types;
+                return this;
+            }
+
+            public Builder withFixedDelay(Long fixedDelay) {
+                this.fixedDelay = fixedDelay;
+                return this;
+            }
+
+            public Builder withConfig(Map<String, Object> config) {
+                this.config = config;
+                return this;
+            }
+
+            public Action build() {
+                return new Action(rows, result, column_types, fixedDelay, config);
+            }
+        }
+    }
+
+    public final static class VariableMatch {
+        private final String matcher;
+
+        public VariableMatch(String matcher) {
+            this.matcher = matcher;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            VariableMatch that = (VariableMatch) o;
+
+            return matcher != null ? matcher.equals(that.matcher) : that.matcher == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            return matcher != null ? matcher.hashCode() : 0;
+        }
+
+
+        public static class Builder {
+            private String matcher;
+
+            private Builder() {
+            }
+
+            public Builder withMatcher(String matcher) {
+                this.matcher = matcher;
+                return this;
+            }
+
+            public VariableMatch build() {
+                return new VariableMatch(matcher);
+            }
+        }
+    }
+
+    public final static class Match {
+        private final List<VariableMatch> variable_matcher;
+
+        public Match(List<VariableMatch> variable_matcher) {
+            this.variable_matcher = variable_matcher;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Match match = (Match) o;
+
+            return variable_matcher != null ? variable_matcher.equals(match.variable_matcher) : match.variable_matcher == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            return variable_matcher != null ? variable_matcher.hashCode() : 0;
+        }
+
+
+        public static class Builder {
+            private List<VariableMatch> variable_matcher;
+
+            private Builder() {
+            }
+
+            public Builder withVariableMatchers(VariableMatch... variable_matcher) {
+                this.variable_matcher = Arrays.asList(variable_matcher);
+                return this;
+            }
+
+            public Match build() {
+                return new Match(variable_matcher);
+            }
+        }
+    }
+
+    public final static class Then {
+
+        private final List<CqlType> variable_types;
+        private final List<Outcome> outcomes;
+
+        public Then(List<CqlType> variable_types, List<Outcome> outcomes) {
+            this.variable_types = variable_types;
+            this.outcomes = outcomes;
+        }
+
+        public List<CqlType> getVariableTypes() {
+            return variable_types;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Then then = (Then) o;
+
+            if (variable_types != null ? !variable_types.equals(then.variable_types) : then.variable_types != null)
+                return false;
+            return outcomes != null ? outcomes.equals(then.outcomes) : then.outcomes == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = variable_types != null ? variable_types.hashCode() : 0;
+            result = 31 * result + (outcomes != null ? outcomes.hashCode() : 0);
+            return result;
+        }
+
+
+        public static class Builder {
+            private List<CqlType> variable_types;
+            private List<Outcome> outcomes;
+
+            private Builder() {
+            }
+
+            public Builder withVariableTypes(List<CqlType> variable_types) {
+                this.variable_types = variable_types;
+                return this;
+            }
+
+            public Builder withVariableTypes(CqlType... variable_types) {
+                this.variable_types = Arrays.asList(variable_types);
+                return this;
+            }
+
+            public Builder withOutcomes(Outcome... outcomes) {
+                this.outcomes = Arrays.asList(outcomes);
+                return this;
+            }
+
+            public Then build() {
+                return new Then(variable_types, outcomes);
+            }
+        }
+    }
+
+    public static class Outcome {
+        private Match match;
+        private Action action;
+
+        public Outcome(Match match, Action action) {
+            this.match = match;
+            this.action = action;
+        }
+    }
+
+
+    public final static class When {
+        private final String query;
+                private final List<Consistency> consistency;
+
+        private When(String query, List<Consistency> consistency) {
+            this.query = query;
+            this.consistency = consistency;
+        }
+
+        public String getQuery() {
+            return query;
+        }
+
+        public List<Consistency> getConsistency() {
+            return Collections.unmodifiableList(consistency);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            When when = (When) o;
+
+            if (query != null ? !query.equals(when.query) : when.query != null) return false;
+            return consistency != null ? consistency.equals(when.consistency) : when.consistency == null;
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = query != null ? query.hashCode() : 0;
+            result = 31 * result + (consistency != null ? consistency.hashCode() : 0);
+            return result;
+        }
+
+
+        public static class Builder {
+            private String query;
+            private List<Consistency> consistency;
+
+            private Builder() {
+            }
+
+            public Builder withQuery(String query) {
+                this.query = query;
+                return this;
+            }
+
+            public Builder withConsistency(List<Consistency> consistency) {
+                this.consistency = consistency;
+                return this;
+            }
+
+            public When build() {
+                return new When(query, consistency);
+            }
+        }
+    }
+
+    public static class MultiPrimeRequestBuilder {
+        private When when;
+        private Then then;
+
+        private MultiPrimeRequestBuilder() {
+        }
+
+        public static MultiPrimeRequestBuilder multiPrimeRequest() {
+            return new MultiPrimeRequestBuilder();
+        }
+
+        public MultiPrimeRequestBuilder withWhen(When.Builder when) {
+            this.when = when.build();
+            return this;
+        }
+
+        public MultiPrimeRequestBuilder withThen(Then.Builder then) {
+            this.then = then.build();
+            return this;
+        }
+
+        public MultiPrimeRequest build() {
+            return new MultiPrimeRequest(when, then);
+        }
+    }
+}

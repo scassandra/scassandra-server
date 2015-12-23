@@ -31,9 +31,9 @@ import static org.scassandra.http.client.BatchQueryPrime.batchQueryPrime;
 import static org.scassandra.http.client.BatchType.COUNTER;
 import static org.scassandra.http.client.BatchType.LOGGED;
 import static org.scassandra.http.client.BatchType.UNLOGGED;
-import static org.scassandra.http.client.PrimingRequest.Consistency.ONE;
-import static org.scassandra.http.client.PrimingRequest.Result.read_request_timeout;
-import static org.scassandra.http.client.PrimingRequest.Result.success;
+import static org.scassandra.http.client.Consistency.ONE;
+import static org.scassandra.http.client.Result.read_request_timeout;
+import static org.scassandra.http.client.Result.success;
 import static org.scassandra.http.client.PrimingRequest.then;
 
 abstract public class BatchPrimingTest extends AbstractScassandraTest {
@@ -50,7 +50,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
                 ), UNLOGGED
         );
 
-        assertEquals(PrimingRequest.Result.success, result.status().getResult());
+        assertEquals(Result.success, result.status().getResult());
         assertEquals(Collections.emptyList(), result.rows());
     }
 
@@ -131,7 +131,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
     public void primeBatchWithWriteTimeout() {
         primingClient.primeBatch(BatchPrimingRequest.batchPrimingRequest()
                 .withThen(BatchPrimingRequest.then()
-                        .withResult(PrimingRequest.Result.write_request_timeout))
+                        .withResult(Result.write_request_timeout))
                 .withQueries(
                         batchQueryPrime("select * from blah", BatchQueryKind.query))
                 .build());
@@ -141,14 +141,14 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
                 ), BatchType.LOGGED
         );
 
-        assertEquals(PrimingRequest.Result.write_request_timeout, result.status().getResult());
+        assertEquals(Result.write_request_timeout, result.status().getResult());
     }
 
     @Test
     public void primeBatchWithUnavailable() {
         primingClient.primeBatch(BatchPrimingRequest.batchPrimingRequest()
                 .withThen(BatchPrimingRequest.then()
-                        .withResult(PrimingRequest.Result.unavailable))
+                        .withResult(Result.unavailable))
                 .withQueries(
                         batchQueryPrime("select * from blah", BatchQueryKind.query))
                 .withType(COUNTER)
@@ -159,7 +159,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
                 ), COUNTER
         );
 
-        assertEquals(PrimingRequest.Result.unavailable, result.status().getResult());
+        assertEquals(Result.unavailable, result.status().getResult());
     }
 
     @Test
@@ -170,7 +170,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
                         .withType(BatchType.COUNTER)
                         .withQueries(BatchQueryPrime.batchQueryPrime(query, BatchQueryKind.query))
                         .withThen(
-                                then().withResult(PrimingRequest.Result.read_request_timeout))
+                                then().withResult(Result.read_request_timeout))
         );
 
         CassandraResult result = cassandra().executeBatch(newArrayList(

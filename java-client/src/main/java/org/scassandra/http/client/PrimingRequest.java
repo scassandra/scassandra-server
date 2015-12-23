@@ -22,7 +22,6 @@ import java.util.*;
 
 public final class PrimingRequest {
 
-
     public static PrimingRequestBuilder queryBuilder() {
         return new PrimingRequestBuilder(PrimingRequestBuilder.PrimeType.QUERY);
     }
@@ -40,10 +39,8 @@ public final class PrimingRequest {
     public static class PrimingRequestBuilder {
 
         PrimeType type;
-
-
         static enum PrimeType {
-            QUERY, PREPARED;
+            QUERY, PREPARED
         }
         private PrimingRequestBuilder(PrimeType type) {
             this.type = type;
@@ -468,40 +465,6 @@ public final class PrimingRequest {
             result = 31 * result + (consistency != null ? consistency.hashCode() : 0);
             return result;
         }
-    }
-
-    public static enum Consistency {
-        ANY,
-        ONE,
-        TWO,
-        THREE,
-        QUORUM,
-        ALL,
-        LOCAL_QUORUM,
-        EACH_QUORUM,
-        SERIAL,
-        LOCAL_SERIAL,
-        LOCAL_ONE
-    }
-
-    public static enum Result {
-        success,
-        read_request_timeout,
-        unavailable,
-        write_request_timeout,
-        server_error,
-        protocol_error,
-        bad_credentials,
-        overloaded,
-        is_bootstrapping,
-        truncate_error,
-        syntax_error,
-        unauthorized,
-        invalid,
-        config_error,
-        already_exists,
-        unprepared,
-        closed_connection
     }
 
 }

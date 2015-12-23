@@ -110,6 +110,11 @@ public class PrimingClient {
         primeBatch(batchPrimingRequest.build());
     }
 
+    public void multiPrime(MultiPrimeRequest primeRequest) throws PrimeFailedException {
+        String jsonAsString = gson.toJson(primeRequest);
+        System.out.println(jsonAsString);
+    }
+
 
     /**
      * @param primeRequest The Prime

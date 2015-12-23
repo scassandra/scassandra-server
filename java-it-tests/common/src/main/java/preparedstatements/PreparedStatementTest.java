@@ -28,7 +28,8 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.scassandra.http.client.PrimingRequest.Consistency;
+
+import org.scassandra.http.client.Consistency;
 import static org.scassandra.http.client.PrimingRequest.preparedStatementBuilder;
 
 abstract public class PreparedStatementTest extends AbstractScassandraTest {

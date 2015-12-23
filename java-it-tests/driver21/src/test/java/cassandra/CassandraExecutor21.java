@@ -9,7 +9,7 @@ import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.base.Optional;
 import common.*;
 import org.scassandra.http.client.BatchType;
-import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
 import org.scassandra.http.client.WriteTypePrime;
 
 import java.net.InetSocketAddress;
@@ -19,8 +19,8 @@ import java.util.function.Function;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static common.Config.KEYSPACE;
-import static org.scassandra.http.client.PrimingRequest.Result.*;
-import static org.scassandra.http.client.PrimingRequest.Result.already_exists;
+import static org.scassandra.http.client.Result.*;
+import static org.scassandra.http.client.Result.already_exists;
 
 public class CassandraExecutor21 implements CassandraExecutor {
     private Cluster cluster;
@@ -127,7 +127,7 @@ public class CassandraExecutor21 implements CassandraExecutor {
                             e.getRequiredReplicas(),
                             e.getAliveReplicas()));
         } catch (NoHostAvailableException e) {
-            PrimingRequest.Result error = server_error;
+            Result error = server_error;
             String message = e.getMessage();
             InetSocketAddress addr = e.getErrors().keySet().iterator().next();
             Throwable e1 = e.getErrors().get(addr);
@@ -154,7 +154,7 @@ public class CassandraExecutor21 implements CassandraExecutor {
             } catch(Throwable t) {} // unknown error we can handle later.
             return new CassandraResult21(new CassandraResult.ErrorMessageStatus(error, message));
         } catch(DriverInternalError e) {
-            PrimingRequest.Result error = protocol_error;
+            Result error = protocol_error;
             String message = e.getMessage();
             // Unprepared is thrown as a DriverInternalError if the Driver doesn't know about the query either
             // as this is unexpected behavior.

@@ -18,7 +18,9 @@ package org.scassandra.http.client;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.scassandra.cql.PrimitiveType.*;
 import static org.scassandra.http.client.BatchQueryPrime.batchQueryPrime;
+import static org.scassandra.http.client.MultiPrimeRequest.*;
 
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
@@ -176,7 +178,7 @@ public class PrimingClientTest {
         stubFor(post(urlEqualTo(PRIME_QUERY_PATH)).willReturn(aResponse().withStatus(200)));
         PrimingRequest pr = PrimingRequest.queryBuilder()
                 .withQuery("select * from people")
-                .withResult(PrimingRequest.Result.read_request_timeout)
+                .withResult(Result.read_request_timeout)
                 .withConfig(new ReadTimeoutConfig(1, 2, false))
                 .build();
         //when
@@ -197,7 +199,7 @@ public class PrimingClientTest {
         stubFor(post(urlEqualTo(PRIME_QUERY_PATH)).willReturn(aResponse().withStatus(200)));
         PrimingRequest pr = PrimingRequest.queryBuilder()
                 .withQuery("select * from people")
-                .withResult(PrimingRequest.Result.unavailable)
+                .withResult(Result.unavailable)
                 .build();
         //when
         underTest.primeQuery(pr);
@@ -215,7 +217,7 @@ public class PrimingClientTest {
         WriteTimeoutConfig writeTimeoutConfig = new WriteTimeoutConfig(WriteTypePrime.BATCH, 2, 3);
         PrimingRequest pr = PrimingRequest.queryBuilder()
                 .withQuery("select * from people")
-                .withResult(PrimingRequest.Result.write_request_timeout)
+                .withResult(Result.write_request_timeout)
                 .withConfig(writeTimeoutConfig)
                 .build();
         //when
@@ -236,7 +238,7 @@ public class PrimingClientTest {
         stubFor(post(urlEqualTo(PRIME_QUERY_PATH)).willReturn(aResponse().withBody("oh dear").withStatus(500)));
         PrimingRequest pr = PrimingRequest.queryBuilder()
                 .withQuery("select * from people")
-                .withResult(PrimingRequest.Result.read_request_timeout)
+                .withResult(Result.read_request_timeout)
                 .build();
         //when
         underTest.primeQuery(pr);
@@ -249,7 +251,7 @@ public class PrimingClientTest {
         stubFor(post(urlEqualTo(PRIME_QUERY_PATH)).willReturn(aResponse().withStatus(200)));
         PrimingRequest pr = PrimingRequest.queryBuilder()
                 .withQuery("select * from people")
-                .withConsistency(PrimingRequest.Consistency.ALL, PrimingRequest.Consistency.ONE)
+                .withConsistency(Consistency.ALL, Consistency.ONE)
                 .build();
 
         //when
@@ -504,7 +506,7 @@ public class PrimingClientTest {
         rows.put("name", "Chris");
         PrimingRequest pr = PrimingRequest.preparedStatementBuilder()
                 .withQuery("select * from people")
-                .withConsistency(PrimingRequest.Consistency.ANY)
+                .withConsistency(Consistency.ANY)
                 .withVariableTypes(ColumnTypes.Varchar)
                 .withColumnTypes(ImmutableMap.of("name", ColumnTypes.Varchar))
                 .withRows(rows)
@@ -609,7 +611,7 @@ public class PrimingClientTest {
             fail("Expected Illegal argument exception");
         } catch (IllegalArgumentException e) {
             //then
-            assertEquals("Can't pass a query prime to primePreparedStatement, use preparedStatementBuilder()", e.getMessage());
+            assertEquals("Can't pass a query prime to primePreparedStatement, use request()", e.getMessage());
         }
     }
 
@@ -700,7 +702,7 @@ public class PrimingClientTest {
         underTest.primeBatch(BatchPrimingRequest.batchPrimingRequest()
                 .withThen(BatchPrimingRequest
                         .then()
-                        .withResult(PrimingRequest.Result.read_request_timeout)
+                        .withResult(Result.read_request_timeout)
                         .build())
                 .withQueries(
                         batchQueryPrime("select * from blah", BatchQueryKind.prepared_statement))
@@ -713,5 +715,19 @@ public class PrimingClientTest {
                         "\"kind\":\"prepared_statement\"}], \"batchType\":\"LOGGED\"  }," +
                         "\"then\":{\"result\":\"read_request_timeout\"}}")));
 
+    }
+
+    @Test
+    public void testMultiPrime() throws Exception {
+        MultiPrimeRequest prime = MultiPrimeRequest.request()
+                .withWhen(when()
+                        .withQuery("select * from person where name = ?"))
+                .withThen(then()
+                        .withVariableTypes(TEXT)
+                        .withOutcomes(outcome(match().withVariableMatchers(variableMatch().withMatcher("Chris").build()), action()))
+                )
+                .build();
+
+        underTest.multiPrime(prime);
     }
 }

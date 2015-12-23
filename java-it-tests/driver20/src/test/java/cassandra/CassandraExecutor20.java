@@ -8,10 +8,10 @@ import java.util.function.Function;
 import com.google.common.base.Optional;
 import common.*;
 import org.scassandra.http.client.BatchType;
-import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
 import org.scassandra.http.client.WriteTypePrime;
 
-import static org.scassandra.http.client.PrimingRequest.Result.*;
+import static org.scassandra.http.client.Result.*;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.*;
@@ -126,7 +126,7 @@ public class CassandraExecutor20 implements CassandraExecutor {
                             e.getRequiredReplicas(),
                             e.getAliveReplicas()));
         } catch (NoHostAvailableException e) {
-            PrimingRequest.Result error = server_error;
+            Result error = server_error;
             String message = e.getMessage();
             InetSocketAddress addr = e.getErrors().keySet().iterator().next();
             Throwable e1 = e.getErrors().get(addr);
@@ -153,7 +153,7 @@ public class CassandraExecutor20 implements CassandraExecutor {
             } catch(Throwable t) {} // unknown error we can handle later.
             return new CassandraResult20(new CassandraResult.ErrorMessageStatus(error, message));
         } catch(DriverInternalError e) {
-            PrimingRequest.Result error = protocol_error;
+            Result error = protocol_error;
             String message = e.getMessage();
             // Unprepared is thrown as a DriverInternalError if the Driver doesn't know about the query either
             // as this is unexpected behavior.
