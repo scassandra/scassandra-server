@@ -83,10 +83,12 @@ public class PrimingClient {
     private final String primeQueryUrl;
     private final String primePreparedUrl;
     private final String primeBatchUrl;
+    private final String primePreparedMultiUrl;
 
     private PrimingClient(String host, int port) {
         this.primeQueryUrl = "http://" + host + ":" + port + "/prime-query-single";
         this.primePreparedUrl = "http://" + host + ":" + port + "/prime-prepared-single";
+        this.primePreparedMultiUrl = "http://" + host + ":" + port + "/prime-prepared-multi";
         this.primeBatchUrl = "http://" + host + ":" + port + "/prime-batch-single";
     }
 
@@ -113,6 +115,7 @@ public class PrimingClient {
     public void multiPrime(MultiPrimeRequest primeRequest) throws PrimeFailedException {
         String jsonAsString = gson.toJson(primeRequest);
         System.out.println(jsonAsString);
+        prime(primeRequest, primePreparedMultiUrl);
     }
 
 

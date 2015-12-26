@@ -17,7 +17,7 @@ package org.scassandra.server.e2e.prepared
 
 import org.scassandra.server.cqlmessages.types.{CqlText, CqlInt}
 import org.scassandra.server.{PrimingHelper, AbstractIntegrationTest}
-import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle}
+import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPrepared}
 
 class PatternMatchingTest extends AbstractIntegrationTest {
 
@@ -25,7 +25,7 @@ class PatternMatchingTest extends AbstractIntegrationTest {
     val preparedStatementText: String = "select * from people where name = ?"
     val preparedStatementRegex: String = "select .* from people .*"
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(None, Some(preparedStatementRegex)),
+      WhenPrepared(None, Some(preparedStatementRegex)),
       ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))
     )
 
@@ -45,7 +45,7 @@ class PatternMatchingTest extends AbstractIntegrationTest {
     val preparedStatementText: String = "select * from people where name = ? and age = ?"
     val preparedStatementRegex: String = "select .* from people .*"
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(None, Some(preparedStatementRegex)),
+      WhenPrepared(None, Some(preparedStatementRegex)),
       ThenPreparedSingle(
         Some(List(Map("name" -> "Chris"))),
         Some(List(CqlText, CqlInt))
@@ -68,7 +68,7 @@ class PatternMatchingTest extends AbstractIntegrationTest {
     val preparedStatementText: String = "select * from people where age = ? and name = ?"
     val preparedStatementRegex: String = "select .* from people .*"
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(None, Some(preparedStatementRegex)),
+      WhenPrepared(None, Some(preparedStatementRegex)),
       ThenPreparedSingle(
         Some(List(Map("name" -> "Chris"))),
         Some(List(CqlInt))

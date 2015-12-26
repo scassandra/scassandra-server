@@ -28,10 +28,10 @@ import scala.concurrent.duration.FiniteDuration
 
 class PrimePreparedPatternStore extends LazyLogging with PreparedStore with PreparedStoreLookup {
 
-  override def record(incomingPrime: PrimePreparedSingle): PrimeAddResult = {
+  def record(incomingPrime: PrimePreparedSingle): PrimeAddResult = {
     val primeCriteria = PrimeCriteria(incomingPrime.when.queryPattern.get, incomingPrime.when.consistency.getOrElse(Consistency.all))
     val thenDo: ThenPreparedSingle = incomingPrime.thenDo
-    val rows: List[Map[String, Any]] = thenDo.rows.getOrElse(List())
+    val rows = thenDo.rows.getOrElse(List())
     val columnTypes = Defaulter.defaultColumnTypesToVarchar(thenDo.column_types, rows)
     val result = PrimeQueryResultExtractor.convertToPrimeResult(thenDo.config.getOrElse(Map()), thenDo.result.getOrElse(Success))
     val fixedDelay = thenDo.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
@@ -42,7 +42,7 @@ class PrimePreparedPatternStore extends LazyLogging with PreparedStore with Prep
     PrimeAddSuccess
   }
 
-  override def findPrime(primeMatch: PrimeMatch): Option[PreparedPrime] = {
+  def findPrime(primeMatch: PrimeMatch): Option[PreparedPrimeResult] = {
     def findWithRegex: ((PrimeCriteria, PreparedPrime)) => Boolean = {
       entry => {
         entry._1.query.r.findFirstIn(primeMatch.query) match {
@@ -56,7 +56,7 @@ class PrimePreparedPatternStore extends LazyLogging with PreparedStore with Prep
       variablesAndPrime => {
         val numberOfVariables = primeMatch.query.toCharArray.count(_ == '?')
         val variableTypesDefaulted = Defaulter.defaultVariableTypesToVarChar(numberOfVariables, Some(variablesAndPrime.variableTypes))
-        PreparedPrime(variableTypesDefaulted, variablesAndPrime.prime)
+        PreparedPrime(variableTypesDefaulted, variablesAndPrime.getPrime(List()))
       })
   }
 

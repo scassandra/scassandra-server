@@ -18,6 +18,28 @@ package org.scassandra.server.priming.prepared
 import org.scassandra.server.priming.query.Prime
 import org.scassandra.server.cqlmessages.types.ColumnType
 
-case class PreparedPrime(
-                  variableTypes: List[ColumnType[_]] = List(),
-                  prime: Prime = Prime())
+trait PreparedPrimeResult {
+  val variableTypes: List[ColumnType[_]]
+  def getPrime(variables: List[Any] = List()): Prime
+}
+
+case class PreparedPrime(variableTypes: List[ColumnType[_]] = List(),
+                  prime: Prime = Prime()) extends PreparedPrimeResult {
+  def getPrime(variables: List[Any] = List()): Prime = prime
+}
+
+/*object PreparedPrime {
+  def apply(variableTypes: List[ColumnType[_]] = List(), prime: Prime = Prime()) = new PreparedPrime(variableTypes, prime)
+}*/
+
+class PreparedMultiPrime(val variableTypes: List[ColumnType[_]], f: (List[Any] => Prime)) extends PreparedPrimeResult {
+  def getPrime(variables: List[Any]): Prime = f(variables)
+
+  override def toString = s"PreparedMultiPrime(variableTypes=$variableTypes, outcomes=$f)"
+}
+
+object PreparedMultiPrime {
+  def apply(variableTypes: List[ColumnType[_]], f: (List[Any] => Prime)): PreparedMultiPrime = {
+    new PreparedMultiPrime(variableTypes, f)
+  }
+}

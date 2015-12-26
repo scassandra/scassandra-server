@@ -1,25 +1,15 @@
 package preparedstatements;
 
-import com.google.common.collect.ImmutableMap;
 import common.AbstractScassandraTest;
 import common.CassandraExecutor;
+import common.CassandraResult;
 import org.junit.Test;
-import org.scassandra.cql.PrimitiveType;
-import org.scassandra.http.client.ColumnTypes;
-import org.scassandra.http.client.PreparedStatementExecution;
-import org.scassandra.http.client.PrimingRequest;
-import org.scassandra.http.client.types.ColumnMetadata;
+import org.scassandra.http.client.MultiPrimeRequest;
+import org.scassandra.http.client.Result;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
-import static org.scassandra.cql.PrimitiveType.*;
-import static org.scassandra.http.client.PrimingRequest.then;
-
+import static org.scassandra.cql.PrimitiveType.TEXT;
+import static org.scassandra.http.client.MultiPrimeRequest.*;
 
 abstract public class PreparedStatementPrimeOnVariables extends AbstractScassandraTest {
 
@@ -28,21 +18,26 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
     }
 
     @Test
-    public void testUUIDasVariableTypeAndInRow() {
-        Map<String, String> rows = ImmutableMap.of("field", "");
-        String query = "select * from blah where id = ?";
-        PrimingRequest primingRequest = PrimingRequest.preparedStatementBuilder()
-                .withQuery(query)
+    public void testPrimeBasedOnMatchedString() {
+        String query = "select * from person where name = ?";
+        MultiPrimeRequest prime = MultiPrimeRequest.request()
+                .withWhen(when()
+                        .withQuery(query))
                 .withThen(then()
-                        .withColumnTypes(ColumnMetadata.column("col", TEXT))
                         .withVariableTypes(TEXT)
+                        .withOutcomes(
+                                outcome(match().withVariableMatchers(variableMatch().withMatcher("Chris").build()), action().withResult(Result.success)),
+                                outcome(match().withVariableMatchers(variableMatch().withMatcher("Andrew").build()), action().withResult(Result.read_request_timeout))
+                        )
                 )
                 .build();
-        primingClient.prime(primingRequest);
 
-        cassandra().prepareAndExecute(query, "blah");
+        primingClient.multiPrime(prime);
 
+        CassandraResult chrisResult = cassandra().prepareAndExecute(query, "Chris");
+        CassandraResult andrewResult = cassandra().prepareAndExecute(query, "Andrew");
 
+        assertEquals(Result.success, chrisResult.status().getResult());
+        assertEquals(Result.read_request_timeout, andrewResult.status().getResult());
     }
-
 }

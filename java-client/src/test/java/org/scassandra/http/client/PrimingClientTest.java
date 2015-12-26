@@ -36,6 +36,7 @@ public class PrimingClientTest {
     private static final int PORT = 1234;
 
     public static final String PRIME_PREPARED_PATH = "/prime-prepared-single";
+    public static final String PRIME_PREPARED_MULTI_PATH = "/prime-prepared-multi";
     public static final String PRIME_QUERY_PATH = "/prime-query-single";
     public static final String PRIME_BATCH_PATH = "/prime-batch-single";
 
@@ -611,7 +612,7 @@ public class PrimingClientTest {
             fail("Expected Illegal argument exception");
         } catch (IllegalArgumentException e) {
             //then
-            assertEquals("Can't pass a query prime to primePreparedStatement, use request()", e.getMessage());
+            assertEquals("Can't pass a query prime to primePreparedStatement, use preparedStatementBuilder()", e.getMessage());
         }
     }
 
@@ -719,6 +720,8 @@ public class PrimingClientTest {
 
     @Test
     public void testMultiPrime() throws Exception {
+        stubFor(post(urlEqualTo(PRIME_PREPARED_MULTI_PATH)).willReturn(aResponse().withStatus(200)));
+
         MultiPrimeRequest prime = MultiPrimeRequest.request()
                 .withWhen(when()
                         .withQuery("select * from person where name = ?"))
@@ -729,5 +732,11 @@ public class PrimingClientTest {
                 .build();
 
         underTest.multiPrime(prime);
+
+        verify(postRequestedFor(urlEqualTo(PRIME_PREPARED_MULTI_PATH))
+                .withHeader("Content-Type", equalTo("application/json; charset=UTF-8"))
+                .withRequestBody(equalToJson("{\"when\":{\"query\":\"select * from person where name \\u003d ?\"}," +
+                        "\"then\":{\"variable_types\":[\"text\"],\"outcomes\":[{\"criteria\":{\"variable_matcher\":[{\"matcher\":\"Chris\"}]},\"action\":{}}]}}"))
+        );
     }
 }

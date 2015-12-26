@@ -17,8 +17,10 @@ package org.scassandra.server.priming.prepared
 
 import org.scassandra.server.priming.query.PrimeMatch
 
-class CompositePreparedPrimeStore(firstPrimeStore: PreparedStoreLookup, secondPrimeStore : PreparedStoreLookup) extends PreparedStoreLookup {
-  override def findPrime(primeMatch: PrimeMatch): Option[PreparedPrime] = {
-    firstPrimeStore.findPrime(primeMatch).orElse(secondPrimeStore.findPrime(primeMatch))
+class CompositePreparedPrimeStore(primeStores: PreparedStoreLookup*) extends PreparedStoreLookup {
+  def findPrime(primeMatch: PrimeMatch): Option[PreparedPrimeResult] = {
+    primeStores.collectFirst({
+      case psb if psb.findPrime(primeMatch).isDefined => psb.findPrime(primeMatch).get
+    })
   }
 }

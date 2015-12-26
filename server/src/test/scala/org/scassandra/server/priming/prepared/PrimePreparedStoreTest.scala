@@ -47,35 +47,35 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ?"
-    val when = WhenPreparedSingle(Some(query))
+    val when = WhenPrepared(Some(query))
     val thenDo = ThenPreparedSingle(Some(List()))
     val prime = PrimePreparedSingle(when, thenDo)
     //when
     underTest.record(prime)
     val actualPrime = underTest.findPrime(PrimeMatch(query))
     //then
-    actualPrime.get.prime.rows should equal(List())
+    actualPrime.get.getPrime()   .rows should equal(List())
   }
 
   test("Overriding result to read_request_timeout") {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ?"
-    val when = WhenPreparedSingle(Some(query))
+    val when = WhenPrepared(Some(query))
     val thenDo = ThenPreparedSingle(Some(List()), result = Some(ReadTimeout))
     val prime = PrimePreparedSingle(when, thenDo)
     //when
     underTest.record(prime)
     val actualPrime = underTest.findPrime(PrimeMatch(query))
     //then
-    actualPrime.get.prime.result should equal(ReadRequestTimeoutResult())
+    actualPrime.get.getPrime().result should equal(ReadRequestTimeoutResult())
   }
 
   test("Single row without variable type info - defaults to varchar") {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ? and age = ?"
-    val when = WhenPreparedSingle(Some(query))
+    val when = WhenPrepared(Some(query))
     val rows: List[Map[String, Any]] = List(Map("one"->"two"))
     val thenDo = ThenPreparedSingle(Some(rows))
     val prime = PrimePreparedSingle(when, thenDo)
@@ -90,7 +90,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ? and age = ?"
-    val when = WhenPreparedSingle(Some(query))
+    val when = WhenPrepared(Some(query))
     val rows: List[Map[String, Any]] = List(Map("one"->"two"))
     val variableTypes = List(CqlInet, CqlInet)
     val thenDo = ThenPreparedSingle(Some(rows), Some(variableTypes))
@@ -106,7 +106,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ? and age = ?"
-    val when = WhenPreparedSingle(Some(query))
+    val when = WhenPrepared(Some(query))
     val rows: List[Map[String, Any]] = List(Map("one"->"two"))
     val variableTypes = List(CqlInet)
     val thenDo = ThenPreparedSingle(Some(rows), Some(variableTypes))
@@ -122,7 +122,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ? and age = ?"
-    val when = WhenPreparedSingle(Some(query))
+    val when = WhenPrepared(Some(query))
     val rows: List[Map[String, Any]] = List(Map("one"->"two"))
     val columnTypes = Map("one"->CqlText)
     val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(rows), column_types = Some(columnTypes))
@@ -139,7 +139,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ? and age = ?"
-    val when = WhenPreparedSingle(Some(query))
+    val when = WhenPrepared(Some(query))
     val rows: List[Map[String, Any]] = List(Map("column_type_specified" -> "two","column_type_not_specified"->"three"))
     val columnTypes = Map("column_type_specified" -> CqlText)
     val thenDo = ThenPreparedSingle(Some(rows), column_types = Some(columnTypes))
@@ -156,7 +156,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people"
-    val when = WhenPreparedSingle(Some(query))
+    val when = WhenPrepared(Some(query))
     val thenDo = ThenPreparedSingle(None, result = Some(ReadTimeout))
     val prime = PrimePreparedSingle(when, thenDo)
     //when
@@ -170,7 +170,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people"
-    val when = WhenPreparedSingle(Some(query))
+    val when = WhenPrepared(Some(query))
     val thenDo = ThenPreparedSingle(rows = Some(List()), fixedDelay = Some(1500l))
     val prime = PrimePreparedSingle(when, thenDo)
     //when
@@ -183,7 +183,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
   test("Clearing all the primes") {
     //given
     val underTest = new PrimePreparedStore
-    val when = WhenPreparedSingle(Some(""))
+    val when = WhenPrepared(Some(""))
     val thenDo = ThenPreparedSingle(None)
     val prime = PrimePreparedSingle(when, thenDo)
     underTest.record(prime)
@@ -197,7 +197,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ?"
     val consistencies = List(ONE, TWO)
-    val when = WhenPreparedSingle(Some(query), None, Some(consistencies))
+    val when = WhenPrepared(Some(query), None, Some(consistencies))
     val thenDo = ThenPreparedSingle(Some(List()))
     val prime = PrimePreparedSingle(when, thenDo)
     underTest.record(prime)
@@ -214,7 +214,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
   test("Priming Consistency. Should default to all consistencies") {
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ?"
-    val when = WhenPreparedSingle(Some(query), None)
+    val when = WhenPrepared(Some(query), None)
     val thenDo = ThenPreparedSingle(Some(List()))
     val prime = PrimePreparedSingle(when, thenDo)
     underTest.record(prime)
@@ -234,8 +234,8 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ?"
     val thenDo = ThenPreparedSingle(Some(List()))
-    val primeForOneAndTwo = PrimePreparedSingle(WhenPreparedSingle(Some(query), None, Some(List(ONE, TWO))), thenDo)
-    val primeForTwoAndThree = PrimePreparedSingle(WhenPreparedSingle(Some(query), None, Some(List(TWO, THREE))), thenDo)
+    val primeForOneAndTwo = PrimePreparedSingle(WhenPrepared(Some(query), None, Some(List(ONE, TWO))), thenDo)
+    val primeForTwoAndThree = PrimePreparedSingle(WhenPrepared(Some(query), None, Some(List(TWO, THREE))), thenDo)
     //when
     underTest.record(primeForOneAndTwo)
     val result = underTest.record(primeForTwoAndThree)

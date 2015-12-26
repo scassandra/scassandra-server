@@ -27,9 +27,9 @@ public final class MultiPrimeRequest {
 
     public static Then.Builder then() { return new Then.Builder(); }
     public static When.Builder when() { return new When.Builder(); }
-    public static Match.Builder match() { return new Match.Builder(); }
+    public static Criteria.Builder match() { return new Criteria.Builder(); }
     public static Action.Builder action() { return new Action.Builder(); }
-    public static Outcome outcome(Match.Builder match, Action.Builder action) {
+    public static Outcome outcome(Criteria.Builder match, Action.Builder action) {
         return new Outcome(match.build(), action.build());
     }
     public static VariableMatch.Builder variableMatch() { return new VariableMatch.Builder(); }
@@ -131,7 +131,7 @@ public final class MultiPrimeRequest {
                 return this;
             }
 
-            public Builder withColumn_types(Map<String, CqlType> column_types) {
+            public Builder withColumnTypes(Map<String, CqlType> column_types) {
                 this.column_types = column_types;
                 return this;
             }
@@ -193,10 +193,10 @@ public final class MultiPrimeRequest {
         }
     }
 
-    public final static class Match {
+    public final static class Criteria {
         private final List<VariableMatch> variable_matcher;
 
-        public Match(List<VariableMatch> variable_matcher) {
+        public Criteria(List<VariableMatch> variable_matcher) {
             this.variable_matcher = variable_matcher;
         }
 
@@ -205,9 +205,9 @@ public final class MultiPrimeRequest {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            Match match = (Match) o;
+            Criteria criteria = (Criteria) o;
 
-            return variable_matcher != null ? variable_matcher.equals(match.variable_matcher) : match.variable_matcher == null;
+            return variable_matcher != null ? variable_matcher.equals(criteria.variable_matcher) : criteria.variable_matcher == null;
 
         }
 
@@ -228,8 +228,8 @@ public final class MultiPrimeRequest {
                 return this;
             }
 
-            public Match build() {
-                return new Match(variable_matcher);
+            public Criteria build() {
+                return new Criteria(variable_matcher);
             }
         }
     }
@@ -298,11 +298,11 @@ public final class MultiPrimeRequest {
     }
 
     public static class Outcome {
-        private Match match;
+        private Criteria criteria;
         private Action action;
 
-        public Outcome(Match match, Action action) {
-            this.match = match;
+        public Outcome(Criteria criteria, Action action) {
+            this.criteria = criteria;
             this.action = action;
         }
     }

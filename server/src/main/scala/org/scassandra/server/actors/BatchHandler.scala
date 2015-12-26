@@ -24,7 +24,7 @@ import org.scassandra.server.actors.PrepareHandler.{PreparedStatementResponse, P
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.priming.batch.{BatchPrime, PrimeBatchStore}
 import org.scassandra.server.priming._
-import org.scassandra.server.priming.prepared.{PreparedPrime, PreparedStoreLookup}
+import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import org.scassandra.server.priming.query.PrimeMatch
 
 import scala.collection.immutable.IndexedSeq
@@ -84,7 +84,8 @@ class BatchHandler(tcpConnection: ActorRef,
         case IncompletePreparedStatement(id, variables: List[Array[Byte]]) =>
           val queryText: String = ids.getOrElse(id, "A prepared statement was in the batch but couldn't be found - did you prepare against a different  session?")
           preparedStore.findPrime(PrimeMatch(queryText, consistency)) match {
-            case Some(PreparedPrime(variableTypes, _)) =>
+            case Some(result) =>
+              val variableTypes = result.variableTypes
               val parsedVariables = variables.zip(variableTypes).map { case (bytes, colType) => colType.readValue(ByteString(bytes).iterator) }
               BatchQuery(queryText, PreparedStatementKind, parsedVariables)
             case None => BatchQuery(queryText, PreparedStatementKind)

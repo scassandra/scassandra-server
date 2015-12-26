@@ -6,12 +6,12 @@ import akka.pattern.{ask, pipe}
 import akka.util.{ByteString, Timeout}
 import org.scassandra.server.actors.ExecuteHandler.DeserializedExecute
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.cqlmessages.{CqlProtocolHelper, CqlMessageFactory}
-import org.scassandra.server.cqlmessages.CqlProtocolHelper.{bytes2Hex, serializeInt, serializeShortBytes}
+import org.scassandra.server.cqlmessages.CqlMessageFactory
+import org.scassandra.server.cqlmessages.CqlProtocolHelper.{bytes2Hex, serializeInt}
 import org.scassandra.server.cqlmessages.request.ExecuteRequest
 import org.scassandra.server.priming._
-import org.scassandra.server.priming.prepared.{PreparedPrime, PreparedStoreLookup}
-import org.scassandra.server.priming.query.PrimeMatch
+import org.scassandra.server.priming.prepared.{PreparedPrimeResult, PreparedStoreLookup}
+import org.scassandra.server.priming.query.{Prime, PrimeMatch}
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -38,15 +38,20 @@ class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
   private def handleExecute(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, prepStatement: Option[String], executeRequest: ExecuteRequest, connection: ActorRef): ExecuteResponse = {
     val action = prepStatement match {
-      case Some(p) =>
+      case Some(preparedStatementText) =>
+        val foundPrime: Option[PreparedPrimeResult] = primePreparedStore.findPrime(PrimeMatch(preparedStatementText, executeRequest.consistency))
+        foundPrime.foreach(p => log.info("Found prime {}", p))
         val matchingPrimedAction = for {
-          prime <- primePreparedStore.findPrime(PrimeMatch(p, executeRequest.consistency))
+          prime <- foundPrime
           if executeRequest.numberOfVariables == prime.variableTypes.size
           parsed = msgFactory.parseExecuteRequestWithVariables(stream, body, prime.variableTypes)
-          pse = PreparedStatementExecution(p, parsed.consistency, parsed.variables, prime.variableTypes)
-        } yield ExecuteResponse(Some(pse), MessageWithDelay(createMessage(prime, executeRequest, stream, msgFactory, connection), prime.prime.fixedDelay))
+          pse = PreparedStatementExecution(preparedStatementText, parsed.consistency, parsed.variables, prime.variableTypes)
+        } yield {
+          val primeResult = prime.getPrime(parsed.variables)
+          ExecuteResponse(Some(pse), MessageWithDelay(createMessage(primeResult, executeRequest, stream, msgFactory, connection), primeResult.fixedDelay))
+        }
 
-        lazy val defaultAction = ExecuteResponse(Some(PreparedStatementExecution(p, executeRequest.consistency, List(), List())),
+        lazy val defaultAction = ExecuteResponse(Some(PreparedStatementExecution(preparedStatementText, executeRequest.consistency, List(), List())),
           MessageWithDelay(msgFactory.createVoidMessage(stream)))
         matchingPrimedAction.getOrElse(defaultAction)
       case None =>
@@ -54,6 +59,24 @@ class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
     }
     action
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   private def statementNotRecognised(stream: Byte, msgFactory: CqlMessageFactory, executeRequest: ExecuteRequest): ExecuteResponse = {
     val id = serializeInt(executeRequest.id)
@@ -72,9 +95,9 @@ class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
     }
   }
 
-  private def createMessage(preparedPrime: PreparedPrime, executeRequest: ExecuteRequest ,stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef) = {
-    preparedPrime.prime.result match {
-      case SuccessResult => msgFactory.createRowsMessage(preparedPrime.prime, stream)
+  private def createMessage(preparedPrime: Prime, executeRequest: ExecuteRequest ,stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef) = {
+    preparedPrime.result match {
+      case SuccessResult => msgFactory.createRowsMessage(preparedPrime, stream)
       case result: ErrorResult => msgFactory.createErrorMessage(result, stream, executeRequest.consistency)
       case result: FatalResult => result.produceFatalError(connection)
     }

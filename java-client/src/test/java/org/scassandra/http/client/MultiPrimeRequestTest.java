@@ -9,7 +9,7 @@ public class MultiPrimeRequestTest {
     public void testEqualsContract() {
         EqualsVerifier.forClass(MultiPrimeRequest.class).allFieldsShouldBeUsed().verify();
         EqualsVerifier.forClass(MultiPrimeRequest.Action.class).allFieldsShouldBeUsed().verify();
-        EqualsVerifier.forClass(MultiPrimeRequest.Match.class).allFieldsShouldBeUsed().verify();
+        EqualsVerifier.forClass(MultiPrimeRequest.Criteria.class).allFieldsShouldBeUsed().verify();
         EqualsVerifier.forClass(MultiPrimeRequest.When.class).allFieldsShouldBeUsed().verify();
         EqualsVerifier.forClass(MultiPrimeRequest.Then.class).allFieldsShouldBeUsed().verify();
         EqualsVerifier.forClass(MultiPrimeRequest.VariableMatch.class).allFieldsShouldBeUsed().verify();

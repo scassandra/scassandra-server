@@ -37,7 +37,7 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
   test("Should return None if pattern does not match") {
     //given
     val pattern = "select .* from people.*"
-    val when = WhenPreparedSingle(None, Some(pattern), Some(List(ONE)))
+    val when = WhenPrepared(None, Some(pattern), Some(List(ONE)))
     val thenDo = ThenPreparedSingle(Some(List()))
     val preparedPrime = PrimePreparedSingle(when, thenDo)
 
@@ -45,44 +45,44 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     underTest.record(preparedPrime)
 
     //then
-    val result: Option[PreparedPrime] = underTest.findPrime(PrimeMatch("select name from users where age = '6'"))
+    val result = underTest.findPrime(PrimeMatch("select name from users where age = '6'"))
     result.isDefined should equal(false)
   }
 
   test("Should record result") {
     //given
     val pattern = ".*"
-    val when = WhenPreparedSingle(None, Some(pattern), Some(List(ONE)))
+    val when = WhenPrepared(None, Some(pattern), Some(List(ONE)))
     val thenDo = ThenPreparedSingle(Some(List()), result = Some(WriteTimeout))
     val preparedPrime = PrimePreparedSingle(when, thenDo)
 
     //when
     underTest.record(preparedPrime)
-    val result: Option[PreparedPrime] = underTest.findPrime(PrimeMatch("select name from users where age = '6'"))
+    val result = underTest.findPrime(PrimeMatch("select name from users where age = '6'"))
 
     //then
-    result.get.prime.result should equal(WriteRequestTimeoutResult())
+    result.get.getPrime().result should equal(WriteRequestTimeoutResult())
   }
 
   test("Should record fixed delay") {
     //given
     val pattern = ".*"
-    val when = WhenPreparedSingle(None, Some(pattern), Some(List(ONE)))
+    val when = WhenPrepared(None, Some(pattern), Some(List(ONE)))
     val thenDo = ThenPreparedSingle(Some(List()), fixedDelay = Some(2000))
     val preparedPrime = PrimePreparedSingle(when, thenDo)
 
     //when
     underTest.record(preparedPrime)
-    val result: Option[PreparedPrime] = underTest.findPrime(PrimeMatch("select name from users where age = '6'"))
+    val result = underTest.findPrime(PrimeMatch("select name from users where age = '6'"))
 
     //then
-    result.get.prime.fixedDelay should equal(Some(FiniteDuration(2000, TimeUnit.MILLISECONDS)))
+    result.get.getPrime().fixedDelay should equal(Some(FiniteDuration(2000, TimeUnit.MILLISECONDS)))
   }
 
   test("Should find prime if pattern and consistency match") {
     //given
     val pattern = "select .* from people.*"
-    val when = WhenPreparedSingle(None, Some(pattern), consistency = Some(List(ONE)))
+    val when = WhenPrepared(None, Some(pattern), consistency = Some(List(ONE)))
     val thenDo = ThenPreparedSingle(Some(List()))
 
     val preparedPrime = PrimePreparedSingle(when, thenDo)
@@ -91,7 +91,7 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     underTest.record(preparedPrime)
 
     //then
-    val result: Option[PreparedPrime] = underTest.findPrime(PrimeMatch("select name from people where age = '6'", ONE))
+    val result = underTest.findPrime(PrimeMatch("select name from people where age = '6'", ONE))
     result.isDefined should equal(true)
     result.get should equal(PreparedPrime(List(), Prime(List())))
   }
@@ -99,7 +99,7 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
   test("Should not find prime if pattern matches but consistency does not") {
     //given
     val pattern = "select .* from people.*"
-    val when = WhenPreparedSingle(None, Some(pattern), consistency = Some(List(ONE, TWO)))
+    val when = WhenPrepared(None, Some(pattern), consistency = Some(List(ONE, TWO)))
     val thenDo = ThenPreparedSingle(Some(List()))
 
     val preparedPrime = PrimePreparedSingle(when, thenDo)
@@ -108,14 +108,14 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     underTest.record(preparedPrime)
 
     //then
-    val result: Option[PreparedPrime] = underTest.findPrime(PrimeMatch("select name from people where age = '6'", THREE))
+    val result = underTest.findPrime(PrimeMatch("select name from people where age = '6'", THREE))
     result.isDefined should equal(false)
   }
 
 
   test("Defaults consistencies to all") {
     val pattern = "select .* from people.*"
-    val when = WhenPreparedSingle(None, Some(pattern))
+    val when = WhenPrepared(None, Some(pattern))
     val thenDo = ThenPreparedSingle(Some(List()))
 
     val preparedPrime = PrimePreparedSingle(when, thenDo)
@@ -133,7 +133,7 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
   test("Defaults column types to varchar") {
     //given
     val pattern = "select .* from people.*"
-    val when = WhenPreparedSingle(None, Some(pattern), consistency = Some(List(ONE)))
+    val when = WhenPrepared(None, Some(pattern), consistency = Some(List(ONE)))
     val rows: List[Map[String, String]] = List(Map(
       "col_one" -> "value"
     ))
@@ -146,15 +146,15 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
 
     //then
     val expectedColumnTypes = Map("col_one" -> CqlVarchar)
-    val result: Option[PreparedPrime] = underTest.findPrime(PrimeMatch("select name from people where age = '6'", ONE))
+    val result = underTest.findPrime(PrimeMatch("select name from people where age = '6'", ONE))
     result.isDefined should equal(true)
-    result.get.prime.columnTypes should equal(expectedColumnTypes)
+    result.get.getPrime().columnTypes should equal(expectedColumnTypes)
   }
 
   test("Defaults variable types to varchar - this is done on find, unlike the non-pattern matching version") {
     //given
     val pattern = "select .* from people.*"
-    val when = WhenPreparedSingle(None, Some(pattern), consistency = Some(List(ONE)))
+    val when = WhenPrepared(None, Some(pattern), consistency = Some(List(ONE)))
     val rows: List[Map[String, String]] = List()
     val thenDo = ThenPreparedSingle(Some(rows))
 
@@ -164,14 +164,14 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     underTest.record(preparedPrime)
 
     //then
-    val result: Option[PreparedPrime] = underTest.findPrime(PrimeMatch("select name from people where age = ? and name = ?", ONE))
+    val result = underTest.findPrime(PrimeMatch("select name from people where age = ? and name = ?", ONE))
     result.get.variableTypes should equal(List(CqlVarchar, CqlVarchar))
   }
 
   test("Subset of variable types specified, defaults rest to varchar") {
     //given
     val pattern = "select .* from people.*"
-    val when = WhenPreparedSingle(None, Some(pattern), consistency = Some(List(ONE)))
+    val when = WhenPrepared(None, Some(pattern), consistency = Some(List(ONE)))
     val rows: List[Map[String, String]] = List()
     val thenDo = ThenPreparedSingle(Some(rows), Some(List(CqlInet)))
 
@@ -181,14 +181,14 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     underTest.record(preparedPrime)
 
     //then
-    val result: Option[PreparedPrime] = underTest.findPrime(PrimeMatch("select name from people where age = ? and name = ?", ONE))
+    val result = underTest.findPrime(PrimeMatch("select name from people where age = ? and name = ?", ONE))
     result.get.variableTypes should equal(List(CqlInet, CqlVarchar))
   }
 
   test("All variable types specified") {
     //given
     val pattern = "select .* from people.*"
-    val when = WhenPreparedSingle(None, Some(pattern), consistency = Some(List(ONE)))
+    val when = WhenPrepared(None, Some(pattern), consistency = Some(List(ONE)))
     val rows: List[Map[String, String]] = List()
     val thenDo = ThenPreparedSingle(Some(rows), Some(List(CqlInet, CqlInt)))
 
@@ -198,7 +198,7 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     underTest.record(preparedPrime)
 
     //then
-    val result: Option[PreparedPrime] = underTest.findPrime(PrimeMatch("select name from people where age = ? and name = ?", ONE))
+    val result = underTest.findPrime(PrimeMatch("select name from people where age = ? and name = ?", ONE))
     result.get.variableTypes should equal(List(CqlInet, CqlInt))
   }
 

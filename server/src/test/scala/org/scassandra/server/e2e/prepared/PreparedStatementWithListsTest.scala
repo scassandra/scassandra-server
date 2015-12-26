@@ -27,7 +27,7 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
 import org.scassandra.server.PrimingHelper.getRecordedPreparedStatements
 import org.scassandra.server.cqlmessages.types._
-import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle}
+import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPrepared}
 import org.scassandra.server.{AbstractIntegrationTest, PrimingHelper}
 
 class PreparedStatementWithListsTest  extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
@@ -49,7 +49,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlVarchar))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 
@@ -72,7 +72,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlText))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 
@@ -95,7 +95,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlAscii))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 
@@ -118,7 +118,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlBigint))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 
@@ -141,7 +141,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlBlob))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 
@@ -163,7 +163,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlBoolean))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 
@@ -187,7 +187,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlDecimal))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 
@@ -210,7 +210,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlDouble))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 
@@ -234,7 +234,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlFloat))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 
@@ -258,7 +258,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlInet))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 
@@ -281,7 +281,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlInt))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 
@@ -305,7 +305,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlTimestamp))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 
@@ -329,7 +329,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlTimeUUID))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 
@@ -353,7 +353,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlUUID))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 
@@ -377,7 +377,7 @@ class PreparedStatementWithListsTest  extends AbstractIntegrationTest with Befor
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlList(CqlVarint))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(rows = None, variable_types = Some(variableTypes))
     )
 

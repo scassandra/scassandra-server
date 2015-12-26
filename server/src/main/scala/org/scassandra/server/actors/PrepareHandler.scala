@@ -50,7 +50,7 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
   private def handlePrepare(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory): PrepareResponse = {
     val query: String = readLongString(body.iterator).get
-    val preparedPrime: Option[PreparedPrime] = primePreparedStore.findPrime(PrimeMatch(query))
+    val preparedPrime = primePreparedStore.findPrime(PrimeMatch(query))
 
     val preparedResult: Result = preparedPrime
       .map(prime => msgFactory.createPreparedResult(stream, nextId, prime.variableTypes))

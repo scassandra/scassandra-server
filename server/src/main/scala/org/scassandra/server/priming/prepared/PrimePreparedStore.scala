@@ -48,7 +48,7 @@ class PrimePreparedStore extends LazyLogging with PreparedStore with PreparedSto
     val consistencies = prime.when.consistency.getOrElse(Consistency.all)
     val primeCriteria = PrimeCriteria(query.get, consistencies)
 
-    validator.validate(primeCriteria, primeToStore.prime, state.map( existingPrime => (existingPrime._1, existingPrime._2.prime)  ) ) match {
+    validator.validate(primeCriteria, primeToStore.getPrime(List()), state.map( existingPrime => (existingPrime._1, existingPrime._2.getPrime(List()))  ) ) match {
       case PrimeAddSuccess =>
         logger.info(s"Storing prime for prepared statement $primeToStore with prime criteria $primeCriteria")
         state += (primeCriteria -> primeToStore)

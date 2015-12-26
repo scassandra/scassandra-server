@@ -19,11 +19,20 @@ import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.json.{Success, ResultJsonRepresentation}
 
-case class PrimePreparedSingle(when: WhenPreparedSingle, thenDo: ThenPreparedSingle)
+sealed trait PreparedPrimeIncoming {
+  val when: WhenPrepared
+}
 
-case class WhenPreparedSingle(query: Option[String] = None,
-                              queryPattern: Option[String] = None,
-                              consistency: Option[List[Consistency]] = None)
+sealed trait ThenPrepared {
+  val variable_types: Option[List[ColumnType[_]]]
+}
+
+case class PrimePreparedSingle(when: WhenPrepared, thenDo: ThenPreparedSingle) extends PreparedPrimeIncoming
+case class PrimePreparedMulti(when: WhenPrepared, thenDo: ThenPreparedMulti) extends PreparedPrimeIncoming
+
+case class WhenPrepared(query: Option[String] = None,
+                        queryPattern: Option[String] = None,
+                        consistency: Option[List[Consistency]] = None)
 
 case class ThenPreparedSingle(rows: Option[List[Map[String, Any]]],
                               variable_types: Option[List[ColumnType[_]]] = None,
@@ -31,4 +40,19 @@ case class ThenPreparedSingle(rows: Option[List[Map[String, Any]]],
                               result : Option[ResultJsonRepresentation] = Some(Success),
                               fixedDelay : Option[Long] = None,
                               config: Option[Map[String, String]] = None
-                               )
+                               ) extends ThenPrepared
+
+case class ThenPreparedMulti(variable_types: Option[List[ColumnType[_]]] = None,
+                            outcomes: List[Outcome]) extends ThenPrepared
+
+case class Outcome(criteria: Criteria, action: Action)
+
+case class Criteria(variable_matcher: List[VariableMatch])
+
+case class Action(rows: Option[List[Map[String, Any]]],
+                  column_types: Option[Map[String, ColumnType[_]]] = None,
+                  result : Option[ResultJsonRepresentation] = Some(Success),
+                  fixedDelay : Option[Long] = None,
+                  config: Option[Map[String, String]] = None)
+
+case class VariableMatch(matcher: Option[Any])

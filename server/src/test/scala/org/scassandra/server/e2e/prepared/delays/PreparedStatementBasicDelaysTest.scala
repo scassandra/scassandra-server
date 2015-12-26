@@ -20,7 +20,7 @@ import dispatch._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
 import org.scassandra.server.priming.json.PrimingJsonImplicits
-import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle}
+import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPrepared}
 import org.scassandra.server.{AbstractIntegrationTest, PrimingHelper}
 
 class PreparedStatementBasicDelaysTest extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
@@ -37,7 +37,7 @@ class PreparedStatementBasicDelaysTest extends AbstractIntegrationTest with Befo
     val fixedDelay: Long = 1500l
     val preparedStatementText: String = "select * from people where name = ?"
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(Some(List(Map("name" -> "Chris"))), fixedDelay = Some(fixedDelay))
     )
     val preparedStatement = session.prepare(preparedStatementText)
@@ -58,7 +58,7 @@ class PreparedStatementBasicDelaysTest extends AbstractIntegrationTest with Befo
     val fixedDelay: Long = 1500l
     val preparedStatementText: String = ".*"
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(queryPattern = Some(preparedStatementText)),
+      WhenPrepared(queryPattern = Some(preparedStatementText)),
       ThenPreparedSingle(Some(List(Map("name" -> "Chris"))), fixedDelay = Some(fixedDelay))
     )
     val preparedStatement = session.prepare("select * from person where name = ?")

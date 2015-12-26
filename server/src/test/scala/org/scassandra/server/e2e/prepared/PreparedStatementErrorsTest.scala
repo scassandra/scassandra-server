@@ -23,7 +23,7 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
-import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle}
+import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPrepared}
 import org.scassandra.server.{AbstractIntegrationTest, PrimingHelper}
 
 class PreparedStatementErrorsTest extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
@@ -43,7 +43,7 @@ class PreparedStatementErrorsTest extends AbstractIntegrationTest with BeforeAnd
     val consistency = ConsistencyLevel.TWO
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(None, result = Some(ReadTimeout), config = Some(properties))
     )
     val preparedStatement = session.prepare(preparedStatementText)
@@ -70,7 +70,7 @@ class PreparedStatementErrorsTest extends AbstractIntegrationTest with BeforeAnd
     val consistency = ConsistencyLevel.EACH_QUORUM
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(None, result = Some(WriteTimeout), config = Some(properties))
     )
 
@@ -97,7 +97,7 @@ class PreparedStatementErrorsTest extends AbstractIntegrationTest with BeforeAnd
     val preparedStatementText: String = "select * from people where name = ?"
     val consistency = ConsistencyLevel.LOCAL_ONE
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(None, result = Some(Unavailable), config = Some(properties))
     )
     val preparedStatement = session.prepare(preparedStatementText)

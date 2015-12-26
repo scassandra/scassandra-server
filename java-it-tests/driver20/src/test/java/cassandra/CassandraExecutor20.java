@@ -52,7 +52,7 @@ public class CassandraExecutor20 implements CassandraExecutor {
     public CassandraResult prepareAndExecute(String query, Object... variable) {
         PreparedStatement prepare = session.prepare(query);
         BoundStatement bind = prepare.bind(variable);
-        return new CassandraResult20(session.execute(bind));
+        return this.execute(session::execute, bind);
     }
 
     @Override
