@@ -35,4 +35,8 @@ abstract class CqlUUIDType(override val code : Short, override val stringRep: St
     bs.putLong(uuid.getLeastSignificantBits)
     bs.result().toArray
   }
+
+  override def convertJsonToInternal(value: Any): Option[UUID] = {
+    Some(UUID.fromString(value.toString))
+  }
 }

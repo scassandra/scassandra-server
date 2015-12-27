@@ -33,6 +33,7 @@ public final class MultiPrimeRequest {
         return new Outcome(match.build(), action.build());
     }
     public static VariableMatch.Builder variableMatch() { return new VariableMatch.Builder(); }
+    public static VariableMatch variableMatch(Object o) { return new VariableMatch.Builder().withMatcher(o).build(); }
 
     private final When when;
     private final Then then;
@@ -153,9 +154,9 @@ public final class MultiPrimeRequest {
     }
 
     public final static class VariableMatch {
-        private final String matcher;
+        private final Object matcher;
 
-        public VariableMatch(String matcher) {
+        public VariableMatch(Object matcher) {
             this.matcher = matcher;
         }
 
@@ -177,12 +178,12 @@ public final class MultiPrimeRequest {
 
 
         public static class Builder {
-            private String matcher;
+            private Object matcher;
 
             private Builder() {
             }
 
-            public Builder withMatcher(String matcher) {
+            public Builder withMatcher(Object matcher) {
                 this.matcher = matcher;
                 return this;
             }

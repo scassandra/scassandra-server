@@ -31,11 +31,10 @@ import static org.scassandra.cql.PrimitiveType.*;
 import static org.scassandra.cql.MapType.*;
 import static org.scassandra.cql.SetType.*;
 import static org.scassandra.cql.ListType.*;
-
+import static org.scassandra.http.client.MultiPrimeRequest.*;
 
 ```
-
-This is how to prime a prepared statement:
+Prime a prepared statement:
 
 ```java
 PrimingRequest preparedStatementPrime = PrimingRequest.preparedStatementBuilder()
@@ -49,8 +48,8 @@ As this is an insert then you don't need to specify any rows to return.
 
 #### Priming variable types and rows with column types
 
-This is about as complicated as it gets. You want to prime the variable types of the prepared statement as well as
-return rows with column types other than varchat.
+You want to prime the variable types of the prepared statement as well as
+returned rows with column types other than varchar.
 
 ```java
 Map<String, ? extends  Object> row = ImmutableMap.of(
@@ -65,6 +64,39 @@ PrimingRequest preparedStatementPrime = PrimingRequest.preparedStatementBuilder(
         .build();
 primingClient.primePreparedStatement(preparedStatementPrime);
 ```
+
+#### Priming based on bound variables
+
+Sometimes the need arises to prime based on the actual variables bound during execution. For example imagine the following
+prepared statement:
+
+```cql
+select * from events where name = ?
+```
+
+And you want to have a successful result of the bound variable is 'Chris' but a read time out if the bound variable is
+'Andrew'. You can achieve this with a multi prime:
+
+```
+MultiPrimeRequest prime = MultiPrimeRequest.request()
+        .withWhen(when()
+                .withQuery("select * from events where name = ?"))
+        .withThen(then()
+                .withVariableTypes(TEXT)
+                .withOutcomes(
+                        outcome(match().withVariableMatchers(variableMatch().withMatcher("Chris").build()), action().withResult(Result.success)),
+                        outcome(match().withVariableMatchers(variableMatch().withMatcher("Andrew").build()), action().withResult(Result.read_request_timeout))
+                )
+        )
+        .build();
+
+primingClient.multiPrime(prime);
+
+```
+
+
+
+Collections are not currently supported for variable matching.
 
 #### Priming errors
 

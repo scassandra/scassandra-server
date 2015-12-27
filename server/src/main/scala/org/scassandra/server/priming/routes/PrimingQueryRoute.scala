@@ -45,7 +45,7 @@ trait PrimingQueryRoute extends HttpService with LazyLogging {
         get {
           complete {
             val allPrimes: Map[PrimeCriteria, Prime] = primeQueryStore.getAllPrimes
-            PrimeQueryResultExtractor.convertBackToPrimeQueryResult(allPrimes)
+            PrimingJsonHelper.convertBackToPrimeQueryResult(allPrimes)
           }
         } ~
           post {
@@ -53,12 +53,12 @@ trait PrimingQueryRoute extends HttpService with LazyLogging {
               primeRequest => {
                 complete {
                   logger.debug(s"Received prime request $primeRequest")
-                  val primeCriteriaTry = PrimeQueryResultExtractor.extractPrimeCriteria(primeRequest)
+                  val primeCriteriaTry = PrimingJsonHelper.extractPrimeCriteria(primeRequest)
 
                   primeCriteriaTry match {
                     case Success(primeCriteria) =>
 
-                      val primeResult = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+                      val primeResult = PrimingJsonHelper.extractPrime(primeRequest)
 
                       primeQueryStore.add(primeCriteria, primeResult) match {
                         case cp: ConflictingPrimes => {

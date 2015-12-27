@@ -3,7 +3,7 @@ package org.scassandra.server.priming.prepared
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.priming.json.Success
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
-import org.scassandra.server.priming.routes.PrimeQueryResultExtractor
+import org.scassandra.server.priming.routes.PrimingJsonHelper
 
 class PreparedMultiStore extends PreparedStoreLookup with LazyLogging {
 
@@ -14,7 +14,7 @@ class PreparedMultiStore extends PreparedStoreLookup with LazyLogging {
     val variableTypes = prime.thenDo.variable_types.getOrElse(List())
 
     val outcomes: List[(List[Option[Any]], Prime)] = prime.thenDo.outcomes.map(o => {
-      val result = PrimeQueryResultExtractor.convertToPrimeResult(Map(), o.action.result.getOrElse(Success))
+      val result = PrimingJsonHelper.convertToPrimeResult(Map(), o.action.result.getOrElse(Success))
       (o.criteria.variable_matcher.map(_.matcher), Prime(result = result))
     })
 

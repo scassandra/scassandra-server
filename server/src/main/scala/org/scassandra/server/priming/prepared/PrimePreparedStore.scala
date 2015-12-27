@@ -23,7 +23,7 @@ import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json.Success
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
-import org.scassandra.server.priming.routes.PrimeQueryResultExtractor
+import org.scassandra.server.priming.routes.PrimingJsonHelper
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -37,7 +37,7 @@ class PrimePreparedStore extends LazyLogging with PreparedStore with PreparedSto
     val query = prime.when.query
     val numberOfParameters = query.get.toCharArray.count(_ == '?')
     val fixedDelay: Option[FiniteDuration] = thenDo.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
-    val result = PrimeQueryResultExtractor.convertToPrimeResult(thenDo.config.getOrElse(Map()), thenDo.result.getOrElse(Success))
+    val result = PrimingJsonHelper.convertToPrimeResult(thenDo.config.getOrElse(Map()), thenDo.result.getOrElse(Success))
 
     val variableTypesDefaultedToVarchar: List[ColumnType[_]] = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, thenDo.variable_types)
     val colTypes = Defaulter.defaultColumnTypesToVarchar(thenDo.column_types, rows)

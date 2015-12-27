@@ -4,14 +4,14 @@ import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.cqlmessages.{LOGGED, BatchType, Consistency}
 import org.scassandra.server.priming.{BatchExecution, PrimeResult}
 import org.scassandra.server.priming.json.Success
-import org.scassandra.server.priming.routes.PrimeQueryResultExtractor
+import org.scassandra.server.priming.routes.PrimingJsonHelper
 
 class PrimeBatchStore extends LazyLogging {
 
   var primes: Map[BatchCriteria, BatchPrime] = Map()
   
   def record(prime: BatchPrimeSingle): Unit = {
-    val result: PrimeResult = PrimeQueryResultExtractor.convertToPrimeResult(Map(), prime.thenDo.result.getOrElse(Success))
+    val result: PrimeResult = PrimingJsonHelper.convertToPrimeResult(Map(), prime.thenDo.result.getOrElse(Success))
     val consistencies: List[Consistency] = prime.when.consistency.getOrElse(Consistency.all)
     primes += (BatchCriteria(prime.when.queries, consistencies, prime.when.batchType.getOrElse(LOGGED)) -> BatchPrime(result))
   }

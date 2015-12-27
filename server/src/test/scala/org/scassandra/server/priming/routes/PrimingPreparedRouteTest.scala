@@ -34,7 +34,7 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
-import org.scassandra.server.cqlmessages.types.{CqlInt, CqlVarchar}
+import org.scassandra.server.cqlmessages.types.{CqlText, CqlInt, CqlVarchar}
 import org.scassandra.server.cqlmessages.{ONE, TWO}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
@@ -64,13 +64,15 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
   describe("Priming multiple responses") {
     it("Should record it with the multi prime store") {
       val when: WhenPrepared = WhenPrepared(Some("select * from people where name = ?"))
-      val thenDo = ThenPreparedMulti(None, List(Outcome(Criteria(List(VariableMatch(Some("Chris")))), Action(None))))
+      val thenDo = ThenPreparedMulti(Some(List(CqlText)), List(Outcome(Criteria(List(VariableMatch(Some("Chris")))), Action(None))))
       val prime = PrimePreparedMulti(when, thenDo)
       Post(primePreparedMultiPath, prime) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.OK)
         verify(primePreparedMultiStore).record(prime)
       }
     }
+
+    //todo validation error if variable types length != outcome varaiable matcher length
   }
 
   describe("Priming") {

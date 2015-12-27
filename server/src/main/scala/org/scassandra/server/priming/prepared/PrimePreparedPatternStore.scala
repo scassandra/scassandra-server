@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
-import org.scassandra.server.priming.routes.PrimeQueryResultExtractor
+import org.scassandra.server.priming.routes.PrimingJsonHelper
 import org.scassandra.server.priming.{Defaulter, PrimeAddResult, PrimeAddSuccess}
 import org.scassandra.server.priming.json.Success
 
@@ -33,7 +33,7 @@ class PrimePreparedPatternStore extends LazyLogging with PreparedStore with Prep
     val thenDo: ThenPreparedSingle = incomingPrime.thenDo
     val rows = thenDo.rows.getOrElse(List())
     val columnTypes = Defaulter.defaultColumnTypesToVarchar(thenDo.column_types, rows)
-    val result = PrimeQueryResultExtractor.convertToPrimeResult(thenDo.config.getOrElse(Map()), thenDo.result.getOrElse(Success))
+    val result = PrimingJsonHelper.convertToPrimeResult(thenDo.config.getOrElse(Map()), thenDo.result.getOrElse(Success))
     val fixedDelay = thenDo.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
     val prime = Prime(rows, columnTypes = columnTypes, result = result, fixedDelay = fixedDelay)
     val preparedPrime = PreparedPrime(thenDo.variable_types.getOrElse(List()), prime)
