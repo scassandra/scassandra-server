@@ -32,4 +32,8 @@ case object CqlInet extends ColumnType[InetAddress](0x0010, "inet") {
     bs.putBytes(bytes)
     bs.result().toArray
   }
+
+  override def convertJsonToInternal(value: Any): Option[InetAddress] = {
+    Option(InetAddresses.forString(value.toString))
+  }
 }

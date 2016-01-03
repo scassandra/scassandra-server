@@ -9,6 +9,7 @@ import org.scassandra.http.client.MultiPrimeRequest;
 import org.scassandra.http.client.Result;
 
 import java.math.BigDecimal;
+import java.net.InetAddress;
 
 import static org.junit.Assert.assertEquals;
 import static org.scassandra.cql.PrimitiveType.*;
@@ -161,10 +162,32 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
         assertEquals(Result.write_request_timeout, trueResult.status().getResult());
     }
 
-    //todo inet
+    @Test
+    public void testPrimeBasedOnMatchInet() throws Exception {
+        String query = "select * from person where ip = ?";
+        InetAddress localHost = InetAddress.getLocalHost();
+        MultiPrimeRequest prime = MultiPrimeRequest.request()
+                .withWhen(when()
+                        .withQuery(query))
+                .withThen(then()
+                        .withVariableTypes(INET)
+                        .withOutcomes(
+                                outcome(match().withVariableMatchers(variableMatch().withMatcher(localHost).build()), action().withResult(Result.read_request_timeout))
+                        )
+                )
+                .build();
+
+        primingClient.multiPrime(prime);
+
+        CassandraResult result = cassandra().prepareAndExecute(query, localHost);
+
+        assertEquals(Result.read_request_timeout, result.status().getResult());
+    }
+
     //todo blob
     //todo timestamp
     //todo varint
+    //todo match null variables
 
     // todo returns rows
     // todo delays

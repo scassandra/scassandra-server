@@ -308,7 +308,6 @@ public final class MultiPrimeRequest {
         }
     }
 
-
     public final static class When {
         private final String query;
                 private final List<Consistency> consistency;
@@ -345,7 +344,6 @@ public final class MultiPrimeRequest {
             return result;
         }
 
-
         public static class Builder {
             private String query;
             private List<Consistency> consistency;
@@ -364,7 +362,7 @@ public final class MultiPrimeRequest {
             }
 
             public Builder withConsistency(Consistency consistency, Consistency... consistencies) {
-                this.consistency = new ArrayList<>();
+                this.consistency = new ArrayList<Consistency>();
                 this.consistency.add(consistency);
                 this.consistency.addAll(Arrays.asList(consistencies));
                 return this;
