@@ -73,6 +73,23 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
     preparedPrime should equal(None)
   }
 
+  test("Stores rows for prime") {
+    val variableTypes = List(CqlText)
+    val rows = List(
+      Map("name" -> "Chris")
+    )
+    val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(variableTypes), List(
+      Outcome(Criteria(List(VariableMatch(Some("Daniel")))), Action(Some(rows)))
+    ))
+    val queryText = "Some query"
+    val when: WhenPrepared = WhenPrepared(Some(queryText))
+    underTest.record(PrimePreparedMulti(when, thenDo))
+
+    val preparedPrime = underTest.findPrime(PrimeMatch(queryText, ONE))
+
+    preparedPrime.value.getPrime(List(Some("Daniel"))).rows should equal(rows)
+  }
+
   // return th delay
 
 }

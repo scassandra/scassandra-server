@@ -1,15 +1,23 @@
 package preparedstatements;
 
+import com.google.common.collect.ImmutableMap;
 import common.AbstractScassandraTest;
 import common.CassandraExecutor;
 import common.CassandraResult;
+import common.CassandraRow;
 import org.junit.Test;
+import org.scassandra.cql.CqlType;
+import org.scassandra.cql.PrimitiveType;
 import org.scassandra.http.client.Consistency;
 import org.scassandra.http.client.MultiPrimeRequest;
 import org.scassandra.http.client.Result;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.InetAddress;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.scassandra.cql.PrimitiveType.*;
@@ -22,7 +30,7 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
     }
 
     @Test
-    public void testPrimeBasedOnMatchOnConsistency() {
+    public void testPrimeBasedMatchOnConsistency() {
         String query = "select * from person where name = ?";
         MultiPrimeRequest prime = MultiPrimeRequest.request()
                 .withWhen(when()
@@ -41,6 +49,38 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
 
         // shouldn't match due to consistency
         assertEquals(Result.success, result.status().getResult());
+    }
+
+    @Test
+    public void testPrimeReturningRows() {
+        String query = "select * from person where name = ?";
+        Map<String, Object> rows = ImmutableMap.of(
+          "name", "Chris",
+          "age", 30
+        );
+        Map<String, CqlType> colTypes = ImmutableMap.of("age", PrimitiveType.INT, "name", PrimitiveType.TEXT);
+        MultiPrimeRequest prime = MultiPrimeRequest.request()
+                .withWhen(when()
+                        .withQuery(query))
+                .withThen(then()
+                        .withVariableTypes(TEXT)
+                        .withOutcomes(
+                                outcome(match().withVariableMatchers(variableMatch().withMatcher("Andrew").build()),
+                                        action().withRows(rows).withColumnTypes(colTypes))
+                        )
+                )
+                .build();
+
+        primingClient.multiPrime(prime);
+
+        CassandraResult result = cassandra().prepareAndExecute(query, "Andrew");
+
+        // shouldn't match due to consistency
+        assertEquals(Result.success, result.status().getResult());
+        List<CassandraRow> returnedRows = result.rows();
+        assertEquals("Expected one row", 1, returnedRows.size());
+        assertEquals("Chris", returnedRows.get(0).getString("name"));
+        assertEquals(30, returnedRows.get(0).getInt("age"));
     }
 
     @Test
@@ -69,25 +109,27 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
 
     @Test
     public void testPrimeBasedOnMatcherNumericTypes() {
-        String query = "select * from person where i = ? and bi = ? and f = ? and doub = ? and dec = ?";
+        String query = "select * from person where i = ? and bi = ? and f = ? and doub = ? and dec = ? and vint = ?";
         MultiPrimeRequest prime = MultiPrimeRequest.request()
                 .withWhen(when()
                         .withQuery(query))
                 .withThen(then()
-                        .withVariableTypes(INT, BIG_INT, FLOAT, DOUBLE, DECIMAL)
+                        .withVariableTypes(INT, BIG_INT, FLOAT, DOUBLE, DECIMAL, VAR_INT)
                         .withOutcomes(
                                 outcome(match().withVariableMatchers(
                                         variableMatch(1),
                                         variableMatch(2L),
                                         variableMatch(3.0F),
                                         variableMatch(4.0),
-                                        variableMatch(new BigDecimal("5.0"))), action().withResult(Result.unavailable)),
+                                        variableMatch(new BigDecimal("5.0")),
+                                        variableMatch(new BigInteger("6"))), action().withResult(Result.unavailable)),
                                 outcome(match().withVariableMatchers(
                                         variableMatch(11),
                                         variableMatch(12L),
                                         variableMatch(13.0F),
                                         variableMatch(14.0),
-                                        variableMatch(new BigDecimal("15.0"))), action().withResult(Result.write_request_timeout))
+                                        variableMatch(new BigDecimal("15.0")),
+                                        variableMatch(new BigInteger("16"))), action().withResult(Result.write_request_timeout))
 
                         )
                 )
@@ -95,8 +137,8 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
 
         primingClient.multiPrime(prime);
 
-        CassandraResult unavailable = cassandra().prepareAndExecute(query, 1, 2L, 3.0F, 4.0, new BigDecimal("5.0"));
-        CassandraResult writeTimeout = cassandra().prepareAndExecute(query, 11, 12L, 13F, 14.0, new BigDecimal("15.0"));
+        CassandraResult unavailable = cassandra().prepareAndExecute(query, 1, 2L, 3.0F, 4.0, new BigDecimal("5.0"), new BigInteger("6"));
+        CassandraResult writeTimeout = cassandra().prepareAndExecute(query, 11, 12L, 13F, 14.0, new BigDecimal("15.0"), new BigInteger("16"));
 
         assertEquals(Result.unavailable, unavailable.status().getResult());
         assertEquals(Result.write_request_timeout, writeTimeout.status().getResult());
@@ -184,14 +226,25 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
         assertEquals(Result.read_request_timeout, result.status().getResult());
     }
 
-    //todo blob
-    //todo timestamp
-    //todo varint
-    //todo match null variables
+    @Test
+    public void testPrimeBasedOnMatchTimestamps() throws Exception {
+        String query = "select * from person where time = ?";
+        Date today = new Date();
+        MultiPrimeRequest prime = MultiPrimeRequest.request()
+                .withWhen(when()
+                        .withQuery(query))
+                .withThen(then()
+                        .withVariableTypes(TIMESTAMP)
+                        .withOutcomes(
+                                outcome(match().withVariableMatchers(variableMatch().withMatcher(today).build()), action().withResult(Result.read_request_timeout))
+                        )
+                )
+                .build();
 
-    // todo returns rows
-    // todo delays
-    // todo error test: mismatch of types
-    // todo error test: mismatch of number of variable types with outcome match
-    // todo support matching on collections
+        primingClient.multiPrime(prime);
+
+        CassandraResult result = cassandra().prepareAndExecute(query, today);
+
+        assertEquals(Result.read_request_timeout, result.status().getResult());
+    }
 }

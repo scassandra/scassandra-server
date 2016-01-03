@@ -29,6 +29,7 @@ import org.apache.http.util.EntityUtils;
 import org.scassandra.cql.CqlType;
 import org.scassandra.http.client.types.GsonCqlTypeDeserialiser;
 import org.scassandra.http.client.types.GsonCqlTypeSerialiser;
+import org.scassandra.http.client.types.GsonDateSerialiser;
 import org.scassandra.http.client.types.GsonInetAddressSerialiser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 public class PrimingClient {
@@ -75,6 +77,7 @@ public class PrimingClient {
             .registerTypeAdapter(CqlType.class, new GsonCqlTypeSerialiser())
             .registerTypeAdapter(CqlType.class, new GsonCqlTypeDeserialiser())
             .registerTypeAdapter(InetAddress.class, new GsonInetAddressSerialiser())
+            .registerTypeAdapter(Date.class, new GsonDateSerialiser())
             .enableComplexMapKeySerialization()
             .create();
 

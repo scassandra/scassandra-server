@@ -35,10 +35,11 @@ class PrimePreparedStore extends LazyLogging with PreparedStore with PreparedSto
     val thenDo: ThenPreparedSingle = prime.thenDo
     val rows = thenDo.rows.getOrElse(List())
     val query = prime.when.query
-    val numberOfParameters = query.get.toCharArray.count(_ == '?')
+
     val fixedDelay: Option[FiniteDuration] = thenDo.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
     val result = PrimingJsonHelper.convertToPrimeResult(thenDo.config.getOrElse(Map()), thenDo.result.getOrElse(Success))
 
+    val numberOfParameters = query.get.toCharArray.count(_ == '?')
     val variableTypesDefaultedToVarchar: List[ColumnType[_]] = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, thenDo.variable_types)
     val colTypes = Defaulter.defaultColumnTypesToVarchar(thenDo.column_types, rows)
 
