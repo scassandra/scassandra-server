@@ -137,11 +137,34 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
         assertEquals(Result.write_request_timeout, writeTimeout.status().getResult());
     }
 
+    @Test
+    public void testPrimeBasedOnMatchBoolean() {
+        String query = "select * from person where clever = ?";
+        MultiPrimeRequest prime = MultiPrimeRequest.request()
+                .withWhen(when()
+                        .withQuery(query))
+                .withThen(then()
+                        .withVariableTypes(BOOLEAN)
+                        .withOutcomes(
+                                outcome(match().withVariableMatchers(variableMatch().withMatcher(false).build()), action().withResult(Result.read_request_timeout)),
+                                outcome(match().withVariableMatchers(variableMatch().withMatcher(true).build()), action().withResult(Result.write_request_timeout))
+                        )
+                )
+                .build();
+
+        primingClient.multiPrime(prime);
+
+        CassandraResult falseResult = cassandra().prepareAndExecute(query, false);
+        CassandraResult trueResult = cassandra().prepareAndExecute(query, true);
+
+        assertEquals(Result.read_request_timeout, falseResult.status().getResult());
+        assertEquals(Result.write_request_timeout, trueResult.status().getResult());
+    }
+
     //todo inet
     //todo blob
     //todo timestamp
     //todo varint
-    //todo boolean
 
     // todo returns rows
     // todo delays

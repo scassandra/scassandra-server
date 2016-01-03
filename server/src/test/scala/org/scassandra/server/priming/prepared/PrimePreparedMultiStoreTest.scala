@@ -9,7 +9,7 @@ import org.scassandra.server.priming.query.{Prime, PrimeMatch}
 
 import org.scalatest.OptionValues._
 
-// todo genralise all the prepared stores, very little difference
+// todo generalise all the prepared stores, very little difference
 class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndAfter {
 
   var underTest: PrimePreparedMultiStore = _

@@ -1,6 +1,7 @@
 package org.scassandra.server.priming.prepared
 
 import com.typesafe.scalalogging.LazyLogging
+import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.priming.json.Success
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
 import org.scassandra.server.priming.routes.PrimingJsonHelper
@@ -11,6 +12,7 @@ class PrimePreparedMultiStore extends PreparedStoreLookup with LazyLogging {
 
   // todo change to a result to include validation failures etc
   def record(prime: PrimePreparedMulti): Unit = {
+    val consistencies = prime.when.consistency.getOrElse(Consistency.all)
     val variableTypes = prime.thenDo.variable_types.getOrElse(List())
 
     val outcomes: List[(List[Option[Any]], Prime)] = prime.thenDo.outcomes.map(o => {
@@ -19,7 +21,7 @@ class PrimePreparedMultiStore extends PreparedStoreLookup with LazyLogging {
     })
 
     val finalPrime = PreparedMultiPrime(variableTypes, outcomes.toMap)
-    val criteria: PrimeCriteria = PrimeCriteria(prime.when.query.get, List())
+    val criteria: PrimeCriteria = PrimeCriteria(prime.when.query.get, consistencies)
     logger.info("Storing prime {} for with criteria {}", finalPrime, criteria)
     state += (criteria -> finalPrime)
   }
