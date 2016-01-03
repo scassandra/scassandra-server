@@ -25,14 +25,12 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 public class CassandraExecutor30 implements CassandraExecutor {
     private Cluster cluster;
     private Session session;
-    private QueryBuilder queryBuilder;
 
     public CassandraExecutor30() {
         cluster = Cluster.builder().addContactPoint(Config.NATIVE_HOST).withPort(Config.NATIVE_PORT)
                 .withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.ONE))
                 .build();
         session = cluster.connect(Config.KEYSPACE);
-        queryBuilder = new QueryBuilder(cluster);
     }
 
     @Override
@@ -42,7 +40,7 @@ public class CassandraExecutor30 implements CassandraExecutor {
 
     @Override
     public CassandraResult executeSimpleStatement(String query, String consistency) {
-        SimpleStatement simpleStatement = session.newSimpleStatement(query);
+        SimpleStatement simpleStatement = new SimpleStatement(query);
         Statement statement = simpleStatement.setConsistencyLevel(ConsistencyLevel.valueOf(consistency));
         return this.execute(session::execute, statement);
     }
@@ -70,7 +68,7 @@ public class CassandraExecutor30 implements CassandraExecutor {
     @Override
     public CassandraResult executeSelectWithBuilder(String table, Optional<WhereEquals> clause) {
 
-        Select query = queryBuilder.select().all().from(table);
+        Select query = QueryBuilder.select().all().from(table);
         if (clause.isPresent()) {
             query.where(eq(clause.get().getField(), clause.get().getValue()));
         }
@@ -88,7 +86,7 @@ public class CassandraExecutor30 implements CassandraExecutor {
         queries.forEach(query -> {
             switch (query.getQueryType()) {
                 case QUERY:
-                    batch.add(session.newSimpleStatement(query.getQuery(), query.getVariables()));
+                    batch.add(new SimpleStatement(query.getQuery(), query.getVariables()));
                     break;
                 case PREPARED_STATEMENT:
                     batch.add(session.prepare(query.getQuery()).bind(query.getVariables()));
@@ -139,45 +137,47 @@ public class CassandraExecutor30 implements CassandraExecutor {
             } catch (UnavailableException ue) {
                 // NHAE is raised when first node is unavailable and there are no remaining hosts.
                 return new CassandraResult30(
-                    new CassandraResult.UnavailableStatus(
-                        ue.getConsistencyLevel().toString(),
-                        ue.getRequiredReplicas(),
-                        ue.getAliveReplicas()));
-            } catch(DriverException de) {
+                        new CassandraResult.UnavailableStatus(
+                                ue.getConsistencyLevel().toString(),
+                                ue.getRequiredReplicas(),
+                                ue.getAliveReplicas()));
+            } catch (DriverException de) {
                 message = de.getMessage();
                 // These errors are thrown in NHAE as the driver considers them host-specific errors and
                 // tries another host.
-                if(message.contains("protocol error")) {
+                if (message.contains("protocol error")) {
                     error = protocol_error;
-                } else if(message.contains("Host overloaded")) {
+                } else if (message.contains("Host overloaded")) {
                     error = overloaded;
-                } else if(message.contains("Host is bootstrapping")) {
+                } else if (message.contains("Host is bootstrapping")) {
                     error = is_bootstrapping;
                 }
-            } catch(Throwable t) {} // unknown error we can handle later.
+            } catch (Throwable t) {
+            } // unknown error we can handle later.
             return new CassandraResult30(new CassandraResult.ErrorMessageStatus(error, message));
-        } catch(DriverInternalError e) {
+        } catch (DriverInternalError e) {
             Result error = protocol_error;
             String message = e.getMessage();
             // Unprepared is thrown as a DriverInternalError if the Driver doesn't know about the query either
             // as this is unexpected behavior.
-            if(message.startsWith("Tried to execute unknown prepared query")) {
+            if (message.startsWith("Tried to execute unknown prepared query")) {
                 error = unprepared;
             }
             return new CassandraResult30(new CassandraResult.ErrorMessageStatus(error, message));
-        } catch(AuthenticationException e) {
+        } catch (AuthenticationException e) {
             return new CassandraResult30(new CassandraResult.ErrorMessageStatus(bad_credentials, e.getMessage()));
-        } catch(TruncateException e) {
+        } catch (TruncateException e) {
             return new CassandraResult30(new CassandraResult.ErrorMessageStatus(truncate_error, e.getMessage()));
-        } catch(SyntaxError e) {
+        } catch (SyntaxError e) {
             return new CassandraResult30(new CassandraResult.ErrorMessageStatus(syntax_error, e.getMessage()));
-        } catch(UnauthorizedException e) {
+        } catch (UnauthorizedException e) {
             return new CassandraResult30(new CassandraResult.ErrorMessageStatus(unauthorized, e.getMessage()));
-        } catch(InvalidConfigurationInQueryException e) {
+        } catch (InvalidConfigurationInQueryException e) {
             return new CassandraResult30(new CassandraResult.ErrorMessageStatus(config_error, e.getMessage()));
-        } catch(InvalidQueryException e) {
+        } catch (InvalidQueryException e) {
+            e.printStackTrace();
             return new CassandraResult30(new CassandraResult.ErrorMessageStatus(invalid, e.getMessage()));
-        } catch(AlreadyExistsException e) {
+        } catch (AlreadyExistsException e) {
             return new CassandraResult30(new CassandraResult.ErrorMessageStatus(already_exists, e.getMessage()));
         }
         return new CassandraResult30(resultSet);

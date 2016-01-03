@@ -148,9 +148,9 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
     public void testPrimeBasedOnMatcherUUIDs() {
         String query = "select * from person where u = ? and t = ?";
         java.util.UUID uuidOne = java.util.UUID.randomUUID();
-        java.util.UUID tUuidOne = java.util.UUID.randomUUID();
+        java.util.UUID tUuidOne = java.util.UUID.fromString("59ad61d0-c540-11e2-881e-b9e6057626c4");
         java.util.UUID uuidTwo = java.util.UUID.randomUUID();
-        java.util.UUID tUuidTwo = java.util.UUID.randomUUID();
+        java.util.UUID tUuidTwo = java.util.UUID.fromString("59ad61d0-c540-11e2-881e-b9e6057626c4");
 
         MultiPrimeRequest prime = MultiPrimeRequest.request()
                 .withWhen(when()
@@ -161,7 +161,7 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
                                 outcome(match().withVariableMatchers(
                                         variableMatch(uuidOne),
                                         variableMatch(tUuidOne)),
-                                        action().withResult(Result.overloaded)),
+                                        action().withResult(Result.read_request_timeout)),
                                 outcome(match().withVariableMatchers(
                                         variableMatch(uuidTwo),
                                         variableMatch(tUuidTwo)),
@@ -173,10 +173,10 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
 
         primingClient.multiPrime(prime);
 
-        CassandraResult overloaded = cassandra().prepareAndExecute(query, uuidOne, tUuidOne);
+        CassandraResult readTimeout = cassandra().prepareAndExecute(query, uuidOne, tUuidOne);
         CassandraResult writeTimeout = cassandra().prepareAndExecute(query, uuidTwo, tUuidTwo);
 
-        assertEquals(Result.overloaded, overloaded.status().getResult());
+        assertEquals(Result.read_request_timeout, readTimeout.status().getResult());
         assertEquals(Result.write_request_timeout, writeTimeout.status().getResult());
     }
 
