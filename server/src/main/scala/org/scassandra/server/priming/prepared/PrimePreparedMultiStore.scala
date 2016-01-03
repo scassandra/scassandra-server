@@ -5,7 +5,7 @@ import org.scassandra.server.priming.json.Success
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
 import org.scassandra.server.priming.routes.PrimingJsonHelper
 
-class PreparedMultiStore extends PreparedStoreLookup with LazyLogging {
+class PrimePreparedMultiStore extends PreparedStoreLookup with LazyLogging {
 
   var state: Map[PrimeCriteria, PreparedPrimeResult] = Map()
 
@@ -25,6 +25,7 @@ class PreparedMultiStore extends PreparedStoreLookup with LazyLogging {
   }
 
   def findPrime(primeMatch: PrimeMatch): Option[PreparedPrimeResult] = {
-    state.find({ case (criteria, result) => primeMatch.query == criteria.query }).map(_._2)
+    state.find({ case (criteria, result) => primeMatch.query == criteria.query &&
+      criteria.consistency.contains(primeMatch.consistency) }).map(_._2)
   }
 }

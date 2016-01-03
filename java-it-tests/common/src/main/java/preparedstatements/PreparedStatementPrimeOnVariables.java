@@ -4,6 +4,7 @@ import common.AbstractScassandraTest;
 import common.CassandraExecutor;
 import common.CassandraResult;
 import org.junit.Test;
+import org.scassandra.http.client.Consistency;
 import org.scassandra.http.client.MultiPrimeRequest;
 import org.scassandra.http.client.Result;
 
@@ -17,6 +18,28 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
 
     public PreparedStatementPrimeOnVariables(CassandraExecutor cassandraExecutor) {
         super(cassandraExecutor);
+    }
+
+    @Test
+    public void testPrimeBasedOnMatchOnConsistency() {
+        String query = "select * from person where name = ?";
+        MultiPrimeRequest prime = MultiPrimeRequest.request()
+                .withWhen(when()
+                        .withQuery(query).withConsistency(Consistency.TWO))
+                .withThen(then()
+                        .withVariableTypes(TEXT)
+                        .withOutcomes(
+                                outcome(match().withVariableMatchers(variableMatch().withMatcher("Andrew").build()), action().withResult(Result.read_request_timeout))
+                        )
+                )
+                .build();
+
+        primingClient.multiPrime(prime);
+
+        CassandraResult result = cassandra().prepareAndExecute(query, "Andrew");
+
+        // shouldn't match due to consistency
+        assertEquals(Result.success, result.status().getResult());
     }
 
     @Test
@@ -114,7 +137,12 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
         assertEquals(Result.write_request_timeout, writeTimeout.status().getResult());
     }
 
-    // todo match based on consistency
+    //todo inet
+    //todo blob
+    //todo timestamp
+    //todo varint
+    //todo boolean
+
     // todo returns rows
     // todo delays
     // todo error test: mismatch of types

@@ -363,6 +363,13 @@ public final class MultiPrimeRequest {
                 return this;
             }
 
+            public Builder withConsistency(Consistency consistency, Consistency... consistencies) {
+                this.consistency = new ArrayList<>();
+                this.consistency.add(consistency);
+                this.consistency.addAll(Arrays.asList(consistencies));
+                return this;
+            }
+
             public When build() {
                 return new When(query, consistency);
             }

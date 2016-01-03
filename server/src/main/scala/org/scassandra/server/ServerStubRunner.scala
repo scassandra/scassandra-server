@@ -26,7 +26,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 import org.scassandra.server.actors.TcpServer
 import org.scassandra.server.priming.batch.PrimeBatchStore
-import org.scassandra.server.priming.prepared.{PreparedMultiStore, CompositePreparedPrimeStore, PrimePreparedPatternStore, PrimePreparedStore}
+import org.scassandra.server.priming.prepared.{PrimePreparedMultiStore, CompositePreparedPrimeStore, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.priming.query.PrimeQueryStore
 import org.scassandra.server.priming.{ActivityLog, PrimingServer}
 
@@ -58,7 +58,7 @@ class ServerStubRunner( val binaryListenAddress: String = "localhost",
   val primedResults = PrimeQueryStore()
   val primePreparedStore = new PrimePreparedStore
   val primePreparedPatternStore = new PrimePreparedPatternStore
-  val primePreparedMultiStore = new PreparedMultiStore
+  val primePreparedMultiStore = new PrimePreparedMultiStore
   val primeBatchStore = new PrimeBatchStore
   val activityLog = new ActivityLog
   val preparedLookup = new CompositePreparedPrimeStore(primePreparedStore, primePreparedPatternStore, primePreparedMultiStore)

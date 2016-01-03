@@ -22,7 +22,7 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.ServerReady
 import org.scassandra.server.priming.batch.PrimeBatchStore
-import org.scassandra.server.priming.prepared.{PreparedMultiStore, PrimePreparedPatternStore, PrimePreparedStore}
+import org.scassandra.server.priming.prepared.{PrimePreparedMultiStore, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.priming.query.PrimeQueryStore
 import org.scassandra.server.priming.routes._
 import spray.can.Http
@@ -47,7 +47,7 @@ class PrimingServer(listenAddress: String, port: Int,
                     primeQueryStore: PrimeQueryStore,
                     primePreparedStore: PrimePreparedStore,
                     primePreparedPatternStore: PrimePreparedPatternStore,
-                    primePreparedMultiStpre: PreparedMultiStore,
+                    primePreparedMultiStpre: PrimePreparedMultiStore,
                     primeBatchStore: PrimeBatchStore,
                     serverReadyListener: ActorRef,
                     activityLog: ActivityLog,
@@ -80,7 +80,7 @@ class PrimingServer(listenAddress: String, port: Int,
 class PrimingServerHttpService(val primeQueryStore: PrimeQueryStore,
                                val primePreparedStore: PrimePreparedStore,
                                val primePreparedPatternStore: PrimePreparedPatternStore,
-                               val primePreparedMultiStore: PreparedMultiStore,
+                               val primePreparedMultiStore: PrimePreparedMultiStore,
                                val primeBatchStore: PrimeBatchStore,
                                val activityLog: ActivityLog,
                                val tcpServer: ActorRef) extends Actor with AllRoutes with LazyLogging {

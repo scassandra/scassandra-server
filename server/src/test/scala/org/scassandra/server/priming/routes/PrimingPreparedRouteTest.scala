@@ -49,7 +49,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
   implicit def actorRefFactory = system
   implicit val primePreparedStore: PrimePreparedStore = mock[PrimePreparedStore]
   implicit val primePreparedPatternStore: PrimePreparedPatternStore = mock[PrimePreparedPatternStore]
-  implicit val primePreparedMultiStore: PreparedMultiStore = mock[PreparedMultiStore]
+  implicit val primePreparedMultiStore: PrimePreparedMultiStore = mock[PrimePreparedMultiStore]
   val primePreparedSinglePath = "/prime-prepared-single"
   val primePreparedMultiPath = "/prime-prepared-multi"
 

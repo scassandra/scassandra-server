@@ -30,7 +30,7 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
 
   implicit val primePreparedStore: PrimePreparedStore
   implicit val primePreparedPatternStore: PrimePreparedPatternStore
-  implicit val primePreparedMultiStore: PreparedMultiStore
+  implicit val primePreparedMultiStore: PrimePreparedMultiStore
 
   val routeForPreparedPriming =
     path ("prime-prepared-multi") {
