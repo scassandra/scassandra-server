@@ -727,7 +727,7 @@ public class PrimingClientTest {
                         .withQuery("select * from person where name = ?"))
                 .withThen(then()
                         .withVariableTypes(TEXT)
-                        .withOutcomes(outcome(match().withVariableMatchers(variableMatch().withMatcher("Chris").build()), action()))
+                        .withOutcomes(outcome(match().withVariableMatchers(exactMatch().withMatcher("Chris").build()), action()))
                 )
                 .build();
 
@@ -736,7 +736,9 @@ public class PrimingClientTest {
         verify(postRequestedFor(urlEqualTo(PRIME_PREPARED_MULTI_PATH))
                 .withHeader("Content-Type", equalTo("application/json; charset=UTF-8"))
                 .withRequestBody(equalToJson("{\"when\":{\"query\":\"select * from person where name \\u003d ?\"}," +
-                        "\"then\":{\"variable_types\":[\"text\"],\"outcomes\":[{\"criteria\":{\"variable_matcher\":[{\"matcher\":\"Chris\"}]},\"action\":{}}]}}"))
+                        "\"then\":{\"variable_types\":[\"text\"],\"outcomes\":[{\"criteria\":" +
+                        "{\"variable_matcher\":[{\"matcher\":\"Chris\",\"type\":\"exact\"}]},\"action\":{}}]}}"))
+
         );
     }
 }

@@ -21,7 +21,7 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
   test("Match on variable type - success") {
     val variableTypes = List(CqlText)
     val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(variableTypes), List(
-      Outcome(Criteria(List(VariableMatch(Some("Chris")))), Action(Some(List()), result = Some(Success)))))
+      Outcome(Criteria(List(ExactMatch(Some("Chris")))), Action(Some(List()), result = Some(Success)))))
     val queryText = "Some query"
     underTest.record(PrimePreparedMulti(WhenPrepared(Some(queryText)), thenDo))
 
@@ -34,7 +34,7 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
   test("Match on variable type - failure") {
     val variableTypes = List(CqlText)
     val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(variableTypes), List(
-      Outcome(Criteria(List(VariableMatch(Some("Chris")))), Action(Some(List()), result = Some(ReadTimeout)))))
+      Outcome(Criteria(List(ExactMatch(Some("Chris")))), Action(Some(List()), result = Some(ReadTimeout)))))
     val queryText = "Some query"
     underTest.record(PrimePreparedMulti(WhenPrepared(Some(queryText)), thenDo))
 
@@ -47,8 +47,8 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
   test("Match on variable type - multiple options") {
     val variableTypes = List(CqlText)
     val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(variableTypes), List(
-      Outcome(Criteria(List(VariableMatch(Some("Chris")))), Action(Some(List()), result = Some(ReadTimeout))),
-      Outcome(Criteria(List(VariableMatch(Some("Daniel")))), Action(Some(List()), result = Some(WriteTimeout)))
+      Outcome(Criteria(List(ExactMatch(Some("Chris")))), Action(Some(List()), result = Some(ReadTimeout))),
+      Outcome(Criteria(List(ExactMatch(Some("Daniel")))), Action(Some(List()), result = Some(WriteTimeout)))
     ))
     val queryText = "Some query"
     underTest.record(PrimePreparedMulti(WhenPrepared(Some(queryText)), thenDo))
@@ -62,7 +62,7 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
   test("Match on consistency") {
     val variableTypes = List(CqlText)
     val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(variableTypes), List(
-      Outcome(Criteria(List(VariableMatch(Some("Daniel")))), Action(Some(List()), result = Some(WriteTimeout)))
+      Outcome(Criteria(List(ExactMatch(Some("Daniel")))), Action(Some(List()), result = Some(WriteTimeout)))
     ))
     val queryText = "Some query"
     val when: WhenPrepared = WhenPrepared(Some(queryText), consistency = Some(List(TWO)))
@@ -79,7 +79,7 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
       Map("name" -> "Chris")
     )
     val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(variableTypes), List(
-      Outcome(Criteria(List(VariableMatch(Some("Daniel")))), Action(Some(rows)))
+      Outcome(Criteria(List(ExactMatch(Some("Daniel")))), Action(Some(rows)))
     ))
     val queryText = "Some query"
     val when: WhenPrepared = WhenPrepared(Some(queryText))

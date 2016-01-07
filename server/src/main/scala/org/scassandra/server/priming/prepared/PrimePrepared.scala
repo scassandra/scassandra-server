@@ -55,4 +55,18 @@ case class Action(rows: Option[List[Map[String, Any]]],
                   fixedDelay : Option[Long] = None,
                   config: Option[Map[String, String]] = None)
 
-case class VariableMatch(matcher: Option[Any])
+sealed trait VariableMatch {
+  def test(variable: Any): Boolean
+}
+
+case class ExactMatch(matcher: Option[Any]) extends VariableMatch {
+  def test(variable: Any): Boolean = {
+    matcher.equals(variable)
+  }
+}
+
+case object AnyMatch extends VariableMatch {
+  def test(variable: Any): Boolean = {
+    true
+  }
+}

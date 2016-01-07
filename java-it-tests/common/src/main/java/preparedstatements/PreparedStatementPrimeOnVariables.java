@@ -38,7 +38,7 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
                 .withThen(then()
                         .withVariableTypes(TEXT)
                         .withOutcomes(
-                                outcome(match().withVariableMatchers(variableMatch().withMatcher("Andrew").build()), action().withResult(Result.read_request_timeout))
+                                outcome(match().withVariableMatchers(exactMatch().withMatcher("Andrew").build()), action().withResult(Result.read_request_timeout))
                         )
                 )
                 .build();
@@ -65,7 +65,7 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
                 .withThen(then()
                         .withVariableTypes(TEXT)
                         .withOutcomes(
-                                outcome(match().withVariableMatchers(variableMatch().withMatcher("Andrew").build()),
+                                outcome(match().withVariableMatchers(exactMatch().withMatcher("Andrew").build()),
                                         action().withRows(rows).withColumnTypes(colTypes))
                         )
                 )
@@ -75,12 +75,42 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
 
         CassandraResult result = cassandra().prepareAndExecute(query, "Andrew");
 
-        // shouldn't match due to consistency
         assertEquals(Result.success, result.status().getResult());
         List<CassandraRow> returnedRows = result.rows();
         assertEquals("Expected one row", 1, returnedRows.size());
         assertEquals("Chris", returnedRows.get(0).getString("name"));
         assertEquals(30, returnedRows.get(0).getInt("age"));
+    }
+
+    @Test
+    public void testPartialMatchWithAnyMatcher() {
+        String query = "select * from person where name = ? and age = ?";
+        Map<String, Object> rows = ImmutableMap.of(
+                "name", "Chris",
+                "age", 30
+        );
+        Map<String, CqlType> colTypes = ImmutableMap.of("age", PrimitiveType.INT, "name", PrimitiveType.TEXT);
+        MultiPrimeRequest prime = MultiPrimeRequest.request()
+                .withWhen(when()
+                        .withQuery(query))
+                .withThen(then()
+                        .withVariableTypes(TEXT, INT)
+                        .withOutcomes(
+                                outcome(match().withVariableMatchers(exactMatch("Andrew"), anyMatch()),
+                                        action().withRows(rows).withColumnTypes(colTypes)),
+                                outcome(match().withVariableMatchers(anyMatch(), anyMatch()),
+                                        action().withResult(Result.read_request_timeout).withColumnTypes(colTypes))
+                        )
+                )
+                .build();
+
+        primingClient.multiPrime(prime);
+
+        CassandraResult resultFirstMatch = cassandra().prepareAndExecute(query, "Andrew", 15);
+        CassandraResult resultAnyMatch = cassandra().prepareAndExecute(query, "Not Andrew", 20);
+
+        assertEquals(Result.success, resultFirstMatch.status().getResult());
+        assertEquals(Result.read_request_timeout, resultAnyMatch.status().getResult());
     }
 
     @Test
@@ -92,8 +122,8 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
                 .withThen(then()
                         .withVariableTypes(TEXT)
                         .withOutcomes(
-                                outcome(match().withVariableMatchers(variableMatch().withMatcher("Chris").build()), action().withResult(Result.success)),
-                                outcome(match().withVariableMatchers(variableMatch().withMatcher("Andrew").build()), action().withResult(Result.read_request_timeout))
+                                outcome(match().withVariableMatchers(exactMatch().withMatcher("Chris").build()), action().withResult(Result.success)),
+                                outcome(match().withVariableMatchers(exactMatch().withMatcher("Andrew").build()), action().withResult(Result.read_request_timeout))
                         )
                 )
                 .build();
@@ -117,19 +147,19 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
                         .withVariableTypes(INT, BIG_INT, FLOAT, DOUBLE, DECIMAL, VAR_INT)
                         .withOutcomes(
                                 outcome(match().withVariableMatchers(
-                                        variableMatch(1),
-                                        variableMatch(2L),
-                                        variableMatch(3.0F),
-                                        variableMatch(4.0),
-                                        variableMatch(new BigDecimal("5.0")),
-                                        variableMatch(new BigInteger("6"))), action().withResult(Result.unavailable)),
+                                        exactMatch(1),
+                                        exactMatch(2L),
+                                        exactMatch(3.0F),
+                                        exactMatch(4.0),
+                                        exactMatch(new BigDecimal("5.0")),
+                                        exactMatch(new BigInteger("6"))), action().withResult(Result.unavailable)),
                                 outcome(match().withVariableMatchers(
-                                        variableMatch(11),
-                                        variableMatch(12L),
-                                        variableMatch(13.0F),
-                                        variableMatch(14.0),
-                                        variableMatch(new BigDecimal("15.0")),
-                                        variableMatch(new BigInteger("16"))), action().withResult(Result.write_request_timeout))
+                                        exactMatch(11),
+                                        exactMatch(12L),
+                                        exactMatch(13.0F),
+                                        exactMatch(14.0),
+                                        exactMatch(new BigDecimal("15.0")),
+                                        exactMatch(new BigInteger("16"))), action().withResult(Result.write_request_timeout))
 
                         )
                 )
@@ -159,12 +189,12 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
                         .withVariableTypes(UUID, TIMEUUID)
                         .withOutcomes(
                                 outcome(match().withVariableMatchers(
-                                        variableMatch(uuidOne),
-                                        variableMatch(tUuidOne)),
+                                        exactMatch(uuidOne),
+                                        exactMatch(tUuidOne)),
                                         action().withResult(Result.read_request_timeout)),
                                 outcome(match().withVariableMatchers(
-                                        variableMatch(uuidTwo),
-                                        variableMatch(tUuidTwo)),
+                                        exactMatch(uuidTwo),
+                                        exactMatch(tUuidTwo)),
                                         action().withResult(Result.write_request_timeout))
 
                         )
@@ -189,8 +219,8 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
                 .withThen(then()
                         .withVariableTypes(BOOLEAN)
                         .withOutcomes(
-                                outcome(match().withVariableMatchers(variableMatch().withMatcher(false).build()), action().withResult(Result.read_request_timeout)),
-                                outcome(match().withVariableMatchers(variableMatch().withMatcher(true).build()), action().withResult(Result.write_request_timeout))
+                                outcome(match().withVariableMatchers(exactMatch().withMatcher(false).build()), action().withResult(Result.read_request_timeout)),
+                                outcome(match().withVariableMatchers(exactMatch().withMatcher(true).build()), action().withResult(Result.write_request_timeout))
                         )
                 )
                 .build();
@@ -214,7 +244,7 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
                 .withThen(then()
                         .withVariableTypes(INET)
                         .withOutcomes(
-                                outcome(match().withVariableMatchers(variableMatch().withMatcher(localHost).build()), action().withResult(Result.read_request_timeout))
+                                outcome(match().withVariableMatchers(exactMatch().withMatcher(localHost).build()), action().withResult(Result.read_request_timeout))
                         )
                 )
                 .build();
@@ -236,7 +266,7 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
                 .withThen(then()
                         .withVariableTypes(TIMESTAMP)
                         .withOutcomes(
-                                outcome(match().withVariableMatchers(variableMatch().withMatcher(today).build()), action().withResult(Result.read_request_timeout))
+                                outcome(match().withVariableMatchers(exactMatch().withMatcher(today).build()), action().withResult(Result.read_request_timeout))
                         )
                 )
                 .build();

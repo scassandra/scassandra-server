@@ -22,7 +22,7 @@ import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.cqlmessages.CqlProtocolHelper.hex2Bytes
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.json._
-import org.scassandra.server.priming.prepared.VariableMatch
+import org.scassandra.server.priming.prepared.{AnyMatch, ExactMatch, VariableMatch}
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeQuerySingle, Then, When}
 import org.scassandra.server.priming._
 
@@ -167,7 +167,8 @@ object PrimingJsonHelper extends LazyLogging {
    */
   def convertTypesBasedOnCqlTypes(variableTypes: List[ColumnType[_]], outcomes: List[VariableMatch]): List[VariableMatch] = {
     variableTypes.zip(outcomes) map {
-      case (t, vm) => VariableMatch(vm.matcher.flatMap(t.convertJsonToInternal))
+      case (t, ExactMatch(exact)) => ExactMatch(exact.flatMap(t.convertJsonToInternal))
+      case (t, AnyMatch) => AnyMatch
     }
   }
 

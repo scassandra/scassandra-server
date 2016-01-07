@@ -20,6 +20,31 @@ import scala.collection.Set
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport with LazyLogging {
 
+  implicit object VariableMatchFormat extends JsonFormat[VariableMatch] {
+    override def write(obj: VariableMatch): JsValue = {
+      obj match {
+        case ExactMatch(value) => {
+          JsObject(Map(
+            "type" -> JsString("exact"),
+            "matcher" -> AnyJsonFormat.write(value)
+          ))
+        }
+        case AnyMatch => JsObject(Map("type" -> JsString("any")))
+      }
+    }
+
+    override def read(json: JsValue): VariableMatch = {
+      json match {
+        case obj: JsObject => {
+          obj.fields("type") match {
+            case JsString("exact") => ExactMatch(Some(AnyJsonFormat.read(obj.fields("matcher"))))
+            case JsString("any") => AnyMatch
+          }
+        }
+      }
+    }
+  }
+
   implicit object AnyJsonFormat extends JsonFormat[Any] {
     def write(x: Any) = x match {
       case n: Int => JsNumber(n)
@@ -114,7 +139,6 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
     }
   }
 
-
   implicit val impThen = jsonFormat6(Then)
   implicit val impWhen = jsonFormat5(When)
   implicit val impPrimeQueryResult = jsonFormat(PrimeQuerySingle, "when", "then")
@@ -141,7 +165,6 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
   implicit val impAcceptNewConnectionsEnabled = jsonFormat1(AcceptNewConnectionsEnabled)
   implicit val impRejectNewConnectionsEnabled = jsonFormat1(RejectNewConnectionsEnabled)
 
-  implicit val impVariableMatch = jsonFormat1(VariableMatch)
   implicit val impCriterna = jsonFormat1(Criteria)
   implicit val impAction = jsonFormat5(Action)
   implicit val impOutcoe = jsonFormat2(Outcome)

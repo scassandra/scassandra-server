@@ -32,8 +32,10 @@ public final class MultiPrimeRequest {
     public static Outcome outcome(Criteria.Builder match, Action.Builder action) {
         return new Outcome(match.build(), action.build());
     }
-    public static VariableMatch.Builder variableMatch() { return new VariableMatch.Builder(); }
-    public static VariableMatch variableMatch(Object o) { return new VariableMatch.Builder().withMatcher(o).build(); }
+    public static ExactMatch.Builder exactMatch() { return new ExactMatch.Builder(); }
+    public static VariableMatch exactMatch(Object o) { return new ExactMatch.Builder().withMatcher(o).build(); }
+    public static VariableMatch anyMatch() { return new AnyMatch(); }
+
 
     private final When when;
     private final Then then;
@@ -159,10 +161,27 @@ public final class MultiPrimeRequest {
         }
     }
 
-    public final static class VariableMatch {
+    public enum MatchType {
+        exact,
+        any
+    }
+
+    public static abstract class VariableMatch {
+        private MatchType type = type();
+        protected abstract MatchType type();
+    }
+
+    public static class AnyMatch extends VariableMatch {
+        @Override
+        public MatchType type() {
+            return MatchType.any;
+        }
+    }
+
+    public final static class ExactMatch extends VariableMatch {
         private final Object matcher;
 
-        public VariableMatch(Object matcher) {
+        public ExactMatch(Object matcher) {
             this.matcher = matcher;
         }
 
@@ -170,18 +189,19 @@ public final class MultiPrimeRequest {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-
-            VariableMatch that = (VariableMatch) o;
-
-            return matcher != null ? matcher.equals(that.matcher) : that.matcher == null;
-
+            ExactMatch that = (ExactMatch) o;
+            return Objects.equals(matcher, that.matcher);
         }
 
         @Override
         public int hashCode() {
-            return matcher != null ? matcher.hashCode() : 0;
+            return Objects.hash(matcher);
         }
 
+        @Override
+        public MatchType type() {
+            return MatchType.exact;
+        }
 
         public static class Builder {
             private Object matcher;
@@ -194,8 +214,8 @@ public final class MultiPrimeRequest {
                 return this;
             }
 
-            public VariableMatch build() {
-                return new VariableMatch(matcher);
+            public ExactMatch build() {
+                return new ExactMatch(matcher);
             }
         }
     }

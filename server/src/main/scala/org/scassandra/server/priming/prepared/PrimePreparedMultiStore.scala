@@ -21,14 +21,14 @@ class PrimePreparedMultiStore extends PreparedStoreLookup with LazyLogging {
     val numberOfParameters = query.get.toCharArray.count(_ == '?')
     val variableTypesDefaultedToVarchar: List[ColumnType[_]] = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, thenDo.variable_types)
 
-    val outcomes: List[(List[Option[Any]], Prime)] = prime.thenDo.outcomes.map(o => {
+    val outcomes: List[(List[VariableMatch], Prime)] = prime.thenDo.outcomes.map(o => {
       val result = PrimingJsonHelper.convertToPrimeResult(Map(), o.action.result.getOrElse(Success))
       val rows = o.action.rows.getOrElse(List())
       val columnTypes = Defaulter.defaultColumnTypesToVarchar(o.action.column_types, rows)
-      (o.criteria.variable_matcher.map(_.matcher), Prime(result = result, rows = rows, columnTypes = columnTypes))
+      (o.criteria.variable_matcher, Prime(result = result, rows = rows, columnTypes = columnTypes))
     })
 
-    val finalPrime = PreparedMultiPrime(variableTypesDefaultedToVarchar, outcomes.toMap)
+    val finalPrime = PreparedMultiPrime(variableTypesDefaultedToVarchar, outcomes)
     val criteria: PrimeCriteria = PrimeCriteria(prime.when.query.get, consistencies)
     logger.info("Storing prime {} for with criteria {}", finalPrime, criteria)
     state += (criteria -> finalPrime)

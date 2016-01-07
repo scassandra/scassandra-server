@@ -64,7 +64,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
   describe("Priming multiple responses") {
     it("Should record it with the multi prime store") {
       val when: WhenPrepared = WhenPrepared(Some("select * from people where name = ?"))
-      val thenDo = ThenPreparedMulti(Some(List(CqlText)), List(Outcome(Criteria(List(VariableMatch(Some("Chris")))), Action(None))))
+      val thenDo = ThenPreparedMulti(Some(List(CqlText)), List(Outcome(Criteria(List(ExactMatch(Some("Chris")))), Action(None))))
       val prime = PrimePreparedMulti(when, thenDo)
       Post(primePreparedMultiPath, prime) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.OK)

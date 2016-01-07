@@ -12,6 +12,6 @@ public class MultiPrimeRequestTest {
         EqualsVerifier.forClass(MultiPrimeRequest.Criteria.class).allFieldsShouldBeUsed().verify();
         EqualsVerifier.forClass(MultiPrimeRequest.When.class).allFieldsShouldBeUsed().verify();
         EqualsVerifier.forClass(MultiPrimeRequest.Then.class).allFieldsShouldBeUsed().verify();
-        EqualsVerifier.forClass(MultiPrimeRequest.VariableMatch.class).allFieldsShouldBeUsed().verify();
+        EqualsVerifier.forClass(MultiPrimeRequest.ExactMatch.class).allFieldsShouldBeUsedExcept("type").verify();
     }
 }
