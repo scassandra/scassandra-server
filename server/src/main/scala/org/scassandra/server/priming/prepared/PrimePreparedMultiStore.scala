@@ -1,5 +1,7 @@
 package org.scassandra.server.priming.prepared
 
+import java.util.concurrent.TimeUnit
+
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.cqlmessages.types.ColumnType
@@ -7,6 +9,8 @@ import org.scassandra.server.priming.Defaulter
 import org.scassandra.server.priming.json.Success
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
 import org.scassandra.server.priming.routes.PrimingJsonHelper
+
+import scala.concurrent.duration.FiniteDuration
 
 class PrimePreparedMultiStore extends PreparedStoreLookup with LazyLogging {
 
@@ -24,8 +28,9 @@ class PrimePreparedMultiStore extends PreparedStoreLookup with LazyLogging {
     val outcomes: List[(List[VariableMatch], Prime)] = prime.thenDo.outcomes.map(o => {
       val result = PrimingJsonHelper.convertToPrimeResult(Map(), o.action.result.getOrElse(Success))
       val rows = o.action.rows.getOrElse(List())
+      val fixedDelay = o.action.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
       val columnTypes = Defaulter.defaultColumnTypesToVarchar(o.action.column_types, rows)
-      (o.criteria.variable_matcher, Prime(result = result, rows = rows, columnTypes = columnTypes))
+      (o.criteria.variable_matcher, Prime(result = result, rows = rows, columnTypes = columnTypes, fixedDelay = fixedDelay))
     })
 
     val finalPrime = PreparedMultiPrime(variableTypesDefaultedToVarchar, outcomes)

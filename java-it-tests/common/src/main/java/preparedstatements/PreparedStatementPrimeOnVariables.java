@@ -1,5 +1,6 @@
 package preparedstatements;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
 import common.AbstractScassandraTest;
 import common.CassandraExecutor;
@@ -18,8 +19,10 @@ import java.net.InetAddress;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.scassandra.cql.PrimitiveType.*;
 import static org.scassandra.http.client.MultiPrimeRequest.*;
 
@@ -81,6 +84,37 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
         assertEquals("Chris", returnedRows.get(0).getString("name"));
         assertEquals(30, returnedRows.get(0).getInt("age"));
     }
+
+    @Test
+    public void testDelays() {
+        String query = "select * from person where name = ?";
+        Map<String, Object> rows = ImmutableMap.of(
+                "name", "Chris",
+                "age", 30
+        );
+        Map<String, CqlType> colTypes = ImmutableMap.of("age", PrimitiveType.INT, "name", PrimitiveType.TEXT);
+        MultiPrimeRequest prime = MultiPrimeRequest.request()
+                .withWhen(when()
+                        .withQuery(query))
+                .withThen(then()
+                        .withVariableTypes(TEXT)
+                        .withOutcomes(
+                                outcome(match().withVariableMatchers(exactMatch().withMatcher("Andrew").build()),
+                                        action().withRows(rows).withColumnTypes(colTypes).withFixedDelay(500L))
+                        )
+                )
+                .build();
+
+        primingClient.multiPrime(prime);
+
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        CassandraResult result = cassandra().prepareAndExecute(query, "Andrew");
+        long elapsed = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+
+        assertEquals(Result.success, result.status().getResult());
+        assertTrue("Expected delay to be greater than 500 milliseconds", elapsed > 500);
+    }
+
 
     @Test
     public void testPartialMatchWithAnyMatcher() {
@@ -277,4 +311,6 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
 
         assertEquals(Result.read_request_timeout, result.status().getResult());
     }
+
+    //todo blobs
 }
