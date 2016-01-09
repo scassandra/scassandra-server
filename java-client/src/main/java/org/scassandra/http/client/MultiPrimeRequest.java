@@ -189,13 +189,16 @@ public final class MultiPrimeRequest {
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
+
             ExactMatch that = (ExactMatch) o;
-            return Objects.equals(matcher, that.matcher);
+
+            return matcher != null ? matcher.equals(that.matcher) : that.matcher == null;
+
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(matcher);
+            return matcher != null ? matcher.hashCode() : 0;
         }
 
         @Override
