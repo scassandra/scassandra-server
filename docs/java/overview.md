@@ -18,13 +18,16 @@ the Python Datastax Driver blows up if no rows come back from its query on syste
 
 ### Getting started
 
-The Scassandra Java Client is in Maven central. You can add it as a dependency:
+The Scassandra Java Client is in Maven central.
+See [the GitHub Releases page](https://github.com/scassandra/scassandra-server/releases) for the latest version number.
+
+You can add it as a dependency:
 
 ### Gradle:
 
 ~~~ groovy
 dependencies {
-  testCompile 'org.scassandra:java-client:0.6.0'
+  testCompile 'org.scassandra:java-client:0.11.0'
 }
 ~~~
 
@@ -35,7 +38,7 @@ dependencies {
 <dependency>
   <groupId>org.scassandra</groupId>
   <artifactId>java-client</artifactId>
-  <version>0.6.0</version>
+  <version>0.11.0</version>
   <scope>test</scope>
 </dependency>
 ~~~
