@@ -55,6 +55,7 @@ trait CqlMessageFactory {
 
   def parseExecuteRequestWithoutVariables(stream: Byte, byteString: ByteString): ExecuteRequest
   def parseExecuteRequestWithVariables(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): ExecuteRequest
+  def parseExecuteRequestWithColumnTypes(stream: Byte, byteString: ByteString, columnTypes: Map[String, ColumnType[_]]): ExecuteRequest
 
   def parseQueryRequest(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): QueryRequest
 

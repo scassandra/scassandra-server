@@ -41,6 +41,10 @@ object VersionTwoMessageFactory extends AbstractMessageFactory {
     ExecuteRequest.versionTwoWithTypes(stream, byteString, variableTypes)
   }
 
+  def parseExecuteRequestWithColumnTypes(stream: Byte, byteString: ByteString, columnTypes: Map[String, ColumnType[_]]): ExecuteRequest = {
+    ExecuteRequest.versionTwoWithTypes(stream, byteString, columnTypes.values.toList)
+  }
+
   def parseBatchQuery(iterator: ByteIterator): String = {
     val query: String = readLongString(iterator).get
     val numVariables = iterator.getShort

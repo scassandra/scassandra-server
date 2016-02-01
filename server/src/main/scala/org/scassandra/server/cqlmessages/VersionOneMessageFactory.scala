@@ -37,6 +37,10 @@ object VersionOneMessageFactory extends AbstractMessageFactory {
     ExecuteRequest.versionOneWithTypes(stream, byteString, variableTypes)
   }
 
+  def parseExecuteRequestWithColumnTypes(stream: Byte, byteString: ByteString, columnTypes: Map[String, ColumnType[_]]): ExecuteRequest = {
+    ExecuteRequest.versionTwoWithTypes(stream, byteString, columnTypes.values.toList)
+  }
+
   def parseBatchQuery(byteString: ByteIterator): String  = throw new UnsupportedOperationException("Batches not supported at v1 of the protocol")
 
   def readVariables(iterator: ByteIterator): List[Array[Byte]] = throw new UnsupportedOperationException("Batches not supported at v1 of the protocol")

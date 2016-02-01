@@ -41,9 +41,10 @@ class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
       case Some(p) =>
         val matchingPrimedAction = for {
           prime <- primePreparedStore.findPrime(PrimeMatch(p, executeRequest.consistency))
-          if executeRequest.numberOfVariables == prime.variableTypes.size
-          parsed = msgFactory.parseExecuteRequestWithVariables(stream, body, prime.variableTypes)
-          pse = PreparedStatementExecution(p, parsed.consistency, parsed.variables, prime.variableTypes)
+          if executeRequest.numberOfVariables == prime.variableTypes.size || executeRequest.numberOfVariables == prime.prime.columnTypes.size
+          columnTypes = if (executeRequest.numberOfVariables == prime.variableTypes.size) prime.variableTypes else prime.prime.columnTypes.values.toList
+          parsed = msgFactory.parseExecuteRequestWithVariables(stream, body, columnTypes)
+          pse = PreparedStatementExecution(p, parsed.consistency, parsed.variables, columnTypes)
         } yield ExecuteResponse(Some(pse), MessageWithDelay(createMessage(prime, executeRequest, stream, msgFactory, connection), prime.prime.fixedDelay))
 
         lazy val defaultAction = ExecuteResponse(Some(PreparedStatementExecution(p, executeRequest.consistency, List(), List())),

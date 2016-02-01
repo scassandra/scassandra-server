@@ -83,6 +83,11 @@ object PrimingHelper {
     JsonParser(body).convertTo[List[BatchExecution]]
   }
 
+  def clearRecordedPreparedStatements() = {
+    val svc = url(s"${DefaultHost}prepared-statement-execution").DELETE
+    Http(svc OK as.String)(dispatch.Defaults.executor)()
+  }
+
   def clearQueryPrimes(): String = {
     val svc = url(s"${DefaultHost}prime-query-single").DELETE
     Http(svc OK as.String)(dispatch.Defaults.executor)()
