@@ -25,7 +25,7 @@ object VersionOneMessageFactory extends AbstractMessageFactory {
   implicit val protocolVersion = VersionOne
   import CqlProtocolHelper._
 
-  def createPreparedResult(stream: Byte, id : Int, variableTypes: List[ColumnType[_]]): PreparedResultV1 = {
+  def createPreparedResult(stream: Byte, id : Int, variableTypes: List[ColumnType[_]], columns: Map[String, ColumnType[_]]): PreparedResultV1 = {
     PreparedResultV1(stream, id, "keyspace", "table", variableTypes)
   }
 

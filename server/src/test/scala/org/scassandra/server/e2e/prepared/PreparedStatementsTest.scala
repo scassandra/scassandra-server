@@ -27,7 +27,7 @@ import java.util.{UUID, Date}
 import com.datastax.driver.core.utils.UUIDs
 import java.net.InetAddress
 import java.util
-import com.datastax.driver.core.{ConsistencyLevel, Row}
+import com.datastax.driver.core.{BoundStatement, ConsistencyLevel, Row}
 import org.scassandra.server.priming._
 import com.datastax.driver.core.exceptions.{UnavailableException, WriteTimeoutException, ReadTimeoutException}
 import org.scalatest.BeforeAndAfter
@@ -305,5 +305,23 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     resultRow.getString("varchar") should equal(varchar)
     resultRow.getUUID("timeuuid") should equal(timeuuid)
     resultRow.getInet("inet") should equal(inet)
+  }
+
+  test("prime insert with column types") {
+    val preparedStatementText: String = "insert into people (age)"
+    PrimingHelper.primePreparedStatement(
+      WhenPreparedSingle(Some(preparedStatementText)),
+      ThenPreparedSingle(Some(List()), column_types = Some(Map("name"->CqlBigint)))
+    )
+
+    val preparedStatement = session.prepare(preparedStatementText)
+    val boundStatement = new BoundStatement(preparedStatement).setLong("name", 10)
+
+    //when
+    val result = session.execute(boundStatement)
+
+    //then
+    val results = result.all()
+    results.size() should equal(0)
   }
 }

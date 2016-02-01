@@ -20,7 +20,7 @@ import akka.util.ByteString
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementResponse, PreparedStatementQuery}
 import org.scassandra.server.cqlmessages.CqlMessageFactory
 import org.scassandra.server.cqlmessages.response.Result
-import org.scassandra.server.cqlmessages.types.CqlVarchar
+import org.scassandra.server.cqlmessages.types.{ColumnType, CqlVarchar}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.prepared.{PreparedPrime, PreparedStoreLookup}
 import org.scassandra.server.priming.query.PrimeMatch
@@ -53,11 +53,12 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
     val preparedPrime: Option[PreparedPrime] = primePreparedStore.findPrime(PrimeMatch(query))
 
     val preparedResult: Result = preparedPrime
-      .map(prime => msgFactory.createPreparedResult(stream, nextId, prime.variableTypes))
+      .map(prime => msgFactory.createPreparedResult(stream, nextId, prime.variableTypes, prime.prime.columnTypes))
       .getOrElse({
       val numberOfParameters = query.toCharArray.count(_ == '?')
       val variableTypes = (0 until numberOfParameters).map(num => CqlVarchar).toList
-      msgFactory.createPreparedResult(stream, nextId, variableTypes)
+        val columns = Map[String, ColumnType[_]]()
+      msgFactory.createPreparedResult(stream, nextId, variableTypes, columns)
     })
     idToStatement += (nextId -> query)
     nextId = nextId + 1

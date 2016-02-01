@@ -29,8 +29,8 @@ object VersionTwoMessageFactory extends AbstractMessageFactory {
 
   implicit val protocolVersion = VersionTwo
 
-  def createPreparedResult(stream: Byte, id : Int, variableTypes: List[ColumnType[_]]) = {
-    PreparedResultV2(stream, id, "keyspace", "table", variableTypes)
+  def createPreparedResult(stream: Byte, id : Int, variableTypes: List[ColumnType[_]], columns: Map[String, ColumnType[_]]) = {
+    PreparedResultV2(stream, id, "keyspace", "table", variableTypes, columns)
   }
 
   def parseExecuteRequestWithoutVariables(stream: Byte, byteString: ByteString): ExecuteRequest = {
