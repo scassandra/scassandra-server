@@ -47,7 +47,7 @@ case class PreparedResultV1(stream: Byte, preparedStatementId: Int, keyspaceName
   }
 }
 
-case class PreparedResultV2(stream: Byte, preparedStatementId: Int, keyspaceName: String, tableName: String, variableTypes: List[ColumnType[_]])(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Prepared, stream, protocolVersion.serverCode) {
+case class PreparedResultV2(stream: Byte, preparedStatementId: Int, keyspaceName: String, tableName: String, variableTypes: List[ColumnType[_]], columns: Map[String, ColumnType[_]])(implicit protocolVersion: ProtocolVersion) extends Result(ResultKinds.Prepared, stream, protocolVersion.serverCode) {
 
   import CqlProtocolHelper._
 
@@ -61,15 +61,23 @@ case class PreparedResultV2(stream: Byte, preparedStatementId: Int, keyspaceName
     bodyBs.putInt(preparedStatementId)
 
     bodyBs.putInt(1) // flags
-    bodyBs.putInt(variableTypes.size) // col count
+    if (variableTypes.nonEmpty)
+      bodyBs.putInt(variableTypes.size)
+    else
+      bodyBs.putInt(columns.size)
 
     bodyBs.putBytes(serializeString(keyspaceName).toArray)
     bodyBs.putBytes(serializeString(tableName).toArray)
 
     // column specs
-    for (i <- 0 until variableTypes.length) {
-      ResultHelper.serialiseTypeInfomration(i.toString, variableTypes(i), bodyBs)
-    }
+    if (variableTypes.nonEmpty)
+      for (i <- 0 until variableTypes.length) {
+        ResultHelper.serialiseTypeInfomration(i.toString, variableTypes(i), bodyBs)
+      }
+    else
+      columns.foreach { case (columnName: String, columnType: ColumnType[_]) =>
+        ResultHelper.serialiseTypeInfomration(columnName, columnType, bodyBs)
+      }
 
     // second meta data - 3 indicates it does not exist
     bodyBs.putInt(RowsFlags.HasNoMetaData)

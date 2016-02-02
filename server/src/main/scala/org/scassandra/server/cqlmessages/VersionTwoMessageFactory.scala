@@ -29,8 +29,8 @@ object VersionTwoMessageFactory extends AbstractMessageFactory {
 
   implicit val protocolVersion = VersionTwo
 
-  def createPreparedResult(stream: Byte, id : Int, variableTypes: List[ColumnType[_]]) = {
-    PreparedResultV2(stream, id, "keyspace", "table", variableTypes)
+  def createPreparedResult(stream: Byte, id : Int, variableTypes: List[ColumnType[_]], columns: Map[String, ColumnType[_]]) = {
+    PreparedResultV2(stream, id, "keyspace", "table", variableTypes, columns)
   }
 
   def parseExecuteRequestWithoutVariables(stream: Byte, byteString: ByteString): ExecuteRequest = {
@@ -39,6 +39,10 @@ object VersionTwoMessageFactory extends AbstractMessageFactory {
 
   def parseExecuteRequestWithVariables(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): ExecuteRequest = {
     ExecuteRequest.versionTwoWithTypes(stream, byteString, variableTypes)
+  }
+
+  def parseExecuteRequestWithColumnTypes(stream: Byte, byteString: ByteString, columnTypes: Map[String, ColumnType[_]]): ExecuteRequest = {
+    ExecuteRequest.versionTwoWithTypes(stream, byteString, columnTypes.values.toList)
   }
 
   def parseBatchQuery(iterator: ByteIterator): String = {

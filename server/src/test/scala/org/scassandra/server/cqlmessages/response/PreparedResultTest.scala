@@ -18,7 +18,7 @@ package org.scassandra.server.cqlmessages.response
 import org.scassandra.server.cqlmessages.{VersionTwo, OpCodes}
 import org.scalatest.{Matchers, FunSuite}
 import org.scassandra.server.cqlmessages.CqlProtocolHelper._
-import org.scassandra.server.cqlmessages.types.CqlVarint
+import org.scassandra.server.cqlmessages.types.{ColumnType, CqlVarint}
 
 class PreparedResultTest extends FunSuite with Matchers {
 
@@ -70,7 +70,8 @@ class PreparedResultTest extends FunSuite with Matchers {
     val keyspace : String = "keyspace"
     val table : String = "table"
     val variableTypes = List(CqlVarint)
-    val preparedResult = PreparedResultV2(stream, preparedStatementId, keyspace, table, variableTypes)
+    val columns = Map[String, ColumnType[_]]()
+    val preparedResult = PreparedResultV2(stream, preparedStatementId, keyspace, table, variableTypes, columns)
     val bytes = preparedResult.serialize().iterator
 
     bytes.getByte should equal(protocolVersion.serverCode)

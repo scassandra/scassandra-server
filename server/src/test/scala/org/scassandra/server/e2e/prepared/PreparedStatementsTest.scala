@@ -20,21 +20,19 @@ import org.scassandra.server.priming.json.PrimingJsonImplicits
 import org.scassandra.server.{PrimingHelper, AbstractIntegrationTest}
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
-import scala.Some
 import java.nio.ByteBuffer
 import akka.util.ByteString
 import java.util.{UUID, Date}
 import com.datastax.driver.core.utils.UUIDs
 import java.net.InetAddress
 import java.util
-import com.datastax.driver.core.{ConsistencyLevel, Row}
-import org.scassandra.server.priming._
+import com.datastax.driver.core.{BoundStatement, ConsistencyLevel, Row}
 import com.datastax.driver.core.exceptions.{UnavailableException, WriteTimeoutException, ReadTimeoutException}
 import org.scalatest.BeforeAndAfter
 import dispatch._, Defaults._
 import spray.json._
 import org.scassandra.server.cqlmessages.types._
-import org.scassandra.server.priming.ConflictingPrimes
+import org.scassandra.server.priming.{PreparedStatementExecution, ConflictingPrimes}
 import org.scassandra.server.priming.prepared.ThenPreparedSingle
 import org.scassandra.server.priming.prepared.WhenPreparedSingle
 import org.scassandra.server.priming.prepared.PrimePreparedSingle
@@ -165,7 +163,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     results.size() should equal(1)
     results.get(0).getString("name") should equal("Chris")
   }
-  
+
   test("Conflicting primes") {
     //given
     val preparedStatementText = "select * from people where name = ?"
@@ -305,5 +303,27 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     resultRow.getString("varchar") should equal(varchar)
     resultRow.getUUID("timeuuid") should equal(timeuuid)
     resultRow.getInet("inet") should equal(inet)
+  }
+
+  test("prime insert with column types") {
+    //given
+    PrimingHelper.clearRecordedPreparedStatements()
+    val preparedStatementText: String = "insert into people (age)"
+    PrimingHelper.primePreparedStatement(
+      WhenPreparedSingle(Some(preparedStatementText)),
+      ThenPreparedSingle(Some(List()), column_types = Some(Map("age"->CqlBigint)))
+    )
+
+    val preparedStatement = session.prepare(preparedStatementText)
+    val boundStatement = new BoundStatement(preparedStatement).setLong("age", 10)
+
+    //when
+    val result = session.execute(boundStatement)
+
+    //then
+    val results = result.all()
+    results.size() should equal(0)
+    val preparedStatements = PrimingHelper.getRecordedPreparedStatements()
+    preparedStatements shouldEqual List(PreparedStatementExecution(preparedStatementText, ONE, List(10), List(CqlBigint)))
   }
 }

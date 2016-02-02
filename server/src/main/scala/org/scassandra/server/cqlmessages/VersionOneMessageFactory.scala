@@ -25,7 +25,7 @@ object VersionOneMessageFactory extends AbstractMessageFactory {
   implicit val protocolVersion = VersionOne
   import CqlProtocolHelper._
 
-  def createPreparedResult(stream: Byte, id : Int, variableTypes: List[ColumnType[_]]): PreparedResultV1 = {
+  def createPreparedResult(stream: Byte, id : Int, variableTypes: List[ColumnType[_]], columns: Map[String, ColumnType[_]]): PreparedResultV1 = {
     PreparedResultV1(stream, id, "keyspace", "table", variableTypes)
   }
 
@@ -35,6 +35,10 @@ object VersionOneMessageFactory extends AbstractMessageFactory {
 
   def parseExecuteRequestWithVariables(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): ExecuteRequest = {
     ExecuteRequest.versionOneWithTypes(stream, byteString, variableTypes)
+  }
+
+  def parseExecuteRequestWithColumnTypes(stream: Byte, byteString: ByteString, columnTypes: Map[String, ColumnType[_]]): ExecuteRequest = {
+    ExecuteRequest.versionTwoWithTypes(stream, byteString, columnTypes.values.toList)
   }
 
   def parseBatchQuery(byteString: ByteIterator): String  = throw new UnsupportedOperationException("Batches not supported at v1 of the protocol")

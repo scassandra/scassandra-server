@@ -50,11 +50,12 @@ trait CqlMessageFactory {
   def createAlreadyExistsMessage(stream: Byte, alreadyExistsResult: AlreadyExistsResult): AlreadyExists
   def createdUnpreparedMessage(stream: Byte, unpreparedResult: UnpreparedResult): Unprepared
   def createVoidMessage(stream: Byte): VoidResult
-  def createPreparedResult(stream: Byte, id: Int, variableTypes: List[ColumnType[_]]): Result
+  def createPreparedResult(stream: Byte, id: Int, variableTypes: List[ColumnType[_]], columns: Map[String, ColumnType[_]]): Result
   def createSupportedMessage(stream: Byte): Supported
 
   def parseExecuteRequestWithoutVariables(stream: Byte, byteString: ByteString): ExecuteRequest
   def parseExecuteRequestWithVariables(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): ExecuteRequest
+  def parseExecuteRequestWithColumnTypes(stream: Byte, byteString: ByteString, columnTypes: Map[String, ColumnType[_]]): ExecuteRequest
 
   def parseQueryRequest(stream: Byte, byteString: ByteString, variableTypes: List[ColumnType[_]]): QueryRequest
 
