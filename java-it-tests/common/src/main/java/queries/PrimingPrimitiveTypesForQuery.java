@@ -9,7 +9,8 @@ import org.junit.Test;
 import org.scassandra.cql.CqlType;
 import org.scassandra.http.client.ColumnTypes;
 import org.scassandra.http.client.PrimingRequest;
-import org.scassandra.http.client.PrimingRequest.Consistency;
+import org.scassandra.http.client.Consistency;
+import org.scassandra.http.client.Result;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -22,8 +23,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static org.scassandra.http.client.PrimingRequest.Consistency.ONE;
-import static org.scassandra.http.client.PrimingRequest.Consistency.TWO;
+import static org.scassandra.http.client.Consistency.ONE;
+import static org.scassandra.http.client.Consistency.TWO;
 
 public class PrimingPrimitiveTypesForQuery extends AbstractScassandraTest {
 
@@ -254,7 +255,7 @@ public class PrimingPrimitiveTypesForQuery extends AbstractScassandraTest {
 
         // Retrieve primes check
         List<PrimingRequest> primingRequests = primingClient.retrieveQueryPrimes();
-        assertEquals(PrimingRequest.Result.success, primingRequests.get(0).getThen().getResult());
+        assertEquals(Result.success, primingRequests.get(0).getThen().getResult());
         assertEquals(newTypes, primingRequests.get(0).getThen().getColumnTypes());
     }
 

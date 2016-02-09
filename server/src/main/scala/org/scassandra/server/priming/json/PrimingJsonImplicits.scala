@@ -10,7 +10,7 @@ import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.cqlmessages.{BatchType, BatchQueryKind, Consistency}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.batch.{BatchQueryPrime, BatchWhen, BatchPrimeSingle}
-import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
+import org.scassandra.server.priming.prepared._
 import org.scassandra.server.priming.query.{PrimeCriteria, PrimeQuerySingle, When, Then}
 import org.scassandra.server.priming.routes.Version
 import spray.httpx.SprayJsonSupport
@@ -19,6 +19,31 @@ import spray.json._
 import scala.collection.Set
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport with LazyLogging {
+
+  implicit object VariableMatchFormat extends JsonFormat[VariableMatch] {
+    override def write(obj: VariableMatch): JsValue = {
+      obj match {
+        case ExactMatch(value) => {
+          JsObject(Map(
+            "type" -> JsString("exact"),
+            "matcher" -> AnyJsonFormat.write(value)
+          ))
+        }
+        case AnyMatch => JsObject(Map("type" -> JsString("any")))
+      }
+    }
+
+    override def read(json: JsValue): VariableMatch = {
+      json match {
+        case obj: JsObject => {
+          obj.fields("type") match {
+            case JsString("exact") => ExactMatch(Some(AnyJsonFormat.read(obj.fields("matcher"))))
+            case JsString("any") => AnyMatch
+          }
+        }
+      }
+    }
+  }
 
   implicit object AnyJsonFormat extends JsonFormat[Any] {
     def write(x: Any) = x match {
@@ -114,7 +139,6 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
     }
   }
 
-
   implicit val impThen = jsonFormat6(Then)
   implicit val impWhen = jsonFormat5(When)
   implicit val impPrimeQueryResult = jsonFormat(PrimeQuerySingle, "when", "then")
@@ -124,7 +148,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
   implicit val impConflictingPrimes = jsonFormat1(ConflictingPrimes)
   implicit val impTypeMismatch = jsonFormat3(TypeMismatch)
   implicit val impTypeMismatches = jsonFormat1(TypeMismatches)
-  implicit val impWhenPreparedSingle = jsonFormat3(WhenPreparedSingle)
+  implicit val impWhenPreparedSingle = jsonFormat3(WhenPrepared)
   implicit val impThenPreparedSingle = jsonFormat6(ThenPreparedSingle)
   implicit val impPrimePreparedSingle = jsonFormat(PrimePreparedSingle, "when", "then")
   implicit val impPreparedStatementExecution = jsonFormat4(PreparedStatementExecution)
@@ -140,4 +164,11 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
   implicit val impClosedConnections = jsonFormat(ClosedConnections, "closed_connections", "operation")
   implicit val impAcceptNewConnectionsEnabled = jsonFormat1(AcceptNewConnectionsEnabled)
   implicit val impRejectNewConnectionsEnabled = jsonFormat1(RejectNewConnectionsEnabled)
+
+  implicit val impCriterna = jsonFormat1(Criteria)
+  implicit val impAction = jsonFormat5(Action)
+  implicit val impOutcoe = jsonFormat2(Outcome)
+  implicit val impPrimePreparedMultiThen = jsonFormat2(ThenPreparedMulti)
+  implicit val impPrimePreparedMulti = jsonFormat(PrimePreparedMulti, "when", "then")
+
 }

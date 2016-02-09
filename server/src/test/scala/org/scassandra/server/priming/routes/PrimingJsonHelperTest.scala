@@ -31,14 +31,14 @@ import scala.concurrent.duration.FiniteDuration
  *
  * Starting to add direct tests as the PrimingQueryRoute test is getting large
  */
-class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
+class PrimingJsonHelperTest extends FunSuite with Matchers {
 
   test("Should default fixedDelay to None") {
     val when = When()
     val thenDo = Then(None, None, None, fixedDelay = None)
     val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
-    val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+    val primeResult: Prime = PrimingJsonHelper.extractPrime(primeRequest)
 
     primeResult.fixedDelay should equal(None)
   }
@@ -49,7 +49,7 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
     val thenDo = Then(None, None, None, fixedDelay)
     val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
-    val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+    val primeResult: Prime = PrimingJsonHelper.extractPrime(primeRequest)
 
     primeResult.fixedDelay should equal(Some(FiniteDuration(500, TimeUnit.MILLISECONDS)))
   }
@@ -59,7 +59,7 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
     val thenDo = Then(None, Some(Success), None, fixedDelay = None)
     val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
-    val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+    val primeResult: Prime = PrimingJsonHelper.extractPrime(primeRequest)
 
     primeResult.result should equal(SuccessResult)
   }
@@ -73,7 +73,7 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
     val thenDo = Then(None, Some(ReadTimeout), config = Some(properties))
     val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
-    val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+    val primeResult: Prime = PrimingJsonHelper.extractPrime(primeRequest)
 
     primeResult.result should equal(ReadRequestTimeoutResult(2, 3, dataPresent = true))
   }
@@ -87,7 +87,7 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
     val thenDo = Then(None, Some(WriteTimeout), config = Some(properties))
     val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
-    val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+    val primeResult: Prime = PrimingJsonHelper.extractPrime(primeRequest)
 
     primeResult.result should equal(WriteRequestTimeoutResult(2, 3, WriteType.BATCH))
   }
@@ -100,7 +100,7 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
     val thenDo = Then(None, Some(Unavailable), config = Some(properties))
     val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
-    val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+    val primeResult: Prime = PrimingJsonHelper.extractPrime(primeRequest)
 
     primeResult.result should equal(UnavailableResult(3, 2))
   }
@@ -110,7 +110,7 @@ class PrimeQueryResultExtractorTest extends FunSuite with Matchers {
     val thenDo = Then(None, None, None, variable_types = Some(List(CqlText)))
     val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
-    val primeResult: Prime = PrimeQueryResultExtractor.extractPrimeResult(primeRequest)
+    val primeResult: Prime = PrimingJsonHelper.extractPrime(primeRequest)
 
     primeResult.variableTypes should equal(List(CqlText))
   }

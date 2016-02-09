@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.scassandra.http.client.PrimingRequest.Result.success;
+import static org.scassandra.http.client.Result.success;
 import static org.scassandra.http.client.PrimingRequest.preparedStatementBuilder;
 import static org.scassandra.http.client.PrimingRequest.then;
 

@@ -21,7 +21,7 @@ import com.datastax.driver.core.Row
 import dispatch._, Defaults._
 import org.scassandra.server.cqlmessages.types._
 import org.scassandra.server.priming.json.PrimingJsonImplicits
-import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPreparedSingle}
+import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPrepared}
 import spray.json._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
@@ -47,7 +47,7 @@ class PreparedStatementWithCollectionsTest  extends AbstractIntegrationTest with
     val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlMap(CqlText, CqlText))
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(Some(List(primedRow)),
         variable_types = Some(variableTypes),
         column_types = Some(Map[String, ColumnType[_]]("map_column" -> new CqlMap(CqlText, CqlText)))

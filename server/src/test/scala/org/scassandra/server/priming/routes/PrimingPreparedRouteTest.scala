@@ -33,28 +33,51 @@ package org.scassandra.server.priming.routes
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{FunSpec, Matchers}
-import org.scassandra.server.cqlmessages.types.{CqlInt, CqlVarchar}
+import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
+import org.scassandra.server.cqlmessages.types.{CqlText, CqlInt, CqlVarchar}
 import org.scassandra.server.cqlmessages.{ONE, TWO}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
-import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle, _}
+import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPrepared, _}
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
 import spray.http.StatusCodes
 import spray.testkit.ScalatestRouteTest
 
-class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRouteTest with PrimingPreparedRoute with MockitoSugar {
+class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRouteTest with PrimingPreparedRoute with MockitoSugar
+ with BeforeAndAfter {
 
   implicit def actorRefFactory = system
-  implicit val primePreparedStore : PrimePreparedStore = mock[PrimePreparedStore]
-  implicit val primePreparedPatternStore : PrimePreparedPatternStore = mock[PrimePreparedPatternStore]
+  implicit val primePreparedStore: PrimePreparedStore = mock[PrimePreparedStore]
+  implicit val primePreparedPatternStore: PrimePreparedPatternStore = mock[PrimePreparedPatternStore]
+  implicit val primePreparedMultiStore: PrimePreparedMultiStore = mock[PrimePreparedMultiStore]
   val primePreparedSinglePath = "/prime-prepared-single"
+  val primePreparedMultiPath = "/prime-prepared-multi"
 
   import PrimingJsonImplicits._
 
+  before {
+    reset(primePreparedStore)
+    reset(primePreparedPatternStore)
+    reset(primePreparedMultiStore)
+  }
+
+  describe("Priming multiple responses") {
+    it("Should record it with the multi prime store") {
+      val when: WhenPrepared = WhenPrepared(Some("select * from people where name = ?"))
+      val thenDo = ThenPreparedMulti(Some(List(CqlText)), List(Outcome(Criteria(List(ExactMatch(Some("Chris")))), Action(None))))
+      val prime = PrimePreparedMulti(when, thenDo)
+      Post(primePreparedMultiPath, prime) ~> routeForPreparedPriming ~> check {
+        status should equal(StatusCodes.OK)
+        verify(primePreparedMultiStore).record(prime)
+      }
+    }
+
+    //todo validation error if variable types length != outcome varaiable matcher length
+  }
+
   describe("Priming") {
     it("Should take in query") {
-      val when: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"))
+      val when: WhenPrepared = WhenPrepared(Some("select * from people where name = ?"))
       val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
       val prime = PrimePreparedSingle(when, thenDo)
       Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
@@ -64,7 +87,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     }
 
     it("should store a fixedDelay") {
-      val when: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"))
+      val when: WhenPrepared = WhenPrepared(Some("select * from people where name = ?"))
       val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()), fixedDelay = Some(1500l))
       val prime = PrimePreparedSingle(when, thenDo)
       Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
@@ -74,7 +97,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     }
 
     it("Should use the pattern store if queryPattern specified") {
-      val when: WhenPreparedSingle = WhenPreparedSingle(queryPattern = Some("select * from people where name = ?"))
+      val when: WhenPrepared = WhenPrepared(queryPattern = Some("select * from people where name = ?"))
       val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
       val prime = PrimePreparedSingle(when, thenDo)
       Post(primePreparedSinglePath, prime) ~> routeForPreparedPriming ~> check {
@@ -194,7 +217,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     it("Should convert Conflicting Primes to Bad Request") {
       when(primePreparedStore.record(any(classOf[PrimePreparedSingle]))).thenReturn(ConflictingPrimes(List()))
 
-      val primeWhen: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"))
+      val primeWhen: WhenPrepared = WhenPrepared(Some("select * from people where name = ?"))
       val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
       val prime = PrimePreparedSingle(primeWhen, thenDo)
 
@@ -206,7 +229,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     it("Should convert type mis match to Bad Request") {
       when(primePreparedStore.record(any(classOf[PrimePreparedSingle]))).thenReturn(TypeMismatches  (List()))
 
-      val primeWhen: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"))
+      val primeWhen: WhenPrepared = WhenPrepared(Some("select * from people where name = ?"))
       val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
       val prime = PrimePreparedSingle(primeWhen, thenDo)
 
@@ -216,7 +239,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     }
 
     it("Should be Bad Request if both query and queryPattern specified") {
-      val primeWhen: WhenPreparedSingle = WhenPreparedSingle(Some("select * from people where name = ?"), Some("Pattern as well"))
+      val primeWhen: WhenPrepared = WhenPrepared(Some("select * from people where name = ?"), Some("Pattern as well"))
       val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
       val prime = PrimePreparedSingle(primeWhen, thenDo)
 
@@ -227,7 +250,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     }
 
     it("Should be Bad Request if neither query and queryPattern specified") {
-      val primeWhen: WhenPreparedSingle = WhenPreparedSingle()
+      val primeWhen: WhenPrepared = WhenPrepared()
       val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()))
       val prime = PrimePreparedSingle(primeWhen, thenDo)
 

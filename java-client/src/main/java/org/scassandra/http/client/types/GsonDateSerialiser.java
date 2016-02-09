@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2014 Christopher Batey
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.server.priming.prepared
+package org.scassandra.http.client.types;
 
-import org.scassandra.server.priming.query.PrimeMatch
+import com.google.gson.JsonElement;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
 
-class CompositePreparedPrimeStore(primeStores: PreparedStoreLookup*) extends PreparedStoreLookup {
-  def findPrime(primeMatch: PrimeMatch): Option[PreparedPrimeResult] = {
-    primeStores.collectFirst({
-      case psb if psb.findPrime(primeMatch).isDefined => psb.findPrime(primeMatch).get
-    })
-  }
+import java.lang.reflect.Type;
+import java.util.Date;
+
+public class GsonDateSerialiser implements JsonSerializer<Date> {
+    @Override
+    public JsonElement serialize(Date src, Type typeOfSrc, JsonSerializationContext context) {
+        return new JsonPrimitive(src.getTime());
+    }
 }

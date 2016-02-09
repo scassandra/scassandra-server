@@ -22,13 +22,14 @@ import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.cqlmessages.CqlProtocolHelper.hex2Bytes
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.json._
+import org.scassandra.server.priming.prepared.{AnyMatch, ExactMatch, VariableMatch}
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeQuerySingle, Then, When}
 import org.scassandra.server.priming._
 
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Try}
 
-object PrimeQueryResultExtractor extends LazyLogging {
+object PrimingJsonHelper extends LazyLogging {
   def extractPrimeCriteria(primeQueryRequest: PrimeQuerySingle): Try[PrimeCriteria] = {
     val primeConsistencies = primeQueryRequest.when.consistency.getOrElse(Consistency.all)
 
@@ -42,7 +43,7 @@ object PrimeQueryResultExtractor extends LazyLogging {
     }
   }
 
-  def extractPrimeResult(primeRequest: PrimeQuerySingle): Prime = {
+  def extractPrime(primeRequest: PrimeQuerySingle): Prime = {
     // add the deserialized JSON request to the map of prime requests
     val thenDo = primeRequest.thenDo
     val config = thenDo.config.getOrElse(Map())
@@ -61,7 +62,6 @@ object PrimeQueryResultExtractor extends LazyLogging {
 
     Prime(resultsAsList, primeResult, columnTypes, keyspace, table, fixedDelay, variableTypes)
   }
-
 
   def convertToPrimeResult(config: Map[String, String], result: ResultJsonRepresentation): PrimeResult = {
     val primeResult: PrimeResult = result match {
@@ -155,4 +155,22 @@ object PrimeQueryResultExtractor extends LazyLogging {
       PrimeQuerySingle(when, thenDo)
     })
   }
+
+  /**
+   * Converts the types produced by the JSON parser based on the actual CQL type information.
+    *
+    * The goal is for a given CQL type it is only represented by a single type inside scassandra.
+    *
+    * E.g UUIDs are java.util.UUIDs not a String throughout.
+    *
+    * This means in the transport layer we want to conver them before passing anything to the prime stores.
+   */
+  def convertTypesBasedOnCqlTypes(variableTypes: List[ColumnType[_]], outcomes: List[VariableMatch]): List[VariableMatch] = {
+    variableTypes.zip(outcomes) map {
+      case (t, ExactMatch(exact)) => ExactMatch(exact.flatMap(t.convertJsonToInternal))
+      case (t, AnyMatch) => AnyMatch
+    }
+  }
+
+  case class ValidationError(reason: String)
 }

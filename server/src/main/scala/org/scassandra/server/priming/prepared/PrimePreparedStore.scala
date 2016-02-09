@@ -23,7 +23,7 @@ import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json.Success
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
-import org.scassandra.server.priming.routes.PrimeQueryResultExtractor
+import org.scassandra.server.priming.routes.PrimingJsonHelper
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -35,10 +35,11 @@ class PrimePreparedStore extends LazyLogging with PreparedStore with PreparedSto
     val thenDo: ThenPreparedSingle = prime.thenDo
     val rows = thenDo.rows.getOrElse(List())
     val query = prime.when.query
-    val numberOfParameters = query.get.toCharArray.count(_ == '?')
-    val fixedDelay: Option[FiniteDuration] = thenDo.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
-    val result = PrimeQueryResultExtractor.convertToPrimeResult(thenDo.config.getOrElse(Map()), thenDo.result.getOrElse(Success))
 
+    val fixedDelay: Option[FiniteDuration] = thenDo.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
+    val result = PrimingJsonHelper.convertToPrimeResult(thenDo.config.getOrElse(Map()), thenDo.result.getOrElse(Success))
+
+    val numberOfParameters = query.get.toCharArray.count(_ == '?')
     val variableTypesDefaultedToVarchar: List[ColumnType[_]] = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, thenDo.variable_types)
     val colTypes = Defaulter.defaultColumnTypesToVarchar(thenDo.column_types, rows)
 
@@ -48,7 +49,7 @@ class PrimePreparedStore extends LazyLogging with PreparedStore with PreparedSto
     val consistencies = prime.when.consistency.getOrElse(Consistency.all)
     val primeCriteria = PrimeCriteria(query.get, consistencies)
 
-    validator.validate(primeCriteria, primeToStore.prime, state.map( existingPrime => (existingPrime._1, existingPrime._2.prime)  ) ) match {
+    validator.validate(primeCriteria, primeToStore.getPrime(List()), state.map( existingPrime => (existingPrime._1, existingPrime._2.getPrime(List()))  ) ) match {
       case PrimeAddSuccess =>
         logger.info(s"Storing prime for prepared statement $primeToStore with prime criteria $primeCriteria")
         state += (primeCriteria -> primeToStore)

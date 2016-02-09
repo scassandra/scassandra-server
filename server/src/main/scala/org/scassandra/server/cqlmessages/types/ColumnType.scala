@@ -30,7 +30,7 @@ abstract class ColumnType[T](val code : Short, val stringRep: String) extends La
    * @param protocolVersion Protocol version to decode with.
    * @return The decoded value.
    */
-  def readValue(byteIterator : ByteIterator)(implicit protocolVersion: ProtocolVersion) : Option[T]
+  def readValue(byteIterator: ByteIterator)(implicit protocolVersion: ProtocolVersion) : Option[T]
 
   /**
    * Takes a sequence of bytes, decodes bytes to determine length and then consumes length bytes from
@@ -87,6 +87,18 @@ abstract class ColumnType[T](val code : Short, val stringRep: String) extends La
     val bs = sizeF(ByteString.newBuilder, bytes.length)
     bs.putBytes(bytes)
     bs.result().toArray
+  }
+
+  /**
+    * Converts the priming json representation into the internal representation T
+    *
+    * If the JSON type matches the internal representation then this method need not
+    * be overridden.
+    *
+    * @return the decoded value or None for null
+    */
+  def convertJsonToInternal(value: Any): Option[T] = {
+    Option(value.asInstanceOf[T])
   }
 }
 

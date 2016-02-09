@@ -20,7 +20,7 @@ import org.scassandra.server.priming.query.{PrimeCriteria, PrimeMatch}
 
 trait PreparedStore {
   var state: Map[PrimeCriteria, PreparedPrime] = Map()
-  def record(prime: PrimePreparedSingle) : PrimeAddResult
+  def record(prime: PrimePreparedSingle): PrimeAddResult
   def retrievePrimes(): Map[PrimeCriteria, PreparedPrime] = state
   def clear() = {
     state = Map()
@@ -28,5 +28,5 @@ trait PreparedStore {
 }
 
 trait PreparedStoreLookup {
-  def findPrime(primeMatch : PrimeMatch) : Option[PreparedPrime]
+  def findPrime(primeMatch : PrimeMatch) : Option[PreparedPrimeResult]
 }

@@ -16,7 +16,28 @@
 package org.scassandra.server.priming.prepared
 
 import org.scalatest.{Matchers, FunSuite}
+import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.server.priming.query.{Prime, PrimeMatch}
 
 class CompositePreparedPrimeStoreTest extends FunSuite with Matchers {
 
+  val one: PreparedStoreLookup = new PreparedStoreLookup {
+    def findPrime(primeMatch: PrimeMatch): Option[PreparedPrimeResult] = None
+  }
+  val two: PreparedStoreLookup = new PreparedStoreLookup {
+    def findPrime(primeMatch: PrimeMatch): Option[PreparedPrimeResult] = None
+  }
+
+  val result = new PreparedPrimeResult {
+    def getPrime(variables: List[Any]): Prime = Prime()
+    val variableTypes: List[ColumnType[_]] = List()
+  }
+  val three: PreparedStoreLookup = new PreparedStoreLookup {
+    def findPrime(primeMatch: PrimeMatch): Option[PreparedPrimeResult] = Some(result)
+  }
+
+  test("Delegates to all stores") {
+    val underTest = new CompositePreparedPrimeStore(one, two, three)
+    underTest.findPrime(PrimeMatch("blah")) should equal(Some(result))
+  }
 }

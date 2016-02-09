@@ -7,7 +7,8 @@ import org.scassandra.http.client.*;
 import org.scassandra.http.client.Config;
 
 import static org.junit.Assert.assertEquals;
-import static org.scassandra.http.client.PrimingRequest.Result.*;
+import static org.junit.Assert.assertTrue;
+import static org.scassandra.http.client.Result.*;
 import static org.scassandra.http.client.WriteTypePrime.SIMPLE;
 
 abstract public class PreparedStatementErrorPrimingTest extends AbstractScassandraTest {
@@ -92,7 +93,7 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
     public void testPrimingProtocolError() {
         String errorMessage = "Arbitrary Protocol Error";
         ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
-        assertErrorMessageStatus(protocol_error, config, "An unexpected protocol error occurred on host localhost/127.0.0.1:8042. This is a bug in this library, please report: " + errorMessage);
+        assertErrorMessageStatus(protocol_error, config, "An unexpected protocol error occurred");
     }
 
     @Test
@@ -178,11 +179,11 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
             server_error);
     }
 
-    private CassandraResult assertErrorMessageStatus(PrimingRequest.Result result, Config config, String expectedMsg) {
+    private CassandraResult assertErrorMessageStatus(Result result, Config config, String expectedMsg) {
         return assertErrorMessageStatus(result, config, expectedMsg, result);
     }
 
-    private CassandraResult assertErrorMessageStatus(PrimingRequest.Result result, Config config, String expectedMsg, PrimingRequest.Result expectedResult) {
+    private CassandraResult assertErrorMessageStatus(Result result, Config config, String expectedMsg, Result expectedResult) {
         String query = "select * from people";
         String consistency = "LOCAL_ONE";
         PrimingRequest prime = PrimingRequest.preparedStatementBuilder()
@@ -196,7 +197,8 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
 
         CassandraResult.ResponseStatus status = cassandraResult.status();
         assertEquals(expectedResult, status.getResult());
-        assertEquals(expectedMsg, ((CassandraResult.ErrorMessageStatus) status).getMessage());
+        String actualErrorMessage = ((CassandraResult.ErrorMessageStatus) status).getMessage();
+        assertTrue("Expected error message to contain: " + expectedMsg + " Got: " + actualErrorMessage, actualErrorMessage.contains(expectedMsg));
         return cassandraResult;
     }
 }

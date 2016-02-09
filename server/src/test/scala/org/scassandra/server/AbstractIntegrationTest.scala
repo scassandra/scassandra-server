@@ -24,7 +24,7 @@ import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSuite, Matchers}
 import org.scassandra.server.actors._
 import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.json._
-import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
+import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPrepared}
 import org.scassandra.server.priming.query.{PrimeQuerySingle, Then, When}
 import org.scassandra.server.priming._
 import spray.json._
@@ -49,7 +49,7 @@ object PrimingHelper {
     response()
   }
 
-  def primePreparedStatement(query: WhenPreparedSingle, thenDo: ThenPreparedSingle) = {
+  def primePreparedStatement(query: WhenPrepared, thenDo: ThenPreparedSingle) = {
     val prime = PrimePreparedSingle(query, thenDo).toJson
     println("Sending JSON: " + prime.toString)
     val svc = url(s"${DefaultHost}prime-prepared-single") <<

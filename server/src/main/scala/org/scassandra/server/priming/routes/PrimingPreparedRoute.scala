@@ -28,15 +28,28 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
 
   import PrimingJsonImplicits._
 
-  implicit val primePreparedStore : PrimePreparedStore
-  implicit val primePreparedPatternStore : PrimePreparedPatternStore
+  implicit val primePreparedStore: PrimePreparedStore
+  implicit val primePreparedPatternStore: PrimePreparedPatternStore
+  implicit val primePreparedMultiStore: PrimePreparedMultiStore
 
   val routeForPreparedPriming =
+    path ("prime-prepared-multi") {
+      entity(as[PrimePreparedMulti]) { prime: PrimePreparedMulti =>
+        complete {
+          logger.info(s"Received a prepared multi prime $prime")
+          val variableTypes = prime.thenDo.variable_types.getOrElse(List())
+          val mappedOutcomes = prime.thenDo.outcomes.map { o =>
+            o.copy(criteria = o.criteria.copy(variable_matcher = PrimingJsonHelper.convertTypesBasedOnCqlTypes(variableTypes, o.criteria.variable_matcher )))}
+          val mappedPrime = prime.copy(thenDo = prime.thenDo.copy(outcomes = mappedOutcomes))
+          primePreparedMultiStore.record(mappedPrime)
+          StatusCodes.OK
+        }
+      }
+    } ~
     path("prime-prepared-single") {
       post {
         entity(as[PrimePreparedSingle]) { prime =>
           complete {
-
             val storeToUse = if (prime.when.query.isDefined && prime.when.queryPattern.isEmpty) {
               Some(primePreparedStore)
             } else if (prime.when.queryPattern.isDefined && prime.when.query.isEmpty) {
@@ -67,7 +80,7 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
       get {
         complete {
           val preparedPrimes: Iterable[PrimePreparedSingle] = primePreparedStore.retrievePrimes().map({case (primeCriteria, preparedPrime) =>
-            val result = preparedPrime.prime.result match {
+            val result = preparedPrime.getPrime().result match {
               case SuccessResult => Success
               case _: ReadRequestTimeoutResult => ReadTimeout
               case _: WriteRequestTimeoutResult => WriteTimeout
@@ -87,12 +100,12 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
               case _: ClosedConnectionResult => ClosedConnection
             }
             PrimePreparedSingle(
-              WhenPreparedSingle(
+              WhenPrepared(
                 query = Some(primeCriteria.query), consistency = Some(primeCriteria.consistency)),
               ThenPreparedSingle(
-                Some(preparedPrime.prime.rows),
+                Some(preparedPrime.getPrime().rows),
                 Some(preparedPrime.variableTypes),
-                Some(preparedPrime.prime.columnTypes),
+                Some(preparedPrime.getPrime().columnTypes),
                 Some(result)
               )
             )

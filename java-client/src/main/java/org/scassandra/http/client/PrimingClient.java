@@ -29,6 +29,7 @@ import org.apache.http.util.EntityUtils;
 import org.scassandra.cql.CqlType;
 import org.scassandra.http.client.types.GsonCqlTypeDeserialiser;
 import org.scassandra.http.client.types.GsonCqlTypeSerialiser;
+import org.scassandra.http.client.types.GsonDateSerialiser;
 import org.scassandra.http.client.types.GsonInetAddressSerialiser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 public class PrimingClient {
@@ -75,6 +77,7 @@ public class PrimingClient {
             .registerTypeAdapter(CqlType.class, new GsonCqlTypeSerialiser())
             .registerTypeAdapter(CqlType.class, new GsonCqlTypeDeserialiser())
             .registerTypeAdapter(InetAddress.class, new GsonInetAddressSerialiser())
+            .registerTypeAdapter(Date.class, new GsonDateSerialiser())
             .enableComplexMapKeySerialization()
             .create();
 
@@ -83,10 +86,12 @@ public class PrimingClient {
     private final String primeQueryUrl;
     private final String primePreparedUrl;
     private final String primeBatchUrl;
+    private final String primePreparedMultiUrl;
 
     private PrimingClient(String host, int port) {
         this.primeQueryUrl = "http://" + host + ":" + port + "/prime-query-single";
         this.primePreparedUrl = "http://" + host + ":" + port + "/prime-prepared-single";
+        this.primePreparedMultiUrl = "http://" + host + ":" + port + "/prime-prepared-multi";
         this.primeBatchUrl = "http://" + host + ":" + port + "/prime-batch-single";
     }
 
@@ -108,6 +113,12 @@ public class PrimingClient {
 
     public void primeBatch(BatchPrimingRequest.BatchPrimingRequestBuilder batchPrimingRequest) throws PrimeFailedException {
         primeBatch(batchPrimingRequest.build());
+    }
+
+    public void multiPrime(MultiPrimeRequest primeRequest) throws PrimeFailedException {
+        String jsonAsString = gson.toJson(primeRequest);
+        System.out.println(jsonAsString);
+        prime(primeRequest, primePreparedMultiUrl);
     }
 
 

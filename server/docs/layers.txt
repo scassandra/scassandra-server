@@ -3,11 +3,9 @@ Priming
 
 Route/Web layer - Takes case classes that represent the JSON & pass them to the correct store
 
-Slight difference between Queries and preapred statements:
+Slight difference between Queries and prepared statements:
 - Queries are extracted from the JSON case classes prior to going to the store
 - Prepared statement primes get passed directly.
-
-TODO: Pick the better and make it consistent
 
 Stores
 ------

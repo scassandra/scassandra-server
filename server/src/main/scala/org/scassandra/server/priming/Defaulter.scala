@@ -18,7 +18,7 @@ package org.scassandra.server.priming
 import org.scassandra.server.cqlmessages.types.{CqlVarchar, ColumnType}
 
 object Defaulter {
-  def defaultColumnTypesToVarchar(columnTypes : Option[Map[String, ColumnType[_]]], resultsAsList: List[Map[String, Any]]) = {
+  def defaultColumnTypesToVarchar(columnTypes: Option[Map[String, ColumnType[_]]], resultsAsList: List[Map[String, Any]]) = {
     val colTypes: Map[String, ColumnType[_]] =  columnTypes.getOrElse(Map[String, ColumnType[_]]())
 
     // check that all the columns in the rows have a type

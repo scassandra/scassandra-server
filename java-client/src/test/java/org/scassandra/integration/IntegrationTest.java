@@ -49,7 +49,7 @@ public class IntegrationTest {
         //when
         PrimingRequest pr = PrimingRequest.queryBuilder()
                 .withQuery("select * from people")
-                .withResult(PrimingRequest.Result.read_request_timeout)
+                .withResult(Result.read_request_timeout)
                 .build();
 
         //then
@@ -62,11 +62,11 @@ public class IntegrationTest {
         //given
         PrimingRequest prWithAllAndAny = PrimingRequest.queryBuilder()
                 .withQuery("select * from people")
-                .withConsistency(PrimingRequest.Consistency.ALL, PrimingRequest.Consistency.ANY)
+                .withConsistency(Consistency.ALL, Consistency.ANY)
                 .build();
         PrimingRequest prWithAllAndONE = PrimingRequest.queryBuilder()
                 .withQuery("select * from people")
-                .withConsistency(PrimingRequest.Consistency.ALL, PrimingRequest.Consistency.ONE)
+                .withConsistency(Consistency.ALL, Consistency.ONE)
                 .build();
         //when
         primingClient.prime(prWithAllAndAny);
@@ -83,8 +83,8 @@ public class IntegrationTest {
         PrimingRequest prime = PrimingRequest.queryBuilder()
                 .withQuery("select * from people")
                 .withRows(row)
-                .withResult(PrimingRequest.Result.success)
-                .withConsistency(PrimingRequest.Consistency.ALL, PrimingRequest.Consistency.ANY)
+                .withResult(Result.success)
+                .withConsistency(Consistency.ALL, Consistency.ANY)
                 .build();
 
         //when
@@ -95,8 +95,8 @@ public class IntegrationTest {
                 .withQuery("select * from people")
                 .withRows(row)
                 .withColumnTypes(ImmutableMap.of("name", ColumnTypes.Varchar))
-                .withResult(PrimingRequest.Result.success)
-                .withConsistency(PrimingRequest.Consistency.ALL, PrimingRequest.Consistency.ANY)
+                .withResult(Result.success)
+                .withConsistency(Consistency.ALL, Consistency.ANY)
                 .build();
         assertEquals(1, primes.size());
         assertEquals(expectedPrimeWithDefaults, primes.get(0));
@@ -110,7 +110,7 @@ public class IntegrationTest {
         PrimingRequest prime = PrimingRequest.preparedStatementBuilder()
                 .withQuery("select * from people where name = ?")
                 .withRows(row)
-                .withConsistency(PrimingRequest.Consistency.ALL)
+                .withConsistency(Consistency.ALL)
                 .build();
 
         //when
@@ -121,8 +121,8 @@ public class IntegrationTest {
                 .withQuery("select * from people where name = ?")
                 .withRows(row)
                 .withColumnTypes(ImmutableMap.of("name", ColumnTypes.Varchar))
-                .withResult(PrimingRequest.Result.success)
-                .withConsistency(PrimingRequest.Consistency.ALL)
+                .withResult(Result.success)
+                .withConsistency(Consistency.ALL)
                 .withVariableTypes(ColumnTypes.Varchar)
                 .build();
 

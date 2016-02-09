@@ -27,7 +27,6 @@ import akka.pattern.AskTimeoutException
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{Matchers, FunSpecLike}
 
-
 class ServerReadyAwaiterTest extends TestKit(ActorSystem("TestSystem")) with FunSpecLike with Matchers with ScalaFutures {
 
   import ExecutionContext.Implicits.global

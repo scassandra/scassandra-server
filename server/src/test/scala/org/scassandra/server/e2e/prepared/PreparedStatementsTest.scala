@@ -19,7 +19,7 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scassandra.server.priming.json.PrimingJsonImplicits
 import org.scassandra.server.{PrimingHelper, AbstractIntegrationTest}
 import org.scassandra.server.cqlmessages._
-import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPreparedSingle}
+import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPrepared}
 import scala.Some
 import java.nio.ByteBuffer
 import akka.util.ByteString
@@ -28,15 +28,13 @@ import com.datastax.driver.core.utils.UUIDs
 import java.net.InetAddress
 import java.util
 import com.datastax.driver.core.{ConsistencyLevel, Row}
-import org.scassandra.server.priming._
-import com.datastax.driver.core.exceptions.{UnavailableException, WriteTimeoutException, ReadTimeoutException}
 import org.scalatest.BeforeAndAfter
 import dispatch._, Defaults._
 import spray.json._
 import org.scassandra.server.cqlmessages.types._
 import org.scassandra.server.priming.ConflictingPrimes
 import org.scassandra.server.priming.prepared.ThenPreparedSingle
-import org.scassandra.server.priming.prepared.WhenPreparedSingle
+import org.scassandra.server.priming.prepared.WhenPrepared
 import org.scassandra.server.priming.prepared.PrimePreparedSingle
 
 class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
@@ -91,7 +89,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
   test("Prepared statement with priming - empty rows") {
     val preparedStatementText: String = "select * from people where name = ?"
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(Some(List()))
     )
 
@@ -109,7 +107,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
   test("Prepared statement with priming - single row") {
     val preparedStatementText: String = "select * from people where name = ?"
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))
     )
 
@@ -130,7 +128,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     val preparedStatementText: String = "select * from people where name = ?"
     val consistencyToPrime = List(TWO)
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText), consistency = Some(consistencyToPrime)),
+      WhenPrepared(Some(preparedStatementText), consistency = Some(consistencyToPrime)),
       ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))
     )
     val preparedStatement = session.prepare(preparedStatementText)
@@ -150,7 +148,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     val preparedStatementText: String = "select * from people where name = ?"
     val consistencyToPrime = List(QUORUM)
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText), None, Some(consistencyToPrime)),
+      WhenPrepared(Some(preparedStatementText), None, Some(consistencyToPrime)),
       ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))
     )
     val preparedStatement = session.prepare(preparedStatementText)
@@ -171,13 +169,13 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     val preparedStatementText = "select * from people where name = ?"
     val consistencyOneAndTwo = List(ONE, TWO)
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText), consistency = Some(consistencyOneAndTwo)),
+      WhenPrepared(Some(preparedStatementText), consistency = Some(consistencyOneAndTwo)),
       ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))
     )
 
     //when
     val consistencyTwoAndThree = List(TWO, THREE)
-    val prime = PrimePreparedSingle(WhenPreparedSingle(Some(preparedStatementText), consistency = Some(consistencyTwoAndThree)),
+    val prime = PrimePreparedSingle(WhenPrepared(Some(preparedStatementText), consistency = Some(consistencyTwoAndThree)),
       ThenPreparedSingle(Some(List(Map("name" -> "Chris"))))).toJson
     val svc = url("http://localhost:8043/prime-prepared-single") <<
       prime.toString <:<
@@ -222,7 +220,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
       )
     )
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(Some(rows),
         Some(List[ColumnType[_]](CqlBigint, CqlCounter, CqlDecimal, CqlDouble, CqlFloat, CqlInt, CqlVarint)),
         Some(resultColumnTypes))
@@ -281,7 +279,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     )
 
     PrimingHelper.primePreparedStatement(
-      WhenPreparedSingle(Some(preparedStatementText)),
+      WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(Some(List(primedRow)),
         variable_types = Some(List[ColumnType[_]](CqlAscii, CqlBlob, CqlBoolean, CqlTimestamp, CqlUUID, CqlVarchar, CqlTimeUUID, CqlInet)),
         column_types = Some(resultColumnTypes))

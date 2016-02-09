@@ -28,7 +28,7 @@ public final class BatchPrimingRequest {
     public static class BatchPrimingRequestBuilder {
         private PrimingRequest.Then then;
         private List<BatchQueryPrime> queries;
-        private List<PrimingRequest.Consistency> consistency;
+        private List<Consistency> consistency;
         private BatchType type = BatchType.LOGGED;
 
         private BatchPrimingRequestBuilder() {
@@ -39,7 +39,7 @@ public final class BatchPrimingRequest {
             return this;
         }
 
-        public BatchPrimingRequestBuilder withConsistency(PrimingRequest.Consistency... consistencies) {
+        public BatchPrimingRequestBuilder withConsistency(Consistency... consistencies) {
             this.consistency = Arrays.asList(consistencies);
             return this;
         }
@@ -68,17 +68,17 @@ public final class BatchPrimingRequest {
     }
 
     public final static class BatchWhen {
-        private final List<PrimingRequest.Consistency> consistency;
+        private final List<Consistency> consistency;
         private final List<BatchQueryPrime> queries;
         private final BatchType batchType;
 
-        private BatchWhen(List<PrimingRequest.Consistency> consistency, List<BatchQueryPrime> queries, BatchType batchType) {
+        private BatchWhen(List<Consistency> consistency, List<BatchQueryPrime> queries, BatchType batchType) {
             this.consistency = consistency;
             this.queries = queries;
             this.batchType = batchType;
         }
 
-        public List<PrimingRequest.Consistency> getConsistency() {
+        public List<Consistency> getConsistency() {
             return Collections.unmodifiableList(consistency);
         }
 

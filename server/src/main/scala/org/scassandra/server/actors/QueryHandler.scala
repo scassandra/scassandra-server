@@ -52,10 +52,10 @@ class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, ms
               case result: ErrorResult => msgFactory.createErrorMessage(result, stream, consistency)
               case result: FatalResult => result.produceFatalError(tcpConnection)
             }
-            sendMessage(prime.fixedDelay, tcpConnection, message)
             val queryRequest = msgFactory.parseQueryRequest(stream, queryBody, prime.variableTypes)
             log.info(s"Parsed query request $queryRequest")
             activityLog.recordQuery(queryRequest.query, consistency, queryRequest.parameters, prime.variableTypes)
+            sendMessage(prime.fixedDelay, tcpConnection, message)
           case None =>
             log.info(s"No prime found for $queryText")
             sendMessage(None, tcpConnection, msgFactory.createEmptyRowsMessage(stream))
