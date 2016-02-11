@@ -1,1 +1,1 @@
-todo document how to build the docs locally
+To run the docs
