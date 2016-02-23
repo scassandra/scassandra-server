@@ -1,4 +1,4 @@
-Developing software is fun. Developing software that is well tested, where those tests run quickly is even more fun.
+# Stubbed Cassandra
 
 Stubbed Cassandra is an open source tool that enables you to test applications that use Cassandra in a quick, deterministic way.
 

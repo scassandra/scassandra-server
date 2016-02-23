@@ -2,11 +2,11 @@
 
 So far we have tested Scassandra with the following drivers:
 
-* Datastax Java Driver 1
 * Datastax Java Driver 2
 * Datastax Java Driver 2.1
+* Datastax Java Driver 3.0
 
-The next Driver we intent to test with is:
+Support may be added in the future for:
 
 * Astyanax
 
@@ -27,7 +27,7 @@ You can add it as a dependency:
 
 ~~~ groovy
 dependencies {
-  testCompile 'org.scassandra:java-client:0.11.0'
+  testCompile 'org.scassandra:java-client:1.0.0'
 }
 ~~~
 
@@ -38,7 +38,7 @@ dependencies {
 <dependency>
   <groupId>org.scassandra</groupId>
   <artifactId>java-client</artifactId>
-  <version>0.11.0</version>
+  <version>1.0.0</version>
   <scope>test</scope>
 </dependency>
 ~~~
@@ -49,7 +49,7 @@ If you have dependency clashes with Guava, Apache Http Client etc try the standa
 <dependency>
   <groupId>org.scassandra</groupId>
   <artifactId>java-client</artifactId>
-  <version>0.6.0</version>
+  <version>1.0.0</version>
   <classifier>standalone</classifier>
   <scope>test</scope>
 </dependency>

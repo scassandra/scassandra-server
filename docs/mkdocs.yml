@@ -1,7 +1,6 @@
 site_name: Stubbed Cassandra
 pages:
 - [index.md, Home]
-- [about.md, About]
 - [java/overview.md, Java Client, Overview]
 - [java/priming-query.md, Java Client, Priming Queries]
 - [java/priming-prepared-statements.md, Java Client, Priming Prepared Statements]

@@ -1,7 +1,7 @@
 ## Priming Prepared Statements
 
 You need to prime any prepared statements your application is going to use before your application prepares the statement,
-not just before it executes it. So if your application prepares them on startup you should prime Scassandra before you
+not just before they are executed. If your application prepares them on startup you should prime Scassandra before you
 start your application.
 
 This is because when your application prepares the statement Cassandra responds with the types of each of the variable's (?s)
@@ -94,7 +94,12 @@ primingClient.multiPrime(prime);
 
 ```
 
+For variables you do not want to match on you can use the ```anyMatch()```
 
+Primes are identified by the `queryText` and `consistency` so you can't have two primes with the same `queryText` and `consistency` but with different
+outcomes as they will overwrite each other.
+
+If none of the outcomes match then a RuntimeException will currently be thrown. This will be replaced with default behaviour of returning an empty successful result.
 
 Collections are not currently supported for variable matching.
 
