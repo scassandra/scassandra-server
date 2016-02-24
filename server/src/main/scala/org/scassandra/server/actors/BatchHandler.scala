@@ -22,6 +22,7 @@ import akka.pattern.{ask, pipe}
 import org.scassandra.server.actors.BatchHandler.{BatchToFinish, Execute}
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementResponse, PreparedStatementQuery}
 import org.scassandra.server.cqlmessages._
+import org.scassandra.server.cqlmessages.types.ColumnType
 import org.scassandra.server.priming.batch.{BatchPrime, PrimeBatchStore}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
@@ -86,7 +87,7 @@ class BatchHandler(tcpConnection: ActorRef,
           preparedStore.findPrime(PrimeMatch(queryText, consistency)) match {
             case Some(result) =>
               val variableTypes = result.variableTypes
-              val parsedVariables = variables.zip(variableTypes).map { case (bytes, colType) => colType.readValue(ByteString(bytes).iterator) }
+              val parsedVariables = variables.zip(variableTypes).map { case (bytes, colType) => readValue(bytes, colType) }
               BatchQuery(queryText, PreparedStatementKind, parsedVariables)
             case None => BatchQuery(queryText, PreparedStatementKind)
           }
@@ -97,6 +98,10 @@ class BatchHandler(tcpConnection: ActorRef,
       sendResponse(execution, stream, consistency)
 
     case msg @ _ => log.warning("Unknown msg {}", msg)
+  }
+
+  def readValue(bytes: Array[Byte], colType: ColumnType[_]): Option[Any] = {
+    if (bytes.isEmpty) None else colType.readValue(ByteString(bytes).iterator)
   }
 
   private def sendResponse(execution: BatchExecution, stream: Byte, consistency: Consistency): Unit = {
