@@ -15,21 +15,21 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.{Props, ActorRef, ActorSystem}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.io.Tcp.CloseCommand
 import akka.testkit.{TestKitBase, TestProbe}
 import akka.util.ByteString
-import org.mockito.Mockito._
 import org.mockito.Matchers._
+import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{FunSuite, BeforeAndAfter, Matchers}
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.server.actors.MessageHelper._
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
 import org.scassandra.server.cqlmessages._
 import org.scassandra.server.cqlmessages.response.Error
-import org.scassandra.server.priming.batch.{BatchPrime, PrimeBatchStore}
 import org.scassandra.server.priming._
-import org.scassandra.server.priming.prepared.{PreparedStoreLookup}
+import org.scassandra.server.priming.batch.{BatchPrime, PrimeBatchStore}
+import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import org.scassandra.server.priming.query.PrimeMatch
 
 class BatchHandlerTest extends FunSuite with TestKitBase with MockitoSugar
@@ -123,7 +123,7 @@ class BatchHandlerTest extends FunSuite with TestKitBase with MockitoSugar
     val batchMessage: Array[Byte] = dropHeaderAndLength(createBatchMessage(
       List(SimpleQuery("super simple query")),
       streamId))
-    when(primeBatchStore.findPrime(any(classOf[BatchExecution]))).thenReturn(Some(BatchPrime(result)))
+    when(primeBatchStore.findPrime(any(classOf[BatchExecution]))).thenReturn(Some(BatchPrime(result, None)))
 
     underTest ! BatchHandler.Execute(ByteString(batchMessage), streamId)
 
@@ -134,7 +134,7 @@ class BatchHandlerTest extends FunSuite with TestKitBase with MockitoSugar
     val batchMessage: Array[Byte] = dropHeaderAndLength(createBatchMessage(
       List(SimpleQuery("super simple query")),
       streamId))
-    when(primeBatchStore.findPrime(any(classOf[BatchExecution]))).thenReturn(Some(BatchPrime(result)))
+    when(primeBatchStore.findPrime(any(classOf[BatchExecution]))).thenReturn(Some(BatchPrime(result, None)))
 
     underTest ! BatchHandler.Execute(ByteString(batchMessage), streamId)
 

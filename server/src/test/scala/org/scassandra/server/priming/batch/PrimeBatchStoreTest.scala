@@ -17,7 +17,7 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
 
       val prime = underTest.findPrime(BatchExecution(Seq(BatchQuery("select * blah", QueryKind)), ONE, LOGGED))
 
-      prime should equal(Some(BatchPrime(SuccessResult)))
+      prime should equal(Some(BatchPrime(SuccessResult, None)))
     }
 
     it("Should fail if single query does not match") {
@@ -57,7 +57,7 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
         BatchQuery("select * blah", QueryKind),
         BatchQuery("select * wah", PreparedStatementKind)), ONE, LOGGED))
 
-      prime should equal(Some(BatchPrime(SuccessResult)))
+      prime should equal(Some(BatchPrime(SuccessResult, None)))
     }
 
     it("Should match on consistency") {

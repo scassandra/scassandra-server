@@ -14,27 +14,37 @@ package batches;/*
  * limitations under the License.
  */
 
-import common.*;
+import common.AbstractScassandraTest;
+import common.CassandraExecutor;
+import common.CassandraQuery;
+import common.CassandraResult;
 import org.junit.Test;
-import org.scassandra.http.client.*;
+import org.scassandra.http.client.BatchExecution;
+import org.scassandra.http.client.BatchPrimingRequest;
+import org.scassandra.http.client.BatchQuery;
+import org.scassandra.http.client.BatchQueryKind;
+import org.scassandra.http.client.BatchQueryPrime;
+import org.scassandra.http.client.BatchType;
+import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
 
 import java.util.Collections;
 import java.util.List;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static common.CassandraQuery.QueryType.PREPARED_STATEMENT;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.scassandra.cql.PrimitiveType.*;
 import static org.scassandra.http.client.BatchQueryKind.prepared_statement;
 import static org.scassandra.http.client.BatchQueryKind.query;
 import static org.scassandra.http.client.BatchQueryPrime.batchQueryPrime;
 import static org.scassandra.http.client.BatchType.COUNTER;
-import static org.scassandra.http.client.BatchType.LOGGED;
-import static org.scassandra.http.client.BatchType.UNLOGGED;
+import static org.scassandra.http.client.BatchType.*;
 import static org.scassandra.http.client.Consistency.ONE;
+import static org.scassandra.http.client.PrimingRequest.then;
 import static org.scassandra.http.client.Result.read_request_timeout;
 import static org.scassandra.http.client.Result.success;
-import static org.scassandra.http.client.PrimingRequest.then;
 
 abstract public class BatchPrimingTest extends AbstractScassandraTest {
 
@@ -107,6 +117,40 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
         );
 
         assertEquals(success, result.status().getResult());
+    }
+
+    @Test
+    public void batchWithDelay() throws Exception {
+        String query = "insert ? ?";
+        primingClient.prime(PrimingRequest.preparedStatementBuilder()
+                .withQuery(query)
+                .withThen(then()
+                        .withVariableTypes(VARCHAR, INT))
+        );
+
+        long primedDelay = 500;
+
+        primingClient.primeBatch(
+                BatchPrimingRequest.batchPrimingRequest()
+                        .withQueries(
+                                batchQueryPrime("insert something else", BatchQueryKind.query),
+                                batchQueryPrime(query, prepared_statement))
+                        .withThen(then()
+                                .withFixedDelay(primedDelay)
+                                .withResult(success))
+
+        );
+
+        long before = System.currentTimeMillis();
+        cassandra().executeBatch(newArrayList(
+                new CassandraQuery("insert something else"),
+                new CassandraQuery(query,
+                        PREPARED_STATEMENT, "Donkey", 42)
+                ), BatchType.LOGGED);
+        long duration = System.currentTimeMillis() - before;
+
+        assertTrue("Expected delay of " + primedDelay + " got " + duration, duration > primedDelay && duration < (primedDelay + 200));
+
     }
 
     @Test
