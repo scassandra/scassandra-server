@@ -15,16 +15,18 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.{ActorLogging, ActorRef, Actor}
-import akka.util.{Timeout, ByteString}
-import akka.pattern.{ask, pipe}
+import java.util.concurrent.TimeUnit
 
+import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.pattern.{ask, pipe}
+import akka.util.{ByteString, Timeout}
 import org.scassandra.server.actors.BatchHandler.{BatchToFinish, Execute}
-import org.scassandra.server.actors.PrepareHandler.{PreparedStatementResponse, PreparedStatementQuery}
+import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
 import org.scassandra.server.cqlmessages._
+import org.scassandra.server.cqlmessages.response.Response
 import org.scassandra.server.cqlmessages.types.ColumnType
-import org.scassandra.server.priming.batch.{BatchPrime, PrimeBatchStore}
 import org.scassandra.server.priming._
+import org.scassandra.server.priming.batch.{BatchPrime, PrimeBatchStore}
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import org.scassandra.server.priming.query.PrimeMatch
 
@@ -108,14 +110,21 @@ class BatchHandler(tcpConnection: ActorRef,
     val prime: Option[BatchPrime] = batchPrimeStore.findPrime(execution)
     log.info("Found prime {} for batch execution {}", prime, execution)
     prime match {
-      case Some(BatchPrime(SuccessResult)) => tcpConnection ! msgFactory.createVoidMessage(stream)
-      case Some(BatchPrime(errorResult: ErrorResult)) => tcpConnection ! msgFactory.createErrorMessage(errorResult, stream, consistency)
-      case Some(BatchPrime(fatalResult: FatalResult)) => fatalResult.produceFatalError(tcpConnection)
+      case Some(BatchPrime(SuccessResult, delay: Option[Long])) => sendWithDelay(msgFactory.createVoidMessage(stream), delay)
+      case Some(BatchPrime(errorResult: ErrorResult, delay: Option[Long])) => sendWithDelay(msgFactory.createErrorMessage(errorResult, stream, consistency), delay)
+      case Some(BatchPrime(fatalResult: FatalResult, delay: Option[Long])) => fatalResult.produceFatalError(tcpConnection)
       case None => tcpConnection ! msgFactory.createVoidMessage(stream)
     }
   }
 
+  private def sendWithDelay(response: Response, delay: Option[Long]): Unit = {
+    val delayDuration: FiniteDuration = FiniteDuration(delay.getOrElse(0L), TimeUnit.MILLISECONDS)
+    context.system.scheduler.scheduleOnce(delayDuration, tcpConnection, response)(context.system.dispatcher)
+  }
+
 }
+
+
 
 private sealed trait InFlightBatchQuery
 private case class NormalQuery(text: String) extends InFlightBatchQuery

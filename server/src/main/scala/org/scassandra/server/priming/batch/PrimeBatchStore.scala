@@ -1,10 +1,10 @@
 package org.scassandra.server.priming.batch
 
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.cqlmessages.{LOGGED, BatchType, Consistency}
-import org.scassandra.server.priming.{BatchExecution, PrimeResult}
+import org.scassandra.server.cqlmessages.{BatchType, Consistency, LOGGED}
 import org.scassandra.server.priming.json.Success
 import org.scassandra.server.priming.routes.PrimingJsonHelper
+import org.scassandra.server.priming.{BatchExecution, PrimeResult}
 
 class PrimeBatchStore extends LazyLogging {
 
@@ -13,7 +13,7 @@ class PrimeBatchStore extends LazyLogging {
   def record(prime: BatchPrimeSingle): Unit = {
     val result: PrimeResult = PrimingJsonHelper.convertToPrimeResult(Map(), prime.thenDo.result.getOrElse(Success))
     val consistencies: List[Consistency] = prime.when.consistency.getOrElse(Consistency.all)
-    primes += (BatchCriteria(prime.when.queries, consistencies, prime.when.batchType.getOrElse(LOGGED)) -> BatchPrime(result))
+    primes += (BatchCriteria(prime.when.queries, consistencies, prime.when.batchType.getOrElse(LOGGED)) -> BatchPrime(result, prime.thenDo.fixedDelay))
   }
   def findPrime(primeMatch: BatchExecution): Option[BatchPrime] = {
     logger.debug("Batch Prime Match {} current primes {}", primeMatch, primes)
@@ -28,5 +28,4 @@ class PrimeBatchStore extends LazyLogging {
 
 case class BatchCriteria(queries: Seq[BatchQueryPrime], consistency: List[Consistency], batchType: BatchType)
 // batches can only be DML statements
-// todo delay
-case class BatchPrime(result: PrimeResult)
+case class BatchPrime(result: PrimeResult, delay: Option[Long])
