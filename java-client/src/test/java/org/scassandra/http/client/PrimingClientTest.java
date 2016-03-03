@@ -15,13 +15,6 @@
  */
 package org.scassandra.http.client;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.scassandra.cql.PrimitiveType.*;
-import static org.scassandra.http.client.BatchQueryPrime.batchQueryPrime;
-import static org.scassandra.http.client.MultiPrimeRequest.*;
-
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
@@ -30,6 +23,13 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.*;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+import static org.scassandra.cql.PrimitiveType.TEXT;
+import static org.scassandra.http.client.BatchQueryPrime.batchQueryPrime;
+import static org.scassandra.http.client.MultiPrimeRequest.*;
 
 public class PrimingClientTest {
 
@@ -740,5 +740,33 @@ public class PrimingClientTest {
                         "{\"variable_matcher\":[{\"matcher\":\"Chris\",\"type\":\"exact\"}]},\"action\":{}}]}}"))
 
         );
+    }
+
+    @Test
+    public void testDeletingOfPreparedMultiPrimes() {
+        //given
+        stubFor(delete(urlEqualTo(PRIME_PREPARED_MULTI_PATH)).willReturn(aResponse().withStatus(200)));
+        //when
+        underTest.clearPreparedMultiPrimes();
+        //then
+        verify(deleteRequestedFor(urlEqualTo(PRIME_PREPARED_MULTI_PATH)));
+    }
+
+    @Test(expected = PrimeFailedException.class)
+    public void testDeletingOfPreparedMultiPrimesFailedDueToStatusCode() {
+        //given
+        stubFor(delete(urlEqualTo(PRIME_PREPARED_MULTI_PATH)).willReturn(aResponse().withStatus(500)));
+        //when
+        underTest.clearPreparedMultiPrimes();
+        //then
+    }
+
+    @Test(expected = PrimeFailedException.class)
+    public void testDeletingOfPreparedMultiPrimesFailed() {
+        //given
+        stubFor(delete(urlEqualTo(PRIME_PREPARED_MULTI_PATH)).willReturn(aResponse().withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
+        //when
+        underTest.clearQueryPrimes();
+        //then
     }
 }

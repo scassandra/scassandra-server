@@ -104,4 +104,17 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
 
     preparedPrime.value.getPrime(List(Some("Daniel"))).fixedDelay should equal(Some(FiniteDuration(500, TimeUnit.MILLISECONDS)))
   }
+
+  test("Clearing all the primes") {
+    //given
+    val variableTypes = List(CqlText)
+    val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(variableTypes), List(
+      Outcome(Criteria(List(ExactMatch(Some("Chris")))), Action(Some(List()), result = Some(Success)))))
+    val queryText = "Some query"
+    underTest.record(PrimePreparedMulti(WhenPrepared(Some(queryText)), thenDo))
+    //when
+    underTest.clear()
+    //then
+    underTest.state.size should equal(0)
+  }
 }
