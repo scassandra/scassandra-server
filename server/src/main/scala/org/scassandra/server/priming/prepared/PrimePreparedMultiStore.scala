@@ -43,4 +43,8 @@ class PrimePreparedMultiStore extends PreparedStoreLookup with LazyLogging {
     state.find({ case (criteria, result) => primeMatch.query == criteria.query &&
       criteria.consistency.contains(primeMatch.consistency) }).map(_._2)
   }
+
+  def clear() = {
+    state = Map()
+  }
 }

@@ -167,6 +167,10 @@ public class PrimingClient {
         httpDelete(primePreparedUrl);
     }
 
+    public void clearPreparedMultiPrimes() {
+        httpDelete(primePreparedMultiUrl);
+    }
+
     private List<PrimingRequest> httpGetPrimingRequests(String url) {
         HttpGet get = new HttpGet(url);
         try {

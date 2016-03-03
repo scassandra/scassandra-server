@@ -72,6 +72,13 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       }
     }
 
+    it("Should allow primes to be deleted") {
+      Delete(primePreparedMultiPath) ~> routeForPreparedPriming ~> check {
+        status should equal(StatusCodes.OK)
+        verify(primePreparedMultiStore).clear()
+      }
+    }
+
     //todo validation error if variable types length != outcome varaiable matcher length
   }
 

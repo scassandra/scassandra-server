@@ -34,14 +34,23 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
 
   val routeForPreparedPriming =
     path ("prime-prepared-multi") {
-      entity(as[PrimePreparedMulti]) { prime: PrimePreparedMulti =>
+      post {
+        entity(as[PrimePreparedMulti]) { prime: PrimePreparedMulti =>
+          complete {
+            logger.info(s"Received a prepared multi prime $prime")
+            val variableTypes = prime.thenDo.variable_types.getOrElse(List())
+            val mappedOutcomes = prime.thenDo.outcomes.map { o =>
+              o.copy(criteria = o.criteria.copy(variable_matcher = PrimingJsonHelper.convertTypesBasedOnCqlTypes(variableTypes, o.criteria.variable_matcher)))
+            }
+            val mappedPrime = prime.copy(thenDo = prime.thenDo.copy(outcomes = mappedOutcomes))
+            primePreparedMultiStore.record(mappedPrime)
+            StatusCodes.OK
+          }
+        }
+      } ~
+      delete {
         complete {
-          logger.info(s"Received a prepared multi prime $prime")
-          val variableTypes = prime.thenDo.variable_types.getOrElse(List())
-          val mappedOutcomes = prime.thenDo.outcomes.map { o =>
-            o.copy(criteria = o.criteria.copy(variable_matcher = PrimingJsonHelper.convertTypesBasedOnCqlTypes(variableTypes, o.criteria.variable_matcher )))}
-          val mappedPrime = prime.copy(thenDo = prime.thenDo.copy(outcomes = mappedOutcomes))
-          primePreparedMultiStore.record(mappedPrime)
+          primePreparedMultiStore.clear()
           StatusCodes.OK
         }
       }
