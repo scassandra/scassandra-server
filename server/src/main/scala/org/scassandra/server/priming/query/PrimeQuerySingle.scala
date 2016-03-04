@@ -25,7 +25,7 @@ import org.scassandra.server.priming.json.ResultJsonRepresentation
   Really variable_types make more sense in the When but for reason I put them in the
   Then for prepared statements and I didn't want the two to be inconsistent
  */
-case class PrimeQuerySingle(when: When, thenDo: Then)
+case class  PrimeQuerySingle(when: When, thenDo: Then)
 
 case class When(query: Option[String] = None,
                 queryPattern: Option[String] = None,

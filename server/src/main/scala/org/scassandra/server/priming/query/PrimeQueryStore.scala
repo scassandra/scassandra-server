@@ -86,7 +86,7 @@ case class PrimeCriteria(query: String, consistency: List[Consistency], patternM
 
 case class PrimeMatch(query: String, consistency: Consistency = ONE)
 
-case class Prime( rows: List[Map[String, Any]] = List(),
+case class Prime(rows: List[Map[String, Any]] = List(),
                   result: PrimeResult = SuccessResult,
                   columnTypes: Map[String, ColumnType[_]] = Map(),
                   keyspace: String = "",

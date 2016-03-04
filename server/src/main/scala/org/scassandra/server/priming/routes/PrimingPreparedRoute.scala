@@ -17,6 +17,7 @@ package org.scassandra.server.priming.routes
 
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json.WriteTimeout
+import org.scassandra.server.priming.query.Prime
 import spray.routing.HttpService
 import com.typesafe.scalalogging.LazyLogging
 import spray.http.StatusCodes
@@ -52,6 +53,55 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
         complete {
           primePreparedMultiStore.clear()
           StatusCodes.OK
+        }
+      } ~
+      get {
+        complete {
+
+          val preparedPrimes: Iterable[PrimePreparedMulti] = primePreparedMultiStore.retrievePrimes().map({ case (primeCriteria, preparedPrime) =>
+
+            val outcomes : List[Outcome] = preparedPrime.variableMatchers.map({ case (outcome) =>
+              val variableMatchers: List[VariableMatch] = outcome._1
+              val criteria = Criteria(variableMatchers)
+
+              val prime: Prime = outcome._2
+              val result = prime.result match {
+                case SuccessResult => Success
+                case _: ReadRequestTimeoutResult => ReadTimeout
+                case _: WriteRequestTimeoutResult => WriteTimeout
+                case _: UnavailableResult => Unavailable
+                case _: ServerErrorResult => ServerError
+                case _: ProtocolErrorResult => ProtocolError
+                case _: BadCredentialsResult => BadCredentials
+                case _: OverloadedResult => Overloaded
+                case _: IsBootstrappingResult => IsBootstrapping
+                case _: TruncateErrorResult => TruncateError
+                case _: SyntaxErrorResult => SyntaxError
+                case _: UnauthorizedResult => Unauthorized
+                case _: InvalidResult => Invalid
+                case _: ConfigErrorResult => ConfigError
+                case _: AlreadyExistsResult => AlreadyExists
+                case _: UnpreparedResult => Unprepared
+                case _: ClosedConnectionResult => ClosedConnection
+              }
+              val fixedDelay = if (prime.fixedDelay.isDefined) Some(prime.fixedDelay.get.toMillis) else None
+              val action = Action(Some(prime.rows), Some(prime.columnTypes), Some(result), fixedDelay)
+              Outcome(criteria, action)
+            })
+
+            PrimePreparedMulti(
+              WhenPrepared(
+                query = Some(primeCriteria.query),
+                consistency = Some(primeCriteria.consistency)
+              ),
+              ThenPreparedMulti(
+                Some(preparedPrime.variableTypes),
+                outcomes
+              )
+            )
+          })
+
+          preparedPrimes
         }
       }
     } ~

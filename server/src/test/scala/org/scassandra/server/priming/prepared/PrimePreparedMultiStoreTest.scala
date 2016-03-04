@@ -3,11 +3,11 @@ package org.scassandra.server.priming.prepared
 import java.util.concurrent.TimeUnit
 
 import org.scalatest.{BeforeAndAfter, Matchers, FunSuite}
-import org.scassandra.server.cqlmessages.{TWO, ONE}
+import org.scassandra.server.cqlmessages.{Consistency, TWO, ONE}
 import org.scassandra.server.cqlmessages.types.CqlText
 import org.scassandra.server.priming.{WriteRequestTimeoutResult, ReadRequestTimeoutResult, SuccessResult}
 import org.scassandra.server.priming.json.{WriteTimeout, ReadTimeout, Success}
-import org.scassandra.server.priming.query.{Prime, PrimeMatch}
+import org.scassandra.server.priming.query.{PrimeCriteria, Prime, PrimeMatch}
 
 import org.scalatest.OptionValues._
 
@@ -103,6 +103,20 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
     val preparedPrime = underTest.findPrime(PrimeMatch("Some query", ONE))
 
     preparedPrime.value.getPrime(List(Some("Daniel"))).fixedDelay should equal(Some(FiniteDuration(500, TimeUnit.MILLISECONDS)))
+  }
+
+  test("Returns all the primes") {
+    val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(List(CqlText)), List())
+    val when: WhenPrepared = WhenPrepared(Some("Some query"), None, Some(Consistency.all))
+    val prime: PrimePreparedMulti = PrimePreparedMulti(when, thenDo)
+    underTest.record(prime)
+
+    val primes = underTest.retrievePrimes()
+
+    val expectedPrimeCriteria: PrimeCriteria = PrimeCriteria(when.query.get, when.consistency.get)
+
+    primes.size should equal(1)
+    primes.get(expectedPrimeCriteria) shouldBe defined
   }
 
   test("Clearing all the primes") {

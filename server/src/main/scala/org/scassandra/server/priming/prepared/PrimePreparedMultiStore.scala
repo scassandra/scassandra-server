@@ -14,7 +14,7 @@ import scala.concurrent.duration.FiniteDuration
 
 class PrimePreparedMultiStore extends PreparedStoreLookup with LazyLogging {
 
-  var state: Map[PrimeCriteria, PreparedPrimeResult] = Map()
+  var state: Map[PrimeCriteria, PreparedMultiPrime] = Map()
 
   // todo change to a result to include validation failures etc
   def record(prime: PrimePreparedMulti): Unit = {
@@ -43,6 +43,8 @@ class PrimePreparedMultiStore extends PreparedStoreLookup with LazyLogging {
     state.find({ case (criteria, result) => primeMatch.query == criteria.query &&
       criteria.consistency.contains(primeMatch.consistency) }).map(_._2)
   }
+
+  def retrievePrimes(): Map[PrimeCriteria, PreparedMultiPrime] = state
 
   def clear() = {
     state = Map()
