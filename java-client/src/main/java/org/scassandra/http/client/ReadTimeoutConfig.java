@@ -24,19 +24,30 @@ public class ReadTimeoutConfig extends Config {
     private final int receivedAcknowledgements;
     private final int requiredAcknowledgements;
     private final boolean dataRetrieved;
+    private final Consistency consistencyLevel;
 
     public ReadTimeoutConfig(int receivedAcknowledgements, int requiredAcknowledgements, boolean dataRetrieved) {
+        this(receivedAcknowledgements, requiredAcknowledgements, dataRetrieved, null);
+    }
+
+    public ReadTimeoutConfig(int receivedAcknowledgements, int requiredAcknowledgements, boolean dataRetrieved, Consistency consistencyLevel) {
         this.receivedAcknowledgements = receivedAcknowledgements;
         this.requiredAcknowledgements = requiredAcknowledgements;
         this.dataRetrieved = dataRetrieved;
+        this.consistencyLevel = consistencyLevel;
     }
 
     @Override
     Map<String, ?> getProperties() {
-        return ImmutableMap.of(
-                ErrorConstants.ReceivedResponse(), String.valueOf(this.receivedAcknowledgements),
-                ErrorConstants.RequiredResponse(), String.valueOf(this.requiredAcknowledgements),
-                ErrorConstants.DataPresent(), String.valueOf(this.dataRetrieved)
-        );
+        ImmutableMap.Builder<String,String> builder = ImmutableMap.<String,String>builder()
+                .put(ErrorConstants.ReceivedResponse(), String.valueOf(this.receivedAcknowledgements))
+                .put(ErrorConstants.RequiredResponse(), String.valueOf(this.requiredAcknowledgements))
+                .put(ErrorConstants.DataPresent(), String.valueOf(this.dataRetrieved));
+
+        if(consistencyLevel != null) {
+            builder.put(ErrorConstants.ConsistencyLevel(), String.valueOf(consistencyLevel.toString()));
+        }
+
+        return builder.build();
     }
 }

@@ -17,6 +17,7 @@ package org.scassandra.server.priming
 
 import akka.actor.ActorRef
 import akka.io.Tcp
+import org.scassandra.server.cqlmessages.Consistency
 
 object WriteType extends Enumeration {
   val SIMPLE, BATCH, UNLOGGED_BATCH, COUNTER, BATCH_LOG, CAS = Value
@@ -47,9 +48,9 @@ case class ConfigErrorResult(message: String) extends ErrorResult
 case class AlreadyExistsResult(message: String, keyspace: String, table: String) extends ErrorResult
 case class UnpreparedResult(message: String, id: Array[Byte]) extends ErrorResult
 
-case class ReadRequestTimeoutResult(receivedResponses: Int = 0, requiredResponses: Int = 1, dataPresent: Boolean = false) extends ErrorResult
-case class WriteRequestTimeoutResult(receivedResponses: Int = 0, requiredResponses: Int = 1, writeType: WriteType.Value = WriteType.SIMPLE) extends ErrorResult
-case class UnavailableResult(requiredResponses: Int = 1, alive: Int = 0) extends ErrorResult
+case class ReadRequestTimeoutResult(receivedResponses: Int = 0, requiredResponses: Int = 1, dataPresent: Boolean = false, consistencyLevel: Option[Consistency] = None) extends ErrorResult
+case class WriteRequestTimeoutResult(receivedResponses: Int = 0, requiredResponses: Int = 1, writeType: WriteType.Value = WriteType.SIMPLE, consistencyLevel: Option[Consistency] = None) extends ErrorResult
+case class UnavailableResult(requiredResponses: Int = 1, alive: Int = 0, consistencyLevel: Option[Consistency] = None) extends ErrorResult
 
 case class ClosedConnectionResult(command: String) extends FatalResult {
 

@@ -18,32 +18,50 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
     }
 
     @Test
-    public void testPrimingReadTimeout() {
+    public void testPrimingReadTimeoutStatementCL() {
+        ReadTimeoutConfig config = new ReadTimeoutConfig(2,3,false);
+        testPrimingReadTimeout(config, Consistency.LOCAL_QUORUM, Consistency.LOCAL_QUORUM);
+    }
+
+    @Test
+    public void testPrimingReadTimeoutPrimeCL() {
+        ReadTimeoutConfig config = new ReadTimeoutConfig(2,3,false, Consistency.TWO);
+        testPrimingReadTimeout(config, Consistency.LOCAL_QUORUM, Consistency.TWO);
+    }
+
+    private void testPrimingReadTimeout(ReadTimeoutConfig readTimeoutConfig, Consistency statementCL, Consistency expectedCL) {
         String query = "select * from people";
-        ReadTimeoutConfig readTimeoutConfig = new ReadTimeoutConfig(2,3,false);
         PrimingRequest prime = PrimingRequest.preparedStatementBuilder()
                 .withQuery(query)
                 .withResult(read_request_timeout)
                 .withConfig(readTimeoutConfig)
                 .build();
         primingClient.prime(prime);
-        String consistency = "LOCAL_QUORUM";
 
-        CassandraResult cassandraResult = cassandra().prepareAndExecuteWithConsistency(query, consistency);
+        CassandraResult cassandraResult = cassandra().prepareAndExecuteWithConsistency(query, statementCL.name());
 
         CassandraResult.ResponseStatus status = cassandraResult.status();
         assertEquals(read_request_timeout, status.getResult());
-        assertEquals(consistency, ((CassandraResult.ReadTimeoutStatus) status).getConsistency());
+        assertEquals(expectedCL.name(), ((CassandraResult.ReadTimeoutStatus) status).getConsistency());
         assertEquals(2, ((CassandraResult.ReadTimeoutStatus) status).getReceivedAcknowledgements());
         assertEquals(3, ((CassandraResult.ReadTimeoutStatus) status).getRequiredAcknowledgements());
         assertEquals(false, ((CassandraResult.ReadTimeoutStatus) status).WasDataRetrieved());
     }
 
     @Test
-    public void testPrimingWriteTimeout() {
+    public void testPrimingWriteTimeoutStatementCL() {
+        WriteTimeoutConfig config = new WriteTimeoutConfig(SIMPLE, 2, 3);
+        testPrimingWriteTimeout(config, Consistency.ALL, Consistency.ALL);
+    }
+
+    @Test
+    public void testPrimingWriteTimeoutPrimeCL() {
+        WriteTimeoutConfig config = new WriteTimeoutConfig(SIMPLE, 2, 3, Consistency.ONE);
+        testPrimingWriteTimeout(config, Consistency.ALL, Consistency.ONE);
+    }
+
+    private void testPrimingWriteTimeout(WriteTimeoutConfig writeTimeoutConfig, Consistency statementCL, Consistency expectedCL) {
         String query = "select * from people";
-        String consistency = "ALL";
-        WriteTimeoutConfig writeTimeoutConfig = new WriteTimeoutConfig(SIMPLE, 2, 3);
         PrimingRequest prime = PrimingRequest.preparedStatementBuilder()
                 .withQuery(query)
                 .withResult(write_request_timeout)
@@ -51,21 +69,30 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
                 .build();
         primingClient.prime(prime);
 
-        CassandraResult cassandraResult = cassandra().prepareAndExecuteWithConsistency(query, consistency);
+        CassandraResult cassandraResult = cassandra().prepareAndExecuteWithConsistency(query, statementCL.name());
 
         CassandraResult.ResponseStatus status = cassandraResult.status();
         assertEquals(write_request_timeout, status.getResult());
-        assertEquals(consistency, ((CassandraResult.WriteTimeoutStatus) status).getConsistency());
+        assertEquals(expectedCL.name(), ((CassandraResult.WriteTimeoutStatus) status).getConsistency());
         assertEquals(2, ((CassandraResult.WriteTimeoutStatus) status).getReceivedAcknowledgements());
         assertEquals(3, ((CassandraResult.WriteTimeoutStatus) status).getRequiredAcknowledgements());
         assertEquals(SIMPLE, ((CassandraResult.WriteTimeoutStatus) status).getWriteTypePrime());
     }
 
     @Test
-    public void testPrimingUnavailable() {
+    public void testPrimingUnavailableStatementCL() {
+        UnavailableConfig config = new UnavailableConfig(4,3);
+        testPrimingUnavailable(config, Consistency.LOCAL_QUORUM, Consistency.LOCAL_QUORUM);
+    }
+
+    @Test
+    public void testPrimingUnavailablePrimeCL() {
+        UnavailableConfig config = new UnavailableConfig(4,3, Consistency.THREE);
+        testPrimingUnavailable(config, Consistency.LOCAL_QUORUM, Consistency.THREE);
+    }
+
+    private void testPrimingUnavailable(UnavailableConfig unavailableConfig, Consistency statementCL, Consistency expectedCL) {
         String query = "select * from people";
-        String consistency = "LOCAL_ONE";
-        UnavailableConfig unavailableConfig = new UnavailableConfig(4,3);
         PrimingRequest prime = PrimingRequest.preparedStatementBuilder()
                 .withQuery(query)
                 .withResult(unavailable)
@@ -73,11 +100,11 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
                 .build();
         primingClient.prime(prime);
 
-        CassandraResult cassandraResult = cassandra().prepareAndExecuteWithConsistency(query, consistency);
+        CassandraResult cassandraResult = cassandra().prepareAndExecuteWithConsistency(query, statementCL.name());
 
         CassandraResult.ResponseStatus status = cassandraResult.status();
         assertEquals(unavailable, status.getResult());
-        assertEquals(consistency, ((CassandraResult.UnavailableStatus) status).getConsistency());
+        assertEquals(expectedCL.name(), ((CassandraResult.UnavailableStatus) status).getConsistency());
         assertEquals(4, ((CassandraResult.UnavailableStatus) status).getRequiredAcknowledgements());
         assertEquals(3, ((CassandraResult.UnavailableStatus) status).getAlive());
     }

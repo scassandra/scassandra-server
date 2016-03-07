@@ -24,17 +24,28 @@ public class UnavailableConfig extends Config {
 
     private final int requiredAcknowledgements;
     private final int alive;
+    private final Consistency consistencyLevel;
 
     public UnavailableConfig(int requiredAcknowledgements, int alive) {
+        this(requiredAcknowledgements, alive, null);
+    }
+
+    public UnavailableConfig(int requiredAcknowledgements, int alive, Consistency consistencyLevel) {
         this.requiredAcknowledgements = requiredAcknowledgements;
         this.alive = alive;
+        this.consistencyLevel = consistencyLevel;
     }
 
     @Override
     Map<String, ?> getProperties() {
-        return ImmutableMap.of(
-                ErrorConstants.Alive(), String.valueOf(this.alive),
-                ErrorConstants.RequiredResponse(), String.valueOf(this.requiredAcknowledgements)
-        );
+        ImmutableMap.Builder<String,String> builder = ImmutableMap.<String,String>builder()
+                .put(ErrorConstants.Alive(), String.valueOf(this.alive))
+                .put(ErrorConstants.RequiredResponse(), String.valueOf(this.requiredAcknowledgements));
+
+        if(consistencyLevel != null) {
+            builder.put(ErrorConstants.ConsistencyLevel(), String.valueOf(consistencyLevel.toString()));
+        }
+
+        return builder.build();
     }
 }

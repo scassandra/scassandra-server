@@ -26,4 +26,5 @@ object ErrorConstants {
   val Message = "error.message"
   var PrepareId = "error.prepare_id"
   var CloseType = "error.close_type"
+  var ConsistencyLevel = "error.consistency_level"
 }

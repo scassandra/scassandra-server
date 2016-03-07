@@ -71,13 +71,15 @@ case class UnavailableException(stream: Byte, consistency: Consistency, unavaila
 
   val required : Int = unavailableResult.requiredResponses
   val alive : Int = unavailableResult.alive
+  val consistencyToUse: Consistency = unavailableResult.consistencyLevel.getOrElse(consistency)
+
 
   override def serialize() : ByteString = {
     val bodyBs = ByteString.newBuilder
     bodyBs.putInt(errorCode)
     val errorMessageBytes = CqlProtocolHelper.serializeString(errorMessage)
     bodyBs.putBytes(errorMessageBytes.toArray)
-    bodyBs.putShort(consistency.code)
+    bodyBs.putShort(consistencyToUse.code)
     bodyBs.putInt(required)
     bodyBs.putInt(alive)
 
@@ -100,13 +102,14 @@ case class WriteRequestTimeout(stream: Byte, consistency: Consistency, writeRequ
   val receivedResponses : Int = writeRequestTimeoutResult.receivedResponses
   val blockFor : Int = writeRequestTimeoutResult.requiredResponses
   val writeType : String = writeRequestTimeoutResult.writeType.toString
+  val consistencyToUse: Consistency = writeRequestTimeoutResult.consistencyLevel.getOrElse(consistency)
 
   override def serialize() : ByteString = {
     val bodyBs = ByteString.newBuilder
     bodyBs.putInt(errorCode)
     val errorMessageBytes = CqlProtocolHelper.serializeString(errorMessage)
     bodyBs.putBytes(errorMessageBytes.toArray)
-    bodyBs.putShort(consistency.code)
+    bodyBs.putShort(consistencyToUse.code)
     bodyBs.putInt(receivedResponses)
     bodyBs.putInt(blockFor)
     bodyBs.putBytes(CqlProtocolHelper.serializeString(writeType).toArray)
@@ -120,6 +123,7 @@ case class ReadRequestTimeout(stream : Byte, consistency: Consistency, readReque
   val receivedResponses: Int = readRequestTimeoutResult.receivedResponses
   val blockFor: Int = readRequestTimeoutResult.requiredResponses
   val dataPresent: Byte = if (readRequestTimeoutResult.dataPresent) 1 else 0
+  val consistencyToUse: Consistency = readRequestTimeoutResult.consistencyLevel.getOrElse(consistency)
 
   import org.scassandra.server.cqlmessages.CqlProtocolHelper._
 
@@ -128,7 +132,7 @@ case class ReadRequestTimeout(stream : Byte, consistency: Consistency, readReque
     bodyBs.putInt(errorCode)
     val errorMessageBytes = CqlProtocolHelper.serializeString(errorMessage)
     bodyBs.putBytes(errorMessageBytes.toArray)
-    bodyBs.putShort(consistency.code)
+    bodyBs.putShort(consistencyToUse.code)
     bodyBs.putInt(receivedResponses)
     bodyBs.putInt(blockFor)
     bodyBs.putByte(dataPresent)

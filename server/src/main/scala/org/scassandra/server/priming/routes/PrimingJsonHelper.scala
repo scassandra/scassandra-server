@@ -108,17 +108,20 @@ object PrimingJsonHelper extends LazyLogging {
       case ReadTimeout => ReadRequestTimeoutResult(
         config.getOrElse(ErrorConstants.ReceivedResponse, "0").toInt,
         config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
-        config.getOrElse(ErrorConstants.DataPresent, "false").toBoolean
+        config.getOrElse(ErrorConstants.DataPresent, "false").toBoolean,
+        config.get(ErrorConstants.ConsistencyLevel).map(Consistency.fromString)
       )
       case WriteTimeout => WriteRequestTimeoutResult(
         config.getOrElse(ErrorConstants.ReceivedResponse, "0").toInt,
         config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
-        WriteType.withName(config.getOrElse(ErrorConstants.WriteType, "SIMPLE"))
+        WriteType.withName(config.getOrElse(ErrorConstants.WriteType, "SIMPLE")),
+        config.get(ErrorConstants.ConsistencyLevel).map(Consistency.fromString)
       )
       case Unavailable => UnavailableResult(
         config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
-        config.getOrElse(ErrorConstants.Alive, "0").toInt)
-
+        config.getOrElse(ErrorConstants.Alive, "0").toInt,
+        config.get(ErrorConstants.ConsistencyLevel).map(Consistency.fromString)
+      )
       case ClosedConnection => ClosedConnectionResult(
         config.getOrElse(ErrorConstants.CloseType, "close")
       )
