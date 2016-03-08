@@ -5,19 +5,17 @@ import java.util.concurrent.TimeUnit
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.cqlmessages.types.ColumnType
-import org.scassandra.server.priming.Defaulter
+import org.scassandra.server.priming.{PrimeAddResult, PrimeAddSuccess, Defaulter}
 import org.scassandra.server.priming.json.Success
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
 import org.scassandra.server.priming.routes.PrimingJsonHelper
 
 import scala.concurrent.duration.FiniteDuration
 
-class PrimePreparedMultiStore extends PreparedStoreLookup with LazyLogging {
+class PrimePreparedMultiStore extends PreparedStore[PrimePreparedMulti, PreparedMultiPrime] with PreparedStoreLookup with LazyLogging {
 
-  var state: Map[PrimeCriteria, PreparedMultiPrime] = Map()
-
-  // todo change to a result to include validation failures etc
-  def record(prime: PrimePreparedMulti): Unit = {
+  // todo validate PrimePreparedMulti
+  def record(prime: PrimePreparedMulti): PrimeAddResult = {
     val consistencies = prime.when.consistency.getOrElse(Consistency.all)
     val query = prime.when.query
     val thenDo = prime.thenDo
@@ -37,16 +35,11 @@ class PrimePreparedMultiStore extends PreparedStoreLookup with LazyLogging {
     val criteria: PrimeCriteria = PrimeCriteria(prime.when.query.get, consistencies)
     logger.info("Storing prime {} for with criteria {}", finalPrime, criteria)
     state += (criteria -> finalPrime)
+    PrimeAddSuccess
   }
 
   def findPrime(primeMatch: PrimeMatch): Option[PreparedPrimeResult] = {
     state.find({ case (criteria, result) => primeMatch.query == criteria.query &&
       criteria.consistency.contains(primeMatch.consistency) }).map(_._2)
-  }
-
-  def retrievePrimes(): Map[PrimeCriteria, PreparedMultiPrime] = state
-
-  def clear() = {
-    state = Map()
   }
 }

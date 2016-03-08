@@ -361,7 +361,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
   }
 
   describe("Retrieving of primes") {
-      it("should convert a prime back to the original JSON format") {
+    it("should convert a prime back to the original JSON format") {
       val query = "select * from users"
       val whenQuery = When(query = Some(query))
       val thenRows = Some(List(Map("field" -> "2c530380-b9f9-11e3-850e-338bb2a2e74f",
@@ -428,6 +428,22 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       }
     }
 
+    it("Should return delay passed into prime") {
+      val query = "select * from users"
+      val consistencies = Some(List(ONE, ALL))
+      val whenQuery = When(query = Some(query), consistency = consistencies)
+      val thenRows = Some(List(Map("one"->"two")))
+      val primePayload = PrimeQuerySingle(whenQuery, Then(rows = thenRows, fixedDelay = Some(123l)))
+
+      Post(primeQuerySinglePath, primePayload) ~> queryRoute
+
+      Get(primeQuerySinglePath) ~> queryRoute ~> check {
+        val response = responseAs[List[PrimeQuerySingle]]
+        response.size should equal(1)
+        response(0).thenDo.fixedDelay should equal(Some(123l))
+      }
+    }
+
     it("Should return consistencies passed into prime") {
       val query = "select * from users"
       val consistencies = Some(List(ONE, ALL))
@@ -454,7 +470,8 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
                                                  thenRows : Option[List[Map[String, Any]]] = None,
                                                  result : ResultJsonRepresentation = Success,
                                                  columnTypes : Option[Map[String, ColumnType[_]]] = None,
-                                                 consistencies : Option[List[Consistency]] = None) = {
+                                                 consistencies : Option[List[Consistency]] = None,
+                                                 fixedDelay : Option[Long] = None) = {
 
 
 
@@ -467,6 +484,6 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val columnNamesInAllRows = thenRows.get.flatMap(row => row.keys).distinct
       columnNamesInAllRows.map(colName => (colName, CqlVarchar)).toMap
     }
-    PrimeQuerySingle(When(query = Some(query), keyspace = Some(keyspace), table = Some(table), consistency = Some(consistenciesDefaultingToAll)), Then(thenRows, Some(result), Some(colTypesDefaultingToVarchar)))
+    PrimeQuerySingle(When(query = Some(query), keyspace = Some(keyspace), table = Some(table), consistency = Some(consistenciesDefaultingToAll)), Then(thenRows, Some(result), Some(colTypesDefaultingToVarchar), fixedDelay))
   }
 }

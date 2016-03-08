@@ -27,11 +27,11 @@ import org.scassandra.server.priming.routes.PrimingJsonHelper
 
 import scala.concurrent.duration.FiniteDuration
 
-class PrimePreparedStore extends LazyLogging with PreparedStore with PreparedStoreLookup {
+class PrimePreparedStore extends PreparedStore[PrimePreparedSingle, PreparedPrime] with PreparedStoreLookup with LazyLogging {
 
   val validator: PrimeValidator = PrimeValidator()
 
-  def record(prime: PrimePreparedSingle) : PrimeAddResult= {
+  def record(prime: PrimePreparedSingle) : PrimeAddResult = {
     val thenDo: ThenPreparedSingle = prime.thenDo
     val rows = thenDo.rows.getOrElse(List())
     val query = prime.when.query

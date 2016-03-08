@@ -18,10 +18,10 @@ package org.scassandra.server.priming.prepared
 import org.scassandra.server.priming.PrimeAddResult
 import org.scassandra.server.priming.query.{PrimeCriteria, PrimeMatch}
 
-trait PreparedStore {
-  var state: Map[PrimeCriteria, PreparedPrime] = Map()
-  def record(prime: PrimePreparedSingle): PrimeAddResult
-  def retrievePrimes(): Map[PrimeCriteria, PreparedPrime] = state
+trait PreparedStore[Incoming <: PreparedPrimeIncoming, Prime <: PreparedPrimeResult] {
+  var state: Map[PrimeCriteria, Prime] = Map()
+  def record(prime: Incoming): PrimeAddResult
+  def retrievePrimes(): Map[PrimeCriteria, Prime] = state
   def clear() = {
     state = Map()
   }

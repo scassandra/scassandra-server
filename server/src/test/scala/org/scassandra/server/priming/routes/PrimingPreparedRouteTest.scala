@@ -209,6 +209,20 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       }
     }
 
+    it("should convert outcome delay to the original Json Format") {
+      val fixedDelay = Some(FiniteDuration(1500, TimeUnit.MILLISECONDS))
+      val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map(
+        PrimeCriteria("", List()) -> PreparedPrime(List(), Prime(fixedDelay = fixedDelay))
+      )
+      when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
+
+      Get(primePreparedSinglePath) ~> routeForPreparedPriming ~> check {
+        val parsedResponse = responseAs[List[PrimePreparedSingle]]
+        parsedResponse.size should equal(1)
+        parsedResponse.head.thenDo.fixedDelay should equal(Some(fixedDelay.get.toMillis))
+      }
+    }
+
     it("should convert consistencies to the original Json Format") {
       val query: String = "select * from people where name = ?"
       val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map(
@@ -311,8 +325,6 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
         parsedResponse.head.when.query should equal(Some(query))
       }
     }
-
-    //TODO query pattern?
 
     it("should convert outcome criteria variable matchers to the original Json Format") {
       val variableMatchers: List[VariableMatch] = List(AnyMatch, ExactMatch(Some("")))

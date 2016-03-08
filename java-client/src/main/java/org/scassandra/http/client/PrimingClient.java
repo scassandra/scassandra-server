@@ -27,10 +27,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.scassandra.cql.CqlType;
-import org.scassandra.http.client.types.GsonCqlTypeDeserialiser;
-import org.scassandra.http.client.types.GsonCqlTypeSerialiser;
-import org.scassandra.http.client.types.GsonDateSerialiser;
-import org.scassandra.http.client.types.GsonInetAddressSerialiser;
+import org.scassandra.http.client.types.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,11 +41,13 @@ public class PrimingClient {
 
     public static final String DELETING_OF_PRIMES_FAILED = "Deleting of primes failed";
     public static final String PRIMING_FAILED = "Priming failed";
+
     public static class PrimingClientBuilder {
 
         private String host = "localhost";
 
         private int port = 8043;
+
         private PrimingClientBuilder() {
         }
 
@@ -67,6 +66,7 @@ public class PrimingClient {
         }
 
     }
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PrimingClient.class);
 
     public static PrimingClientBuilder builder() {
@@ -78,6 +78,8 @@ public class PrimingClient {
             .registerTypeAdapter(CqlType.class, new GsonCqlTypeDeserialiser())
             .registerTypeAdapter(InetAddress.class, new GsonInetAddressSerialiser())
             .registerTypeAdapter(Date.class, new GsonDateSerialiser())
+            .registerTypeAdapter(MultiPrimeRequest.VariableMatch.class, new GsonVariableMatchDeserialiser())
+            .registerTypeAdapter(MultiPrimeRequest.ExactMatch.class, new GsonExactMatchSerialiser())
             .enableComplexMapKeySerialization()
             .create();
 
@@ -121,7 +123,6 @@ public class PrimingClient {
         prime(primeRequest, primePreparedMultiUrl);
     }
 
-
     /**
      * @param primeRequest The Prime
      * @deprecated Use prime() instead.
@@ -147,11 +148,15 @@ public class PrimingClient {
     }
 
     public List<PrimingRequest> retrievePreparedPrimes() {
-        return httpGetPrimingRequests(primePreparedUrl);
+        return httpGetSinglePrimingRequests(primePreparedUrl);
+    }
+
+    public List<MultiPrimeRequest> retrievePreparedMultiPrimes() {
+        return httpGetMultiPrimingRequests(primePreparedMultiUrl);
     }
 
     public List<PrimingRequest> retrieveQueryPrimes() {
-        return httpGetPrimingRequests(primeQueryUrl);
+        return httpGetSinglePrimingRequests(primeQueryUrl);
     }
 
     public void clearAllPrimes() {
@@ -171,7 +176,19 @@ public class PrimingClient {
         httpDelete(primePreparedMultiUrl);
     }
 
-    private List<PrimingRequest> httpGetPrimingRequests(String url) {
+    private List<PrimingRequest> httpGetSinglePrimingRequests(String url) {
+        String responseAsString = httpGet(url);
+        PrimingRequest[] primes = (PrimingRequest[]) gson.fromJson(responseAsString, (Class) PrimingRequest[].class);
+        return Arrays.asList(primes);
+    }
+
+    private List<MultiPrimeRequest> httpGetMultiPrimingRequests(String url) {
+        String responseAsString = httpGet(url);
+        MultiPrimeRequest[] primes = (MultiPrimeRequest[]) gson.fromJson(responseAsString, (Class) MultiPrimeRequest[].class);
+        return Arrays.asList(primes);
+    }
+
+    private String httpGet(String url) {
         HttpGet get = new HttpGet(url);
         try {
             CloseableHttpResponse httpResponse = httpClient.execute(get);
@@ -183,8 +200,7 @@ public class PrimingClient {
                 throw new PrimeFailedException(errorMessage);
             }
             LOGGER.debug("Received response from scassandra {}", responseAsString);
-            PrimingRequest[] primes = (PrimingRequest[]) gson.fromJson(responseAsString, (Class) PrimingRequest[].class);
-            return Arrays.asList(primes);
+            return responseAsString;
         } catch (IOException e) {
             LOGGER.info("Retrieving failed", e);
             throw new PrimeFailedException("Retrieving of primes failed.", e);

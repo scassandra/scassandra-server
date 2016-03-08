@@ -28,6 +28,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.scassandra.cql.PrimitiveType.TEXT;
+import static org.scassandra.cql.PrimitiveType.TIMESTAMP;
+import static org.scassandra.cql.PrimitiveType.TIMEUUID;
 import static org.scassandra.http.client.BatchQueryPrime.batchQueryPrime;
 import static org.scassandra.http.client.MultiPrimeRequest.*;
 
@@ -49,7 +51,6 @@ public class PrimingClientTest {
     public void setup() {
         underTest = PrimingClient.builder().withHost("localhost").withPort(PORT).build();
     }
-
 
     @Test
     public void primeQueryUsingPrimeMethod() throws Exception {
@@ -243,7 +244,6 @@ public class PrimingClientTest {
                 .build();
         //when
         underTest.primeQuery(pr);
-        //then
     }
 
     @Test
@@ -312,7 +312,6 @@ public class PrimingClientTest {
         stubFor(delete(urlEqualTo(PRIME_QUERY_PATH)).willReturn(aResponse().withStatus(500)));
         //when
         underTest.clearQueryPrimes();
-        //then
     }
 
     @Test(expected = PrimeFailedException.class)
@@ -321,7 +320,6 @@ public class PrimingClientTest {
         stubFor(get(urlEqualTo(PRIME_QUERY_PATH)).willReturn(aResponse().withStatus(500)));
         //when
         underTest.retrieveQueryPrimes();
-        //then
     }
 
     @Test(expected = PrimeFailedException.class)
@@ -330,7 +328,6 @@ public class PrimingClientTest {
         stubFor(delete(urlEqualTo(PRIME_QUERY_PATH)).willReturn(aResponse().withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
         //when
         underTest.clearQueryPrimes();
-        //then
     }
 
     @Test(expected = PrimeFailedException.class)
@@ -341,7 +338,6 @@ public class PrimingClientTest {
                         .withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
         //when
         underTest.retrieveQueryPrimes();
-        //then
     }
 
     @Test
@@ -487,7 +483,6 @@ public class PrimingClientTest {
                 .willReturn(aResponse().withBody("oh dear").withStatus(500)));
         //when
         underTest.primePreparedStatement(PrimingRequest.preparedStatementBuilder().withQuery("").build());
-        //then
     }
 
     @Test(expected = PrimeFailedException.class)
@@ -497,7 +492,6 @@ public class PrimingClientTest {
                 .willReturn(aResponse().withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
         //when
         underTest.primePreparedStatement(PrimingRequest.preparedStatementBuilder().withQuery("").build());
-        //then
     }
 
     @Test
@@ -557,7 +551,6 @@ public class PrimingClientTest {
         stubFor(delete(urlEqualTo(PRIME_PREPARED_PATH)).willReturn(aResponse().withStatus(300)));
         //when
         underTest.clearPreparedPrimes();
-        //then
     }
 
     @Test(expected = PrimeFailedException.class)
@@ -566,7 +559,6 @@ public class PrimingClientTest {
         stubFor(delete(urlEqualTo(PRIME_PREPARED_PATH)).willReturn(aResponse().withFault(Fault.RANDOM_DATA_THEN_CLOSE).withStatus(200)));
         //when
         underTest.clearPreparedPrimes();
-        //then
     }
 
     @Test
@@ -580,7 +572,6 @@ public class PrimingClientTest {
         verify(deleteRequestedFor(urlEqualTo(PRIME_PREPARED_PATH)));
         verify(deleteRequestedFor(urlEqualTo(PRIME_QUERY_PATH)));
     }
-
 
     @Test
     public void testPrimingWithQueryPattern() throws Exception {
@@ -659,7 +650,7 @@ public class PrimingClientTest {
                         "{\"map_type\":{\"one\":\"two\",\"three\":\"four\"}}]," +
                         "\"result\":\"success\"," +
                         "\"column_types\":{\"map_type\":\"map<varchar,varchar>\"}}}"
-                       )));
+                )));
 
     }
 
@@ -758,7 +749,6 @@ public class PrimingClientTest {
         stubFor(delete(urlEqualTo(PRIME_PREPARED_MULTI_PATH)).willReturn(aResponse().withStatus(500)));
         //when
         underTest.clearPreparedMultiPrimes();
-        //then
     }
 
     @Test(expected = PrimeFailedException.class)
@@ -767,6 +757,49 @@ public class PrimingClientTest {
         stubFor(delete(urlEqualTo(PRIME_PREPARED_MULTI_PATH)).willReturn(aResponse().withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
         //when
         underTest.clearQueryPrimes();
+    }
+
+    @Test
+    public void testRetrieveOfPreviousMultiPreparedPrimes() {
+        //given
+        MultiPrimeRequest pr = MultiPrimeRequest.request()
+                .withWhen(when()
+                        .withQuery("select * from person where name = ?"))
+                .withThen(then()
+                        .withVariableTypes(TEXT, TIMESTAMP, TIMEUUID)
+                        .withOutcomes(outcome(match().withVariableMatchers(exactMatch().withMatcher("Chris").build(), anyMatch()), action()))
+                )
+                .build();
+
+        stubFor(get(urlEqualTo(PRIME_PREPARED_MULTI_PATH)).willReturn(aResponse().withStatus(200).withBody(
+                "[{\"when\":{\"query\":\"select * from person where name \\u003d ?\"}," +
+                        "\"then\":{\"variable_types\":[\"text\", \"timestamp\", \"timeuuid\"],\"outcomes\":[{\"criteria\":" +
+                        "{\"variable_matcher\":[{\"matcher\":\"Chris\",\"type\":\"exact\"}, {\"type\":\"any\"}]},\"action\":{}}]}}]"
+        )));
+
+        //when
+        List<MultiPrimeRequest> primingRequests = underTest.retrievePreparedMultiPrimes();
+
         //then
+        assertEquals(1, primingRequests.size());
+        assertEquals(pr, primingRequests.get(0));
+    }
+
+    @Test(expected = PrimeFailedException.class)
+    public void testRetrievingOfMultiPreparedPrimesFailedDueToStatusCode() {
+        //given
+        stubFor(get(urlEqualTo(PRIME_PREPARED_MULTI_PATH)).willReturn(aResponse().withStatus(500)));
+        //when
+        underTest.retrieveQueryPrimes();
+    }
+
+    @Test(expected = PrimeFailedException.class)
+    public void testRetrievingOfMultiPreparedPrimesFailed() {
+        //given
+        stubFor(get(urlEqualTo(PRIME_PREPARED_MULTI_PATH))
+                .willReturn(aResponse()
+                        .withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
+        //when
+        underTest.retrieveQueryPrimes();
     }
 }

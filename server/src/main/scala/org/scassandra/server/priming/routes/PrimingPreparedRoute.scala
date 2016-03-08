@@ -61,30 +61,12 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
           val preparedPrimes: Iterable[PrimePreparedMulti] = primePreparedMultiStore.retrievePrimes().map({ case (primeCriteria, preparedPrime) =>
 
             val outcomes : List[Outcome] = preparedPrime.variableMatchers.map({ case (outcome) =>
-              val variableMatchers: List[VariableMatch] = outcome._1
+              val (variableMatchers, prime) = outcome
+
               val criteria = Criteria(variableMatchers)
 
-              val prime: Prime = outcome._2
-              val result = prime.result match {
-                case SuccessResult => Success
-                case _: ReadRequestTimeoutResult => ReadTimeout
-                case _: WriteRequestTimeoutResult => WriteTimeout
-                case _: UnavailableResult => Unavailable
-                case _: ServerErrorResult => ServerError
-                case _: ProtocolErrorResult => ProtocolError
-                case _: BadCredentialsResult => BadCredentials
-                case _: OverloadedResult => Overloaded
-                case _: IsBootstrappingResult => IsBootstrapping
-                case _: TruncateErrorResult => TruncateError
-                case _: SyntaxErrorResult => SyntaxError
-                case _: UnauthorizedResult => Unauthorized
-                case _: InvalidResult => Invalid
-                case _: ConfigErrorResult => ConfigError
-                case _: AlreadyExistsResult => AlreadyExists
-                case _: UnpreparedResult => Unprepared
-                case _: ClosedConnectionResult => ClosedConnection
-              }
-              val fixedDelay = if (prime.fixedDelay.isDefined) Some(prime.fixedDelay.get.toMillis) else None
+              val result = PrimingJsonHelper.convertToResultJsonRepresentation(prime.result)
+              val fixedDelay = prime.fixedDelay.map(_.toMillis)
               val action = Action(Some(prime.rows), Some(prime.columnTypes), Some(result), fixedDelay)
               Outcome(criteria, action)
             })
@@ -139,25 +121,8 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
       get {
         complete {
           val preparedPrimes: Iterable[PrimePreparedSingle] = primePreparedStore.retrievePrimes().map({case (primeCriteria, preparedPrime) =>
-            val result = preparedPrime.getPrime().result match {
-              case SuccessResult => Success
-              case _: ReadRequestTimeoutResult => ReadTimeout
-              case _: WriteRequestTimeoutResult => WriteTimeout
-              case _: UnavailableResult => Unavailable
-              case _: ServerErrorResult => ServerError
-              case _: ProtocolErrorResult => ProtocolError
-              case _: BadCredentialsResult => BadCredentials
-              case _: OverloadedResult => Overloaded
-              case _: IsBootstrappingResult => IsBootstrapping
-              case _: TruncateErrorResult => TruncateError
-              case _: SyntaxErrorResult => SyntaxError
-              case _: UnauthorizedResult => Unauthorized
-              case _: InvalidResult => Invalid
-              case _: ConfigErrorResult => ConfigError
-              case _: AlreadyExistsResult => AlreadyExists
-              case _: UnpreparedResult => Unprepared
-              case _: ClosedConnectionResult => ClosedConnection
-            }
+            val fixedDelay = preparedPrime.prime.fixedDelay.map(_.toMillis)
+            val result = PrimingJsonHelper.convertToResultJsonRepresentation(preparedPrime.getPrime().result)
             PrimePreparedSingle(
               WhenPrepared(
                 query = Some(primeCriteria.query), consistency = Some(primeCriteria.consistency)),
@@ -165,7 +130,8 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
                 Some(preparedPrime.getPrime().rows),
                 Some(preparedPrime.variableTypes),
                 Some(preparedPrime.getPrime().columnTypes),
-                Some(result)
+                Some(result),
+                fixedDelay
               )
             )
           })
