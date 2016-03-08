@@ -25,19 +25,30 @@ public class WriteTimeoutConfig extends Config {
     private final WriteTypePrime writeType;
     private final int receivedAcknowledgements;
     private final int requiredAcknowledgements;
+    private final Consistency consistencyLevel;
 
     public WriteTimeoutConfig(WriteTypePrime writeType, int receivedAcknowledgements, int requiredAcknowledgements) {
+        this(writeType, receivedAcknowledgements, requiredAcknowledgements, null);
+    }
+
+    public WriteTimeoutConfig(WriteTypePrime writeType, int receivedAcknowledgements, int requiredAcknowledgements, Consistency consistencyLevel) {
         this.writeType = writeType;
         this.receivedAcknowledgements = receivedAcknowledgements;
         this.requiredAcknowledgements = requiredAcknowledgements;
+        this.consistencyLevel = consistencyLevel;
     }
 
     @Override
     Map<String, ?> getProperties() {
-        return ImmutableMap.of(
-                ErrorConstants.ReceivedResponse(), String.valueOf(this.receivedAcknowledgements),
-                ErrorConstants.RequiredResponse(), String.valueOf(this.requiredAcknowledgements),
-                ErrorConstants.WriteType(), String.valueOf(writeType.toString())
-        );
+        ImmutableMap.Builder<String,String> builder = ImmutableMap.<String,String>builder()
+                .put(ErrorConstants.ReceivedResponse(), String.valueOf(this.receivedAcknowledgements))
+                .put(ErrorConstants.RequiredResponse(), String.valueOf(this.requiredAcknowledgements))
+                .put(ErrorConstants.WriteType(), String.valueOf(writeType.toString()));
+
+        if(consistencyLevel != null) {
+            builder.put(ErrorConstants.ConsistencyLevel(), String.valueOf(consistencyLevel.toString()));
+        }
+
+        return builder.build();
     }
 }
