@@ -129,31 +129,37 @@ object PrimingJsonHelper extends LazyLogging {
     primeResult
   }
 
+  def convertToResultJsonRepresentation(primeResult: PrimeResult): ResultJsonRepresentation = {
+    primeResult match {
+      case SuccessResult => Success
+      case _: ReadRequestTimeoutResult => ReadTimeout
+      case _: WriteRequestTimeoutResult => WriteTimeout
+      case _: UnavailableResult => Unavailable
+      case _: ServerErrorResult => ServerError
+      case _: ProtocolErrorResult => ProtocolError
+      case _: BadCredentialsResult => BadCredentials
+      case _: OverloadedResult => Overloaded
+      case _: IsBootstrappingResult => IsBootstrapping
+      case _: TruncateErrorResult => TruncateError
+      case _: SyntaxErrorResult => SyntaxError
+      case _: UnauthorizedResult => Unauthorized
+      case _: InvalidResult => Invalid
+      case _: ConfigErrorResult => ConfigError
+      case _: AlreadyExistsResult => AlreadyExists
+      case _: UnpreparedResult => Unprepared
+      case _: ClosedConnectionResult => ClosedConnection
+    }
+  }
+
   def convertBackToPrimeQueryResult(allPrimes: Map[PrimeCriteria, Prime]) = {
     allPrimes.map({ case (primeCriteria, prime) =>
       val when = When(Some(primeCriteria.query), keyspace = Some(prime.keyspace), table = Some(prime.table), consistency = Some(primeCriteria.consistency))
 
-      val result = prime.result match {
-        case SuccessResult => Success
-        case _: ReadRequestTimeoutResult => ReadTimeout
-        case _: WriteRequestTimeoutResult => WriteTimeout
-        case _: UnavailableResult => Unavailable
-        case _: ServerErrorResult => ServerError
-        case _: ProtocolErrorResult => ProtocolError
-        case _: BadCredentialsResult => BadCredentials
-        case _: OverloadedResult => Overloaded
-        case _: IsBootstrappingResult => IsBootstrapping
-        case _: TruncateErrorResult => TruncateError
-        case _: SyntaxErrorResult => SyntaxError
-        case _: UnauthorizedResult => Unauthorized
-        case _: InvalidResult => Invalid
-        case _: ConfigErrorResult => ConfigError
-        case _: AlreadyExistsResult => AlreadyExists
-        case _: UnpreparedResult => Unprepared
-        case _: ClosedConnectionResult => ClosedConnection
-      }
+      val fixedDelay = if (prime.fixedDelay.isDefined) Some(prime.fixedDelay.get.toMillis) else None
 
-      val thenDo = Then(Some(prime.rows), result = Some(result), column_types = Some(prime.columnTypes))
+      val result = convertToResultJsonRepresentation(prime.result)
+
+      val thenDo = Then(Some(prime.rows), result = Some(result), column_types = Some(prime.columnTypes), fixedDelay = fixedDelay)
 
       PrimeQuerySingle(when, thenDo)
     })

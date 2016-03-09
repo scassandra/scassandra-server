@@ -30,6 +30,8 @@
 */
 package org.scassandra.server.priming.routes
 
+import java.util.concurrent.TimeUnit
+
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -38,10 +40,12 @@ import org.scassandra.server.cqlmessages.types.{CqlText, CqlInt, CqlVarchar}
 import org.scassandra.server.cqlmessages.{ONE, TWO}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
-import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPrepared, _}
+import org.scassandra.server.priming.prepared._
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
 import spray.http.StatusCodes
 import spray.testkit.ScalatestRouteTest
+
+import scala.concurrent.duration.FiniteDuration
 
 class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRouteTest with PrimingPreparedRoute with MockitoSugar
  with BeforeAndAfter {
@@ -127,7 +131,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map()
       when(primePreparedStore.retrievePrimes()).thenReturn(existingPrimes)
 
-      Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
+      Get(primePreparedSinglePath) ~> routeForPreparedPriming ~> check {
           responseAs[List[PrimePreparedSingle]].size should equal(0)
       }
     }
@@ -140,7 +144,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       )
       when(primePreparedStore.retrievePrimes()).thenReturn(existingPrimes)
 
-      Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
+      Get(primePreparedSinglePath) ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
         parsedResponse.size should equal(1)
         parsedResponse(0).thenDo.variable_types should equal(Some(variableTypes))
@@ -154,7 +158,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       )
       when(primePreparedStore.retrievePrimes()).thenReturn(existingPrimes)
 
-      Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
+      Get(primePreparedSinglePath) ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
         parsedResponse.size should equal(1)
         parsedResponse.head.when.query should equal(Some(query) )
@@ -169,7 +173,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       )
       when(primePreparedStore.retrievePrimes()).thenReturn(existingPrimes)
 
-      Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
+      Get(primePreparedSinglePath) ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
         parsedResponse.size should equal(1)
         parsedResponse.head.thenDo.rows should equal(Some(rows))
@@ -184,7 +188,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       )
       when(primePreparedStore.retrievePrimes()).thenReturn(existingPrimes)
 
-      Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
+      Get(primePreparedSinglePath) ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
         parsedResponse.size should equal(1)
         parsedResponse(0).thenDo.column_types should equal(Some(columnTypes))
@@ -198,10 +202,24 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       )
       when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
 
-      Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
+      Get(primePreparedSinglePath) ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
         parsedResponse.size should equal(1)
         parsedResponse.head.thenDo.result should equal(Some(ReadTimeout))
+      }
+    }
+
+    it("should convert outcome delay to the original Json Format") {
+      val fixedDelay = Some(FiniteDuration(1500, TimeUnit.MILLISECONDS))
+      val existingPrimes : Map[PrimeCriteria, PreparedPrime] = Map(
+        PrimeCriteria("", List()) -> PreparedPrime(List(), Prime(fixedDelay = fixedDelay))
+      )
+      when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
+
+      Get(primePreparedSinglePath) ~> routeForPreparedPriming ~> check {
+        val parsedResponse = responseAs[List[PrimePreparedSingle]]
+        parsedResponse.size should equal(1)
+        parsedResponse.head.thenDo.fixedDelay should equal(Some(fixedDelay.get.toMillis))
       }
     }
 
@@ -212,7 +230,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
       )
       when(primePreparedStore.retrievePrimes).thenReturn(existingPrimes)
 
-      Get("/prime-prepared-single") ~> routeForPreparedPriming ~> check {
+      Get(primePreparedSinglePath) ~> routeForPreparedPriming ~> check {
         val parsedResponse = responseAs[List[PrimePreparedSingle]]
         parsedResponse.size should equal(1)
         parsedResponse.head.when.consistency should equal(Some(List(ONE, TWO)))
@@ -270,4 +288,131 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
 
   //todo test for specifying neither a query or queryPattern
 
+  describe("Retrieving of multi primes") {
+    it("should return empty list when there are no multi primes") {
+      val existingMultiPrimes : Map[PrimeCriteria, PreparedMultiPrime] = Map()
+      when(primePreparedMultiStore.retrievePrimes()).thenReturn(existingMultiPrimes)
+
+      Get(primePreparedMultiPath) ~> routeForPreparedPriming ~> check {
+        responseAs[List[PrimePreparedMulti]].size should equal(0)
+      }
+    }
+
+    it("should convert variable types in original Json Format") {
+      val variableTypes = List(CqlVarchar, CqlInt)
+      val existingPrimes : Map[PrimeCriteria, PreparedMultiPrime] = Map(
+        PrimeCriteria("", List()) -> PreparedMultiPrime(variableTypes, List())
+      )
+      when(primePreparedMultiStore.retrievePrimes()).thenReturn(existingPrimes)
+
+      Get(primePreparedMultiPath) ~> routeForPreparedPriming ~> check {
+        val parsedResponse = responseAs[List[PrimePreparedMulti]]
+        parsedResponse.size should equal(1)
+        parsedResponse.head.thenDo.variable_types should equal(Some(variableTypes))
+      }
+    }
+
+    it("should put query in original Json Format") {
+      val query: String = "select * from people where name = ?"
+      val existingPrimes : Map[PrimeCriteria, PreparedMultiPrime] = Map(
+        PrimeCriteria(query, List()) -> PreparedMultiPrime(List(), List())
+      )
+      when(primePreparedMultiStore.retrievePrimes()).thenReturn(existingPrimes)
+
+      Get(primePreparedMultiPath) ~> routeForPreparedPriming ~> check {
+        val parsedResponse = responseAs[List[PrimePreparedMulti]]
+        parsedResponse.size should equal(1)
+        parsedResponse.head.when.query should equal(Some(query))
+      }
+    }
+
+    it("should convert outcome criteria variable matchers to the original Json Format") {
+      val variableMatchers: List[VariableMatch] = List(AnyMatch, ExactMatch(Some("")))
+      val outcomes: List[(List[VariableMatch], Prime)] = List((variableMatchers, Prime()))
+      val existingPrimes : Map[PrimeCriteria, PreparedMultiPrime] = Map(
+        PrimeCriteria("", List()) -> PreparedMultiPrime(List(), outcomes)
+      )
+      when(primePreparedMultiStore.retrievePrimes()).thenReturn(existingPrimes)
+
+      Get(primePreparedMultiPath) ~> routeForPreparedPriming ~> check {
+        val parsedResponse = responseAs[List[PrimePreparedMulti]]
+        parsedResponse.size should equal(1)
+        parsedResponse.head.thenDo.outcomes.size should equal(1)
+        parsedResponse.head.thenDo.outcomes.head.criteria.variable_matcher should equal(variableMatchers)
+      }
+    }
+
+    it("should convert outcome action rows to the original Json Format") {
+      val rows = List(Map("name" -> "Chris"))
+      val outcomes: List[(List[VariableMatch], Prime)] = List((List(), Prime(rows)))
+      val existingPrimes : Map[PrimeCriteria, PreparedMultiPrime] = Map(
+        PrimeCriteria("", List()) -> PreparedMultiPrime(List(), outcomes)
+      )
+      when(primePreparedMultiStore.retrievePrimes()).thenReturn(existingPrimes)
+
+      Get(primePreparedMultiPath) ~> routeForPreparedPriming ~> check {
+        val parsedResponse = responseAs[List[PrimePreparedMulti]]
+        parsedResponse.head.thenDo.outcomes.size should equal(1)
+        parsedResponse.head.thenDo.outcomes.head.action.rows should equal(Some(rows))
+      }
+    }
+
+    it("should convert outcome action columns to the original Json Format") {
+      val columnTypes = Map("name" -> CqlVarchar)
+      val outcomes: List[(List[VariableMatch], Prime)] = List((List(), Prime(columnTypes = columnTypes)))
+      val existingPrimes : Map[PrimeCriteria, PreparedMultiPrime] = Map(
+        PrimeCriteria("", List()) -> PreparedMultiPrime(List(), outcomes)
+      )
+      when(primePreparedMultiStore.retrievePrimes()).thenReturn(existingPrimes)
+
+      Get(primePreparedMultiPath) ~> routeForPreparedPriming ~> check {
+        val parsedResponse = responseAs[List[PrimePreparedMulti]]
+        parsedResponse.head.thenDo.outcomes.size should equal(1)
+        parsedResponse.head.thenDo.outcomes.head.action.column_types should equal(Some(columnTypes))
+      }
+    }
+
+    it("should convert outcome result to the original Json Format") {
+      val result = WriteRequestTimeoutResult()
+      val outcomes: List[(List[VariableMatch], Prime)] = List((List(), Prime(result = result)))
+      val existingPrimes : Map[PrimeCriteria, PreparedMultiPrime] = Map(
+        PrimeCriteria("", List()) -> PreparedMultiPrime(List(), outcomes)
+      )
+      when(primePreparedMultiStore.retrievePrimes()).thenReturn(existingPrimes)
+
+      Get(primePreparedMultiPath) ~> routeForPreparedPriming ~> check {
+        val parsedResponse = responseAs[List[PrimePreparedMulti]]
+        parsedResponse.head.thenDo.outcomes.size should equal(1)
+        parsedResponse.head.thenDo.outcomes.head.action.result should equal(Some(WriteTimeout))
+      }
+    }
+
+    it("should convert outcome delay to the original Json Format") {
+      val fixedDelay = Some(FiniteDuration(1500, TimeUnit.MILLISECONDS))
+      val outcomes: List[(List[VariableMatch], Prime)] = List((List(), Prime(fixedDelay = fixedDelay)))
+      val existingPrimes : Map[PrimeCriteria, PreparedMultiPrime] = Map(
+        PrimeCriteria("", List()) -> PreparedMultiPrime(List(), outcomes)
+      )
+      when(primePreparedMultiStore.retrievePrimes()).thenReturn(existingPrimes)
+
+      Get(primePreparedMultiPath) ~> routeForPreparedPriming ~> check {
+        val parsedResponse = responseAs[List[PrimePreparedMulti]]
+        parsedResponse.head.thenDo.outcomes.size should equal(1)
+        parsedResponse.head.thenDo.outcomes.head.action.fixedDelay should equal(Some(fixedDelay.get.toMillis))
+      }
+    }
+
+    it("should convert consistencies to the original Json Format") {
+      val existingPrimes : Map[PrimeCriteria, PreparedMultiPrime] = Map(
+        PrimeCriteria("", List(ONE, TWO)) -> PreparedMultiPrime(List(), List())
+      )
+      when(primePreparedMultiStore.retrievePrimes).thenReturn(existingPrimes)
+
+      Get(primePreparedMultiPath) ~> routeForPreparedPriming ~> check {
+        val parsedResponse = responseAs[List[PrimePreparedSingle]]
+        parsedResponse.size should equal(1)
+        parsedResponse.head.when.consistency should equal(Some(List(ONE, TWO)))
+      }
+    }
+  }
 }

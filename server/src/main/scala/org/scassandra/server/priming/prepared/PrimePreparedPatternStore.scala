@@ -21,12 +21,12 @@ import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.cqlmessages.Consistency
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
 import org.scassandra.server.priming.routes.PrimingJsonHelper
-import org.scassandra.server.priming.{Defaulter, PrimeAddResult, PrimeAddSuccess}
+import org.scassandra.server.priming.{PrimeAddResult, Defaulter, PrimeAddSuccess}
 import org.scassandra.server.priming.json.Success
 
 import scala.concurrent.duration.FiniteDuration
 
-class PrimePreparedPatternStore extends LazyLogging with PreparedStore with PreparedStoreLookup {
+class PrimePreparedPatternStore extends PreparedStore[PrimePreparedSingle, PreparedPrime] with PreparedStoreLookup with LazyLogging {
 
   def record(incomingPrime: PrimePreparedSingle): PrimeAddResult = {
     val primeCriteria = PrimeCriteria(incomingPrime.when.queryPattern.get, incomingPrime.when.consistency.getOrElse(Consistency.all))

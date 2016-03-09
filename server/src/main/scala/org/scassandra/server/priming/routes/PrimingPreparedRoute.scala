@@ -17,6 +17,7 @@ package org.scassandra.server.priming.routes
 
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json.WriteTimeout
+import org.scassandra.server.priming.query.Prime
 import spray.routing.HttpService
 import com.typesafe.scalalogging.LazyLogging
 import spray.http.StatusCodes
@@ -52,6 +53,37 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
         complete {
           primePreparedMultiStore.clear()
           StatusCodes.OK
+        }
+      } ~
+      get {
+        complete {
+
+          val preparedPrimes: Iterable[PrimePreparedMulti] = primePreparedMultiStore.retrievePrimes().map({ case (primeCriteria, preparedPrime) =>
+
+            val outcomes : List[Outcome] = preparedPrime.variableMatchers.map({ case (outcome) =>
+              val (variableMatchers, prime) = outcome
+
+              val criteria = Criteria(variableMatchers)
+
+              val result = PrimingJsonHelper.convertToResultJsonRepresentation(prime.result)
+              val fixedDelay = prime.fixedDelay.map(_.toMillis)
+              val action = Action(Some(prime.rows), Some(prime.columnTypes), Some(result), fixedDelay)
+              Outcome(criteria, action)
+            })
+
+            PrimePreparedMulti(
+              WhenPrepared(
+                query = Some(primeCriteria.query),
+                consistency = Some(primeCriteria.consistency)
+              ),
+              ThenPreparedMulti(
+                Some(preparedPrime.variableTypes),
+                outcomes
+              )
+            )
+          })
+
+          preparedPrimes
         }
       }
     } ~
@@ -89,25 +121,8 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
       get {
         complete {
           val preparedPrimes: Iterable[PrimePreparedSingle] = primePreparedStore.retrievePrimes().map({case (primeCriteria, preparedPrime) =>
-            val result = preparedPrime.getPrime().result match {
-              case SuccessResult => Success
-              case _: ReadRequestTimeoutResult => ReadTimeout
-              case _: WriteRequestTimeoutResult => WriteTimeout
-              case _: UnavailableResult => Unavailable
-              case _: ServerErrorResult => ServerError
-              case _: ProtocolErrorResult => ProtocolError
-              case _: BadCredentialsResult => BadCredentials
-              case _: OverloadedResult => Overloaded
-              case _: IsBootstrappingResult => IsBootstrapping
-              case _: TruncateErrorResult => TruncateError
-              case _: SyntaxErrorResult => SyntaxError
-              case _: UnauthorizedResult => Unauthorized
-              case _: InvalidResult => Invalid
-              case _: ConfigErrorResult => ConfigError
-              case _: AlreadyExistsResult => AlreadyExists
-              case _: UnpreparedResult => Unprepared
-              case _: ClosedConnectionResult => ClosedConnection
-            }
+            val fixedDelay = preparedPrime.prime.fixedDelay.map(_.toMillis)
+            val result = PrimingJsonHelper.convertToResultJsonRepresentation(preparedPrime.getPrime().result)
             PrimePreparedSingle(
               WhenPrepared(
                 query = Some(primeCriteria.query), consistency = Some(primeCriteria.consistency)),
@@ -115,7 +130,8 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging {
                 Some(preparedPrime.getPrime().rows),
                 Some(preparedPrime.variableTypes),
                 Some(preparedPrime.getPrime().columnTypes),
-                Some(result)
+                Some(result),
+                fixedDelay
               )
             )
           })

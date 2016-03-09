@@ -168,7 +168,23 @@ public final class MultiPrimeRequest {
 
     public static abstract class VariableMatch {
         private MatchType type = type();
+
         protected abstract MatchType type();
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            VariableMatch that = (VariableMatch) o;
+
+            return type == that.type;
+        }
+
+        @Override
+        public int hashCode() {
+            return type != null ? type.hashCode() : 0;
+        }
     }
 
     public static class AnyMatch extends VariableMatch {
@@ -186,6 +202,15 @@ public final class MultiPrimeRequest {
         }
 
         @Override
+        public MatchType type() {
+            return MatchType.exact;
+        }
+
+        public Object matcher() {
+            return matcher;
+        }
+
+        @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
@@ -199,11 +224,6 @@ public final class MultiPrimeRequest {
         @Override
         public int hashCode() {
             return matcher != null ? matcher.hashCode() : 0;
-        }
-
-        @Override
-        public MatchType type() {
-            return MatchType.exact;
         }
 
         public static class Builder {
@@ -245,7 +265,6 @@ public final class MultiPrimeRequest {
         public int hashCode() {
             return variable_matcher != null ? variable_matcher.hashCode() : 0;
         }
-
 
         public static class Builder {
             private List<VariableMatch> variable_matcher;
@@ -335,11 +354,30 @@ public final class MultiPrimeRequest {
             this.criteria = criteria;
             this.action = action;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Outcome outcome = (Outcome) o;
+
+            if (criteria != null ? !criteria.equals(outcome.criteria) : outcome.criteria != null) return false;
+            return !(action != null ? !action.equals(outcome.action) : outcome.action != null);
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = criteria != null ? criteria.hashCode() : 0;
+            result = 31 * result + (action != null ? action.hashCode() : 0);
+            return result;
+        }
     }
 
     public final static class When {
         private final String query;
-                private final List<Consistency> consistency;
+        private final List<Consistency> consistency;
 
         private When(String query, List<Consistency> consistency) {
             this.query = query;

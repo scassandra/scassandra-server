@@ -28,7 +28,7 @@ case class PreparedPrime(variableTypes: List[ColumnType[_]] = List(),
   def getPrime(variables: List[Any] = List()): Prime = prime
 }
 
-class PreparedMultiPrime(val variableTypes: List[ColumnType[_]], variableMatchers: List[(List[VariableMatch], Prime)]) extends PreparedPrimeResult {
+class PreparedMultiPrime(val variableTypes: List[ColumnType[_]], val variableMatchers: List[(List[VariableMatch], Prime)]) extends PreparedPrimeResult {
   def getPrime(variables: List[Any]): Prime = {
     val prime: Option[(List[VariableMatch], Prime)] = variableMatchers.find({ case (matchers, _) if matchers.size == variables.size =>
       val zipped: List[(VariableMatch, Any)] = matchers.zip(variables)
