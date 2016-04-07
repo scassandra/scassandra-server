@@ -139,7 +139,7 @@ task wrapper(type: Wrapper) {
 }
 
 shadowJar {
-    append('reference.conf')
+    append('application.conf')
     relocate 'org.apache.cassandra', 'scassandra.org.apache.cassandra'
     relocate 'org.mortbay', 'scassandra.org.mortbay'
     relocate 'com.google.common', 'scassandra.com.google.common'
