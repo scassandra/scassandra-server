@@ -56,7 +56,7 @@ abstract public class AbstractScassandraTest {
     }
 
     public static Map<String, CqlType> cqlTypes(Map<String, ColumnTypes> columnTypes) {
-        return Maps.transformValues(columnTypes, input -> input.getType());
+        return Maps.transformValues(columnTypes, ColumnTypes::getType);
     }
 
     public static byte[] getArray(ByteBuffer buffer) {

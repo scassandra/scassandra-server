@@ -15,12 +15,13 @@
  */
 package org.scassandra.server.e2e.query
 
-import com.datastax.driver.core.exceptions.{WriteTimeoutException, ReadTimeoutException, UnavailableException}
+import com.datastax.driver.core.exceptions.{NoHostAvailableException, WriteTimeoutException, ReadTimeoutException, UnavailableException}
 import com.datastax.driver.core.{WriteType, ConsistencyLevel, SimpleStatement}
 import org.scassandra.server.AbstractIntegrationTest
 import org.scassandra.server.priming.ErrorConstants
 import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.query.{Then, When}
+import scala.collection.JavaConversions._
 
 class PrimingErrorsTest extends AbstractIntegrationTest {
 
@@ -56,11 +57,13 @@ class PrimingErrorsTest extends AbstractIntegrationTest {
     val consistency: ConsistencyLevel = ConsistencyLevel.LOCAL_QUORUM
     statement.setConsistencyLevel(consistency)
 
-    val exception = intercept[UnavailableException] {
+    val exception = intercept[NoHostAvailableException] {
       session.execute(statement)
     }
 
-    exception.getConsistencyLevel should equal(consistency)
+    val underlyingException = exception.getErrors.values.head.asInstanceOf[UnavailableException]
+
+    underlyingException.getConsistencyLevel should equal(consistency)
   }
 
   test("ReadTimeout: with required / received and data present set") {
@@ -116,12 +119,14 @@ class PrimingErrorsTest extends AbstractIntegrationTest {
     val consistency: ConsistencyLevel = ConsistencyLevel.ALL
     statement.setConsistencyLevel(consistency)
 
-    val exception = intercept[UnavailableException] {
+    val exception = intercept[NoHostAvailableException] {
       session.execute(statement)
     }
 
-    exception.getConsistencyLevel should equal(consistency)
-    exception.getRequiredReplicas should equal(3)
-    exception.getAliveReplicas should equal(2)
+    val underlyingException = exception.getErrors.values.head.asInstanceOf[UnavailableException]
+
+    underlyingException.getConsistencyLevel should equal(consistency)
+    underlyingException.getRequiredReplicas should equal(3)
+    underlyingException.getAliveReplicas should equal(2)
   }
 }

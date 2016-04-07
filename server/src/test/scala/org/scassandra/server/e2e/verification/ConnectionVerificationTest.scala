@@ -52,8 +52,8 @@ class ConnectionVerificationTest extends AbstractIntegrationTest with ScalaFutur
     whenReady(response) {
       result =>
         val connectionList = JsonParser(result).convertTo[List[Connection]]
-        // The java driver establishes 1 control + core connections.
-        connectionList.size should equal(1 + cluster
+        // The java driver establishes 1 control + core connections + 1?.
+        connectionList.size should equal(2 + cluster
           .getConfiguration
           .getPoolingOptions
           .getCoreConnectionsPerHost(HostDistance.LOCAL))

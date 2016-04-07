@@ -16,7 +16,7 @@
 package org.scassandra.server.e2e.prepared
 
 import com.datastax.driver.core.{WriteType, ConsistencyLevel}
-import com.datastax.driver.core.exceptions.{ReadTimeoutException, UnavailableException, WriteTimeoutException}
+import com.datastax.driver.core.exceptions.{NoHostAvailableException, ReadTimeoutException, UnavailableException, WriteTimeoutException}
 import dispatch.Defaults._
 import dispatch._
 import org.scalatest.BeforeAndAfter
@@ -25,6 +25,7 @@ import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPrepared}
 import org.scassandra.server.{AbstractIntegrationTest, PrimingHelper}
+import scala.collection.JavaConversions._
 
 class PreparedStatementErrorsTest extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
 
@@ -105,13 +106,15 @@ class PreparedStatementErrorsTest extends AbstractIntegrationTest with BeforeAnd
     boundStatement.setConsistencyLevel(consistency)
 
     //when
-    val exception = intercept[UnavailableException] {
+    val exception = intercept[NoHostAvailableException] {
       session.execute(boundStatement)
     }
 
+    val underlyingException: UnavailableException = exception.getErrors.values().head.asInstanceOf[UnavailableException]
+
     //then
-    exception.getConsistencyLevel should equal(consistency)
-    exception.getRequiredReplicas should equal(3)
-    exception.getAliveReplicas should equal(2)
+    underlyingException.getConsistencyLevel should equal(consistency)
+    underlyingException.getRequiredReplicas should equal(3)
+    underlyingException.getAliveReplicas should equal(2)
   }
 }
