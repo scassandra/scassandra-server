@@ -146,9 +146,9 @@ public class CassandraExecutor21 implements CassandraExecutor {
                 // tries another host.
                 if(message.contains("protocol error")) {
                     error = protocol_error;
-                } else if(message.contains("Host overloaded")) {
+                } else if(message.contains("was overloaded")) {
                     error = overloaded;
-                } else if(message.contains("Host is bootstrapping")) {
+                } else if(message.contains("was bootstrapping")) {
                     error = is_bootstrapping;
                 }
             } catch(Throwable t) {} // unknown error we can handle later.

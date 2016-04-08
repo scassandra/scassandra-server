@@ -18,6 +18,8 @@ package org.scassandra.server
 import com.datastax.driver.core.exceptions.{SyntaxError => SyntaxErrorDriver, _}
 import org.scalatest.concurrent.ScalaFutures
 import org.scassandra.server.priming.ErrorConstants
+import org.scassandra.server.priming.json.ProtocolError
+import org.scassandra.server.priming.json.ServerError
 import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.query.{Then, When}
 
@@ -83,7 +85,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   }
 
   test("Test unavailable exception on query") {
-    expectException[UnavailableException](Unavailable)
+    expectException[NoHostAvailableException](Unavailable)
   }
 
   test("Test write timeout on query") {
@@ -128,9 +130,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
     expectException[InvalidQueryException](Invalid)
   }
 
-  ignore("Test config error on query") {
-    // Ignored since this is a bug in the java driver as it returns
-    // the wrong exception.
+  test("Test config error on query") {
     expectException[InvalidConfigurationInQueryException](ConfigError)
   }
 
