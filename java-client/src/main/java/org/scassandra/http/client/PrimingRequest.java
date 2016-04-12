@@ -34,6 +34,10 @@ public final class PrimingRequest {
         return new Then.ThenBuilder();
     }
 
+    public static Then.ThenBuilder andThen() {
+        return then();
+    }
+
     transient PrimingRequestBuilder.PrimeType primeType;
 
     public static class PrimingRequestBuilder {
