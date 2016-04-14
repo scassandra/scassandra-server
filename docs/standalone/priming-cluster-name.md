@@ -27,7 +27,7 @@ The Java Datastax Driver looks in the system.local table for the cluster\_name. 
     ],
     "result": "success",
     "column_types": {
-      "tokens": "set"
+      "tokens": "set<text>"
     }
   }
 }
@@ -59,7 +59,7 @@ The 1.* driver executes a different query;
     ],
     "result": "success",
     "column_types": {
-      "tokens": "Set"
+      "tokens": "set<text>"
     }
   }
 }
@@ -80,7 +80,7 @@ If you're using the Scassandra java client you'll need something like:
 
 
 ```java
- Map<String, ColumnTypes> columnTypes = ImmutableMap.of("tokens",ColumnTypes.Set);
+ Map<String, ColumnTypes> columnTypes = ImmutableMap.of("tokens",SetType.set(PrimitiveType.TEXT));
         String query = "SELECT cluster_name, data_center, rack, tokens, partitioner FROM system.local WHERE key='local'";
         Map<String, Object> row = new HashMap<>();
         row.put("cluster_name", CUSTOM_CLUSTER_NAME);
