@@ -51,7 +51,7 @@ Example prime:
       "partitioner": "varchar",
       "data_center": "varchar",
       "rack": "varchar",
-      "tokens": "set",
+      "tokens": "set<text>",
       "release_version": "varchar"
     }
   }
@@ -82,7 +82,7 @@ Example prime:
     ],
     "result": "success",
     "column_types": {
-      "tokens": "uuid"
+      "schema_version": "uuid"
     }
   }
 }

@@ -20,6 +20,8 @@ import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.cql._
 import org.scassandra.server.cqlmessages.{ProtocolVersion, CqlProtocolHelper}
 
+import scala.util.{Failure, Success, Try}
+
 abstract class ColumnType[T](val code : Short, val stringRep: String) extends LazyLogging {
   implicit val byteOrder = CqlProtocolHelper.byteOrder
 
@@ -139,12 +141,7 @@ object ColumnType extends LazyLogging {
     serializer(input, entrySerializer)
   }
 
-  def fromString(string: String): Option[ColumnType[_]] = {
-
-    val cqlTypeFactory = new CqlTypeFactory
-    val cqlType = cqlTypeFactory.buildType(string)
-
-    logger.trace(s"Java type $cqlType")
+  def fromString(string: String): Try[ColumnType[_]] = {
 
     def convertJavaToScalaType(javaType: CqlType): ColumnType[_] = {
       javaType match {
@@ -155,8 +152,17 @@ object ColumnType extends LazyLogging {
       }
     }
 
-    val parsedType = Some(convertJavaToScalaType(cqlType))
-    logger.info(s"Type is $parsedType")
-    parsedType
+    val cqlTypeFactory = new CqlTypeFactory
+
+    try {
+      val cqlType = cqlTypeFactory.buildType(string)
+
+      logger.trace(s"Java type $cqlType")
+      val parsedType = Success(convertJavaToScalaType(cqlType))
+      logger.info(s"Type is $parsedType")
+      parsedType
+    } catch {
+      case e: Exception => Failure(e)
+    }
   }
 }

@@ -17,6 +17,7 @@ import spray.httpx.SprayJsonSupport
 import spray.json._
 
 import scala.collection.Set
+import scala.util.{Failure, Success => TSuccess}
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport with LazyLogging {
 
@@ -121,10 +122,10 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
 
     def read(value: JsValue) = value match {
       case JsString(string) => ColumnType.fromString(string) match {
-        case Some(columnType) => columnType
-        case None =>
-          logger.warn(s"Received invalid column type $string")
-          throw new IllegalArgumentException("Not a valid column type " + string)
+        case TSuccess(columnType) => columnType
+        case Failure(e) =>
+          logger.warn(s"Received invalid column type '$string'", e)
+          throw new IllegalArgumentException(s"Not a valid column type '$string'")
       }
       case _ => throw new IllegalArgumentException("Expected ColumnType as JsString")
     }
