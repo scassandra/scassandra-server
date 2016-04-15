@@ -324,7 +324,7 @@ Varchars can be primed in two ways.
    },
    "then": {
      "rows" :[{"column1": ["one", "two", "three"]}] ,
-     "column_types" : { "column1" : "set"}
+     "column_types" : { "column1" : "set<text>"}
    }
  }
 ```
