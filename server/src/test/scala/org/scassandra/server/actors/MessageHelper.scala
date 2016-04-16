@@ -33,17 +33,19 @@ object MessageHelper {
                          protocolVersion : Byte = ProtocolVersion.ClientProtocolVersionTwo,
                          flags: Byte = 0x00) : List[Byte] = {
 
-    val body : List[Byte] =
-      serializeLongString(queryString) :::
-        serializeShort(consistency.code) ::: // consistency
-        List(flags) ::: // query flags
-        List[Byte]()
+    val body : List[Byte] = createQueryMessageBody(queryString, consistency.code, flags)
 
     val bodyLength = serializeInt(body.size)
     val header = List[Byte](protocolVersion, 0x00, stream, OpCodes.Query) ::: bodyLength
 
     header ::: body
   }
+
+  def createQueryMessageBody(queryString: String, code: Short = ONE.code, flags: Byte = 0x00) =
+    serializeLongString(queryString) :::
+      serializeShort(code) ::: // consistency
+      List(flags) ::: // query flags
+      List[Byte]()
 
   sealed abstract class BatchQueryTemplate
   case class SimpleQuery(text: String) extends BatchQueryTemplate
@@ -52,15 +54,19 @@ object MessageHelper {
   def createBatchMessage(queries: List[BatchQueryTemplate], stream: Byte = ResponseHeader.DefaultStreamId,
                           consistency: Consistency = ONE,
                           protocolVersion: Byte = ProtocolVersion.ClientProtocolVersionTwo) : Array[Byte] = {
+    val body = createBatchMessageBody(queries, consistency)
+    val header = List[Byte](protocolVersion, 0x00, stream, OpCodes.Batch) ::: serializeInt(body.size)
+    (header ::: body).toArray
+  }
+
+  def createBatchMessageBody(queries: List[BatchQueryTemplate], consistency: Consistency = ONE) = {
     val typeAndNumber: List[Byte] = 0x00.toByte :: serializeShort(queries.size.toShort)
     val queryBytes: List[Byte] = queries.flatMap {
-        case SimpleQuery(text) => QueryKind.kind :: serializeLongString(text) ::: serializeShort(0)
-        case PreparedStatement(id) => PreparedStatementKind.kind :: serializeShort(4) ::: serializeInt(id) ::: serializeShort(0)
+      case SimpleQuery(text) => QueryKind.kind :: serializeLongString(text) ::: serializeShort(0)
+      case PreparedStatement(id) => PreparedStatementKind.kind :: serializeShort(4) ::: serializeInt(id) ::: serializeShort(0)
     }
     val c: List[Byte] = serializeShort(consistency.code)
-    val header = List[Byte](protocolVersion, 0x00, stream, OpCodes.Batch) ::: serializeInt(typeAndNumber.size + queryBytes.size + c.size)
-
-    (header ::: typeAndNumber ::: queryBytes ::: c).toArray
+    typeAndNumber ::: queryBytes ::: c
   }
 
   def createStartupMessage(protocolVersion: ProtocolVersion = VersionTwo, stream: Byte = 0x0) : List[Byte] = {
