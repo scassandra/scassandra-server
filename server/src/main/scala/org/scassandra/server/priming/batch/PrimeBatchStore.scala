@@ -11,7 +11,7 @@ class PrimeBatchStore extends LazyLogging {
   var primes: Map[BatchCriteria, BatchPrime] = Map()
   
   def record(prime: BatchPrimeSingle): Unit = {
-    val result: PrimeResult = PrimingJsonHelper.convertToPrimeResult(Map(), prime.thenDo.result.getOrElse(Success))
+    val result: PrimeResult = PrimingJsonHelper.convertToPrimeResult(prime.thenDo.config.getOrElse(Map()), prime.thenDo.result.getOrElse(Success))
     val consistencies: List[Consistency] = prime.when.consistency.getOrElse(Consistency.all)
     primes += (BatchCriteria(prime.when.queries, consistencies, prime.when.batchType.getOrElse(LOGGED)) -> BatchPrime(result, prime.thenDo.fixedDelay))
   }

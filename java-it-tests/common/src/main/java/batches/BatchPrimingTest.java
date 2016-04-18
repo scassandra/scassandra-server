@@ -18,21 +18,17 @@ import common.AbstractScassandraTest;
 import common.CassandraExecutor;
 import common.CassandraQuery;
 import common.CassandraResult;
+import common.CassandraResult.WriteTimeoutStatus;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
-import org.scassandra.http.client.BatchExecution;
-import org.scassandra.http.client.BatchPrimingRequest;
-import org.scassandra.http.client.BatchQuery;
-import org.scassandra.http.client.BatchQueryKind;
-import org.scassandra.http.client.BatchQueryPrime;
-import org.scassandra.http.client.BatchType;
-import org.scassandra.http.client.PrimingRequest;
-import org.scassandra.http.client.Result;
+import org.scassandra.http.client.*;
 
 import java.util.Collections;
 import java.util.List;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static common.CassandraQuery.QueryType.PREPARED_STATEMENT;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.scassandra.cql.PrimitiveType.*;
@@ -215,6 +211,26 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
         );
 
         assertEquals(Result.write_request_timeout, result.status().getResult());
+    }
+
+    @Test
+    public void primeBatchWithWriteTimeoutAndCustomConfig() {
+        primingClient.primeBatch(BatchPrimingRequest.batchPrimingRequest()
+                .withThen(BatchPrimingRequest.then()
+                        .withConfig(new WriteTimeoutConfig(WriteTypePrime.BATCH, 0, 1))
+                        .withResult(Result.write_request_timeout))
+                .withQueries(
+                        batchQueryPrime("select * from blah", BatchQueryKind.query))
+                .build());
+
+        CassandraResult result = cassandra().executeBatch(newArrayList(
+                        new CassandraQuery("select * from blah")
+                ), BatchType.LOGGED
+        );
+
+        assertThat(result.status(), CoreMatchers.instanceOf(WriteTimeoutStatus.class));
+        WriteTimeoutStatus status = (WriteTimeoutStatus) result.status();
+        assertEquals(WriteTypePrime.BATCH, status.getWriteTypePrime());
     }
 
     @Test
