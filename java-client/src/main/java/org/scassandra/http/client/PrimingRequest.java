@@ -350,6 +350,10 @@ public final class PrimingRequest {
             return fixedDelay;
         }
 
+        public Map<String, Object> getConfig() {
+            return Collections.unmodifiableMap(config);
+        }
+
         public static class ThenBuilder {
             private List<CqlType> variable_types;
             private List<Map<String, ? extends Object>> rows;
@@ -397,8 +401,17 @@ public final class PrimingRequest {
                 return this;
             }
 
+            /**
+             * @deprecated Use withConfig(Config config) instead.
+             */
+            @Deprecated
             public ThenBuilder withConfig(Map<String, Object> config) {
                 this.config = config;
+                return this;
+            }
+
+            public ThenBuilder withConfig(Config config) {
+                this.config.putAll(config.getProperties());
                 return this;
             }
 
