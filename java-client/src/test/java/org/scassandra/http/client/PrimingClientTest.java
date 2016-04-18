@@ -27,9 +27,7 @@ import java.util.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.scassandra.cql.PrimitiveType.TEXT;
-import static org.scassandra.cql.PrimitiveType.TIMESTAMP;
-import static org.scassandra.cql.PrimitiveType.TIMEUUID;
+import static org.scassandra.cql.PrimitiveType.*;
 import static org.scassandra.http.client.BatchQueryPrime.batchQueryPrime;
 import static org.scassandra.http.client.MultiPrimeRequest.*;
 
@@ -706,6 +704,32 @@ public class PrimingClientTest {
                 .withRequestBody(equalToJson("{\"when\": {\"queries\": [{\"text\":\"select * from blah\", " +
                         "\"kind\":\"prepared_statement\"}], \"batchType\":\"LOGGED\"  }," +
                         "\"then\":{\"result\":\"read_request_timeout\"}}")));
+
+    }
+
+    @Test
+    public void testPrimeBatchWithQueryWithCustomConfiguration() throws Exception {
+        //given
+        stubFor(post(urlEqualTo(PRIME_BATCH_PATH)).willReturn(aResponse().withStatus(200)));
+
+        //when
+        underTest.primeBatch(BatchPrimingRequest.batchPrimingRequest()
+                .withThen(BatchPrimingRequest
+                        .then()
+                        .withResult(Result.write_request_timeout)
+                        .withConfig(new WriteTimeoutConfig(WriteTypePrime.BATCH, 0, 1))
+                        .build())
+                .withQueries(
+                        batchQueryPrime("select * from blah", BatchQueryKind.prepared_statement))
+                .build());
+
+        //then
+        verify(postRequestedFor(urlEqualTo(PRIME_BATCH_PATH))
+                .withHeader("Content-Type", equalTo("application/json; charset=UTF-8"))
+                .withRequestBody(equalToJson("{ \"when\": { \"queries\": [ { \"text\": \"select * from blah\", " +
+                        "\"kind\": \"prepared_statement\"} ], \"batchType\": \"LOGGED\"}, \"then\": { " +
+                        "\"result\": \"write_request_timeout\", \"config\": { \"error.required_responses\": \"1\", " +
+                        "\"error.received_responses\": \"0\", \"error.write_type\": \"BATCH\"} } }")));
 
     }
 
