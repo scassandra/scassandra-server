@@ -87,6 +87,18 @@ public final class MultiPrimeRequest {
             this.config = config;
         }
 
+        public List<Map<String, ? extends Object>> getRows() {
+            return rows;
+        }
+
+        public Result getResult() {
+            return result;
+        }
+
+        public Long getFixedDelay() {
+            return fixedDelay;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -250,6 +262,10 @@ public final class MultiPrimeRequest {
             this.variable_matcher = variable_matcher;
         }
 
+        public List<VariableMatch> getVariableMatchers() {
+            return variable_matcher;
+        }
+
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -295,6 +311,10 @@ public final class MultiPrimeRequest {
 
         public List<CqlType> getVariableTypes() {
             return variable_types;
+        }
+
+        public List<Outcome> getOutcomes() {
+            return outcomes;
         }
 
         @Override
@@ -353,6 +373,14 @@ public final class MultiPrimeRequest {
         public Outcome(Criteria criteria, Action action) {
             this.criteria = criteria;
             this.action = action;
+        }
+
+        public Action getAction() {
+            return action;
+        }
+
+        public Criteria getCriteria() {
+            return criteria;
         }
 
         @Override
