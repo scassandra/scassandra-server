@@ -24,9 +24,6 @@ import org.scassandra.server.cqlmessages._
 
 /*
  * Expects full native protocol messages.
- *
- * Currently tested via the ConnectionHandler's test as it was extracted from there.
- * TODO: unit test separately
  */
 class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
                         batchHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory, ActorRef) => ActorRef,
