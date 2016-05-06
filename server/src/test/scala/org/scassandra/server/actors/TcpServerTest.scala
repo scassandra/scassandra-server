@@ -52,7 +52,7 @@ class TcpServerTest extends TestKit(ActorSystem("TcpServerTest")) with Matchers 
   before {
     manager = TestProbe()
     tcpConnection = TestProbe()
-    underTest = TestActorRef(new TcpServer(manager.ref, "localhost", 8047, new PrimeQueryStore, new PrimePreparedStore, new PrimeBatchStore, system.actorOf(Props(classOf[ServerReadyListener])), activityLog))
+    underTest = TestActorRef(new TcpServer("localhost", 8047, new PrimeQueryStore, new PrimePreparedStore, new PrimeBatchStore, system.actorOf(Props(classOf[ServerReadyListener])), activityLog, Some(manager.ref)))
     val remote = new InetSocketAddress("127.0.0.1", 8047)
 
     manager.expectMsgType[Bind]
