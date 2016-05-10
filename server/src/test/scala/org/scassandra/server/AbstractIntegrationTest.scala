@@ -16,10 +16,12 @@
 package org.scassandra.server
 
 import java.net.{ConnectException, Socket}
+import java.util.concurrent.TimeUnit
 
-import com.datastax.driver.core.{Cluster, Session}
+import com.datastax.driver.core.{NettyOptions, Cluster, Session}
 import dispatch.Defaults._
 import dispatch._
+import io.netty.channel.EventLoopGroup
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSuite, Matchers}
 import org.scassandra.server.actors._
 import org.scassandra.server.cqlmessages.types.ColumnType
@@ -126,6 +128,12 @@ object PrimingHelper {
 abstract class AbstractIntegrationTest(clusterConnect: Boolean = true) extends FunSuite with Matchers with BeforeAndAfter with BeforeAndAfterAll {
   var serverThread: ServerStubRunner = null
 
+  val closeQuickly = new NettyOptions() {
+    override def onClusterClose(eventLoopGroup: EventLoopGroup) {
+      //Shutdown immediately, since we close cluster when finished, we know nothing new coming through.
+      eventLoopGroup.shutdownGracefully(0, 1000, TimeUnit.MILLISECONDS).syncUninterruptibly
+    }
+  }
   var cluster: Cluster = _
   var session: Session = _
 
@@ -153,7 +161,10 @@ abstract class AbstractIntegrationTest(clusterConnect: Boolean = true) extends F
   }
 
   def builder() = {
-    Cluster.builder().addContactPoint(ConnectionToServerStub.ServerHost).withPort(ConnectionToServerStub.ServerPort)
+    Cluster.builder()
+      .addContactPoint(ConnectionToServerStub.ServerHost)
+      .withPort(ConnectionToServerStub.ServerPort)
+      .withNettyOptions(closeQuickly)
   }
 
   override def beforeAll() {
