@@ -112,11 +112,11 @@ public class ActivityClientTest {
         //then
     }
 
-    @Test(expected = ActivityRequestFailed.class, timeout = 2500)
+    @Test(expected = ActivityRequestFailed.class, timeout = 10000)
     public void testServerHanging() {
         //given
         stubFor(get(urlEqualTo(connectionUrl))
-                .willReturn(aResponse().withFixedDelay(5000)));
+                .willReturn(aResponse().withFixedDelay(10000)));
         //when
         underTest.retrieveConnections();
         //then

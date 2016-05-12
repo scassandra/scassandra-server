@@ -50,7 +50,7 @@ public class CurrentClient {
         private String host = "localhost";
 
         private int port = 8043;
-        private int socketTimeout = 1000;
+        private int socketTimeout = 5000;
 
         public ConnectionsClientBuilder withHost(String host) {
             this.host = host;

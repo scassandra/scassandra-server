@@ -195,10 +195,10 @@ public class CurrentClientTest {
         underTest.getConnections();
     }
 
-    @Test(expected = ConnectionsRequestFailed.class, timeout = 2500)
+    @Test(expected = ConnectionsRequestFailed.class, timeout = 10000)
     public void testServerHanging() {
         //given
-        stubFor(get(urlEqualTo(connectionsUrl)).willReturn(aResponse().withFixedDelay(5000)));
+        stubFor(get(urlEqualTo(connectionsUrl)).willReturn(aResponse().withFixedDelay(10000)));
         //when
         underTest.getConnections();
     }
@@ -365,9 +365,9 @@ public class CurrentClientTest {
         assertEquals(newArrayList(new InetSocketAddress("127.0.0.1", 57518)), report.getAddresses());
     }
 
-    @Test(expected = ConnectionsRequestFailed.class, timeout = 2500)
+    @Test(expected = ConnectionsRequestFailed.class, timeout = 10000)
     public void testServerHangingWhileCloseOfConnections() {
-        stubFor(delete(urlEqualTo(connectionsUrl + "?type=close")).willReturn(aResponse().withFixedDelay(5000)));
+        stubFor(delete(urlEqualTo(connectionsUrl + "?type=close")).willReturn(aResponse().withFixedDelay(10000)));
         //when
         underTest.closeConnections(CLOSE);
         //then
@@ -429,10 +429,10 @@ public class CurrentClientTest {
         assertEquals(false, enabled);
     }
 
-    @Test(expected = ListenerRequestFailed.class, timeout = 2500)
+    @Test(expected = ListenerRequestFailed.class, timeout = 10000)
     public void testListenerServerHanging() {
         //given
-        stubFor(put(urlEqualTo(listenerUrl)).willReturn(aResponse().withFixedDelay(5000)));
+        stubFor(put(urlEqualTo(listenerUrl)).willReturn(aResponse().withFixedDelay(10000)));
         //when
         underTest.enableListener();
     }
