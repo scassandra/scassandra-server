@@ -15,8 +15,10 @@ import org.scassandra.http.client.ActivityClient;
 import org.scassandra.http.client.ColumnTypes;
 import org.scassandra.http.client.PrimingClient;
 
+import static common.PortLocator.*;
+
 abstract public class AbstractScassandraTest {
-    private static Scassandra scassandra;
+    protected static Scassandra scassandra;
     protected static PrimingClient primingClient;
     protected static ActivityClient activityClient;
 
@@ -29,7 +31,7 @@ abstract public class AbstractScassandraTest {
 
     @BeforeClass
     public static void startScassandra() {
-        scassandra = ScassandraFactory.createServer();
+        scassandra = ScassandraFactory.createServer(findFreePort(), findFreePort());
         primingClient = scassandra.primingClient();
         activityClient = scassandra.activityClient();
         scassandra.start();

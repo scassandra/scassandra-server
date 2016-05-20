@@ -7,6 +7,6 @@ import org.junit.Ignore;
 public class PreparedStatementErrorPrimingTest30 extends PreparedStatementErrorPrimingTest {
 
     public PreparedStatementErrorPrimingTest30() {
-        super(new CassandraExecutor30());
+        super(new CassandraExecutor30(scassandra.getBinaryPort()));
     }
 }

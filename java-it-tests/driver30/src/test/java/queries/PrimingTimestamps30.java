@@ -19,6 +19,6 @@ import cassandra.CassandraExecutor30;
 public class PrimingTimestamps30 extends PrimingTimestamps {
 
     public PrimingTimestamps30() {
-        super(new CassandraExecutor30());
+        super(new CassandraExecutor30(scassandra.getBinaryPort()));
     }
 }

@@ -4,6 +4,6 @@ import cassandra.CassandraExecutor30;
 
 public class QueryBuilderTest30 extends QueryBuilderTest {
     public QueryBuilderTest30() {
-        super(new CassandraExecutor30());
+        super(new CassandraExecutor30(scassandra.getBinaryPort()));
     }
 }

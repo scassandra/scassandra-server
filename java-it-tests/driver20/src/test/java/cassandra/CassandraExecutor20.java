@@ -27,7 +27,7 @@ public class CassandraExecutor20 implements CassandraExecutor {
     private Cluster cluster;
     private Session session;
 
-    public CassandraExecutor20() {
+    public CassandraExecutor20(int binaryPort) {
         NettyOptions closeQuickly = new NettyOptions() {
             public void onClusterClose(EventLoopGroup eventLoopGroup) {
                 //Shutdown immediately, since we close cluster when finished, we know nothing new coming through.
@@ -35,7 +35,7 @@ public class CassandraExecutor20 implements CassandraExecutor {
             }
         };
         cluster = Cluster.builder().addContactPoint(Config.NATIVE_HOST)
-                .withPort(Config.NATIVE_PORT)
+                .withPort(binaryPort)
                 .withNettyOptions(closeQuickly)
                 .build();
         session = cluster.connect(Config.KEYSPACE);
