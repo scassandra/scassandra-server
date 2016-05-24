@@ -53,6 +53,7 @@ public class ScassandraServerRule implements TestRule {
                         base.evaluate();
                     } finally {
                         scassandra.stop();
+                        started = false;
                     }
                 } else {
                     primingClient().clearAllPrimes();
