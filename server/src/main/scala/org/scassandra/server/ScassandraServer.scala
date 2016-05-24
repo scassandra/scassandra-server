@@ -25,6 +25,7 @@ import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.{CompositePreparedPrimeStore, PrimePreparedMultiStore, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.priming.query.PrimeQueryStore
 
+import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -65,10 +66,12 @@ class ScassandraServer(val primedResults: PrimeQueryStore, val binaryListenAddre
       implicit val t: Timeout = timeout
       import context.dispatcher
 
-      val f = for {
-        x <- primingReadyListener ? OnServerReady
-        y <- tcpReadyListener ? OnServerReady
-      } yield x :: y:: Nil
+      // Create a future that completes when both listeners ready.
+      val f = Future.sequence(
+        primingReadyListener ? OnServerReady ::
+        tcpReadyListener ? OnServerReady ::
+        Nil
+      )
 
       f pipeTo sender
     }
@@ -76,12 +79,14 @@ class ScassandraServer(val primedResults: PrimeQueryStore, val binaryListenAddre
       implicit val t: Timeout = timeout
       import context.dispatcher
 
-      val f = for {
-        x <- primingServer ? Shutdown
-        y <- tcpServer ? Shutdown
-      } yield x :: y :: Nil
+      // Send shutdown message to each sender and on complete send a PoisonPill to self.
+      val f = Future.sequence(
+        primingServer ? Shutdown ::
+        tcpServer ? Shutdown ::
+        Nil
+      ).map { _ => self ? PoisonPill }
 
-      f.map { _ => self ? PoisonPill } pipeTo sender
+      f pipeTo sender
     }
   }
 }

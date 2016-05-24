@@ -23,7 +23,7 @@ import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.scassandra.http.client.CurrentClient.ConnectionsClientBuilder;
+import org.scassandra.http.client.CurrentClient.CurrentClientBuilder;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.google.common.collect.Lists.newArrayList;
@@ -41,10 +41,12 @@ public class CurrentClientTest {
 
     private CurrentClient underTest;
 
+    private CurrentClient lowTimeoutClient;
+
     @Before
     public void setup() {
-        ConnectionsClientBuilder builder = CurrentClient.builder();
-        underTest = builder.withHost("localhost").withPort(PORT).build();
+        underTest = CurrentClient.builder().withHost("localhost").withPort(PORT).build();
+        lowTimeoutClient = CurrentClient.builder().withHost("localhost").withPort(PORT).withSocketTimeout(1000).build();
     }
 
     @Test
@@ -195,12 +197,12 @@ public class CurrentClientTest {
         underTest.getConnections();
     }
 
-    @Test(expected = ConnectionsRequestFailed.class, timeout = 10000)
+    @Test(expected = ConnectionsRequestFailed.class, timeout = 2500)
     public void testServerHanging() {
         //given
-        stubFor(get(urlEqualTo(connectionsUrl)).willReturn(aResponse().withFixedDelay(10000)));
+        stubFor(get(urlEqualTo(connectionsUrl)).willReturn(aResponse().withFixedDelay(5000)));
         //when
-        underTest.getConnections();
+        lowTimeoutClient.getConnections();
     }
 
     @Test
@@ -365,11 +367,11 @@ public class CurrentClientTest {
         assertEquals(newArrayList(new InetSocketAddress("127.0.0.1", 57518)), report.getAddresses());
     }
 
-    @Test(expected = ConnectionsRequestFailed.class, timeout = 10000)
+    @Test(expected = ConnectionsRequestFailed.class, timeout = 2500)
     public void testServerHangingWhileCloseOfConnections() {
-        stubFor(delete(urlEqualTo(connectionsUrl + "?type=close")).willReturn(aResponse().withFixedDelay(10000)));
+        stubFor(delete(urlEqualTo(connectionsUrl + "?type=close")).willReturn(aResponse().withFixedDelay(5000)));
         //when
-        underTest.closeConnections(CLOSE);
+        lowTimeoutClient.closeConnections(CLOSE);
         //then
     }
 
@@ -429,12 +431,12 @@ public class CurrentClientTest {
         assertEquals(false, enabled);
     }
 
-    @Test(expected = ListenerRequestFailed.class, timeout = 10000)
+    @Test(expected = ListenerRequestFailed.class, timeout = 2500)
     public void testListenerServerHanging() {
         //given
-        stubFor(put(urlEqualTo(listenerUrl)).willReturn(aResponse().withFixedDelay(10000)));
+        stubFor(put(urlEqualTo(listenerUrl)).willReturn(aResponse().withFixedDelay(5000)));
         //when
-        underTest.enableListener();
+        lowTimeoutClient.enableListener();
     }
 
     @Test(expected = ListenerRequestFailed.class)

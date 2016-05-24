@@ -45,24 +45,24 @@ public class CurrentClient {
 
     private final Type map = new TypeToken<Map<String, Boolean>>() { }.getType();
 
-    public static class ConnectionsClientBuilder {
+    public static class CurrentClientBuilder {
 
         private String host = "localhost";
 
         private int port = 8043;
         private int socketTimeout = 5000;
 
-        public ConnectionsClientBuilder withHost(String host) {
+        public CurrentClientBuilder withHost(String host) {
             this.host = host;
             return this;
         }
 
-        public ConnectionsClientBuilder withPort(int port) {
+        public CurrentClientBuilder withPort(int port) {
             this.port = port;
             return this;
         }
 
-        public ConnectionsClientBuilder withSocketTimeout(int timeout) {
+        public CurrentClientBuilder withSocketTimeout(int timeout) {
             this.socketTimeout = timeout;
             return this;
         }
@@ -72,8 +72,8 @@ public class CurrentClient {
         }
     }
 
-    public static ConnectionsClientBuilder builder() {
-        return new ConnectionsClientBuilder();
+    public static CurrentClientBuilder builder() {
+        return new CurrentClientBuilder();
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CurrentClient.class);
