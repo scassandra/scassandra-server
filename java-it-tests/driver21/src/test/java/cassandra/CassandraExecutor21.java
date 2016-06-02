@@ -8,6 +8,7 @@ import com.datastax.driver.core.utils.UUIDs;
 
 import com.google.common.base.Optional;
 import common.*;
+import io.netty.channel.EventLoopGroup;
 import org.scassandra.http.client.BatchType;
 import org.scassandra.http.client.Result;
 import org.scassandra.http.client.WriteTypePrime;
@@ -15,6 +16,7 @@ import org.scassandra.http.client.WriteTypePrime;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
@@ -27,7 +29,15 @@ public class CassandraExecutor21 implements CassandraExecutor {
     private Session session;
 
     public CassandraExecutor21() {
-        cluster = Cluster.builder().addContactPoint(Config.NATIVE_HOST).withPort(Config.NATIVE_PORT)
+        NettyOptions closeQuickly = new NettyOptions() {
+            public void onClusterClose(EventLoopGroup eventLoopGroup) {
+                //Shutdown immediately, since we close cluster when finished, we know nothing new coming through.
+                eventLoopGroup.shutdownGracefully(0, 1000, TimeUnit.MILLISECONDS).syncUninterruptibly();
+            }
+        };
+        cluster = Cluster.builder().addContactPoint(Config.NATIVE_HOST)
+                .withPort(Config.NATIVE_PORT)
+                .withNettyOptions(closeQuickly)
                 .build();
         session = cluster.connect(KEYSPACE);
     }

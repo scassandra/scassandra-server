@@ -15,12 +15,12 @@
  */
 package org.scassandra.server.priming
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor._
 import akka.event.Logging
 import akka.io.{IO, Tcp}
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.ServerReady
+import org.scassandra.server.{Shutdown, ServerReady}
 import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.{PrimePreparedMultiStore, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.priming.query.PrimeQueryStore
@@ -54,26 +54,42 @@ class PrimingServer(listenAddress: String, port: Int,
                     tcpServer: ActorRef) extends Actor with LazyLogging {
 
   import Tcp._
+  import context.system
 
-  implicit def actorRefFactory: ActorSystem = context.system
+  lazy val routing =  {
+    context.actorOf(Props(classOf[PrimingServerHttpService], primeQueryStore, primePreparedStore,
+      primePreparedPatternStore, primePreparedMultiStpre, primeBatchStore, activityLog, tcpServer))
+  }
 
-  logger.info(s"Opening port $port for priming")
-
-  val routing = context.actorOf(Props(classOf[PrimingServerHttpService], primeQueryStore, primePreparedStore,
-    primePreparedPatternStore, primePreparedMultiStpre, primeBatchStore, activityLog, tcpServer))
-
-  IO(Http) ! Http.Bind(self, listenAddress, port)
+  override def preStart() = {
+    logger.info(s"Opening port $port for priming")
+    IO(Http) ! Http.Bind(self, listenAddress, port)
+  }
 
   def receive = {
-    case Connected(_, _) =>
-      sender ! Tcp.Register(routing)
     case b@Bound(_) =>
       logger.info(s"Priming server bound to admin port $port")
+      context.become(listening(sender))
       serverReadyListener ! ServerReady
     case CommandFailed(_) =>
       logger.error(s"Unable to bind to admin port $port. Is it in use?")
       context stop self
-      context.system.shutdown()
+  }
+
+  def listening(listener: ActorRef): Receive = {
+    case Connected(_, _) =>
+      sender ! Tcp.Register(routing)
+    case Shutdown => {
+      val requestor = sender
+      context.become {
+        case u@Http.Unbound => {
+          requestor ! u
+          // Kill self after unbound
+          self ! PoisonPill
+        }
+      }
+      listener ! Http.Unbind
+    }
   }
 }
 

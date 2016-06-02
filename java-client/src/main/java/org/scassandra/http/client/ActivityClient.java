@@ -51,7 +51,7 @@ public class ActivityClient {
         private String host = "localhost";
 
         private int port = 8043;
-        private int socketTimeout = 1000;
+        private int socketTimeout = 5000;
         private ActivityClientBuilder() {
         }
         public ActivityClientBuilder withHost(String host) {

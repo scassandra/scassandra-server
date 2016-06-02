@@ -118,6 +118,8 @@ public class ActivityClientTest {
         stubFor(get(urlEqualTo(connectionUrl))
                 .willReturn(aResponse().withFixedDelay(5000)));
         //when
+        ActivityClient underTest = ActivityClient.builder()
+                .withHost("localhost").withPort(PORT).withSocketTimeout(1000).build();
         underTest.retrieveConnections();
         //then
     }

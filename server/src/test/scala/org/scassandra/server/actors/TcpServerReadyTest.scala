@@ -38,8 +38,7 @@ class TcpServerReadyTest extends TestKit(ActorSystem("TestSystem")) with FunSpec
       val remote = new InetSocketAddress("127.0.0.1", 8046)
 
       // when
-      TestActorRef(new TcpServer(manager.ref, "localhost", 8046, PrimeQueryStore(), PrimePreparedStore(), new PrimeBatchStore(), tcpReadyListener.ref, new ActivityLog))
-      val tcpServer = TestActorRef(new TcpServer(manager.ref, "localhost", 8046, PrimeQueryStore(), PrimePreparedStore(), new PrimeBatchStore(), tcpReadyListener.ref, new ActivityLog))
+      val tcpServer = TestActorRef(new TcpServer("localhost", 8046, PrimeQueryStore(), PrimePreparedStore(), new PrimeBatchStore(), tcpReadyListener.ref, new ActivityLog, Some(manager.ref)))
       manager.expectMsgType[Bind]
       manager.send(tcpServer, Bound(remote))
 

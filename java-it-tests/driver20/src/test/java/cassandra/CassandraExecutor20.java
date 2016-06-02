@@ -3,10 +3,12 @@ package cassandra;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import com.google.common.base.Optional;
 import common.*;
+import io.netty.channel.EventLoopGroup;
 import org.scassandra.http.client.BatchType;
 import org.scassandra.http.client.Result;
 import org.scassandra.http.client.WriteTypePrime;
@@ -26,8 +28,16 @@ public class CassandraExecutor20 implements CassandraExecutor {
     private Session session;
 
     public CassandraExecutor20() {
+        NettyOptions closeQuickly = new NettyOptions() {
+            public void onClusterClose(EventLoopGroup eventLoopGroup) {
+                //Shutdown immediately, since we close cluster when finished, we know nothing new coming through.
+                eventLoopGroup.shutdownGracefully(0, 1000, TimeUnit.MILLISECONDS).syncUninterruptibly();
+            }
+        };
         cluster = Cluster.builder().addContactPoint(Config.NATIVE_HOST)
-            .withPort(Config.NATIVE_PORT).build();
+                .withPort(Config.NATIVE_PORT)
+                .withNettyOptions(closeQuickly)
+                .build();
         session = cluster.connect(Config.KEYSPACE);
     }
 

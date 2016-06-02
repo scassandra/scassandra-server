@@ -15,8 +15,10 @@
  */
 package org.scassandra.server
 
+import akka.pattern.{ask, gracefulStop}
 import akka.util.Timeout
 
+import scala.concurrent.{ExecutionContext, Await}
 import scala.concurrent.duration._
 
 import akka.actor._
@@ -24,12 +26,7 @@ import akka.io.{Tcp, IO}
 
 import com.typesafe.scalalogging.LazyLogging
 
-import org.scassandra.server.actors.TcpServer
-import org.scassandra.server.priming.batch.PrimeBatchStore
-import org.scassandra.server.priming.prepared.{PrimePreparedMultiStore, CompositePreparedPrimeStore, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.priming.query.PrimeQueryStore
-import org.scassandra.server.priming.{ActivityLog, PrimingServer}
-
 
 object ServerStubRunner extends LazyLogging {
   def main(args: Array[String]) {
@@ -40,7 +37,14 @@ object ServerStubRunner extends LazyLogging {
     logger.info(s"Using binary port to $binaryPortNumber and admin port to $adminPortNumber")
     val ss = new ServerStubRunner(binaryListenAddress, binaryPortNumber, adminListenAddress, adminPortNumber, ScassandraConfig.startupTimeout)
     ss.start()
-    ss.awaitTermination()
+
+    // wait indefinitely or until interrupted.
+    val obj = new Object()
+    obj.synchronized { obj.wait(); }
+  }
+
+  lazy val actorSystem: ActorSystem = {
+    ActorSystem(s"Scassandra")
   }
 }
 
@@ -52,42 +56,32 @@ class ServerStubRunner( val binaryListenAddress: String = "localhost",
                         val adminListenAddress: String = "localhost",
                         val adminPortNumber: Int = 8043,
                         val startupTimeoutSeconds: Long = 10) extends LazyLogging {
+  import ServerStubRunner.actorSystem
 
-  var system: ActorSystem = _
+  import ExecutionContext.Implicits.global
 
+  // TODO: This is only used by integration tests, move into Actor.
   val primedResults = PrimeQueryStore()
-  val primePreparedStore = new PrimePreparedStore
-  val primePreparedPatternStore = new PrimePreparedPatternStore
-  val primePreparedMultiStore = new PrimePreparedMultiStore
-  val primeBatchStore = new PrimeBatchStore
-  val activityLog = new ActivityLog
-  val preparedLookup = new CompositePreparedPrimeStore(primePreparedStore, primePreparedPatternStore, primePreparedMultiStore)
 
-  var primingReadyListener: ActorRef = _
-  var tcpReadyListener: ActorRef = _
+  var scassandra: ActorRef = _
 
-  def start() = {
-    system = ActorSystem(s"CassandraServerStub-$binaryPortNumber-$adminPortNumber")
-    val manager = IO(Tcp)(system)
-    primingReadyListener = system.actorOf(Props(classOf[ServerReadyListener]), "PrimingReadyListener")
-    tcpReadyListener = system.actorOf(Props(classOf[ServerReadyListener]), "TcpReadyListener")
-    val tcpServer = system.actorOf(Props(classOf[TcpServer], manager, binaryListenAddress, binaryPortNumber, primedResults, preparedLookup, primeBatchStore, tcpReadyListener, activityLog), "BinaryTcpListener")
-    system.actorOf(Props(classOf[PrimingServer], adminListenAddress, adminPortNumber, primedResults, primePreparedStore,
-      primePreparedPatternStore, primePreparedMultiStore, primeBatchStore, primingReadyListener, activityLog, tcpServer), "PrimingServer")
+  def start() = this.synchronized {
+    scassandra = actorSystem.actorOf(Props(classOf[ScassandraServer], primedResults, binaryListenAddress,
+      binaryPortNumber, adminListenAddress, adminPortNumber))
   }
 
-  def awaitTermination() = {
-    system.awaitTermination()
+  def shutdown() = this.synchronized {
+    val stopped = gracefulStop(scassandra, startupTimeoutSeconds + 1 seconds, ShutdownServer(startupTimeoutSeconds seconds))
+    Await.result(stopped, startupTimeoutSeconds + 1 seconds)
   }
 
-  def shutdown() = {
-    system.shutdown()
-    system.awaitTermination()
-    logger.info("Server is shut down")
-  }
-
-  def awaitStartup() = {
-    ServerReadyAwaiter.run(primingReadyListener, tcpReadyListener)(Timeout(startupTimeoutSeconds.seconds))
+  def awaitStartup() = this.synchronized {
+    implicit val timeout: Timeout = startupTimeoutSeconds seconds
+    val startup = (scassandra ? AwaitStartup(timeout))
+    startup.onFailure { case t: Throwable =>
+      logger.error("Failure or timeout starting server", t)
+    }
+    Await.result(startup, startupTimeoutSeconds + 1 seconds)
   }
 }
 

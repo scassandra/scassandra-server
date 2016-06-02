@@ -26,20 +26,30 @@ import org.scassandra.server.priming.ActivityLog
 import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import org.scassandra.server.priming.query.PrimeQueryStore
-import org.scassandra.server.{RegisterHandler, ServerReady}
+import org.scassandra.server.{ShutdownServer, Shutdown, RegisterHandler, ServerReady}
+import spray.can.Http
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 import scala.concurrent.Future
 
-class TcpServer(manager: ActorRef,
-                listenAddress: String, port: Int,
+class TcpServer(listenAddress: String, port: Int,
                 primedResults: PrimeQueryStore,
                 primePrepareStore: PreparedStoreLookup,
                 primeBatchStore: PrimeBatchStore,
                 serverReadyListener: ActorRef,
-                activityLog: ActivityLog) extends Actor with ActorLogging {
+                activityLog: ActivityLog,
+                manager : Option[ActorRef]) extends Actor with ActorLogging {
+
+  def this(listenAddress: String, port: Int,
+           primedResults: PrimeQueryStore,
+           primePrepareStore: PreparedStoreLookup,
+           primeBatchStore: PrimeBatchStore,
+           serverReadyListener: ActorRef,
+           activityLog: ActivityLog) {
+    this(listenAddress, port, primedResults, primePrepareStore, primeBatchStore, serverReadyListener, activityLog, None)
+  }
 
   import akka.io.Tcp._
   import context.system
@@ -59,7 +69,7 @@ class TcpServer(manager: ActorRef,
   val executeHandler = context.actorOf(Props(classOf[ExecuteHandler], primePrepareStore, activityLog, preparedHandler))
 
   override def preStart(): Unit = {
-    manager ! Bind(self, new InetSocketAddress(listenAddress, port), pullMode=true)
+    manager.getOrElse(IO(Tcp)) ! Bind(self, new InetSocketAddress(listenAddress, port), pullMode=true)
   }
 
   def receive = {
@@ -134,6 +144,17 @@ class TcpServer(manager: ActorRef,
         checkEnablement(listener)
       }
       sender ! response
+    }
+    case Shutdown => {
+      val requestor = sender
+      context.become {
+        case u@Unbound => {
+          requestor ! u
+          // Kill self after unbound
+          self ! PoisonPill
+        }
+      }
+      listener ! Unbind
     }
 
   }
