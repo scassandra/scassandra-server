@@ -127,7 +127,8 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
     public void testBadCredentials() {
         String errorMessage = "Bad Credentials";
         ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
-        assertErrorMessageStatus(bad_credentials, config, "Authentication error on host localhost/127.0.0.1:8042: " + errorMessage);
+        assertErrorMessageStatus(bad_credentials, config,
+                String.format("Authentication error on host localhost/127.0.0.1:%s: ", scassandra.getBinaryPort()) + errorMessage);
     }
 
     @Test
@@ -202,7 +203,8 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
     public void testClosedOnRequest() {
         ClosedConnectionConfig config = new ClosedConnectionConfig(ClosedConnectionConfig.CloseType.CLOSE);
         assertErrorMessageStatus(closed_connection, config,
-            "All host(s) tried for query failed (tried: localhost/127.0.0.1:8042 (com.datastax.driver.core.TransportException: [localhost/127.0.0.1:8042] Connection has been closed))",
+            String.format("All host(s) tried for query failed (tried: localhost/127.0.0.1:%s (com.datastax.driver.core.TransportException: [localhost/127.0.0.1:%s] Connection has been closed))",
+                    scassandra.getBinaryPort(), scassandra.getBinaryPort()),
             server_error);
     }
 

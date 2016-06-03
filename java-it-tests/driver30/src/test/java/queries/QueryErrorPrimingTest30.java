@@ -6,6 +6,6 @@ import org.junit.Ignore;
 @Ignore
 public class QueryErrorPrimingTest30 extends QueryErrorPrimingTest {
     public QueryErrorPrimingTest30() {
-        super(new CassandraExecutor30());
+        super(new CassandraExecutor30(scassandra.getBinaryPort()));
     }
 }

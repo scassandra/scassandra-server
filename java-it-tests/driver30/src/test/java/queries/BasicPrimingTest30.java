@@ -19,6 +19,6 @@ import cassandra.CassandraExecutor30;
 public class BasicPrimingTest30 extends BasicPrimingTest {
 
     public BasicPrimingTest30() {
-        super(new CassandraExecutor30());
+        super(new CassandraExecutor30(scassandra.getBinaryPort()));
     }
 }

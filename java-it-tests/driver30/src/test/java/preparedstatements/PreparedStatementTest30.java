@@ -19,6 +19,6 @@ import cassandra.CassandraExecutor30;
 public class PreparedStatementTest30 extends PreparedStatementTest {
 
     public PreparedStatementTest30() {
-        super(new CassandraExecutor30());
+        super(new CassandraExecutor30(scassandra.getBinaryPort()));
     }
 }

@@ -19,7 +19,6 @@ import com.datastax.driver.core.Cluster;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import common.AbstractScassandraTest;
-import common.Config;
 import org.junit.Test;
 import org.scassandra.http.client.ColumnTypes;
 import org.scassandra.http.client.PrimingRequest;
@@ -33,7 +32,7 @@ public class MetaDataPriming30 extends AbstractScassandraTest {
     public static final String CUSTOM_CLUSTER_NAME = "custom cluster name";
 
     public MetaDataPriming30() {
-        super(new CassandraExecutor30());
+        super(new CassandraExecutor30(scassandra.getBinaryPort()));
     }
 
     @Test
@@ -57,7 +56,7 @@ public class MetaDataPriming30 extends AbstractScassandraTest {
 
         //when
         Cluster cluster = Cluster.builder().addContactPoint("localhost")
-                .withPort(Config.NATIVE_PORT).build();
+                .withPort(scassandra.getBinaryPort()).build();
         cluster.connect();
 
         //then
