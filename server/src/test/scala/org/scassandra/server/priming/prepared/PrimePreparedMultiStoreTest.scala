@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 import org.scalatest.{BeforeAndAfter, Matchers, FunSuite}
 import org.scassandra.server.cqlmessages.{Consistency, TWO, ONE}
-import org.scassandra.server.cqlmessages.types.CqlText
+import org.scassandra.server.cqlmessages.types._
 import org.scassandra.server.priming.{WriteRequestTimeoutResult, ReadRequestTimeoutResult, SuccessResult}
 import org.scassandra.server.priming.json.{WriteTimeout, ReadTimeout, Success}
 import org.scassandra.server.priming.query.{PrimeCriteria, Prime, PrimeMatch}
@@ -33,6 +33,23 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
 
     preparedPrime.value.variableTypes should equal(variableTypes)
     preparedPrime.value.getPrime(List(Some("Chris"))) should equal(Prime(rows = List(), result = SuccessResult))
+  }
+
+  test("Match on collection variable type - success") {
+    val variableTypes = List(CqlList(CqlText), CqlMap(CqlText, CqlInt), CqlSet(CqlText))
+    val outcomeWithListMatch = Outcome(Criteria(List(ExactMatch(Some(List("Zen", "Nez"))))), Action(Some(List()), result = Some(Success)))
+    val outcomeWithMapMatch = Outcome(Criteria(List(ExactMatch(Some(Map("key" -> 1))))), Action(Some(List()), result = Some(Success)))
+    val outcomeWithSetMatch = Outcome(Criteria(List(ExactMatch(Some(Set("Zen", "Nez"))))), Action(Some(List()), result = Some(Success)))
+    val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(variableTypes), List(outcomeWithListMatch, outcomeWithMapMatch, outcomeWithSetMatch))
+    val queryText = "Some query"
+    underTest.record(PrimePreparedMulti(WhenPrepared(Some(queryText)), thenDo))
+
+    val preparedPrime = underTest.findPrime(PrimeMatch(queryText, ONE))
+
+    preparedPrime.value.variableTypes should equal(variableTypes)
+    preparedPrime.value.getPrime(List(Some(List("Zen", "Nez")))) should equal(Prime(rows = List(), result = SuccessResult))
+    preparedPrime.value.getPrime(List(Some(Map("key" -> 1)))) should equal(Prime(rows = List(), result = SuccessResult))
+    preparedPrime.value.getPrime(List(Some(Set("Zen", "Nez")))) should equal(Prime(rows = List(), result = SuccessResult))
   }
 
   test("Match on variable type - failure") {
