@@ -18,9 +18,12 @@ package org.scassandra.http.client;
 import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+
+import static org.scassandra.cql.ListType.*;
 
 import java.util.*;
 
@@ -739,10 +742,13 @@ public class PrimingClientTest {
 
         MultiPrimeRequest prime = MultiPrimeRequest.request()
                 .withWhen(when()
-                        .withQuery("select * from person where name = ?"))
+                        .withQuery("select * from person where name = ? and nicknames = ?"))
                 .withThen(then()
-                        .withVariableTypes(TEXT)
-                        .withOutcomes(outcome(match().withVariableMatchers(exactMatch().withMatcher("Chris").build()), action()))
+                        .withVariableTypes(TEXT, list(TEXT))
+                        .withOutcomes(
+                                outcome(match().withVariableMatchers(exactMatch().withMatcher("Chris").build()), action()),
+                                outcome(match().withVariableMatchers(exactMatch().withMatcher(Lists.newArrayList("Zen", "Nez")).build()), action())
+                        )
                 )
                 .build();
 
@@ -750,11 +756,11 @@ public class PrimingClientTest {
 
         verify(postRequestedFor(urlEqualTo(PRIME_PREPARED_MULTI_PATH))
                 .withHeader("Content-Type", equalTo("application/json; charset=UTF-8"))
-                .withRequestBody(equalToJson("{\"when\":{\"query\":\"select * from person where name \\u003d ?\"}," +
-                        "\"then\":{\"variable_types\":[\"text\"],\"outcomes\":[{\"criteria\":" +
-                        "{\"variable_matcher\":[{\"matcher\":\"Chris\",\"type\":\"exact\"}]},\"action\":{}}]}}"))
-
-        );
+                .withRequestBody(equalToJson("{\"when\":{\"query\":\"select * from person where name \\u003d ? and nicknames \\u003d ?\"}," +
+                        "\"then\":{\"variable_types\":[\"text\",\"list\\u003ctext\\u003e\"],\"outcomes\":[" +
+                        "{\"criteria\":{\"variable_matcher\":[{\"matcher\":\"Chris\",\"type\":\"exact\"}]},\"action\":{}}," +
+                        "{\"criteria\":{\"variable_matcher\":[{\"matcher\":[\"Zen\",\"Nez\"],\"type\":\"exact\"}]},\"action\":{}}]}})")
+        ));
     }
 
     @Test
