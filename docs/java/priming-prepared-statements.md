@@ -101,7 +101,22 @@ outcomes as they will overwrite each other.
 
 If none of the outcomes match then a RuntimeException will currently be thrown. This will be replaced with default behaviour of returning an empty successful result.
 
-Collections are not currently supported for variable matching.
+Collections can also be used for variable matching:
+
+```
+MultiPrimeRequest prime = MultiPrimeRequest.request()
+        .withWhen(when()
+                .withQuery("select * from person where nicknames = ?"))
+        .withThen(then()
+                .withVariableTypes(list(TEXT))
+                .withOutcomes(
+                        outcome(match().withVariableMatchers(exactMatch().withMatcher(Lists.newArrayList("Zen", "Nez")).build()), action().withResult(Result.success))
+                )
+        )
+        .build(); 
+
+primingClient.multiPrime(prime);
+```
 
 #### Priming errors
 
