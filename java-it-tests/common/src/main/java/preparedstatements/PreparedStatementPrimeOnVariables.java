@@ -2,12 +2,15 @@ package preparedstatements;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import common.AbstractScassandraTest;
 import common.CassandraExecutor;
 import common.CassandraResult;
 import common.CassandraRow;
 import org.junit.Test;
+import org.scassandra.cql.CqlText;
 import org.scassandra.cql.CqlType;
+import org.scassandra.cql.ListType;
 import org.scassandra.cql.PrimitiveType;
 import org.scassandra.http.client.Consistency;
 import org.scassandra.http.client.MultiPrimeRequest;
@@ -23,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.scassandra.cql.ListType.*;
 import static org.scassandra.cql.PrimitiveType.*;
 import static org.scassandra.http.client.MultiPrimeRequest.*;
 
@@ -310,6 +314,30 @@ abstract public class PreparedStatementPrimeOnVariables extends AbstractScassand
         CassandraResult result = cassandra().prepareAndExecute(query, today);
 
         assertEquals(Result.read_request_timeout, result.status().getResult());
+    }
+
+    @Test
+    public void testPrimeBasedOnMatchCollection() {
+        String query = "select * from person where nicknames = ?";
+        MultiPrimeRequest prime = MultiPrimeRequest.request()
+                .withWhen(when()
+                        .withQuery(query))
+                .withThen(then()
+                        .withVariableTypes(list(TEXT))
+                        .withOutcomes(
+                                outcome(match().withVariableMatchers(exactMatch().withMatcher(Lists.newArrayList("Zen", "Nez")).build()), action().withResult(Result.success)),
+                                outcome(match().withVariableMatchers(exactMatch().withMatcher(Lists.newArrayList("timeout")).build()), action().withResult(Result.read_request_timeout))
+                        )
+                )
+                .build();
+
+        primingClient.multiPrime(prime);
+
+        CassandraResult successResult = cassandra().prepareAndExecute(query, Lists.newArrayList("Zen", "Nez"));
+        CassandraResult timeoutResult = cassandra().prepareAndExecute(query, Lists.newArrayList("timeout"));
+
+        assertEquals(Result.success, successResult.status().getResult());
+        assertEquals(Result.read_request_timeout, timeoutResult.status().getResult());
     }
 
     //todo blobs
