@@ -23,10 +23,12 @@ import org.scassandra.server.actors._
 import spray.routing.HttpService
 
 import org.scassandra.server.priming.json._
+import org.scassandra.server.priming.cors.CorsSupport
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait CurrentRoute extends HttpService with LazyLogging {
+trait CurrentRoute extends HttpService with LazyLogging with CorsSupport {
+
   val tcpServer: ActorRef
 
   implicit val dispatcher: ExecutionContext
@@ -35,31 +37,33 @@ trait CurrentRoute extends HttpService with LazyLogging {
   import PrimingJsonImplicits._
 
   val currentRoute = pathPrefix("current") {
-    path("connections" ~ Slash.? ~ Segment.? ~ Slash.? ~ IntNumber.?) { (host: Option[String], port: Option[Int]) =>
-      get {
-        complete {
-          (tcpServer ? GetClientConnections(host, port)).mapTo[ClientConnections]
-        }
-      } ~
-      delete {
-        parameters('type.as[String] ? "close") { closeType =>
-          val request = closeType match {
-            case "reset" => ResetClientConnections.apply _
-            case "halfclose" => ConfirmedCloseClientConnections.apply _
-            case _ => CloseClientConnections.apply _
+    cors {
+      path("connections" ~ Slash.? ~ Segment.? ~ Slash.? ~ IntNumber.?) { (host: Option[String], port: Option[Int]) =>
+        get {
+          complete {
+            (tcpServer ? GetClientConnections(host, port)).mapTo[ClientConnections]
           }
+        } ~
+        delete {
+          parameters('type.as[String] ? "close") { closeType =>
+            val request = closeType match {
+              case "reset" => ResetClientConnections.apply _
+              case "halfclose" => ConfirmedCloseClientConnections.apply _
+              case _ => CloseClientConnections.apply _
+            }
 
-          complete((tcpServer ? request(host, port)).mapTo[ClosedConnections])
+            complete((tcpServer ? request(host, port)).mapTo[ClosedConnections])
+          }
         }
-      }
-    } ~
-    path("listener") {
-      put {
-        complete((tcpServer ? AcceptNewConnections).mapTo[AcceptNewConnectionsEnabled])
       } ~
-      delete {
-        parameters('after.as[Int] ? 0) { after =>
-          complete((tcpServer ? RejectNewConnections(after)).mapTo[RejectNewConnectionsEnabled])
+      path("listener") {
+        put {
+          complete((tcpServer ? AcceptNewConnections).mapTo[AcceptNewConnectionsEnabled])
+        } ~
+        delete {
+          parameters('after.as[Int] ? 0) { after =>
+            complete((tcpServer ? RejectNewConnections(after)).mapTo[RejectNewConnectionsEnabled])
+          }
         }
       }
     }

@@ -48,46 +48,46 @@ trait PrimingQueryRoute extends HttpService with LazyLogging {
             PrimingJsonHelper.convertBackToPrimeQueryResult(allPrimes)
           }
         } ~
-          post {
-            entity(as[PrimeQuerySingle]) {
-              primeRequest => {
-                complete {
-                  logger.debug(s"Received prime request $primeRequest")
-                  val primeCriteriaTry = PrimingJsonHelper.extractPrimeCriteria(primeRequest)
+        post {
+          entity(as[PrimeQuerySingle]) {
+            primeRequest => {
+              complete {
+                logger.debug(s"Received prime request $primeRequest")
+                val primeCriteriaTry = PrimingJsonHelper.extractPrimeCriteria(primeRequest)
 
-                  primeCriteriaTry match {
-                    case Success(primeCriteria) =>
+                primeCriteriaTry match {
+                  case Success(primeCriteria) =>
 
-                      val primeResult = PrimingJsonHelper.extractPrime(primeRequest)
+                    val primeResult = PrimingJsonHelper.extractPrime(primeRequest)
 
-                      primeQueryStore.add(primeCriteria, primeResult) match {
-                        case cp: ConflictingPrimes => {
-                          logger.warn(s"Received invalid prime due to conflicting primes $cp")
-                          StatusCodes.BadRequest -> cp
-                        }
-                        case tm: TypeMismatches => {
-                          logger.warn(s"Received invalid prime due to type mismatch $tm")
-                          StatusCodes.BadRequest -> tm
-                        }
-                        case _ => StatusCodes.OK
+                    primeQueryStore.add(primeCriteria, primeResult) match {
+                      case cp: ConflictingPrimes => {
+                        logger.warn(s"Received invalid prime due to conflicting primes $cp")
+                        StatusCodes.BadRequest -> cp
                       }
-                    case failure @ Failure(_) => {
-                      logger.warn(s"Received invalid prime $failure")
-                      StatusCodes.BadRequest
+                      case tm: TypeMismatches => {
+                        logger.warn(s"Received invalid prime due to type mismatch $tm")
+                        StatusCodes.BadRequest -> tm
+                      }
+                      case _ => StatusCodes.OK
                     }
+                  case failure @ Failure(_) => {
+                    logger.warn(s"Received invalid prime $failure")
+                    StatusCodes.BadRequest
                   }
                 }
               }
             }
-          } ~
-          delete {
-            complete {
-              logger.debug("Deleting all recorded priming")
-              primeQueryStore.clear()
-              logger.debug("Return 200")
-              StatusCodes.OK
-            }
           }
+        } ~
+        delete {
+          complete {
+            logger.debug("Deleting all recorded priming")
+            primeQueryStore.clear()
+            logger.debug("Return 200")
+            StatusCodes.OK
+          }
+        }
       }
   }
 }

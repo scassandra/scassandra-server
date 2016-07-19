@@ -1,36 +1,37 @@
 package org.scassandra.server.priming.routes
 
-import org.scassandra.server.priming.batch.{PrimeBatchStore, BatchPrimeSingle}
-import org.scassandra.server.priming.json._
-
 import com.typesafe.scalalogging.LazyLogging
-
+import org.scassandra.server.priming.batch.{BatchPrimeSingle, PrimeBatchStore}
+import org.scassandra.server.priming.cors.CorsSupport
+import org.scassandra.server.priming.json.PrimingJsonImplicits
 import spray.http.StatusCodes
-import spray.routing.{Route, HttpService}
+import spray.routing.{HttpService, Route}
 
-trait PrimingBatchRoute extends HttpService with LazyLogging {
+trait PrimingBatchRoute extends HttpService with LazyLogging with CorsSupport {
 
   import PrimingJsonImplicits._
 
   implicit val primeBatchStore: PrimeBatchStore
 
   val batchRoute: Route = {
-    path("prime-batch-sequence") {
-      post {
-        complete {
-          //todo keep url free for multi primes
-          StatusCodes.NotFound
+    cors {
+      path("prime-batch-sequence") {
+        post {
+          complete {
+            //todo keep url free for multi primes
+            StatusCodes.NotFound
+          }
         }
-      }
-    } ~
-    path("prime-batch-single") {
-      post {
-        entity(as[BatchPrimeSingle]) {
-          primeRequest => {
-            complete {
-              logger.info("Received batch prime {}", primeRequest)
-              primeBatchStore.record(primeRequest)
-              StatusCodes.OK
+      } ~
+      path("prime-batch-single") {
+        post {
+          entity(as[BatchPrimeSingle]) {
+            primeRequest => {
+              complete {
+                logger.info("Received batch prime {}", primeRequest)
+                primeBatchStore.record(primeRequest)
+                StatusCodes.OK
+              }
             }
           }
         }

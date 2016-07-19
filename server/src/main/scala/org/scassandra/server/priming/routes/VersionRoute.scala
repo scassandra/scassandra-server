@@ -15,24 +15,27 @@
  */
 package org.scassandra.server.priming.routes
 
-import org.scassandra.server.priming.json.{PrimingJsonImplicits}
-import spray.routing.HttpService
 import com.typesafe.scalalogging.LazyLogging
+import org.scassandra.server.priming.cors.CorsSupport
+import org.scassandra.server.priming.json.PrimingJsonImplicits
+import spray.routing.HttpService
 
-trait VersionRoute extends HttpService with LazyLogging {
+trait VersionRoute extends HttpService with LazyLogging with CorsSupport {
 
   import PrimingJsonImplicits._
 
   val versionRoute =
-    path("version") {
-      get {
-        complete {
-          val version = if (getClass.getPackage.getImplementationVersion == null) {
-            "unknown"
-          } else {
-            getClass.getPackage.getImplementationVersion
+    cors {
+      path("version") {
+        get {
+          complete {
+            val version = if (getClass.getPackage.getImplementationVersion == null) {
+              "unknown"
+            } else {
+              getClass.getPackage.getImplementationVersion
+            }
+            Version(version)
           }
-          Version(version)
         }
       }
     }

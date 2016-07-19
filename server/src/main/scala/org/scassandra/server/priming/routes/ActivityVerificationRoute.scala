@@ -15,25 +15,27 @@
  */
 package org.scassandra.server.priming.routes
 
-import org.scassandra.server.priming.json.PrimingJsonImplicits
-import spray.routing.HttpService
 import com.typesafe.scalalogging.LazyLogging
-import spray.http.StatusCodes
 import org.scassandra.server.priming.ActivityLog
+import org.scassandra.server.priming.cors.CorsSupport
+import org.scassandra.server.priming.json.PrimingJsonImplicits
+import spray.http.StatusCodes
+import spray.routing.HttpService
 
-trait ActivityVerificationRoute extends HttpService with LazyLogging {
+trait ActivityVerificationRoute extends HttpService with LazyLogging with CorsSupport {
 
   import PrimingJsonImplicits._
 
-  implicit val activityLog : ActivityLog
+  implicit val activityLog: ActivityLog
 
   val activityVerificationRoute =
-    path("connection") {
-      get {
-        complete {
-          activityLog.retrieveConnections()
-        }
-      } ~
+    cors {
+      path("connection") {
+        get {
+          complete {
+            activityLog.retrieveConnections()
+          }
+        } ~
         delete {
           complete {
             logger.debug("Deleting all recorded connections")
@@ -41,14 +43,14 @@ trait ActivityVerificationRoute extends HttpService with LazyLogging {
             StatusCodes.OK
           }
         }
-    } ~
-    path("query") {
-      get {
-        complete {
-          logger.debug("Request for recorded queries")
-          activityLog.retrieveQueries()
-        }
       } ~
+      path("query") {
+        get {
+          complete {
+            logger.debug("Request for recorded queries")
+            activityLog.retrieveQueries()
+          }
+        } ~
         delete {
           complete {
             logger.debug("Deleting all recorded queries")
@@ -56,22 +58,22 @@ trait ActivityVerificationRoute extends HttpService with LazyLogging {
             StatusCodes.OK
           }
         }
-    } ~
-    path("prepared-statement-preparation") {
-      get {
-        complete {
-          logger.debug("Request for recorded prepared statement preparations")
-          activityLog.retrievePreparedStatementPreparations()
+      } ~
+      path("prepared-statement-preparation") {
+        get {
+          complete {
+            logger.debug("Request for recorded prepared statement preparations")
+            activityLog.retrievePreparedStatementPreparations()
+          }
+        } ~
+        delete {
+          complete {
+            logger.debug("Deleting all recorded prepared statement preparations")
+            activityLog.clearPreparedStatementPreparations()
+            StatusCodes.OK
+          }
         }
       } ~
-      delete {
-        complete {
-          logger.debug("Deleting all recorded prepared statement preparations")
-          activityLog.clearPreparedStatementPreparations()
-          StatusCodes.OK
-        }
-      }
-    } ~
       path("prepared-statement-execution") {
         get {
           complete {
@@ -79,26 +81,27 @@ trait ActivityVerificationRoute extends HttpService with LazyLogging {
             activityLog.retrievePreparedStatementExecutions()
           }
         } ~
-          delete {
-            complete {
-              logger.debug("Deleting all recorded prepared statement executions")
-              activityLog.clearPreparedStatementExecutions()
-              StatusCodes.OK
-            }
+        delete {
+          complete {
+            logger.debug("Deleting all recorded prepared statement executions")
+            activityLog.clearPreparedStatementExecutions()
+            StatusCodes.OK
           }
-    } ~
-    path("batch-execution") {
-      get {
-        complete {
-          logger.debug("Request for recorded batch executions")
-          activityLog.retrieveBatchExecutions()
         }
       } ~
-      delete {
-        complete {
-          logger.debug("Deleting all recorded batch executions")
-          activityLog.clearBatchExecutions()
-          StatusCodes.OK
+      path("batch-execution") {
+        get {
+          complete {
+            logger.debug("Request for recorded batch executions")
+            activityLog.retrieveBatchExecutions()
+          }
+        } ~
+        delete {
+          complete {
+            logger.debug("Deleting all recorded batch executions")
+            activityLog.clearBatchExecutions()
+            StatusCodes.OK
+          }
         }
       }
     }
