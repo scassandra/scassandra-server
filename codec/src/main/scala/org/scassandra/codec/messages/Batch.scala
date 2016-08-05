@@ -15,7 +15,7 @@
  */
 package org.scassandra.codec.messages
 
-import org.scassandra.codec.Notations.{bytes, longString, value, short => cshort}
+import org.scassandra.codec.Notations.{longString, shortBytes, value, short => cshort}
 import org.scassandra.codec.Value
 import scodec.Codec
 import scodec.bits.ByteVector
@@ -69,5 +69,5 @@ object SimpleBatchQuery {
 case class PreparedBatchQuery(id: ByteVector, values: List[Value] = Nil) extends BatchQuery
 
 object PreparedBatchQuery {
-  implicit val codec: Codec[PreparedBatchQuery] = (bytes :: listOfN(cshort, value)).as[PreparedBatchQuery]
+  implicit val codec: Codec[PreparedBatchQuery] = (shortBytes :: listOfN(cshort, value)).as[PreparedBatchQuery]
 }
