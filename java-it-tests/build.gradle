@@ -15,10 +15,8 @@ subprojects {
 
     apply plugin: 'java'
 
-    compileJava {
-        sourceCompatibility = "1.8"
-        targetCompatibility = "1.8"
-    }
+    sourceCompatibility = "1.8"
+    targetCompatibility = "1.8"
 
     dependencies {
         repositories {
