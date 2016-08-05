@@ -93,6 +93,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
       case inet: InetAddress => JsString(inet.getHostAddress)
       case bytes: Array[Byte] => JsString("0x" + bytes2hex(bytes))
       case bytes: ByteVector => JsString("0x" + bytes2hex(bytes.toArray))
+      case null => JsNull
       case None => JsNull
       case Some(s) => this.write(s)
       case other => serializationError("Do not understand object of type " + other.getClass.getName)
