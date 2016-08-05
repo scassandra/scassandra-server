@@ -43,10 +43,14 @@ compileJava {
     targetCompatibility = "1.6"
 }
 
+
 compileScala {
     sourceCompatibility = "1.6"
     targetCompatibility = "1.6"
 }
+
+compileScala.scalaCompileOptions.failOnError = false
+compileTestScala.scalaCompileOptions.failOnError = false
 
 task sourceJar(type: Jar) {
     classifier = 'sources'
@@ -130,7 +134,9 @@ uploadArchives {
 
 dependencies {
     compile "org.scala-lang:scala-library:$scalaVersion"
+    compile  project(':codec')
     compile  project(':cql-antlr')
+    compile  "org.scodec:scodec-akka_2.11:0.2.0"
     compile  "ch.qos.logback:logback-classic:$logbackVersion"
     compile  "com.typesafe.akka:akka-actor_2.11:$akkaVersion"
     compile  "com.typesafe.akka:akka-remote_2.11:$akkaVersion"
@@ -143,7 +149,7 @@ dependencies {
 
     testCompile "com.typesafe.akka:akka-testkit_2.11:$akkaVersion"
     testCompile "io.spray:spray-testkit_2.11:$sprayVersion"
-    testCompile "com.datastax.cassandra:cassandra-driver-core:2.0.10" //exclude("com.google.guava", "guava"),
+    testCompile "com.datastax.cassandra:cassandra-driver-core:3.1.0" //exclude("com.google.guava", "guava"),
     testCompile "net.databinder.dispatch:dispatch-core_2.11:0.11.0"
     testCompile "org.scalatest:scalatest_2.11:2.2.3"
     testCompile "org.mockito:mockito-core:$mockitoVersion"

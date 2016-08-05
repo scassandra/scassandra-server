@@ -4,7 +4,7 @@ buildscript {
         maven {
             url "https://plugins.gradle.org/m2/"
         }
-        maven { url "https://oss.sonatype.org/content/groups/public"}
+        maven { url "https://oss.sonatype.org/content/groups/public" }
     }
     dependencies {
         classpath "com.github.maiflai:gradle-scalatest:0.7"
@@ -74,7 +74,7 @@ uploadArchives {
             pom.artifactId = 'scassandra-server_2.11'
 
             pom.project {
-                name 'Scassandra Codec'
+                name 'Scassandra codec'
                 packaging 'jar'
                 // optionally artifactId can be defined here
                 description 'Scassandra codec'
@@ -111,7 +111,8 @@ uploadArchives {
 }
 
 dependencies {
-    compile 'org.scodec:scodec-core_2.11:1.8.1'
+    compile 'org.scala-lang:scala-library:2.11.8'
+    compile 'org.scodec:scodec-core_2.11:1.10.2'
 
     testCompile 'org.scalacheck:scalacheck_2.11:1.12.4'
     testCompile "org.scalatest:scalatest_2.11:2.2.3"

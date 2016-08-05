@@ -31,207 +31,105 @@
 package org.scassandra.server.actors
 
 import akka.actor.{ActorRef, ActorSystem}
-import akka.io.Tcp.CloseCommand
 import akka.testkit._
-import akka.util.ByteString
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-import org.scassandra.server.actors.MessageHelper.createQueryMessage
-import org.scassandra.server.cqlmessages._
-import org.scassandra.server.cqlmessages.response._
-import org.scassandra.server.cqlmessages.types.{CqlInt, CqlVarchar, CqlText}
-import org.scassandra.server.priming.query.{Prime, PrimeMatch, PrimeQueryStore}
-import org.scassandra.server.priming.{Query, _}
+import org.scassandra.codec._
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.messages.{QueryParameters, Row}
+import org.scassandra.server.priming.query.{PrimeQueryStore, Reply}
+import org.scassandra.server.priming.{ActivityLog, Query => RQuery}
 
-class QueryHandlerTest extends FunSuite with Matchers with BeforeAndAfter with TestKitBase with MockitoSugar with ErrorHandlingBehaviors with FatalHandlingBehaviors {
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
+class QueryHandlerTest extends FunSuite with ImplicitSender with ProtocolActorTest with Matchers with BeforeAndAfter
+  with TestKitBase with MockitoSugar {
   implicit lazy val system = ActorSystem()
 
   var underTest: ActorRef = null
   var testProbeForTcpConnection: TestProbe = null
   val mockPrimedResults = mock[PrimeQueryStore]
-  val someCqlStatement = PrimeMatch("some cql statement", ONE)
-  val cqlMessageFactory = VersionTwoMessageFactory
-  val protocolByte: Byte = ProtocolVersion.ServerProtocolVersionTwo
+  val someCqlStatement = Query("some cql statement", QueryParameters(consistency=Consistency.ONE))
   val activityLog = new ActivityLog
-  implicit val impProtocolVersion = VersionTwo
 
   before {
     activityLog.clearQueries()
-    testProbeForTcpConnection = TestProbe()
-    underTest = TestActorRef(new QueryHandler(testProbeForTcpConnection.ref, mockPrimedResults, cqlMessageFactory, activityLog))
+    underTest = TestActorRef(new QueryHandler(mockPrimedResults, activityLog))
     reset(mockPrimedResults)
+
+    receiveWhile(10 milliseconds) {
+      case msg @ _ =>
+    }
   }
 
-  test("Should return set keyspace message for use statement") {
-    val useStatement: String = "use keyspace"
-    val stream: Byte = 0x02
+  test("Should return empty result when PrimeQueryStore returns None") {
+    when(mockPrimedResults.apply(someCqlStatement)).thenReturn(None)
 
-    val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(useStatement).toArray.drop(8))
+    underTest ! protocolMessage(someCqlStatement)
 
-    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
-
-    testProbeForTcpConnection.expectMsg(SetKeyspace("keyspace", stream))
+    expectMsgPF() {
+      case ProtocolResponse(_, `NoRows`) => true
+    }
   }
 
-  test("Should return empty result when PrimedResults returns None") {
-    val stream: Byte = 0x05
-    val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(None)
+  test("Should return Prime message when PrimeQueryStore returns Prime") {
+    val rows = Rows(rows = Row("a" -> 1, "b" -> 2) :: Nil)
+    when(mockPrimedResults.apply(someCqlStatement)).thenReturn(Some(Reply(rows)))
 
-    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
+    underTest ! protocolMessage(someCqlStatement)
 
-    testProbeForTcpConnection.expectMsg(Rows("","",stream, Map()))
-  }
-
-  test("Should return empty rows result when PrimedResults returns empty list") {
-    val stream: Byte = 0x05
-    val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch(someCqlStatement.query, ONE))).thenReturn(Some(Prime(List())))
-
-    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
-
-    testProbeForTcpConnection.expectMsg(Rows("", "", stream, Map()))
-  }
-
-  test("Should return rows result when PrimedResults returns a list of rows") {
-    val stream: Byte = 0x05
-    val rows: List[Row] = List(
-      Row(Map(
-        "name" -> "Mickey",
-        "age" -> "99"
-      ))
-    )
-    val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch(someCqlStatement.query, ONE))).thenReturn(Some(Prime(List[Map[String, Any]](
-      Map(
-        "name" -> "Mickey",
-        "age" -> "99"
-      )
-    ),
-      SuccessResult,
-      Map(
-        "name" -> CqlVarchar,
-        "age" -> CqlInt
-      ))))
-
-    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
-
-    testProbeForTcpConnection.expectMsg(Rows("", "", stream, Map("name" -> CqlVarchar, "age" -> CqlInt), rows))
-  }
-
-  test("Test multiple rows") {
-    val stream: Byte = 0x05
-    val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    val rows = List[Map[String, String]](
-      Map(
-        "name" -> "Mickey",
-        "age" -> "99"
-      ),
-      Map(
-        "name" -> "Jenifer",
-        "age" -> "88"
-      )
-    )
-    val colTypes = Map(
-      "name" -> CqlVarchar,
-      "age" -> CqlVarchar
-    )
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(rows, SuccessResult, colTypes)))
-
-    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
-
-    testProbeForTcpConnection.expectMsg(Rows("", "", stream, Map("name" -> CqlVarchar, "age" -> CqlVarchar),
-      rows.map(row => Row(row))))
+    expectMsgPF() {
+      case ProtocolResponse(_, `rows`) => true
+    }
   }
 
   test("Should store query in the ActivityLog even if not primed") {
     //given
     activityLog.clearQueries()
-    val stream: Byte = 1
-    val query = "select * from people"
-    val consistency = TWO
-    val queryBody: ByteString = ByteString(createQueryMessage(query, consistency = consistency).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch(query, consistency))).thenReturn(None)
+
+    val queryText = "select * from people"
+    val consistency = Consistency.TWO
+    val query = Query(queryText, QueryParameters(consistency=consistency))
+    when(mockPrimedResults.apply(query)).thenReturn(None)
 
     //when
-    underTest ! QueryHandler.Query(queryBody, stream)
+    underTest ! protocolMessage(query)
 
     //then
     val recordedQueries = activityLog.retrieveQueries()
     recordedQueries.size should equal(1)
-    val recordedQuery: Query = recordedQueries.head
-    recordedQuery should equal(Query(query, consistency))
+    val recordedQuery = recordedQueries.head
+    recordedQuery should equal(RQuery(queryText, consistency))
   }
 
-  test("Should return keyspace name when set in PrimedResults") {
+  test("Should record query parameter values from request in QueryLog if Prime contains variable types") {
     // given
-    val stream: Byte = 0x05
-    val someQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    val expectedKeyspace = "somekeyspace"
+    val consistency = Consistency.THREE
 
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), SuccessResult, Map(), expectedKeyspace)))
+    val variableTypes: List[DataType] = DataType.Varchar :: DataType.Int :: Nil
+    val values: List[Any] = "Hello" :: 42 :: Nil
+    val rawValues: List[QueryValue] = values.zip(variableTypes).map {
+      case (v, dataType) =>
+        QueryValue(None, Bytes(dataType.codec.encode(v).require.toByteVector))
+    }
+    val query = Query("select * from sometable where k = ?", QueryParameters(consistency=consistency, values = Some(rawValues)))
+
+    when(mockPrimedResults.apply(query)).thenReturn(Some(Reply(NoRows, variableTypes = Some(variableTypes))))
 
     // when
-    underTest ! QueryHandler.Query(someQuery, stream)
+    underTest ! protocolMessage(query)
 
     // then
-    testProbeForTcpConnection.expectMsg(Rows(expectedKeyspace, "", stream, Map()))
-  }
+    expectMsgPF() {
+      case ProtocolResponse(_, `NoRows`) => true
+    }
 
-  test("Should return table name when set in PrimedResults") {
-    // given
-    val stream: Byte = 0x05
-    val someQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    val expectedTable = "sometable"
-
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), SuccessResult, Map(), "", expectedTable)))
-
-    // when
-    underTest ! QueryHandler.Query(someQuery, stream)
-
-    // then
-    testProbeForTcpConnection.expectMsg(Rows("", expectedTable, stream, Map()))
-  }
-
-  test("Query with parameters - single text parameter") {
-    // given
-    val stream: Byte = 0x05
-    val queryFlag = QueryFlags.Values
-    val someQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query, flags = queryFlag).toArray.drop(8))
-    val queryParams = ByteString(CqlProtocolHelper.serializeShort(1) ++ // number of parameters
-                      CqlText.writeValueWithLength("Hello"))
-    when(mockPrimedResults.get(someCqlStatement)).thenReturn(Some(Prime(List(), SuccessResult, Map(), "", "sometable", variableTypes = List(CqlText))))
-
-    // when
-    underTest ! QueryHandler.Query(someQuery ++ queryParams, stream)
-
-    // then
-    testProbeForTcpConnection.expectMsg(Rows("", "sometable", stream, Map()))
+    // check activityLog
     val recordedQueries = activityLog.retrieveQueries()
     recordedQueries.size should equal(1)
-    val recordedQuery: Query = recordedQueries.head
-    recordedQuery should equal(Query(someCqlStatement.query, someCqlStatement.consistency, List(Some("Hello")), List(CqlText)))
-  }
-
-  override def executeWithError(result: ErrorResult, expectedError: (Byte, Consistency) => Error): Unit = {
-    val stream: Byte = 0x05
-    val consistency = LOCAL_ONE
-    val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query, consistency = consistency).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch("some cql statement", consistency))).thenReturn(Some(Prime(List(), result)))
-
-    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
-
-    testProbeForTcpConnection.expectMsg(expectedError(stream, consistency))
-  }
-
-  override def executeWithFatal(result: FatalResult, expectedCommand: CloseCommand): Unit = {
-    val stream: Byte = 0x05
-    val setKeyspaceQuery: ByteString = ByteString(createQueryMessage(someCqlStatement.query).toArray.drop(8))
-    when(mockPrimedResults.get(PrimeMatch("some cql statement"))).thenReturn(Some(Prime(List(), result)))
-
-    underTest ! QueryHandler.Query(setKeyspaceQuery, stream)
-
-    testProbeForTcpConnection.expectMsg(expectedCommand)
+    val recordedQuery = recordedQueries.head
+    recordedQuery should equal(RQuery(query.query, consistency, values, variableTypes))
   }
 }

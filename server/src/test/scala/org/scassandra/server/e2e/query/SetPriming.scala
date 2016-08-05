@@ -22,8 +22,8 @@ import java.util
 import java.util.{Date, UUID}
 
 import com.datastax.driver.core.DataType
+import org.scassandra.codec.datatype.{DataType => DType}
 import org.scassandra.server.AbstractIntegrationTest
-import org.scassandra.server.cqlmessages.types._
 import org.scassandra.server.priming.json.Success
 import org.scassandra.server.priming.query.When
 
@@ -33,7 +33,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set("one", "two", "three")
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlVarchar))
+    val columnTypes  = Map("field" -> DType.Set(DType.Varchar))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -49,7 +49,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set("one", "two", "three")
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlAscii))
+    val columnTypes  = Map("field" -> DType.Set(DType.Ascii))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -65,7 +65,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set("one", "two", "three")
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlText))
+    val columnTypes  = Map("field" -> DType.Set(DType.Text))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -81,7 +81,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set(1, 2, 3)
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlInt))
+    val columnTypes  = Map("field" -> DType.Set(DType.Int))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -97,7 +97,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set(1l, 2l, 3l)
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlBigint))
+    val columnTypes  = Map("field" -> DType.Set(DType.Bigint))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -113,7 +113,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set(true, false, true)
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlBoolean))
+    val columnTypes  = Map("field" -> DType.Set(DType.Boolean))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -129,7 +129,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set(1l, 2l, 3l)
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlCounter))
+    val columnTypes  = Map("field" -> DType.Set(DType.Counter))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -145,7 +145,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set(BigDecimal("1.2"), BigDecimal("2.3"), BigDecimal("3.4"))
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlDecimal))
+    val columnTypes  = Map("field" -> DType.Set(DType.Decimal))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -161,7 +161,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set(1.0, 2.0, 3.0)
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlDouble))
+    val columnTypes  = Map("field" -> DType.Set(DType.Double))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -177,7 +177,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set(1.0f, 2.0f, 3.0f)
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlFloat))
+    val columnTypes  = Map("field" -> DType.Set(DType.Float))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -193,7 +193,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set(InetAddress.getLocalHost)
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlInet))
+    val columnTypes  = Map("field" -> DType.Set(DType.Inet))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -210,7 +210,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set(date.getTime)
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlTimestamp))
+    val columnTypes  = Map("field" -> DType.Set(DType.Timestamp))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -227,7 +227,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set(uuid)
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlUUID))
+    val columnTypes  = Map("field" -> DType.Set(DType.Uuid))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -244,7 +244,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set(uuid)
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlTimeUUID))
+    val columnTypes  = Map("field" -> DType.Set(DType.Timeuuid))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -260,7 +260,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set(BigInt("1"), BigInt("2"), BigInt("3"))
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlVarint))
+    val columnTypes  = Map("field" -> DType.Set(DType.Varint))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)
@@ -277,7 +277,7 @@ class SetPriming extends AbstractIntegrationTest {
     val set = Set(blob, blob)
     val whenQuery = "Test prime with cql set"
     val rows: List[Map[String, Any]] = List(Map("field" -> set))
-    val columnTypes  = Map("field" -> CqlSet(CqlBlob))
+    val columnTypes  = Map("field" -> DType.Set(DType.Blob))
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     val result = session.execute(whenQuery)

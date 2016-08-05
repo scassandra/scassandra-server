@@ -15,7 +15,8 @@
  */
 package org.scassandra.server
 
-import com.datastax.driver.core.exceptions.{SyntaxError => SyntaxErrorDriver, _}
+import com.datastax.driver.core.exceptions.{ProtocolError => ProtocolErrorDriver, ServerError => ServerErrorDriver, SyntaxError => SyntaxErrorDriver, _}
+import com.datastax.driver.core.policies.FallthroughRetryPolicy
 import org.scalatest.concurrent.ScalaFutures
 import org.scassandra.server.priming.ErrorConstants
 import org.scassandra.server.priming.json._
@@ -64,7 +65,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   def expectException[T <: AnyRef](result: ResultJsonRepresentation, config: Option[Map[String, String]] = None)(implicit manifest: Manifest[T]): Unit = {
     // create a temporary cluster, since these queries may change the behavior of how the driver
     // sees a host.
-    val cluster = builder().build()
+    val cluster = builder().withRetryPolicy(FallthroughRetryPolicy.INSTANCE).build()
     try {
       val session = cluster.connect()
       val whenQuery = "read timeout query"
@@ -91,9 +92,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   }
 
   test("Test server error on query") {
-    // Expect a NHAE as this indicates that there was a server problem
-    // and there were no other hosts to try.
-    expectException[NoHostAvailableException](ServerError)
+    expectException[ServerErrorDriver](ServerError)
   }
 
   test("Test protocol error on query") {
@@ -105,10 +104,11 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   }
 
   test("Test overloaded on query") {
-    expectException[NoHostAvailableException](Overloaded)
+    expectException[OverloadedException](Overloaded)
   }
 
   test("Test is bootstrapping on query") {
+    // Expect a NHAE since on bootstrapping driver will try next host.
     expectException[NoHostAvailableException](IsBootstrapping)
   }
 
@@ -128,9 +128,7 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
     expectException[InvalidQueryException](Invalid)
   }
 
-  ignore("Test config error on query") {
-    // Ignored since this is a bug in the java driver as it returns
-    // the wrong exception.
+  test("Test config error on query") {
     expectException[InvalidConfigurationInQueryException](ConfigError)
   }
 
@@ -143,6 +141,6 @@ class JavaDriverIntegrationTest extends AbstractIntegrationTest with ScalaFuture
   }
 
   test("Test closed connection on query") {
-    expectException[NoHostAvailableException](ClosedConnection, Some(Map(ErrorConstants.CloseType -> "close")))
+    expectException[TransportException](ClosedConnection, Some(Map(ErrorConstants.CloseType -> "close")))
   }
 }

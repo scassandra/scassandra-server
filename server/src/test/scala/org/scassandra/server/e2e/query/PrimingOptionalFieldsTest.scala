@@ -15,11 +15,11 @@
  */
 package org.scassandra.server.e2e.query
 
-import org.scassandra.server.AbstractIntegrationTest
 import org.scalatest.concurrent.ScalaFutures
-import org.scassandra.server.priming.query.When
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.server.AbstractIntegrationTest
 import org.scassandra.server.priming.json.Success
-import org.scassandra.server.cqlmessages.types.CqlVarchar
+import org.scassandra.server.priming.query.When
 
 class PrimingOptionalFieldsTest extends AbstractIntegrationTest with ScalaFutures {
 
@@ -34,7 +34,7 @@ class PrimingOptionalFieldsTest extends AbstractIntegrationTest with ScalaFuture
     // given
     val whenQuery = "select * from people"
     val rows: List[Map[String, String]] = List(Map("name" -> "Chris", "age" -> "19"))
-    val columnTypes  = Map("name" -> CqlVarchar)
+    val columnTypes  = Map("name" -> DataType.Varchar)
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     // when
@@ -51,7 +51,7 @@ class PrimingOptionalFieldsTest extends AbstractIntegrationTest with ScalaFuture
     val whenQuery = "select * from people"
     val expectedKeyspace = "myKeyspace"
     val rows: List[Map[String, String]] = List(Map("name" -> "Chris", "age" -> "19"))
-    val columnTypes  = Map("name" -> CqlVarchar)
+    val columnTypes  = Map("name" -> DataType.Varchar)
     prime(When(query = Some(whenQuery), keyspace = Some(expectedKeyspace)), rows, Success, columnTypes)
 
     // when
@@ -74,7 +74,7 @@ class PrimingOptionalFieldsTest extends AbstractIntegrationTest with ScalaFuture
     // given
     val whenQuery = "select * from people"
     val rows: List[Map[String, String]] = List(Map("name" -> "Chris", "age" -> "19"))
-    val columnTypes  = Map("name" -> CqlVarchar)
+    val columnTypes  = Map("name" -> DataType.Varchar)
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
     // when
@@ -91,7 +91,7 @@ class PrimingOptionalFieldsTest extends AbstractIntegrationTest with ScalaFuture
     val whenQuery = "select * from people"
     val expectedTable = "mytable"
     val rows: List[Map[String, String]] = List(Map("name" -> "Chris", "age" -> "19"))
-    val columnTypes  = Map("name" -> CqlVarchar)
+    val columnTypes  = Map("name" -> DataType.Varchar)
     prime(When(query = Some(whenQuery), table = Some(expectedTable)), rows, Success, columnTypes)
 
     // when

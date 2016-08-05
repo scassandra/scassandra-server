@@ -15,13 +15,15 @@
  */
 package org.scassandra.server.e2e.query
 
-import org.scassandra.server.AbstractIntegrationTest
-import dispatch._, Defaults._
 import java.util
-import org.scassandra.server.cqlmessages.types.{CqlMap, CqlVarchar, CqlSet}
-import org.scassandra.server.priming.query.When
-import org.scassandra.server.priming.json.Success
+
 import com.datastax.driver.core.DataType
+import dispatch.Defaults._
+import dispatch._
+import org.scassandra.codec.datatype.{DataType => DType}
+import org.scassandra.server.AbstractIntegrationTest
+import org.scassandra.server.priming.json.Success
+import org.scassandra.server.priming.query.When
 
 class MapPriming extends AbstractIntegrationTest {
 
@@ -35,7 +37,7 @@ class MapPriming extends AbstractIntegrationTest {
     val map = Map("one" -> "valueOne", "two" -> "valueTwo", "three" -> "valueThree")
     val whenQuery = "Test prime with cql map"
     val rows: List[Map[String, Any]] = List(Map("field" -> map))
-    val mapOfVarcharToVarchar = CqlMap(CqlVarchar, CqlVarchar)
+    val mapOfVarcharToVarchar = DType.Map(DType.Varchar, DType.Varchar)
     val columnTypes  = Map("field" -> mapOfVarcharToVarchar)
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 

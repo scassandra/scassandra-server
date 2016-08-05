@@ -16,8 +16,10 @@
 package org.scassandra.server.priming
 
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.cqlmessages.{BatchQueryKind, BatchType, Consistency}
-import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.codec.Consistency.Consistency
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.messages.BatchQueryKind.BatchQueryKind
+import org.scassandra.codec.messages.BatchType.BatchType
 
 class ActivityLog extends LazyLogging {
 
@@ -35,7 +37,7 @@ class ActivityLog extends LazyLogging {
 
   def retrieveQueries() : List[Query] = queries
   
-  def recordQuery(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[ColumnType[_]] = List()) = {
+  def recordQuery(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[DataType] = List()) = {
     queries = queries ::: Query(query, consistency, variables, variableTypes) :: Nil
   }
 
@@ -69,7 +71,7 @@ class ActivityLog extends LazyLogging {
 
   /*  PreparedStatementExecution activity logging */
 
-  def recordPreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[ColumnType[_]]): Unit = {
+  def recordPreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[DataType]): Unit = {
     val execution: PreparedStatementExecution = PreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes)
     logger.info("Recording {}",execution)
     preparedStatementExecutions = preparedStatementExecutions ::: execution :: Nil
@@ -105,9 +107,9 @@ class ActivityLog extends LazyLogging {
   }
 }
 
-case class Query(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[ColumnType[_]] = List())
+case class Query(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[DataType] = List())
 case class Connection(result: String = "success")
-case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[ColumnType[_]])
+case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[DataType])
 case class BatchQuery(query: String, batchQueryKind: BatchQueryKind, variables: List[Any] = List())
 case class BatchExecution(batchQueries: Seq[BatchQuery], consistency: Consistency, batchType: BatchType)
 case class PreparedStatementPreparation(preparedStatementText: String)

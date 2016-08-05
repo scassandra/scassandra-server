@@ -15,39 +15,32 @@
  */
 package org.scassandra.server.actors
 
-import akka.pattern.{ask, pipe}
-import akka.actor._
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorRefFactory, Props}
 import akka.io.Tcp
-import akka.util.{Timeout, ByteString}
-import org.scassandra.server.cqlmessages._
-import org.scassandra.server.cqlmessages.response.UnsupportedProtocolVersion
+import akka.io.Tcp.{ConnectionClosed, Received, ResumeReading, Write}
+import akka.pattern.{ask, pipe}
+import akka.util.{ByteString, Timeout}
+import org.scassandra.codec._
+import scodec.bits.ByteVector
+import scodec.interop.akka._
 
+import scala.annotation.tailrec
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.{Failure, Success, Try}
 
-/*
- * Deals with partial messages and multiple messages coming in the same Received
- */
 class ConnectionHandler(tcpConnection: ActorRef,
-                        queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
-                        batchHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory, ActorRef) => ActorRef,
-                        registerHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
-                        optionsHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
+                        queryHandlerFactory: (ActorRefFactory) => ActorRef,
+                        batchHandlerFactory: (ActorRefFactory, ActorRef) => ActorRef,
+                        registerHandlerFactory: (ActorRefFactory) => ActorRef,
+                        optionsHandlerFactory: (ActorRefFactory) => ActorRef,
                         prepareHandler: ActorRef,
                         executeHandler: ActorRef) extends Actor with ActorLogging {
 
-  import akka.io.Tcp._
   implicit val timeout: Timeout = 1 seconds
 
   val system = context.system
   import system.dispatcher
-
-  var ready = false
-  var partialMessage = false
-  var dataFromPreviousMessage: ByteString = _
-  var currentData: ByteString = _
-  var registerHandler: ActorRef = _
-  val ProtocolOneOrTwoHeaderLength = 8
 
   // Extracted to handle full messages
   val cqlMessageHandler = context.actorOf(Props(classOf[NativeProtocolMessageHandler],
@@ -61,77 +54,99 @@ class ConnectionHandler(tcpConnection: ActorRef,
 
   override def preStart(): Unit = tcpConnection ! ResumeReading
 
-  def receive = {
-    case Received(data: ByteString) =>
-      currentData = data
-      if (partialMessage) {
-        currentData = dataFromPreviousMessage ++ data
-      }
+  override def receive: Receive = buffering(Buffer(ByteString(), Start))
 
-      // the header could be 8 or 9 bits now :(
-      while (currentData.length >= ProtocolOneOrTwoHeaderLength && takeMessage()) {}
-
-      if (currentData.nonEmpty) {
-        partialMessage = true
-        dataFromPreviousMessage = currentData
-        currentData = ByteString()
-      }
+  def buffering(buffer: Buffer): Receive = {
+    case Received(data) =>
+      val newBuffer = handle(buffer.copy(data = buffer.data ++ data))
       tcpConnection ! ResumeReading
+      context become buffering(newBuffer)
+
     case c: ConnectionClosed =>
       log.info(s"Client disconnected: $c")
       context stop self
 
-    case msg: CqlMessage =>
-      tcpConnection ! Write(msg.serialize())
+    // Message generated from another actor to be sent back to the tcp connection.
+    case ProtocolResponse(requestHeader, message) =>
+      message.toBytes(requestHeader.stream, Response)(requestHeader.version.version) match {
+        case Success(bytes) => tcpConnection ! Write(bytes.toByteString)
+        case Failure(t) => log.error(t, "Failure getting message payload to write.")
+      }
 
     // Forward any TCP commands to the underlying connection.
     // This allows those with a reference to this actor to perform
     // commands such as Close (immediate close), ConfirmedClose (half close),
     // and Abort (RST) the connection.
-    case command: Tcp.Command => {
+    case command: Tcp.Command =>
       (tcpConnection ? command).pipeTo(sender())
+  }
+
+  @tailrec
+  private[this] def handle(buffer: Buffer): Buffer = advanceState(buffer) match {
+    // Continue if the state changed, otherwise terminate
+    case Success(b) => if (buffer == b) b else handle(b)
+    case Failure(UnsupportedProtocolException(v)) =>
+      // we can't really send the correct stream back as it hasn't been parsed because we don't know how to parse
+      // this protocol, so instead we assume stream 0.
+      log.warning(s"Received protocol version $v, currently only versions 1,2,3 and 4 supported so sending an unsupported protocol error to get the driver to use an older version of the protocol.")
+      self ! ProtocolResponse(FrameHeader(ProtocolFlags(Request, ProtocolVersionV4)), ProtocolError(s"Invalid or unsupported protocol version"))
+      // Reset the buffer as any remaining data we won't be able to appropriately parse.
+      Buffer(ByteString(), Start)
+    case Failure(x) =>
+      log.error(x, "Exception parsing message")
+      // TODO send some kind of protocol error, this is tricky because we have no context of the state
+      // of the session lifecycle here.   Perhaps forward the error on to the protocol handler to
+      // handle this.
+      sender() ! Tcp.Abort
+      context stop self
+      buffer
+  }
+
+  private[this] def inspectProtocolVersion(input: ByteVector): Try[(ProtocolFlags, ByteVector)] = {
+    next[ProtocolFlags](input).flatMap {
+      case ((ProtocolFlags(_, UnsupportedProtocolVersion(v)), _)) =>
+        Failure(new UnsupportedProtocolException(v))
+      case x => Success(x)
     }
   }
 
-  /* should not be called if there isn't at least a header */
-  private def takeMessage(): Boolean = {
-    val protocolVersion = currentData(0)
-    if (protocolVersion >= VersionThree.clientCode) {
-      log.warning(s"Received protocol version $protocolVersion, currently only one and two supported so sending an unsupported protocol error to get the driver to use an older version of the protocol.")
-      // we can't really send the correct stream back as it is a different type (short rather than byte)
-      self ! UnsupportedProtocolVersion(0x0)(VersionTwo)
-      currentData = ByteString()
-      return false
-    }
+  private[this] def advanceState(buffer: Buffer): Try[Buffer] = buffer.state match {
+    case Start =>
+      // At the beginning of a frame parse the first byte into protocol flags, which will indicate
+      // the protocol version, and move to the AwaitHeader state.
+      updateState(buffer, 1, inspectProtocolVersion, AwaitHeader)
+    case AwaitHeader(flags) =>
+      // Protocol version has been parsed, attempt to parse the header and move to the AwaitBody state.
+      updateState(buffer, flags.version.headerLength-1, next(flags.headerCodec, _), AwaitBody)
+    case AwaitBody(header) =>
+      // Header has been parsed, attempt to parse the message body and move back to the Start state.
+      updateState(buffer, header.length, next(Message.codec(header.opcode), _), (m: Message) => {
+        // When the frame has been parsed, forward it on to the protocol handler.
+        // We use forward so the sender appears as the tcp connection actor instead of this actor.
+        val frame = Frame(header, m)
+        cqlMessageHandler ! ProtocolMessage(frame)
+        Start
+      })
+  }
 
-    val stream: Byte = currentData(2)
-    val opCode: Byte = currentData(3)
-
-    val bodyLengthArray = currentData.take(ProtocolOneOrTwoHeaderLength).drop(4)
-    log.debug(s"Body length array $bodyLengthArray")
-    val bodyLength = bodyLengthArray.asByteBuffer.getInt
-    log.debug(s"Body length $bodyLength")
-
-    if (currentData.length == bodyLength + ProtocolOneOrTwoHeaderLength) {
-      log.debug("Received exactly the whole message")
-      partialMessage = false
-      val messageBody = currentData.drop(ProtocolOneOrTwoHeaderLength)
-      cqlMessageHandler ! NativeProtocolMessageHandler.Process(opCode, stream, messageBody, protocolVersion)
-      currentData = ByteString()
-      false
-    } else if (currentData.length > (bodyLength + ProtocolOneOrTwoHeaderLength)) {
-      partialMessage = true
-      log.debug("Received a larger message than the length specifies - assume the rest is another message")
-      val messageBody = currentData.drop(ProtocolOneOrTwoHeaderLength).take(bodyLength)
-      log.debug(s"Message received ${messageBody.utf8String}")
-      cqlMessageHandler ! NativeProtocolMessageHandler.Process(opCode, stream, messageBody, protocolVersion)
-      currentData = currentData.drop(ProtocolOneOrTwoHeaderLength + bodyLength)
-      true
+  private[this] def updateState[T](buffer: Buffer, requiredLength: Long, f: ByteVector => Try[(T, ByteVector)], g: T => ParsingState): Try[Buffer] = {
+    if (buffer.data.length >= requiredLength) {
+      f(buffer.data.toByteVector).map { d =>
+        val parsingState = g(d._1)
+        Buffer(d._2.toByteString, parsingState)
+      }
     } else {
-      log.debug(s"Not received whole message yet, currently ${currentData.length} but need ${bodyLength + 8}")
-      partialMessage = true
-      dataFromPreviousMessage = currentData
-      false
+      // Does not meet length requirement, return input.
+      Success(buffer)
     }
   }
 }
+
+case class Buffer(data: ByteString, state: ParsingState)
+
+sealed trait ParsingState
+case object Start extends ParsingState
+case class AwaitHeader(protocolFlags: ProtocolFlags) extends ParsingState
+case class AwaitBody(frameHeader: FrameHeader) extends ParsingState
+
+case class UnsupportedProtocolException(version: Int) extends Exception(s"Unsupported Protocol Version $version")

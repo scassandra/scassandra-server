@@ -18,12 +18,10 @@ package org.scassandra.server.priming.routes
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.cors.CorsSupport
-import org.scassandra.server.priming.json.PrimingJsonImplicits
+import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.prepared._
 import spray.http.StatusCodes
 import spray.routing.HttpService
-
-import scala.collection.immutable.Iterable
 
 trait PrimingPreparedRoute extends HttpService with LazyLogging with CorsSupport {
 
@@ -40,49 +38,22 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging with CorsSupport
           entity(as[PrimePreparedMulti]) { prime: PrimePreparedMulti =>
             complete {
               logger.info(s"Received a prepared multi prime $prime")
-              val variableTypes = prime.thenDo.variable_types.getOrElse(List())
-              val mappedOutcomes = prime.thenDo.outcomes.map { o =>
-                o.copy(criteria = o.criteria.copy(variable_matcher = PrimingJsonHelper.convertTypesBasedOnCqlTypes(variableTypes, o.criteria.variable_matcher)))
-              }
-              val mappedPrime = prime.copy(thenDo = prime.thenDo.copy(outcomes = mappedOutcomes))
-              primePreparedMultiStore.record(mappedPrime)
+              primePreparedMultiStore.record(prime)
               StatusCodes.OK
             }
           }
         } ~
-        delete {
-          complete {
-            primePreparedMultiStore.clear()
-            StatusCodes.OK
+          delete {
+            complete {
+              primePreparedMultiStore.clear()
+              StatusCodes.OK
+            }
+          } ~
+          get {
+            complete {
+              primePreparedMultiStore.retrievePrimes()
+            }
           }
-        } ~
-        get {
-          complete {
-            val preparedPrimes: Iterable[PrimePreparedMulti] = primePreparedMultiStore.retrievePrimes().map({ case (primeCriteria, preparedPrime) =>
-              val outcomes: List[Outcome] = preparedPrime.variableMatchers.map({ case (outcome) =>
-                val (variableMatchers, prime) = outcome
-                val criteria = Criteria(variableMatchers)
-                val result = PrimingJsonHelper.convertToResultJsonRepresentation(prime.result)
-                val fixedDelay = prime.fixedDelay.map(_.toMillis)
-                val action = Action(Some(prime.rows), Some(prime.columnTypes), Some(result), fixedDelay)
-                Outcome(criteria, action)
-              })
-
-              PrimePreparedMulti(
-                WhenPrepared(
-                  query = Some(primeCriteria.query),
-                  consistency = Some(primeCriteria.consistency)
-                ),
-                ThenPreparedMulti(
-                  Some(preparedPrime.variableTypes),
-                  outcomes
-                )
-              )
-            })
-
-            preparedPrimes
-          }
-        }
       } ~
         path("prime-prepared-single") {
           post {
@@ -108,33 +79,18 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging with CorsSupport
               }
             }
           } ~
-          delete {
-            complete {
-              primePreparedStore.clear()
-              primePreparedPatternStore.clear()
-              StatusCodes.OK
+            delete {
+              complete {
+                primePreparedStore.clear()
+                primePreparedPatternStore.clear()
+                StatusCodes.OK
+              }
+            } ~
+            get {
+              complete {
+                primePreparedStore.retrievePrimes() // TODO:  Shouldn't this also hit the pattern store?  It didn't before.
+              }
             }
-          } ~
-          get {
-            complete {
-              val preparedPrimes: Iterable[PrimePreparedSingle] = primePreparedStore.retrievePrimes().map({ case (primeCriteria, preparedPrime) =>
-                val fixedDelay = preparedPrime.prime.fixedDelay.map(_.toMillis)
-                val result = PrimingJsonHelper.convertToResultJsonRepresentation(preparedPrime.getPrime().result)
-                PrimePreparedSingle(
-                  WhenPrepared(
-                    query = Some(primeCriteria.query), consistency = Some(primeCriteria.consistency)),
-                  ThenPreparedSingle(
-                    Some(preparedPrime.getPrime().rows),
-                    Some(preparedPrime.variableTypes),
-                    Some(preparedPrime.getPrime().columnTypes),
-                    Some(result),
-                    fixedDelay
-                  )
-                )
-              })
-              preparedPrimes
-            }
-          }
         }
     }
 }

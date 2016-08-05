@@ -25,7 +25,7 @@ import dispatch.Defaults._
 import dispatch._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
-import org.scassandra.server.cqlmessages.types._
+import org.scassandra.codec.datatype.DataType
 import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPrepared}
 import org.scassandra.server.{AbstractIntegrationTest, PrimingHelper}
 
@@ -45,7 +45,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val listVariable = Sets.newHashSet("one", "two", "three")
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlVarchar))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Varchar))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
@@ -68,7 +68,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val listVariable = Sets.newHashSet("one", "two", "three")
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlText))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Text))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
@@ -91,7 +91,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val listVariable = Sets.newHashSet("one", "two", "three")
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlAscii))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Ascii))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
@@ -114,7 +114,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val listVariable = Sets.newHashSet(1l, 2l, 3l)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlBigint))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Bigint))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
@@ -137,7 +137,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val listVariable = Sets.newHashSet(ByteBuffer.wrap(Array[Byte](1,2,3,4,5)))
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlBlob))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Blob))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
@@ -159,7 +159,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val listVariable = Sets.newHashSet(true, false)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlBoolean))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Boolean))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
@@ -183,7 +183,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val listVariable = Sets.newHashSet(new java.math.BigDecimal("0.1"), new java.math.BigDecimal("0.2"))
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlDecimal))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Decimal))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
@@ -206,7 +206,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val listVariable = Sets.newHashSet(0.1, 0.2)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlDouble))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Double))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
@@ -230,7 +230,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val listVariable = Sets.newHashSet(0.1f, 0.2f)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlFloat))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Float))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
@@ -254,7 +254,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val id: Integer = Int.box(1)
     val localhost: InetAddress = InetAddress.getByName("127.0.0.1")
     val listVariable = Sets.newHashSet(localhost)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlInet))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Inet))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
@@ -277,7 +277,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val preparedStatementText = "insert into some_table(id, list) values(?, ?)"
     val id: Integer = Int.box(1)
     val listVariable = Sets.newHashSet(1,2,3,4)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlInt))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Int))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
@@ -301,7 +301,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val id: Integer = Int.box(1)
     val now = new Date()
     val listVariable = Sets.newHashSet(now)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlTimestamp))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Timestamp))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
@@ -325,7 +325,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val id: Integer = Int.box(1)
     val timeuuid = UUID.fromString("2b329cc0-73f0-11e4-ac06-4b05b98cc84c")
     val listVariable = Sets.newHashSet(timeuuid, timeuuid)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlTimeUUID))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Timeuuid))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
@@ -349,7 +349,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val id: Integer = Int.box(1)
     val uuid = UUID.randomUUID()
     val listVariable = Sets.newHashSet(uuid, uuid)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlUUID))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Uuid))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
@@ -373,7 +373,7 @@ class PreparedStatementWithSetsTest  extends AbstractIntegrationTest with Before
     val id: Integer = Int.box(1)
     val bigInt = new BigInteger("1234")
     val listVariable = Sets.newHashSet(bigInt, bigInt)
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlSet(CqlVarint))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Set(DataType.Varint))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),

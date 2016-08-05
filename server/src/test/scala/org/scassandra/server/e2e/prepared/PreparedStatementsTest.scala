@@ -15,27 +15,25 @@
  */
 package org.scassandra.server.e2e.prepared
 
-import org.scalatest.concurrent.ScalaFutures
-import org.scassandra.server.priming.json.PrimingJsonImplicits
-import org.scassandra.server.{PrimingHelper, AbstractIntegrationTest}
-import org.scassandra.server.cqlmessages._
-import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPrepared}
-import scala.Some
-import java.nio.ByteBuffer
-import akka.util.ByteString
-import java.util.{UUID, Date}
-import com.datastax.driver.core.utils.UUIDs
 import java.net.InetAddress
+import java.nio.ByteBuffer
 import java.util
+import java.util.{Date, UUID}
+
+import akka.util.ByteString
+import com.datastax.driver.core.utils.UUIDs
 import com.datastax.driver.core.{ConsistencyLevel, Row}
+import dispatch.Defaults._
+import dispatch._
 import org.scalatest.BeforeAndAfter
-import dispatch._, Defaults._
-import spray.json._
-import org.scassandra.server.cqlmessages.types._
+import org.scalatest.concurrent.ScalaFutures
+import org.scassandra.codec.Consistency._
+import org.scassandra.codec.datatype.DataType
 import org.scassandra.server.priming.ConflictingPrimes
-import org.scassandra.server.priming.prepared.ThenPreparedSingle
-import org.scassandra.server.priming.prepared.WhenPrepared
-import org.scassandra.server.priming.prepared.PrimePreparedSingle
+import org.scassandra.server.priming.json.PrimingJsonImplicits
+import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPrepared}
+import org.scassandra.server.{AbstractIntegrationTest, PrimingHelper}
+import spray.json._
 
 class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
 
@@ -193,15 +191,15 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
   test("Prepared statement - priming numeric parameters") {
     //given
     val preparedStatementText = "insert into people(bigint, counter, decimal, double, float, int, varint) = (?, ?,?,?,?,?,?)"
-    val resultColumnTypes = Map[String, ColumnType[_]]("bigint" -> CqlBigint,
-      "counter" -> CqlCounter,
-      "decimal" -> CqlDecimal,
-      "double" -> CqlDouble,
-      "float" -> CqlFloat,
-      "int" -> CqlInt,
-      "varint" -> CqlVarint)
-    val bigInt : java.lang.Long = 1234
-    val counter : java.lang.Long = 2345
+    val resultColumnTypes = Map[String, DataType]("bigint" -> DataType.Bigint,
+      "counter" -> DataType.Counter,
+      "decimal" -> DataType.Decimal,
+      "double" -> DataType.Double,
+      "float" -> DataType.Float,
+      "int" -> DataType.Int,
+      "varint" -> DataType.Varint)
+    val bigInt : java.lang.Long = 1234L
+    val counter : java.lang.Long = 2345L
     val decimal : java.math.BigDecimal = new java.math.BigDecimal("1")
     val double : java.lang.Double = 1.5
     val float : java.lang.Float = 2.5f
@@ -222,7 +220,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(Some(rows),
-        Some(List[ColumnType[_]](CqlBigint, CqlCounter, CqlDecimal, CqlDouble, CqlFloat, CqlInt, CqlVarint)),
+        Some(List[DataType](DataType.Bigint, DataType.Counter, DataType.Decimal, DataType.Double, DataType.Float, DataType.Int, DataType.Varint)),
         Some(resultColumnTypes))
     )
 
@@ -247,15 +245,15 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
   test("Prepared statement - priming non-numeric parameters") {
     //given
     val preparedStatementText = "insert into people(ascii, blob, boolean, timestamp, uuid, varchar, timeuuid, inet) = (?,?,?,?,?,?,?,?)"
-    val resultColumnTypes: Map[String, ColumnType[_]] = Map[String, ColumnType[_]](
-      "ascii" -> CqlAscii,
-      "blob" -> CqlBlob,
-      "boolean" -> CqlBoolean,
-      "timestamp" -> CqlTimestamp,
-      "uuid" -> CqlUUID,
-      "varchar" -> CqlVarchar,
-      "timeuuid" -> CqlTimeUUID,
-      "inet" -> CqlInet
+    val resultColumnTypes: Map[String, DataType] = Map[String, DataType](
+      "ascii" -> DataType.Ascii,
+      "blob" -> DataType.Blob,
+      "boolean" -> DataType.Boolean,
+      "timestamp" -> DataType.Timestamp,
+      "uuid" -> DataType.Uuid,
+      "varchar" -> DataType.Varchar,
+      "timeuuid" -> DataType.Timeuuid,
+      "inet" -> DataType.Inet
     )
 
     val ascii : String = "ascii"
@@ -281,7 +279,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(Some(List(primedRow)),
-        variable_types = Some(List[ColumnType[_]](CqlAscii, CqlBlob, CqlBoolean, CqlTimestamp, CqlUUID, CqlVarchar, CqlTimeUUID, CqlInet)),
+        variable_types = Some(List[DataType](DataType.Ascii, DataType.Blob, DataType.Boolean, DataType.Timestamp, DataType.Uuid, DataType.Varchar, DataType.Timeuuid, DataType.Inet)),
         column_types = Some(resultColumnTypes))
     )
 
@@ -298,7 +296,7 @@ class PreparedStatementsTest extends AbstractIntegrationTest with BeforeAndAfter
     resultRow.getString("ascii") should equal(ascii)
     resultRow.getBytes("blob") should equal(blob)
     resultRow.getBool("boolean") should equal(boolean)
-    resultRow.getDate("timestamp") should equal(timestamp)
+    resultRow.getTimestamp("timestamp") should equal(timestamp)
     resultRow.getUUID("uuid") should equal(uuid)
     resultRow.getString("varchar") should equal(varchar)
     resultRow.getUUID("timeuuid") should equal(timeuuid)

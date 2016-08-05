@@ -15,24 +15,22 @@
  */
 package org.scassandra.server.priming.routes
 
-import org.scassandra.server.priming.json._
-import spray.routing.{Route, HttpService}
 import com.typesafe.scalalogging.LazyLogging
-import spray.http.StatusCodes
 import org.scassandra.server.priming._
-import org.scassandra.server.priming.query._
-import org.scassandra.server.priming.query.PrimeCriteria
-import org.scassandra.server.priming.query.PrimeQuerySingle
-import org.scassandra.server.priming.query.Prime
-import scala.util.{Success, Failure}
+import org.scassandra.server.priming.cors.CorsSupport
+import org.scassandra.server.priming.json._
+import org.scassandra.server.priming.query.{PrimeQuerySingle, _}
+import spray.http.StatusCodes
+import spray.routing.{HttpService, Route}
 
-trait PrimingQueryRoute extends HttpService with LazyLogging {
+trait PrimingQueryRoute extends HttpService with LazyLogging with CorsSupport {
 
   import PrimingJsonImplicits._
 
   implicit val primeQueryStore: PrimeQueryStore
 
   val queryRoute: Route = {
+    cors {
       path("prime-query-sequence") {
         post {
           complete {
@@ -41,26 +39,18 @@ trait PrimingQueryRoute extends HttpService with LazyLogging {
           }
         }
       } ~
-      path("prime-query-single") {
-        get {
-          complete {
-            val allPrimes: Map[PrimeCriteria, Prime] = primeQueryStore.getAllPrimes
-            PrimingJsonHelper.convertBackToPrimeQueryResult(allPrimes)
-          }
-        } ~
-        post {
-          entity(as[PrimeQuerySingle]) {
-            primeRequest => {
-              complete {
-                logger.debug(s"Received prime request $primeRequest")
-                val primeCriteriaTry = PrimingJsonHelper.extractPrimeCriteria(primeRequest)
-
-                primeCriteriaTry match {
-                  case Success(primeCriteria) =>
-
-                    val primeResult = PrimingJsonHelper.extractPrime(primeRequest)
-
-                    primeQueryStore.add(primeCriteria, primeResult) match {
+        path("prime-query-single") {
+          get {
+            complete {
+              primeQueryStore.getAllPrimes
+            }
+          } ~
+            post {
+              entity(as[PrimeQuerySingle]) {
+                primeRequest => {
+                  complete {
+                    logger.debug(s"Received prime request $primeRequest")
+                    primeQueryStore.add(primeRequest) match {
                       case cp: ConflictingPrimes => {
                         logger.warn(s"Received invalid prime due to conflicting primes $cp")
                         StatusCodes.BadRequest -> cp
@@ -69,25 +59,22 @@ trait PrimingQueryRoute extends HttpService with LazyLogging {
                         logger.warn(s"Received invalid prime due to type mismatch $tm")
                         StatusCodes.BadRequest -> tm
                       }
+                      case b: BadCriteria => StatusCodes.BadRequest
                       case _ => StatusCodes.OK
                     }
-                  case failure @ Failure(_) => {
-                    logger.warn(s"Received invalid prime $failure")
-                    StatusCodes.BadRequest
                   }
                 }
               }
+            } ~
+            delete {
+              complete {
+                logger.debug("Deleting all recorded priming")
+                primeQueryStore.clear()
+                logger.debug("Return 200")
+                StatusCodes.OK
+              }
             }
-          }
-        } ~
-        delete {
-          complete {
-            logger.debug("Deleting all recorded priming")
-            primeQueryStore.clear()
-            logger.debug("Return 200")
-            StatusCodes.OK
-          }
         }
-      }
+    }
   }
 }

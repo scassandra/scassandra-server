@@ -15,16 +15,32 @@
  */
 package org.scassandra.server.priming.prepared
 
-import org.scassandra.server.cqlmessages.Consistency
-import org.scassandra.server.cqlmessages.types.ColumnType
-import org.scassandra.server.priming.json.{Success, ResultJsonRepresentation}
+import org.scassandra.codec.Consistency.Consistency
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.{Execute, Prepare}
+import org.scassandra.server.priming.json._
+import org.scassandra.server.priming.query.ThenProvider
+import org.scassandra.server.priming.routes.PrimingJsonHelper.extractPrime
+
+trait PreparedPrimeCriteria {
+  def matches(prepare: Prepare): Boolean
+  def matches(queryText: String, execute: Execute): Boolean
+}
+
+class DefaultPreparedPrimeCriteria(query: String, consistency: List[Consistency]) extends PreparedPrimeCriteria {
+  override def matches(prepare: Prepare): Boolean = prepare.query.equals(query)
+
+  override def matches(queryText: String, execute: Execute): Boolean =
+    queryText.equals(query) && consistency.contains(execute.parameters.consistency)
+}
 
 sealed trait PreparedPrimeIncoming {
   val when: WhenPrepared
+  val thenDo: ThenPrepared
 }
 
 sealed trait ThenPrepared {
-  val variable_types: Option[List[ColumnType[_]]]
+  val variable_types: Option[List[DataType]]
 }
 
 case class PrimePreparedSingle(when: WhenPrepared, thenDo: ThenPreparedSingle) extends PreparedPrimeIncoming
@@ -35,14 +51,17 @@ case class WhenPrepared(query: Option[String] = None,
                         consistency: Option[List[Consistency]] = None)
 
 case class ThenPreparedSingle(rows: Option[List[Map[String, Any]]],
-                              variable_types: Option[List[ColumnType[_]]] = None,
-                              column_types: Option[Map[String, ColumnType[_]]] = None,
+                              variable_types: Option[List[DataType]] = None,
+                              column_types: Option[Map[String, DataType]] = None,
                               result : Option[ResultJsonRepresentation] = Some(Success),
                               fixedDelay : Option[Long] = None,
-                              config: Option[Map[String, String]] = None
-                               ) extends ThenPrepared
+                              config: Option[Map[String, String]] = None) extends ThenProvider with ThenPrepared {
+  @transient lazy val prime = {
+    extractPrime(this)
+  }
+}
 
-case class ThenPreparedMulti(variable_types: Option[List[ColumnType[_]]] = None,
+case class ThenPreparedMulti(variable_types: Option[List[DataType]] = None,
                             outcomes: List[Outcome]) extends ThenPrepared
 
 case class Outcome(criteria: Criteria, action: Action)
@@ -50,10 +69,14 @@ case class Outcome(criteria: Criteria, action: Action)
 case class Criteria(variable_matcher: List[VariableMatch])
 
 case class Action(rows: Option[List[Map[String, Any]]],
-                  column_types: Option[Map[String, ColumnType[_]]] = None,
+                  column_types: Option[Map[String, DataType]] = None,
                   result : Option[ResultJsonRepresentation] = Some(Success),
                   fixedDelay : Option[Long] = None,
-                  config: Option[Map[String, String]] = None)
+                  config: Option[Map[String, String]] = None) extends ThenProvider {
+  @transient lazy val prime = {
+    extractPrime(this)
+  }
+}
 
 sealed trait VariableMatch {
   def test(variable: Any): Boolean

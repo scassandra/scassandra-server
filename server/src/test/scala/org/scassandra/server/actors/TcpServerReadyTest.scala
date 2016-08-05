@@ -18,7 +18,7 @@ package org.scassandra.server.actors
 import java.net.InetSocketAddress
 
 import akka.actor.ActorSystem
-import akka.io.Tcp.{Bound, Bind}
+import akka.io.Tcp.{Bind, Bound}
 import akka.testkit._
 import org.scalatest.{FunSpecLike, Matchers}
 import org.scassandra.server.ServerReady
@@ -38,7 +38,7 @@ class TcpServerReadyTest extends TestKit(ActorSystem("TestSystem")) with FunSpec
       val remote = new InetSocketAddress("127.0.0.1", 8046)
 
       // when
-      val tcpServer = TestActorRef(new TcpServer("localhost", 8046, PrimeQueryStore(), PrimePreparedStore(), new PrimeBatchStore(), tcpReadyListener.ref, new ActivityLog, Some(manager.ref)))
+      val tcpServer = TestActorRef(new TcpServer("localhost", 8046, new PrimeQueryStore, new PrimePreparedStore, new PrimeBatchStore(), tcpReadyListener.ref, new ActivityLog, Some(manager.ref)))
       manager.expectMsgType[Bind]
       manager.send(tcpServer, Bound(remote))
 

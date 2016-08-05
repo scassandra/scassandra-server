@@ -16,33 +16,34 @@
 package org.scassandra.server.priming.batch
 
 import org.scalatest.{FunSpec, Matchers}
-import org.scassandra.server.cqlmessages._
+import org.scassandra.codec.Consistency._
+import org.scassandra.codec.messages.BatchQueryKind._
+import org.scassandra.codec.messages.BatchType._
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json.{Success, WriteTimeout}
 import org.scassandra.server.priming.query.Then
 
 class PrimeBatchStoreTest extends FunSpec with Matchers {
+
+  val primeRequest = BatchPrimeSingle(BatchWhen(List(BatchQueryPrime("select * blah", Simple))), Then(result = Some(Success)))
+
   describe("Recording and matching primes") {
     it("Should match a single query") {
       val underTest = new PrimeBatchStore()
 
-      underTest.record(BatchPrimeSingle(
-        BatchWhen(List(BatchQueryPrime("select * blah", QueryKind))),
-        Then(result = Some(Success))))
+      underTest.record(primeRequest)
 
-      val prime = underTest.findPrime(BatchExecution(Seq(BatchQuery("select * blah", QueryKind)), ONE, LOGGED))
+      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, LOGGED))
 
-      prime should equal(Some(BatchPrime(SuccessResult, None)))
+      prime should equal(Some(primeRequest.prime))
     }
 
     it("Should fail if single query does not match") {
       val underTest = new PrimeBatchStore()
 
-      underTest.record(BatchPrimeSingle(
-        BatchWhen(List(BatchQueryPrime("select * blah", QueryKind))),
-        Then(result = Some(Success))))
+      underTest.record(primeRequest)
 
-      val prime = underTest.findPrime(BatchExecution(Seq(BatchQuery("I am do different", QueryKind)), ONE, LOGGED))
+      val prime = underTest(BatchExecution(Seq(BatchQuery("I am do different", Simple)), ONE, LOGGED))
 
       prime should equal(None)
     }
@@ -51,11 +52,11 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
       val underTest = new PrimeBatchStore()
 
       underTest.record(BatchPrimeSingle(
-        BatchWhen(List(BatchQueryPrime("select * blah", QueryKind),
-          BatchQueryPrime("select * wah", PreparedStatementKind))),
+        BatchWhen(List(BatchQueryPrime("select * blah", Simple),
+          BatchQueryPrime("select * wah", Prepared))),
         Then(result = Some(Success))))
 
-      val prime = underTest.findPrime(BatchExecution(Seq(BatchQuery("select * blah", QueryKind)), ONE, LOGGED))
+      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, LOGGED))
 
       prime should equal(None)
     }
@@ -63,69 +64,110 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
     it("Should match if all queries match") {
       val underTest = new PrimeBatchStore()
 
-      underTest.record(BatchPrimeSingle(
-        BatchWhen(List(BatchQueryPrime("select * blah", QueryKind),
-          BatchQueryPrime("select * wah", PreparedStatementKind))),
-        Then(result = Some(Success))))
+      val batchRequest = BatchPrimeSingle(
+        BatchWhen(List(BatchQueryPrime("select * blah", Simple),
+          BatchQueryPrime("select * wah", Prepared))),
+        Then(result = Some(Success)))
 
-      val prime = underTest.findPrime(BatchExecution(Seq(
-        BatchQuery("select * blah", QueryKind),
-        BatchQuery("select * wah", PreparedStatementKind)), ONE, LOGGED))
+      underTest.record(batchRequest)
 
-      prime should equal(Some(BatchPrime(SuccessResult, None)))
+      val prime = underTest(BatchExecution(Seq(
+        BatchQuery("select * blah", Simple),
+        BatchQuery("select * wah", Prepared)), ONE, LOGGED))
+
+      prime should equal(Some(batchRequest.prime))
     }
 
-    it("Should match on consistency") {
+    it("Should use consistency - no match") {
       val underTest = new PrimeBatchStore()
 
       underTest.record(BatchPrimeSingle(
-        BatchWhen(List(BatchQueryPrime("select * blah", QueryKind),
-          BatchQueryPrime("select * wah", PreparedStatementKind)),
+        BatchWhen(List(BatchQueryPrime("select * blah", Simple),
+          BatchQueryPrime("select * wah", Prepared)),
           Some(List(TWO))),
         Then(result = Some(Success))))
 
-      val prime = underTest.findPrime(BatchExecution(Seq(
-        BatchQuery("select * blah", QueryKind),
-        BatchQuery("select * wah", PreparedStatementKind)), ONE, LOGGED))
+      val prime = underTest.apply(BatchExecution(Seq(
+        BatchQuery("select * blah", Simple),
+        BatchQuery("select * wah", Prepared)), ONE, LOGGED))
 
       prime should equal(None)
+    }
+
+    it("Should use consistency - match") {
+      val underTest = new PrimeBatchStore()
+
+      val batchRequest = BatchPrimeSingle(
+        BatchWhen(List(BatchQueryPrime("select * blah", Simple),
+          BatchQueryPrime("select * wah", Prepared)),
+          Some(List(TWO))),
+        Then(result = Some(Success)))
+
+
+      underTest.record(batchRequest)
+
+      val prime = underTest.apply(BatchExecution(Seq(
+        BatchQuery("select * blah", Simple),
+        BatchQuery("select * wah", Prepared)), TWO, LOGGED))
+
+      prime should equal(Some(batchRequest.prime))
     }
 
     it("Should match on batch type - no match") {
       val underTest = new PrimeBatchStore()
 
       underTest.record(BatchPrimeSingle(
-        BatchWhen(List(BatchQueryPrime("select * blah", QueryKind)), batchType = Some(COUNTER)),
+        BatchWhen(List(BatchQueryPrime("select * blah", Simple)), batchType = Some(COUNTER)),
         Then(result = Some(Success))))
 
-      val prime = underTest.findPrime(BatchExecution(Seq(BatchQuery("select * blah", QueryKind)), ONE, LOGGED))
+      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, LOGGED))
 
       prime should equal(None)
+    }
+
+    it("Should match on batch type - match") {
+      val underTest = new PrimeBatchStore()
+
+      val batchRequest = BatchPrimeSingle(
+        BatchWhen(List(BatchQueryPrime("select * blah", Simple)), batchType = Some(COUNTER)),
+        Then(result = Some(Success)))
+
+      underTest.record(batchRequest)
+
+      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, COUNTER))
+
+      prime should equal(Some(batchRequest.prime))
     }
 
     it("Should record a batch WriteTimeout with default configuration") {
       val underTest = new PrimeBatchStore()
 
+      val batchRequest = BatchPrimeSingle(
+        BatchWhen(List(BatchQueryPrime("select * blah", Simple))),
+        Then(result = Some(WriteTimeout)))
+
       underTest.record(BatchPrimeSingle(
-        BatchWhen(List(BatchQueryPrime("select * blah", QueryKind))),
+        BatchWhen(List(BatchQueryPrime("select * blah", Simple))),
         Then(result = Some(WriteTimeout))))
 
-      val prime = underTest.findPrime(BatchExecution(Seq(BatchQuery("select * blah", QueryKind)), ONE, LOGGED))
+      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, LOGGED))
 
-      prime should equal(Some(BatchPrime(WriteRequestTimeoutResult(), None)))
+      prime should equal(Some(batchRequest.prime))
     }
 
     it("Should record a batch WriteTimeout with custom configuration") {
       val underTest = new PrimeBatchStore()
 
       val config: Map[String, String] = Map(ErrorConstants.WriteType -> WriteType.BATCH.toString)
-      underTest.record(BatchPrimeSingle(
-        BatchWhen(List(BatchQueryPrime("select * blah", QueryKind))),
-        Then(result = Some(WriteTimeout), config = Option(config))))
+      val batchRequest = BatchPrimeSingle(
+        BatchWhen(List(BatchQueryPrime("select * blah", Simple))),
+        Then(result = Some(WriteTimeout), config = Option(config)))
 
-      val prime = underTest.findPrime(BatchExecution(Seq(BatchQuery("select * blah", QueryKind)), ONE, LOGGED))
+      underTest.record(batchRequest)
 
-      prime should equal(Some(BatchPrime(WriteRequestTimeoutResult(writeType = WriteType.BATCH), None)))
+      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, LOGGED))
+
+      prime should equal(Some(batchRequest.prime))
     }
   }
 }

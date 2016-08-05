@@ -15,18 +15,14 @@
  */
 package org.scassandra.server
 
+import akka.actor._
 import akka.pattern.{ask, gracefulStop}
 import akka.util.Timeout
-
-import scala.concurrent.{ExecutionContext, Await}
-import scala.concurrent.duration._
-
-import akka.actor._
-import akka.io.{Tcp, IO}
-
 import com.typesafe.scalalogging.LazyLogging
-
 import org.scassandra.server.priming.query.PrimeQueryStore
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
 
 object ServerStubRunner extends LazyLogging {
   def main(args: Array[String]) {
@@ -61,7 +57,7 @@ class ServerStubRunner( val binaryListenAddress: String = "localhost",
   import ExecutionContext.Implicits.global
 
   // TODO: This is only used by integration tests, move into Actor.
-  val primedResults = PrimeQueryStore()
+  val primedResults = new PrimeQueryStore()
 
   var scassandra: ActorRef = _
 

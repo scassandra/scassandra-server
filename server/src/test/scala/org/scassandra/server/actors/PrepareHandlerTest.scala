@@ -30,112 +30,110 @@
 */
 package org.scassandra.server.actors
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import scala.language.postfixOps
-
-import java.util.concurrent.TimeUnit
-
 import akka.actor.{ActorRef, ActorSystem}
-import akka.testkit.{TestActorRef, TestKitBase, TestProbe}
-import akka.util.{Timeout, ByteString}
 import akka.pattern.ask
-
+import akka.testkit.{ImplicitSender, TestActorRef, TestKitBase}
+import akka.util.Timeout
+import org.mockito.ArgumentCaptor
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-import org.scassandra.server.actors.PrepareHandler.{PreparedStatementResponse, PreparedStatementQuery}
-import org.scassandra.server.cqlmessages._
-import org.scassandra.server.cqlmessages.request.{ExecuteRequestV2, PrepareRequest, _}
-import org.scassandra.server.cqlmessages.response._
-import org.scassandra.server.cqlmessages.types.{ColumnType, CqlBigint, CqlInt, CqlVarchar}
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.messages.{ColumnSpecWithoutTable, NoRowMetadata, PreparedMetadata, RowMetadata}
+import org.scassandra.codec.{Prepare, Prepared}
+import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
 import org.scassandra.server.priming._
-import org.scassandra.server.priming.prepared.{PreparedPrime, PrimePreparedStore}
-import org.scassandra.server.priming.query.{Prime, PrimeMatch}
+import org.scassandra.server.priming.prepared.PrimePreparedStore
+import org.scassandra.server.priming.query.Reply
+import scodec.bits.ByteVector
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 
-class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with BeforeAndAfter with MockitoSugar {
+class PrepareHandlerTest extends FunSuite with ProtocolActorTest with ImplicitSender with Matchers with TestKitBase
+  with BeforeAndAfter with MockitoSugar {
   implicit lazy val system = ActorSystem()
 
   var underTest: ActorRef = null
-  var testProbeForTcpConnection: TestProbe = null
-  val versionTwoMessageFactory = VersionTwoMessageFactory
-  val versionOneMessageFactory = VersionOneMessageFactory
-  val protocolByte : Byte = ProtocolVersion.ServerProtocolVersionTwo
-  implicit val impProtocolVersion = VersionTwo
   val activityLog: ActivityLog = new ActivityLog
   val primePreparedStore = mock[PrimePreparedStore]
-  val stream: Byte = 0x3
+
+  def anyFunction() = any[Function2[PreparedMetadata, RowMetadata, Prepared]]
+
+  val id = ByteVector(1)
 
   implicit val atMost: Duration = 1 seconds
   implicit val timeout: Timeout = 1 seconds
 
   before {
     reset(primePreparedStore)
-    when(primePreparedStore.findPrime(any(classOf[PrimeMatch]))).thenReturn(None)
-    testProbeForTcpConnection = TestProbe()
+    when(primePreparedStore.apply(any(classOf[Prepare]), anyFunction())).thenReturn(None)
     underTest = TestActorRef(new PrepareHandler(primePreparedStore, activityLog))
+
+    receiveWhile(10 milliseconds) {
+      case msg @ _ =>
+    }
   }
 
   test("Should return prepared message on prepare - no params") {
-    val stream: Byte = 0x02
-    val query = "select * from something"
-    val prepareBody: ByteString = PrepareRequest(protocolByte, stream, query).serialize().drop(8)
+    underTest ! protocolMessage(Prepare("select * from something"))
 
-    underTest ! PrepareHandler.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
-
-    testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", List()))
+    expectMsgPF() {
+      case ProtocolResponse(_, Prepared(_, PreparedMetadata(Nil, Some("keyspace"), Some("table"), Nil), NoRowMetadata)) => true
+    }
   }
 
-  test("Should return  prepared message on prepare - single param") {
-    val stream: Byte = 0x02
+  test("Should return prepared message on prepare - single param") {
+    underTest ! protocolMessage(Prepare("select * from something where name = ?"))
+
+    expectMsgPF() {
+      case ProtocolResponse(_, Prepared(_, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
+        List(ColumnSpecWithoutTable("0", DataType.Varchar))), NoRowMetadata)) => true
+    }
+  }
+
+  test("Priming variable types - Should use types from Prime") {
     val query = "select * from something where name = ?"
-    val prepareBody: ByteString = PrepareRequest(protocolByte, stream, query).serialize().drop(8)
+    val prepare = Prepare("select * from something where name = ?")
+    val prepared = Prepared(id, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
+      List(ColumnSpecWithoutTable("0", DataType.Int))))
 
-    underTest ! PrepareHandler.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    when(primePreparedStore.apply(any(classOf[Prepare]), any[Function2[PreparedMetadata, RowMetadata, Prepared]]))
+      .thenReturn(Some(Reply(prepared)))
 
-    testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", List(CqlVarchar)))
+    underTest ! protocolMessage(Prepare("select * from something where name = ?"))
+
+    val prepareCaptor = ArgumentCaptor.forClass(classOf[Prepare])
+
+    verify(primePreparedStore).apply(prepareCaptor.capture(), anyFunction())
+
+    prepareCaptor.getValue() shouldEqual prepare
   }
 
-  test("Priming variable types - Should use types from PreparedPrime") {
-    val query = "select * from something where name = ?"
-    val prepareBody: ByteString = PrepareRequest(protocolByte, stream, query).serialize().drop(8)
-    val primedVariableTypes = List(CqlInt)
-    val preparedPrime: PreparedPrime = PreparedPrime(primedVariableTypes)
-    when(primePreparedStore.findPrime(any(classOf[PrimeMatch]))).thenReturn(Some(preparedPrime))
+  test("Should use incrementing ids") {
+    var lastId: Int = -1
+    for (i <- 1 to 10) {
+      val query = s"select * from something where name = ? and i = $i"
 
-    underTest ! PrepareHandler.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+      underTest ! protocolMessage(Prepare(query))
 
-    verify(primePreparedStore).findPrime(PrimeMatch(query))
-    testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", primedVariableTypes))
-  }
-
-  //todo may as well make these UUIDs
-  test("Should use incrementing IDs") {
-    underTest = TestActorRef(new PrepareHandler(primePreparedStore, activityLog))
-    val stream: Byte = 0x02
-    val queryOne = "select * from something where name = ?"
-    val prepareBodyOne: ByteString = PrepareRequest(protocolByte, stream, queryOne).serialize().drop(8)
-    underTest ! PrepareHandler.Prepare(prepareBodyOne, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
-    testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", List(CqlVarchar)))
-
-    emptyTestProbe
-
-    val queryTwo = "select * from something where name = ? and age = ?"
-    val prepareBodyTwo: ByteString = PrepareRequest(protocolByte, stream, queryTwo).serialize().drop(8)
-    underTest ! PrepareHandler.Prepare(prepareBodyTwo, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
-    testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 2.toShort, "keyspace", "table", List(CqlVarchar, CqlVarchar)))
-
+      // The id returned should always be greater than the last id returned.
+      expectMsgPF() {
+        case ProtocolResponse(_, Prepared(id, _, _)) if id.toInt() > lastId =>
+          lastId = id.toInt()
+          true
+      }
+    }
   }
 
   test("Should record preparation in activity log") {
     activityLog.clearPreparedStatementPreparations()
-    val stream: Byte = 0x02
     val query = "select * from something where name = ?"
-    val prepareBody: ByteString = PrepareRequest(protocolByte, stream, query).serialize().drop(8)
 
-    underTest ! PrepareHandler.Prepare(prepareBody, stream, versionTwoMessageFactory, testProbeForTcpConnection.ref)
+    underTest ! protocolMessage(Prepare(query))
 
     activityLog.retrievePreparedStatementPreparations().size should equal(1)
     activityLog.retrievePreparedStatementPreparations().head should equal(PreparedStatementPreparation(query))
@@ -147,18 +145,17 @@ class PrepareHandlerTest extends FunSuite with Matchers with TestKitBase with Be
     Await.result(response, atMost) should equal(PreparedStatementResponse(Map()))
   }
 
-  private def sendPrepareAndCaptureId(stream: Byte, query: String, variableTypes: List[ColumnType[_]] = List(CqlVarchar)) : Int = {
-    val prepareBodyOne: ByteString = PrepareRequest(protocolByte, stream, query).serialize().drop(8)
-    underTest ! PrepareHandler.Prepare(prepareBodyOne, stream, versionTwoMessageFactory , testProbeForTcpConnection.ref)
-    val preparedResponseWithId: PreparedResultV2 = testProbeForTcpConnection.expectMsg(PreparedResultV2(stream, 1.toShort, "keyspace", "table", variableTypes))
-    reset(primePreparedStore)
-    when(primePreparedStore.findPrime(any(classOf[PrimeMatch]))).thenReturn(None)
-    preparedResponseWithId.preparedStatementId
-  }
+  test("Should answer queries for prepared statement - exists") {
+    val query = "select * from something where name = ?"
+    val prepared = Prepared(id, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
+      List(ColumnSpecWithoutTable("0", DataType.Int))))
+    when(primePreparedStore.apply(any(classOf[Prepare]), any[Function2[PreparedMetadata, RowMetadata, Prepared]]))
+      .thenReturn(Some(Reply(prepared)))
 
-  private def emptyTestProbe = {
-    testProbeForTcpConnection.receiveWhile(idle = Duration(100, TimeUnit.MILLISECONDS))({
-      case msg @ _ => println(s"Removing message from test probe $msg")
-    })
+    underTest ! protocolMessage(Prepare(query))
+
+    val response = (underTest ? PreparedStatementQuery(List(id.toInt()))).mapTo[PreparedStatementResponse]
+
+    Await.result(response, atMost) should equal(PreparedStatementResponse(Map(id.toInt() -> (query, prepared))))
   }
 }

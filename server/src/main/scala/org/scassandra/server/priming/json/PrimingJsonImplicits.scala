@@ -20,19 +20,25 @@ import java.net.InetAddress
 import java.util.UUID
 
 import com.typesafe.scalalogging.LazyLogging
+import org.scassandra.codec.Consistency
+import org.scassandra.codec.Consistency.Consistency
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.messages.BatchQueryKind.BatchQueryKind
+import org.scassandra.codec.messages.BatchType.BatchType
+import org.scassandra.codec.messages.{BatchQueryKind, BatchType}
+import org.scassandra.cql._
 import org.scassandra.server.actors._
-import org.scassandra.server.cqlmessages.types.ColumnType
-import org.scassandra.server.cqlmessages.{BatchType, BatchQueryKind, Consistency}
 import org.scassandra.server.priming._
-import org.scassandra.server.priming.batch.{BatchQueryPrime, BatchWhen, BatchPrimeSingle}
+import org.scassandra.server.priming.batch.{BatchPrimeSingle, BatchQueryPrime, BatchWhen}
 import org.scassandra.server.priming.prepared._
-import org.scassandra.server.priming.query.{PrimeCriteria, PrimeQuerySingle, When, Then}
+import org.scassandra.server.priming.query.{PrimeCriteria, PrimeQuerySingle, Then, When}
 import org.scassandra.server.priming.routes.Version
+import scodec.bits.ByteVector
 import spray.httpx.SprayJsonSupport
 import spray.json._
 
 import scala.collection.Set
-import scala.util.{Failure, Success => TSuccess}
+import scala.util.{Failure, Try, Success => TSuccess}
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport with LazyLogging {
 
@@ -84,6 +90,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
       case bigD: java.math.BigDecimal => JsString(bigD.toPlainString)
       case inet: InetAddress => JsString(inet.getHostAddress)
       case bytes: Array[Byte] => JsString("0x" + bytes2hex(bytes))
+      case bytes: ByteVector => JsString("0x" + bytes2hex(bytes.toArray))
       case None => JsNull
       case Some(s) => this.write(s)
       case other => serializationError("Do not understand object of type " + other.getClass.getName)
@@ -105,38 +112,64 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
   }
 
   implicit object ConsistencyJsonFormat extends RootJsonFormat[Consistency] {
-    def write(c: Consistency) = JsString(c.string)
+    def write(c: Consistency) = JsString(c.toString)
 
     def read(value: JsValue) = value match {
-      case JsString(consistency) => Consistency.fromString(consistency)
+      case JsString(consistency) => Consistency.withName(consistency)
       case _ => throw new IllegalArgumentException("Expected Consistency as JsString")
     }
   }
 
   implicit object BatchQueryKindJsonFormat extends RootJsonFormat[BatchQueryKind] {
-    def write(c: BatchQueryKind) = JsString(c.string)
+    def write(c: BatchQueryKind) = JsString(c match {
+      case BatchQueryKind.Simple => "query"
+      case BatchQueryKind.Prepared => "prepared_statement"
+    })
 
     def read(value: JsValue) = value match {
-      case JsString(v) => BatchQueryKind.fromString(v)
+      case JsString(v) => v match {
+        case "query" => BatchQueryKind.Simple
+        case "prepared_statement" => BatchQueryKind.Prepared
+      }
       case _ => throw new IllegalArgumentException("Expected BatchQueryKind as JsString")
     }
   }
 
   implicit object BatchTypeJsonFormat extends RootJsonFormat[BatchType] {
-    def write(c: BatchType) = JsString(c.string)
+    def write(c: BatchType) = JsString(c.toString)
 
     def read(value: JsValue) = value match {
-      case JsString(batchType) => BatchType.fromString(batchType)
+      case JsString(batchType) => BatchType.withName(batchType)
       case _ => throw new IllegalArgumentException("Expected BatchType as JsString")
     }
   }
 
 
-  implicit object ColumnTypeJsonFormat extends RootJsonFormat[ColumnType[_]] {
-    def write(c: ColumnType[_]) = JsString(c.stringRep)
+  implicit object DataTypeJsonFormat extends RootJsonFormat[DataType] {
+
+    lazy val cqlTypeFactory = new CqlTypeFactory
+
+    def convertJavaToScalaType(javaType: CqlType): DataType = javaType match {
+        // TODO: Update for tuples and udts.
+        case primitive: PrimitiveType => DataType.primitiveTypeMap(primitive.serialise())
+        case map: MapType => DataType.Map(convertJavaToScalaType(map.getKeyType), convertJavaToScalaType(map.getValueType))
+        case set: SetType => DataType.Set(convertJavaToScalaType(set.getType))
+        case list: ListType => DataType.List(convertJavaToScalaType(list.getType))
+    }
+
+    def fromString(typeString: String): Try[DataType] = {
+      try {
+        val cqlType = cqlTypeFactory.buildType(typeString)
+        TSuccess(convertJavaToScalaType(cqlType))
+      } catch {
+        case e: Exception => Failure(e)
+      }
+    }
+
+    def write(d: DataType) = JsString(d.stringRep)
 
     def read(value: JsValue) = value match {
-      case JsString(string) => ColumnType.fromString(string) match {
+      case JsString(string) => fromString(string) match {
         case TSuccess(columnType) => columnType
         case Failure(e) =>
           logger.warn(s"Received invalid column type '$string'", e)

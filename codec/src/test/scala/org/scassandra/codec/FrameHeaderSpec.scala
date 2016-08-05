@@ -1,12 +1,27 @@
+/*
+ * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.scassandra.codec
 
 import org.scalacheck.Gen
+import org.scalacheck.Prop.{BooleanOperators, forAll, all => allProps}
 import org.scalatest.prop.Checkers
-import org.scalatest.{Matchers, FlatSpec}
-import scodec.bits.{ByteVector, BitVector}
-import scodec.{Attempt, DecodeResult}
+import org.scalatest.{FlatSpec, Matchers}
+import scodec.bits.{BitVector, ByteVector}
 import scodec.codecs._
-import org.scalacheck.Prop.{forAll, all => allProps, BooleanOperators}
+import scodec.{Attempt, DecodeResult}
 
 class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
 
@@ -95,7 +110,7 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
     }
   }
 
-  "Opcode" must "properly decode from documented values." in {
+  /*"Opcode" must "properly decode from documented values." in {
     // This test simply ensures that the enumeration index properly matches
     // the spec by testing with a known Opcode => Int mapping.
     val codec = Opcode.codec
@@ -109,7 +124,7 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
       case Attempt.Failure(cause) =>
         fail(cause.messageWithContext)
     }
-  }
+  }*/
 
   def validateData(data: ByteVector, version: Int, stream: Int) = {
     val codec = FrameHeader.codec
@@ -161,5 +176,25 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
         data => validateData(data._1, data._2, data._3)
       }
     }
+  }
+
+  it must "properly choose the Message codec based on opcode." in {
+    val codec = Frame.codec
+    val frame = codec.decode((ByteVector(4, 0) ++
+      int16.encode(1).require.toByteVector ++
+      ByteVector(1) ++
+      uint32.encode(12).require.toByteVector ++
+      uint32.encode(15).require.toByteVector).toBitVector)
+
+    println(s"$frame")
+  }
+
+  it must "behave someway when the message is not large enough." in {
+    val codec = FrameHeader.codec
+    val frame = codec.decode((ByteVector(4, 0) ++
+      int16.encode(1).require.toByteVector ++
+      ByteVector(1)).toBitVector)
+
+    println(s"$frame")
   }
 }

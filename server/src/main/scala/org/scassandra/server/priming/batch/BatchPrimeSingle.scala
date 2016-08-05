@@ -15,10 +15,17 @@
  */
 package org.scassandra.server.priming.batch
 
-import org.scassandra.server.cqlmessages.{BatchType, Consistency, BatchQueryKind}
+import org.scassandra.codec.Consistency.Consistency
+import org.scassandra.codec.messages.BatchQueryKind.BatchQueryKind
+import org.scassandra.codec.messages.BatchType.BatchType
 import org.scassandra.server.priming.query.Then
+import org.scassandra.server.priming.routes.PrimingJsonHelper.extractPrime
 
-case class BatchPrimeSingle(when: BatchWhen, thenDo: Then)
+case class BatchPrimeSingle(when: BatchWhen, thenDo: Then) {
+  @transient lazy val prime = {
+    extractPrime(thenDo)
+  }
+}
 
 case class BatchWhen(queries: List[BatchQueryPrime], consistency: Option[List[Consistency]] = None, batchType: Option[BatchType] = None)
 

@@ -52,6 +52,12 @@ case object AlreadyExists extends ResultJsonRepresentation("already_exists")
 
 case object Unprepared extends ResultJsonRepresentation("unprepared")
 
+case object ReadFailure extends ResultJsonRepresentation("read_failure")
+
+case object FunctionFailure extends ResultJsonRepresentation("function_failure")
+
+case object WriteFailure extends ResultJsonRepresentation("write_failure")
+
 case object ClosedConnection extends ResultJsonRepresentation("closed_connection")
 
 object ResultJsonRepresentation {

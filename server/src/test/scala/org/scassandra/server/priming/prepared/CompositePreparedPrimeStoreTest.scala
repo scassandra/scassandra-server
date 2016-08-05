@@ -15,29 +15,38 @@
  */
 package org.scassandra.server.priming.prepared
 
-import org.scalatest.{Matchers, FunSuite}
-import org.scassandra.server.cqlmessages.types.ColumnType
-import org.scassandra.server.priming.query.{Prime, PrimeMatch}
+import org.scalatest.{FunSuite, Matchers}
+import org.scassandra.codec.messages.{PreparedMetadata, RowMetadata}
+import org.scassandra.codec.{Execute, NoRows, Prepare, Prepared}
+import org.scassandra.server.priming.query.{Prime, Reply}
+import scodec.bits.ByteVector
 
 class CompositePreparedPrimeStoreTest extends FunSuite with Matchers {
 
   val one: PreparedStoreLookup = new PreparedStoreLookup {
-    def findPrime(primeMatch: PrimeMatch): Option[PreparedPrimeResult] = None
+    def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = None
+    def apply(queryText: String, execute: Execute) : Option[Prime] = None
   }
   val two: PreparedStoreLookup = new PreparedStoreLookup {
-    def findPrime(primeMatch: PrimeMatch): Option[PreparedPrimeResult] = None
+    def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = None
+    def apply(queryText: String, execute: Execute) : Option[Prime] = None
   }
 
-  val result = new PreparedPrimeResult {
-    def getPrime(variables: List[Any]): Prime = Prime()
-    val variableTypes: List[ColumnType[_]] = List()
-  }
+  val result = Some(Reply(NoRows))
+
   val three: PreparedStoreLookup = new PreparedStoreLookup {
-    def findPrime(primeMatch: PrimeMatch): Option[PreparedPrimeResult] = Some(result)
+    def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = result
+    def apply(queryText: String, execute: Execute) : Option[Prime] = result
   }
 
-  test("Delegates to all stores") {
+  test("Delegates to all stores - apply for prepared") {
     val underTest = new CompositePreparedPrimeStore(one, two, three)
-    underTest.findPrime(PrimeMatch("blah")) should equal(Some(result))
+    val factory = (preparedMetadata: PreparedMetadata, rowMetadata: RowMetadata) => Prepared(ByteVector(1))
+    underTest.apply(Prepare("hello"), factory) shouldEqual result
+  }
+
+  test("Delegates to all stores - apply for execute") {
+    val underTest = new CompositePreparedPrimeStore(one, two, three)
+    underTest.apply("hello", Execute(ByteVector(1))) shouldEqual result
   }
 }

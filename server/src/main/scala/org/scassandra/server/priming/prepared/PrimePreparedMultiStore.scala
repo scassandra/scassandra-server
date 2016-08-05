@@ -15,46 +15,54 @@
  */
 package org.scassandra.server.priming.prepared
 
-import java.util.concurrent.TimeUnit
-
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.cqlmessages.Consistency
-import org.scassandra.server.cqlmessages.types.ColumnType
-import org.scassandra.server.priming.{PrimeAddResult, PrimeAddSuccess, Defaulter}
-import org.scassandra.server.priming.json.Success
-import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
-import org.scassandra.server.priming.routes.PrimingJsonHelper
+import org.scassandra.codec._
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.server.priming.Defaulter
+import org.scassandra.server.priming.query.Prime
 
-import scala.concurrent.duration.FiniteDuration
+class PrimePreparedMultiStore extends PreparedStore[PrimePreparedMulti] with LazyLogging {
 
-class PrimePreparedMultiStore extends PreparedStore[PrimePreparedMulti, PreparedMultiPrime] with PreparedStoreLookup with LazyLogging {
+  def apply(queryText: String, execute: Execute): Option[Prime] = {
+    // Find prime matching queryText and execute's consistency.
+    val prime = retrievePrimes().find { prime =>
+      // if no consistency specified in the prime, allow all
+      val c = prime.when.consistency.getOrElse(Consistency.all)
+      prime.when.query.exists(_.equals(queryText)) && c.contains(execute.parameters.consistency)
+    }
 
-  // todo validate PrimePreparedMulti
-  def record(prime: PrimePreparedMulti): PrimeAddResult = {
-    val consistencies = prime.when.consistency.getOrElse(Consistency.all)
-    val query = prime.when.query
-    val thenDo = prime.thenDo
+    // Find the outcome action matching the execute parameters.
+    val action = prime.flatMap { p =>
+      // decode query parameters using the variable types of the prime.
+      val numberOfParameters = queryText.toCharArray.count(_ == '?')
+      val dataTypes = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, p.thenDo.variable_types.getOrElse(Nil))
+      val queryValues = execute.parameters.values.getOrElse(Nil)
+      // TODO: handle named and unset values
+      val values: List[Option[Any]] = dataTypes.zip(queryValues).map { case (dataType: DataType, queryValue: QueryValue) =>
+        queryValue.value match {
+          case Null => Some(null)
+          case Unset => Some(null)
+          case Bytes(bytes) => dataType.codec.decode(bytes.toBitVector).toOption.map(_.value)
+        }
+      }
 
-    val numberOfParameters = query.get.toCharArray.count(_ == '?')
-    val variableTypesDefaultedToVarchar: List[ColumnType[_]] = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, thenDo.variable_types)
+      // Try to find an outcome whose criteria maps to the query parameters.
+      p.thenDo.outcomes.find { outcome =>
+        val matchers = outcome.criteria.variable_matcher
+        // ensure lists are of the same length.
+        if (values.size == matchers.size) {
+          // Iterate through each value, decode it and check that it matches against the value.
+          values.zip(matchers).forall {
+            case (value, matcher) =>
+              matcher.test(value)
+          }
+        } else {
+          false
+        }
+      }.map(_.action)
+    }
 
-    val outcomes: List[(List[VariableMatch], Prime)] = prime.thenDo.outcomes.map(o => {
-      val result = PrimingJsonHelper.convertToPrimeResult(Map(), o.action.result.getOrElse(Success))
-      val rows = o.action.rows.getOrElse(List())
-      val fixedDelay = o.action.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
-      val columnTypes = Defaulter.defaultColumnTypesToVarchar(o.action.column_types, rows)
-      (o.criteria.variable_matcher, Prime(result = result, rows = rows, columnTypes = columnTypes, fixedDelay = fixedDelay))
-    })
-
-    val finalPrime = PreparedMultiPrime(variableTypesDefaultedToVarchar, outcomes)
-    val criteria: PrimeCriteria = PrimeCriteria(prime.when.query.get, consistencies)
-    logger.info("Storing prime {} for with criteria {}", finalPrime, criteria)
-    state += (criteria -> finalPrime)
-    PrimeAddSuccess
+    action.map(_.prime)
   }
 
-  def findPrime(primeMatch: PrimeMatch): Option[PreparedPrimeResult] = {
-    state.find({ case (criteria, result) => primeMatch.query == criteria.query &&
-      criteria.consistency.contains(primeMatch.consistency) }).map(_._2)
-  }
 }

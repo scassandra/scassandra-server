@@ -18,18 +18,15 @@ package org.scassandra.server.e2e.prepared
 import java.util
 
 import com.datastax.driver.core.Row
-import dispatch._, Defaults._
-import org.scassandra.server.cqlmessages.types._
-import org.scassandra.server.priming.json.PrimingJsonImplicits
-import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPrepared}
-import spray.json._
+import dispatch.Defaults._
+import dispatch._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
-import org.scassandra.server.{PrimingHelper, AbstractIntegrationTest}
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPrepared}
+import org.scassandra.server.{AbstractIntegrationTest, PrimingHelper}
 
 class PreparedStatementWithCollectionsTest  extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
-
-  import PrimingJsonImplicits._
 
   before {
     val svc = url("http://localhost:8043/prime-prepared-single").DELETE
@@ -44,13 +41,13 @@ class PreparedStatementWithCollectionsTest  extends AbstractIntegrationTest with
     val mapVariale = new util.HashMap[String, String]()
     mapVariale.put("one", "ONE")
     mapVariale.put("two", "TWO")
-    val variableTypes: List[ColumnType[_]] = List(CqlInt, new CqlMap(CqlText, CqlText))
+    val variableTypes: List[DataType] = List(DataType.Int, DataType.Map(DataType.Text, DataType.Text))
 
     PrimingHelper.primePreparedStatement(
       WhenPrepared(Some(preparedStatementText)),
       ThenPreparedSingle(Some(List(primedRow)),
         variable_types = Some(variableTypes),
-        column_types = Some(Map[String, ColumnType[_]]("map_column" -> new CqlMap(CqlText, CqlText)))
+        column_types = Some(Map[String, DataType]("map_column" -> DataType.Map(DataType.Text, DataType.Text)))
       )
     )
 

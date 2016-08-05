@@ -15,24 +15,13 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.{ActorRef, Actor}
-import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.cqlmessages.CqlMessageFactory
+import org.scassandra.codec.{Frame, Options, Supported}
 
-class OptionsHandler(connection: ActorRef, msgFactory: CqlMessageFactory) extends Actor with LazyLogging {
-  import org.scassandra.server.actors.OptionsHandlerMessages._
+class OptionsHandler extends ProtocolActor {
 
   override def receive: Receive = {
-    case msg @ OptionsMessage(stream) => {
-      logger.debug(s"Received OPTIONS message $msg")
-      connection ! msgFactory.createSupportedMessage(stream)
-    }
-    case msg @ _ => {
-      logger.debug(s"Received unknown message $msg")
-    }
+    case ProtocolMessage(Frame(header, Options)) =>
+      log.debug(s"Received OPTIONS message")
+      write(Supported(Map[String, List[String]]("CQL_VERSION" -> ("3.0.0" :: Nil))), header)
   }
-}
-
-object OptionsHandlerMessages {
-  case class OptionsMessage(stream: Byte)
 }

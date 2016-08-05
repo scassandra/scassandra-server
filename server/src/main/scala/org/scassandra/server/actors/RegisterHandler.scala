@@ -15,20 +15,13 @@
  */
 package org.scassandra.server
 
-import akka.actor.{ActorLogging, Actor, ActorRef}
-import akka.util.ByteString
-import org.scassandra.server.cqlmessages.CqlMessageFactory
+import org.scassandra.codec.{Frame, Ready, Register}
+import org.scassandra.server.actors.{ProtocolActor, ProtocolMessage}
 
-class RegisterHandler(connection: ActorRef, msgFactory: CqlMessageFactory) extends Actor with ActorLogging {
+class RegisterHandler extends ProtocolActor {
   def receive = {
-    case registerMsg @ RegisterHandlerMessages.Register(_, stream) => {
-      log.debug(s"Received register message $registerMsg")
-      connection ! msgFactory.createReadyMessage(stream)
-    }
+    case ProtocolMessage(Frame(header, r: Register)) =>
+      log.debug(s"Received register message $r")
+      write(Ready, header)
   }
-}
-
-object RegisterHandlerMessages {
-  case class Register(messageBody: ByteString, stream: Byte)
-
 }

@@ -30,20 +30,20 @@
 */
 package org.scassandra.server.priming.prepared
 
-import java.util.concurrent.TimeUnit
-
 import org.scalatest.{FunSuite, Matchers}
-import org.scassandra.server.cqlmessages._
-import org.scassandra.server.cqlmessages.types.{CqlInet, CqlText, CqlVarchar}
-import org.scassandra.server.priming.query.{Prime, PrimeMatch}
-import org.scassandra.server.priming.{ConflictingPrimes, PrimeAddSuccess, ReadRequestTimeoutResult}
-import org.scassandra.server.priming.json.ReadTimeout
-
-import scala.concurrent.duration.FiniteDuration
+import org.scassandra.codec.Consistency._
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.messages.ColumnSpec.column
+import org.scassandra.codec.messages._
+import org.scassandra.codec.{Execute, Prepare, Prepared}
+import org.scassandra.server.priming.query.Reply
+import scodec.bits.ByteVector
 
 class PrimePreparedStoreTest extends FunSuite with Matchers {
 
-  test("Empty rows") {
+  val id = ByteVector(1)
+
+  test("Finds prime - no variables") {
     //given
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ?"
@@ -52,132 +52,9 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     val prime = PrimePreparedSingle(when, thenDo)
     //when
     underTest.record(prime)
-    val actualPrime = underTest.findPrime(PrimeMatch(query))
+    val actualPrime = underTest(query, Execute(id))
     //then
-    actualPrime.get.getPrime()   .rows should equal(List())
-  }
-
-  test("Overriding result to read_request_timeout") {
-    //given
-    val underTest = new PrimePreparedStore
-    val query: String = "select * from people where name = ?"
-    val when = WhenPrepared(Some(query))
-    val thenDo = ThenPreparedSingle(Some(List()), result = Some(ReadTimeout))
-    val prime = PrimePreparedSingle(when, thenDo)
-    //when
-    underTest.record(prime)
-    val actualPrime = underTest.findPrime(PrimeMatch(query))
-    //then
-    actualPrime.get.getPrime().result should equal(ReadRequestTimeoutResult())
-  }
-
-  test("Single row without variable type info - defaults to varchar") {
-    //given
-    val underTest = new PrimePreparedStore
-    val query: String = "select * from people where name = ? and age = ?"
-    val when = WhenPrepared(Some(query))
-    val rows: List[Map[String, Any]] = List(Map("one"->"two"))
-    val thenDo = ThenPreparedSingle(Some(rows))
-    val prime = PrimePreparedSingle(when, thenDo)
-    //when
-    underTest.record(prime)
-    val actualPrime = underTest.findPrime(PrimeMatch(query))
-    //then
-    actualPrime.get should equal(PreparedPrime(List(CqlVarchar, CqlVarchar), prime = Prime(rows, columnTypes = Map("one"-> CqlVarchar))))
-  }
-
-  test("Variable type info supplied") {
-    //given
-    val underTest = new PrimePreparedStore
-    val query: String = "select * from people where name = ? and age = ?"
-    val when = WhenPrepared(Some(query))
-    val rows: List[Map[String, Any]] = List(Map("one"->"two"))
-    val variableTypes = List(CqlInet, CqlInet)
-    val thenDo = ThenPreparedSingle(Some(rows), Some(variableTypes))
-    val prime = PrimePreparedSingle(when, thenDo)
-    //when
-    underTest.record(prime)
-    val actualPrime = underTest.findPrime(PrimeMatch(query))
-    //then
-    actualPrime.get should equal(PreparedPrime(variableTypes, prime = Prime(rows, columnTypes = Map("one"-> CqlVarchar))))
-  }
-
-  test("Subset of variable type info supplied") {
-    //given
-    val underTest = new PrimePreparedStore
-    val query: String = "select * from people where name = ? and age = ?"
-    val when = WhenPrepared(Some(query))
-    val rows: List[Map[String, Any]] = List(Map("one"->"two"))
-    val variableTypes = List(CqlInet)
-    val thenDo = ThenPreparedSingle(Some(rows), Some(variableTypes))
-    val prime = PrimePreparedSingle(when, thenDo)
-    //when
-    underTest.record(prime)
-    val actualPrime = underTest.findPrime(PrimeMatch(query))
-    //then
-    actualPrime.get should equal(PreparedPrime(List(CqlInet, CqlVarchar), prime = Prime(rows, columnTypes = Map("one"-> CqlVarchar))))
-  }
-
-  test("Single row with all column types") {
-    //given
-    val underTest = new PrimePreparedStore
-    val query: String = "select * from people where name = ? and age = ?"
-    val when = WhenPrepared(Some(query))
-    val rows: List[Map[String, Any]] = List(Map("one"->"two"))
-    val columnTypes = Map("one"->CqlText)
-    val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(rows), column_types = Some(columnTypes))
-    val prime = PrimePreparedSingle(when, thenDo)
-    //when
-    val result = underTest.record(prime)
-    val actualPrime = underTest.findPrime(PrimeMatch(query))
-    //then
-    result should equal(PrimeAddSuccess)
-    actualPrime.get should equal(PreparedPrime(List(CqlVarchar, CqlVarchar), prime = Prime(rows, columnTypes = columnTypes)))
-  }
-
-  test("Subset of column type info supplied - rest defaulted to varchar)") {
-    //given
-    val underTest = new PrimePreparedStore
-    val query: String = "select * from people where name = ? and age = ?"
-    val when = WhenPrepared(Some(query))
-    val rows: List[Map[String, Any]] = List(Map("column_type_specified" -> "two","column_type_not_specified"->"three"))
-    val columnTypes = Map("column_type_specified" -> CqlText)
-    val thenDo = ThenPreparedSingle(Some(rows), column_types = Some(columnTypes))
-    val prime = PrimePreparedSingle(when, thenDo)
-    //when
-    underTest.record(prime)
-    val actualPrime = underTest.findPrime(PrimeMatch(query))
-    //then
-    val expectedColumnTypes = Map("column_type_specified" -> CqlText, "column_type_not_specified" -> CqlVarchar)
-    actualPrime.get should equal(PreparedPrime(List(CqlVarchar, CqlVarchar), prime = Prime(rows, columnTypes = expectedColumnTypes)))
-  }
-
-  test("Specifying result other than success") {
-    //given
-    val underTest = new PrimePreparedStore
-    val query: String = "select * from people"
-    val when = WhenPrepared(Some(query))
-    val thenDo = ThenPreparedSingle(None, result = Some(ReadTimeout))
-    val prime = PrimePreparedSingle(when, thenDo)
-    //when
-    underTest.record(prime)
-    val actualPrime = underTest.findPrime(PrimeMatch(query))
-    //then
-    actualPrime.get should equal(PreparedPrime(List(), Prime(result = ReadRequestTimeoutResult())))
-  }
-
-  test("Specifying a fixed delay") {
-    //given
-    val underTest = new PrimePreparedStore
-    val query: String = "select * from people"
-    val when = WhenPrepared(Some(query))
-    val thenDo = ThenPreparedSingle(rows = Some(List()), fixedDelay = Some(1500l))
-    val prime = PrimePreparedSingle(when, thenDo)
-    //when
-    underTest.record(prime)
-    val actualPrime = underTest.findPrime(PrimeMatch(query))
-    //then
-    actualPrime.get should equal(PreparedPrime(List(), Prime(fixedDelay = Some(FiniteDuration(1500l, TimeUnit.MILLISECONDS)))))
+    actualPrime.get should equal(thenDo.prime)
   }
 
   test("Clearing all the primes") {
@@ -190,10 +67,10 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     //when
     underTest.clear()
     //then
-    underTest.state.size should equal(0)
+    underTest.retrievePrimes().size should equal(0)
   }
 
-  test("Priming consistency. Should match on consistency.") {
+  test("Priming consistency. Should match on consistency") {
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ?"
     val consistencies = List(ONE, TWO)
@@ -202,16 +79,16 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     val prime = PrimePreparedSingle(when, thenDo)
     underTest.record(prime)
     //when
-    val primeForOne = underTest.findPrime(PrimeMatch(query, ONE))
-    val primeForTwo = underTest.findPrime(PrimeMatch(query, TWO))
-    val primeForAll = underTest.findPrime(PrimeMatch(query, ALL))
+    val primeForOne = underTest(query, Execute(id, QueryParameters(consistency=ONE)))
+    val primeForTwo = underTest(query, Execute(id, QueryParameters(consistency=TWO)))
+    val primeForAll = underTest(query, Execute(id, QueryParameters(consistency=ALL)))
     //then
     primeForOne.isDefined should equal(true)
     primeForTwo.isDefined should equal(true)
     primeForAll.isDefined should equal(false)
   }
 
-  test("Priming Consistency. Should default to all consistencies") {
+  test("Priming consistency. Should default to all consistencies") {
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where name = ?"
     val when = WhenPrepared(Some(query), None)
@@ -219,10 +96,10 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     val prime = PrimePreparedSingle(when, thenDo)
     underTest.record(prime)
     //when
-    val primeForOne = underTest.findPrime(PrimeMatch(query, ONE))
-    val primeForTwo = underTest.findPrime(PrimeMatch(query, TWO))
-    val primeForAll = underTest.findPrime(PrimeMatch(query, ALL))
-    val primeForLocalOne = underTest.findPrime(PrimeMatch(query, LOCAL_ONE))
+    val primeForOne = underTest(query, Execute(id, QueryParameters(consistency=ONE)))
+    val primeForTwo = underTest(query, Execute(id, QueryParameters(consistency=TWO)))
+    val primeForAll = underTest(query, Execute(id, QueryParameters(consistency=ALL)))
+    val primeForLocalOne = underTest(query, Execute(id, QueryParameters(consistency=LOCAL_ONE)))
     //then
     primeForOne.isDefined should equal(true)
     primeForTwo.isDefined should equal(true)
@@ -230,16 +107,46 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     primeForLocalOne.isDefined should equal(true)
   }
 
-  test("Conflicting primes") {
+  val factory = (p: PreparedMetadata, r: RowMetadata) => Prepared(id, p, r)
+
+  test("Prepared prime - None when no match") {
     val underTest = new PrimePreparedStore
-    val query: String = "select * from people where name = ?"
+
+    // when
+    val prepared = underTest(Prepare("select * from people where a = ? and b = ? and c = ?"), factory)
+
+    // then
+    prepared.isDefined should equal(false)
+  }
+
+  test("Prepared prime - no parameters") {
+    val underTest = new PrimePreparedStore
+    val query: String = "select * from people"
+    val when = WhenPrepared(Some(query), None)
     val thenDo = ThenPreparedSingle(Some(List()))
-    val primeForOneAndTwo = PrimePreparedSingle(WhenPrepared(Some(query), None, Some(List(ONE, TWO))), thenDo)
-    val primeForTwoAndThree = PrimePreparedSingle(WhenPrepared(Some(query), None, Some(List(TWO, THREE))), thenDo)
-    //when
-    underTest.record(primeForOneAndTwo)
-    val result = underTest.record(primeForTwoAndThree)
-    //then
-    result.isInstanceOf[ConflictingPrimes] should equal(true)
+    val prime = PrimePreparedSingle(when, thenDo)
+    underTest.record(prime)
+
+    // when
+    val prepared = underTest(Prepare(query), factory)
+
+    // then - should be a prepared with no column spec
+    prepared should matchPattern { case Some(Reply(Prepared(`id`, PreparedMetadata(_, _, _, `Nil`), _), _, _)) => }
+  }
+
+  test("Prepared prime - with parameters") {
+    val underTest = new PrimePreparedStore
+    val query: String = "select * from people where first=? and last=?"
+    val columnSpec = List(column("0", DataType.Varchar), column("1", DataType.Bigint))
+    val when = WhenPrepared(Some(query), None)
+    val thenDo = ThenPreparedSingle(Some(List()), Some(columnSpec.map(_.dataType)))
+    val prime = PrimePreparedSingle(when, thenDo)
+    underTest.record(prime)
+
+    // when
+    val prepared = underTest(Prepare(query), factory)
+
+    // then - should be a prepared with a column spec containing parameters.
+    prepared should matchPattern { case Some(Reply(Prepared(`id`, PreparedMetadata(_, _, _, `columnSpec`), _), _, _)) => }
   }
 }

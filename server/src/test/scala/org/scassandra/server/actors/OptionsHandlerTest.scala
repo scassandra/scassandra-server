@@ -16,23 +16,22 @@
 package org.scassandra.server.actors
 
 import akka.actor.ActorSystem
-import akka.testkit.{TestActorRef, TestProbe, TestKit}
+import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
 import org.scalatest.{FunSuiteLike, Matchers}
-import org.scassandra.server.cqlmessages.VersionTwoMessageFactory
+import org.scassandra.codec._
 
-class OptionsHandlerTest extends TestKit(ActorSystem("TestSystem")) with FunSuiteLike with Matchers {
+class OptionsHandlerTest extends TestKit(ActorSystem("TestSystem")) with ProtocolActorTest with FunSuiteLike
+  with ImplicitSender with Matchers {
 
   test("Should send supported message on any Options message") {
-    val senderTestProbe = TestProbe()
-    val cqlMessageFactory = VersionTwoMessageFactory
-    val stream : Byte = 0x24
+    val message = protocolMessage(Options)
+    val underTest = TestActorRef(new OptionsHandler)
 
-    val expectedSupportedMessage = cqlMessageFactory.createSupportedMessage(stream)
-    val underTest = TestActorRef(new OptionsHandler(senderTestProbe.ref, cqlMessageFactory))
+    underTest ! message
 
-    underTest ! OptionsHandlerMessages.OptionsMessage(stream)
-
-    senderTestProbe.expectMsg(expectedSupportedMessage)
+    expectMsgPF() {
+      case ProtocolResponse(_, Supported(_)) => true
+    }
   }
 
 }
