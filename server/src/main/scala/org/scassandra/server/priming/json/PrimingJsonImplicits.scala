@@ -61,8 +61,10 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
           obj.fields("type") match {
             case JsString("exact") => ExactMatch(Some(AnyJsonFormat.read(obj.fields("matcher"))))
             case JsString("any") => AnyMatch
+            case _ => AnyMatch
           }
         }
+        case _ => AnyMatch
       }
     }
   }
