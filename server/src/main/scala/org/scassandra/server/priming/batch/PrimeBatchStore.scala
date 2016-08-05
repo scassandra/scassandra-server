@@ -17,27 +17,33 @@ package org.scassandra.server.priming.batch
 
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec.Consistency
+import org.scassandra.codec.Consistency.Consistency
+import org.scassandra.codec.messages.BatchType.{BatchType, _}
 import org.scassandra.server.priming.BatchExecution
 import org.scassandra.server.priming.query.Prime
 
-import scala.collection.mutable.ListBuffer
-
 class PrimeBatchStore extends LazyLogging {
 
-  private val primes: ListBuffer[BatchPrimeSingle] = new ListBuffer[BatchPrimeSingle]
-  
+  var primes: Map[BatchCriteria, BatchPrimeSingle] = Map()
+
   def record(prime: BatchPrimeSingle): Unit = {
-    primes += prime
+    val consistencies: List[Consistency] = prime.when.consistency.getOrElse(Consistency.all)
+    val criteria = BatchCriteria(prime.when.queries, consistencies, prime.when.batchType.getOrElse(LOGGED))
+    primes += (criteria -> prime)
   }
 
   def apply(primeMatch: BatchExecution): Option[Prime] = {
-    primes.find { prime =>
-      prime.when.queries == primeMatch.batchQueries.map(bq => BatchQueryPrime(bq.query, bq.batchQueryKind)) &&
-      prime.when.consistency.getOrElse(Consistency.all).contains(primeMatch.consistency) &&
-      (prime.when.batchType.isEmpty || prime.when.batchType.get == primeMatch.batchType)
-    }.map(_.prime)
+    logger.debug("Batch Prime Match {} current primes {}", primeMatch, primes)
+    primes.find {
+      case (batchCriteria, _) =>
+        batchCriteria.queries == primeMatch.batchQueries.map(bq => BatchQueryPrime(bq.query, bq.batchQueryKind)) &&
+          batchCriteria.consistency.contains(primeMatch.consistency) &&
+          batchCriteria.batchType == primeMatch.batchType
+    } map(_._2.prime)
   }
   def clear() = {
     primes = Map()
   }
 }
+
+case class BatchCriteria(queries: Seq[BatchQueryPrime], consistency: List[Consistency], batchType: BatchType)
