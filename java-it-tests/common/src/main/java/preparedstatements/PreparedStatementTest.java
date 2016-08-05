@@ -22,6 +22,7 @@ import common.CassandraResult;
 import common.CassandraRow;
 import org.junit.Test;
 import org.scassandra.http.client.ColumnTypes;
+import org.scassandra.http.client.Consistency;
 import org.scassandra.http.client.PreparedStatementExecution;
 import org.scassandra.http.client.PrimingRequest;
 
@@ -29,8 +30,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-
-import org.scassandra.http.client.Consistency;
 import static org.scassandra.http.client.PrimingRequest.preparedStatementBuilder;
 
 abstract public class PreparedStatementTest extends AbstractScassandraTest {
@@ -130,7 +129,7 @@ abstract public class PreparedStatementTest extends AbstractScassandraTest {
         assertEquals(1, preparedStatementExecutions.size());
         PreparedStatementExecution execution = preparedStatementExecutions.get(0);
         assertEquals(preparedStatementText, execution.getPreparedStatementText());
-        assertEquals(0, execution.getVariables().size());
+        assertEquals(1, execution.getVariables().size());
     }
 
     @Test
