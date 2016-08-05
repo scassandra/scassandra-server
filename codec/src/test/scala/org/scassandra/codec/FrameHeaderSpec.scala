@@ -45,7 +45,7 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
     }
   }
 
-  it must "return an error when given invalid version." in {
+  it must "return UnsupportedProtocolVersion when given invalid version." in {
     val codec = ProtocolVersion.codec
 
     check {
@@ -53,9 +53,13 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
         version => {
           codec.decode(BitVector(version).drop(1)) match {
             case Attempt.Successful(DecodeResult(decoded, remainder)) =>
-              s"protocol = $decoded" |: false
+              s"protocol = $decoded" |: allProps(
+                ("invalid protocol version" |: decoded.isInstanceOf[UnsupportedProtocolVersion]) &&
+                ("identical version" |: decoded.version == version) &&
+                (s"no remaining data(${remainder.size})" |: remainder.size == 0)
+              )
             case Attempt.Failure(cause) =>
-              s"$cause" |: true
+              s"$cause" |: false
           }
         }
       }

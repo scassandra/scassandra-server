@@ -35,7 +35,7 @@ class QueryHandler(primeQueryStore: PrimeQueryStore, activityLog: ActivityLog) e
           Some(variableTypes).zip(extractQueryVariables(query.query, query.parameters.values, variableTypes)).headOption
         }
 
-      val wasSetKeyspace = prime.forall {
+      val wasSetKeyspace = prime.nonEmpty && prime.forall {
         // Skip 'use keyspace' queries for legacy compatibility
         case Reply(s: SetKeyspace, _, _) => true
         case _ => false
@@ -50,7 +50,7 @@ class QueryHandler(primeQueryStore: PrimeQueryStore, activityLog: ActivityLog) e
         }
       }
 
-      writePrime(query, prime, header, alternative = noRows)
+      writePrime(query, prime, header, alternative = noRows, consistency = Some(query.parameters.consistency))
       log.info(s"Incoming query: $query")
   }
 }

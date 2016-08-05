@@ -65,7 +65,7 @@ class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
         }
 
 
-        writePrime(execute, prime, header, Some(connection), alternative=Some(Reply(VoidResult)))
+        writePrime(execute, prime, header, Some(connection), alternative=Some(Reply(VoidResult)), consistency = Some(execute.parameters.consistency))
       case None =>
         var errMsg = s"Could not find prepared statement with id: 0x${execute.id.toHex}"
         activityLog.recordPreparedStatementExecution(errMsg, execute.parameters.consistency, Nil, Nil)

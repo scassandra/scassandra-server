@@ -19,6 +19,7 @@ import java.net.{ConnectException, Socket}
 import java.util.concurrent.TimeUnit
 
 import com.datastax.driver.core._
+import com.datastax.driver.core.policies.FallthroughRetryPolicy
 import dispatch.Defaults._
 import dispatch._
 import io.netty.channel.EventLoopGroup
@@ -164,6 +165,7 @@ abstract class AbstractIntegrationTest(clusterConnect: Boolean = true) extends F
     Cluster.builder()
       .addContactPoint(ConnectionToServerStub.ServerHost)
       .withPort(ConnectionToServerStub.ServerPort)
+      .withRetryPolicy(FallthroughRetryPolicy.INSTANCE)
       .withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.ONE))
       .withNettyOptions(closeQuickly)
   }

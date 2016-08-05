@@ -19,17 +19,16 @@ import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec._
 import org.scassandra.codec.datatype.DataType
 import org.scassandra.server.priming.Defaulter
-import org.scassandra.server.priming.query.Prime
+import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
 
 class PrimePreparedMultiStore extends PreparedStore[PrimePreparedMulti] with LazyLogging {
 
   def apply(queryText: String, execute: Execute): Option[Prime] = {
     // Find prime matching queryText and execute's consistency.
-    val prime = retrievePrimes().find { prime =>
+    val prime = primes.find { case (criteria, _) =>
       // if no consistency specified in the prime, allow all
-      val c = prime.when.consistency.getOrElse(Consistency.all)
-      prime.when.query.exists(_.equals(queryText)) && c.contains(execute.parameters.consistency)
-    }
+      criteria.query.equals(queryText) && criteria.consistency.contains(execute.parameters.consistency)
+    }.map(_._2)
 
     // Find the outcome action matching the execute parameters.
     val action = prime.flatMap { p =>
@@ -65,4 +64,6 @@ class PrimePreparedMultiStore extends PreparedStore[PrimePreparedMulti] with Laz
     action.map(_.prime)
   }
 
+  override def primeCriteria(prime: PrimePreparedMulti): PrimeCriteria =
+    PrimeCriteria(prime.when.query.get, prime.when.consistency.getOrElse(Consistency.all))
 }

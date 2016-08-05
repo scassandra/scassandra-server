@@ -44,7 +44,7 @@ class PrimeQueryStore() extends LazyLogging {
   def add (primeQuerySingle: PrimeQuerySingle): PrimeAddResult = {
     PrimingJsonHelper.extractPrimeCriteria(primeQuerySingle) match {
       case Success(criteria) =>
-        validator.validate(criteria, primeQuerySingle.prime, queryPrimes) match {
+        validator.validate(criteria, primeQuerySingle.prime, queryPrimes.keys.toList) match {
           case PrimeAddSuccess =>
             if (criteria.patternMatch) {
               queryPatternPrimes += (criteria -> primeQuerySingle)

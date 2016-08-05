@@ -19,13 +19,10 @@ import dispatch.Defaults._
 import dispatch._
 import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures
-import org.scassandra.server.priming.json.PrimingJsonImplicits
 import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPrepared}
 import org.scassandra.server.{AbstractIntegrationTest, PrimingHelper}
 
 class PreparedStatementBasicDelaysTest extends AbstractIntegrationTest with BeforeAndAfter with ScalaFutures {
-
-  import PrimingJsonImplicits._
 
   before {
     val svc = url("http://localhost:8043/prime-prepared-single").DELETE
@@ -54,7 +51,7 @@ class PreparedStatementBasicDelaysTest extends AbstractIntegrationTest with Befo
     difference should be > fixedDelay
   }
 
-  test("Prepared statement with delay and query patten") {
+  test("Prepared statement with delay and query pattern") {
     val fixedDelay: Long = 1500l
     val preparedStatementText: String = ".*"
     PrimingHelper.primePreparedStatement(

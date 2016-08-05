@@ -18,28 +18,28 @@ package org.scassandra.server.priming
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec.Rows
 import org.scassandra.codec.datatype.DataType
-import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeQuerySingle, Reply}
+import org.scassandra.server.priming.query.{Prime, PrimeCriteria, Reply}
 import scodec.Attempt
 import scodec.Attempt.{Failure, Successful}
 import scodec.bits.BitVector
 
 class PrimeValidator extends LazyLogging {
-  def validate(criteria: PrimeCriteria, prime: Prime, queryToResults: Map[PrimeCriteria, PrimeQuerySingle]): PrimeAddResult = {
+  def validate(criteria: PrimeCriteria, prime: Prime, existingCriteria: List[PrimeCriteria]): PrimeAddResult = {
     // 1. Validate consistency
-    validateConsistency(criteria, queryToResults) match {
+    validateConsistency(criteria, existingCriteria) match {
       case c: ConflictingPrimes => c
       // 2. Then validate column types
       case _ => validateColumnTypes(prime)
     }
   }
 
-  private def validateConsistency(criteria: PrimeCriteria, queryToResults: Map[PrimeCriteria, PrimeQuerySingle]): PrimeAddResult = {
+  private def validateConsistency(criteria: PrimeCriteria, existingCriteria: List[PrimeCriteria]): PrimeAddResult = {
 
     def intersectsExistingCriteria: (PrimeCriteria) => Boolean = {
       existing => existing.query == criteria.query && existing.consistency.intersect(criteria.consistency).nonEmpty
     }
 
-    val intersectingCriteria = queryToResults.filterKeys(intersectsExistingCriteria).keySet.toList
+    val intersectingCriteria = existingCriteria.filter(intersectsExistingCriteria)
     intersectingCriteria match {
       // exactly one intersecting criteria: if the criteria is the newly passed one, this is just an override. Otherwise, conflict.
       case list @ head :: Nil if head != criteria => ConflictingPrimes(list)

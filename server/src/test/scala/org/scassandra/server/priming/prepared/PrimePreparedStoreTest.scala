@@ -36,6 +36,7 @@ import org.scassandra.codec.datatype.DataType
 import org.scassandra.codec.messages.ColumnSpec.column
 import org.scassandra.codec.messages._
 import org.scassandra.codec.{Execute, Prepare, Prepared}
+import org.scassandra.server.priming.ConflictingPrimes
 import org.scassandra.server.priming.query.Reply
 import scodec.bits.ByteVector
 
@@ -105,6 +106,19 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     primeForTwo.isDefined should equal(true)
     primeForAll.isDefined should equal(true)
     primeForLocalOne.isDefined should equal(true)
+  }
+
+  test("Conflicting primes") {
+    val underTest = new PrimePreparedStore
+    val query: String = "select * from people where name = ?"
+    val thenDo = ThenPreparedSingle(Some(List()))
+    val primeForOneAndTwo = PrimePreparedSingle(WhenPrepared(Some(query), None, Some(List(ONE, TWO))), thenDo)
+    val primeForTwoAndThree = PrimePreparedSingle(WhenPrepared(Some(query), None, Some(List(TWO, THREE))), thenDo)
+    //when
+    underTest.record(primeForOneAndTwo)
+    val result = underTest.record(primeForTwoAndThree)
+    //then
+    result.isInstanceOf[ConflictingPrimes] should equal(true)
   }
 
   val factory = (p: PreparedMetadata, r: RowMetadata) => Prepared(id, p, r)

@@ -16,6 +16,7 @@
 package org.scassandra.server.actors
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
+import org.scassandra.codec.Consistency.Consistency
 import org.scassandra.codec._
 import org.scassandra.codec.datatype.DataType
 import org.scassandra.server.priming.query.{Fatal, Prime, Reply}
@@ -27,13 +28,32 @@ trait ProtocolActor extends Actor with ActorLogging {
     target ! ProtocolResponse(requestHeader, message)
   }
 
-  def writePrime(input: Message, primeOption: Option[Prime], requestHeader: FrameHeader, recipient: Option[ActorRef] = None, alternative: Option[Prime] = None): Unit = {
+  /**
+    * Update the message with the given consistency if the message is an error containing consistency.
+    * @param input message to update.
+    * @param consistency consistency to update error message with.
+    * @return Updated message if applicable.
+    */
+  private [this] def messageWithConsistency(input: Message, consistency: Option[Consistency]): Message = consistency match {
+    case Some(c) =>
+      input match {
+        case u @ Unavailable(_, uc, _ , _) if c != uc => u.copy(consistency = c)
+        case w @ WriteTimeout(_, wc, _, _, _) if c != wc => w.copy(consistency = c)
+        case r @ ReadTimeout(_, rc, _, _, _) if c != rc => r.copy(consistency = c)
+        case r @ ReadFailure(_, rc, _, _, _, __) if c != rc => r.copy(consistency = c)
+        case w @ WriteFailure(_, wc, _, _, _, __) if c != wc => w.copy(consistency = c)
+        case _ => input
+      }
+    case None => input
+  }
+
+  def writePrime(input: Message, primeOption: Option[Prime], requestHeader: FrameHeader, recipient: Option[ActorRef] = None, alternative: Option[Prime] = None, consistency: Option[Consistency] = None): Unit = {
     val target = recipient.getOrElse(sender)
     primeOption match {
       case Some(prime) =>
         prime match {
           case Reply(message, _, _) =>
-            val msg = ProtocolResponse(requestHeader, message)
+            val msg = ProtocolResponse(requestHeader, messageWithConsistency(message, consistency))
             prime.fixedDelay match {
               case None => target ! msg
               case Some(duration) => context.system.scheduler.scheduleOnce(duration, target, msg)(context.system.dispatcher)

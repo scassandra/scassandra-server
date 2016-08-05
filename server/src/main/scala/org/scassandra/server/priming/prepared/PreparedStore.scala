@@ -18,10 +18,8 @@ package org.scassandra.server.priming.prepared
 import org.scassandra.codec.datatype.DataType
 import org.scassandra.codec.messages._
 import org.scassandra.codec.{Execute, Prepare, Prepared}
-import org.scassandra.server.priming.query.{Prime, Reply}
+import org.scassandra.server.priming.query.{Prime, PrimeCriteria, Reply}
 import org.scassandra.server.priming.{Defaulter, PrimeAddResult, PrimeAddSuccess}
-
-import scala.collection.mutable.ListBuffer
 
 trait PreparedStoreLookup {
   def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime]
@@ -45,26 +43,31 @@ object PreparedStoreLookup {
 }
 
 trait PreparedStore[I <: PreparedPrimeIncoming] extends PreparedStoreLookup {
-  private val primes: ListBuffer[I] = new ListBuffer[I]
+  protected var primes: Map[PrimeCriteria, I] = Map()
+
+  def primeCriteria(prime: I): PrimeCriteria
 
   def record(prime: I): PrimeAddResult = {
-    primes += prime
+    primes += primeCriteria(prime) -> prime
     PrimeAddSuccess
   }
 
-  def retrievePrimes(): List[I] = primes.toList
-  def clear() = primes.clear
+  def retrievePrimes(): List[I] = primes.values.toList
+  def clear() = primes = Map()
 
   def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = {
     // Find prime by text.
-    val prime = retrievePrimes().find(_.when.query.exists(_.equals(prepare.query)))
-    prepared(prime, preparedFactory)
+    val prime = primes.find { case (criteria, _) =>
+      criteria.query.equals(prepare.query)
+    }.map(_._2)
+
+    prepared(prepare, prime, preparedFactory)
   }
 
-  def prepared(prime: Option[I], preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = {
+  def prepared(prepare: Prepare, prime: Option[I], preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = {
     prime.map { p =>
       // Prefill variable types with the rows column spec data types + varchars for any extra variables in the query.
-      val numberOfParameters = p.when.query.map(_.toCharArray.count(_ == '?')).getOrElse(0)
+      val numberOfParameters = prepare.query.toCharArray.count(_ == '?')
       val dataTypes = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, p.thenDo.variable_types.getOrElse(Nil))
 
       // build column spec from data types, we name the columns by indices.

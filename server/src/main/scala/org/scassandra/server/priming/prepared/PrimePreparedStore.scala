@@ -17,19 +17,36 @@ package org.scassandra.server.priming.prepared
 
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec._
-import org.scassandra.server.priming.query.Prime
+import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
+import org.scassandra.server.priming.{PrimeAddResult, PrimeAddSuccess, PrimeValidator}
 
 class PrimePreparedStore extends PreparedStore[PrimePreparedSingle] with LazyLogging {
 
+  val validator: PrimeValidator = new PrimeValidator
+
+  override def record(prime: PrimePreparedSingle) = {
+    val criteria = primeCriteria(prime)
+    validator.validate(criteria, prime.thenDo.prime, primes.keys.toList) match {
+      case PrimeAddSuccess =>
+        logger.info(s"Storing prime for prepared statement $prime with prime criteria $criteria")
+        primes += (criteria -> prime)
+        PrimeAddSuccess
+      case notSuccess: PrimeAddResult =>
+        logger.info(s"Storing prime for prepared statement $prime failed due to $notSuccess")
+        notSuccess
+    }
+  }
+
   def apply(queryText: String, execute: Execute) : Option[Prime] = {
     // Find prime matching queryText and execute's consistency.
-    val prime = retrievePrimes().find { prime =>
+    val prime = primes.find { case (criteria, _) =>
       // if no consistency specified in the prime, allow all
-      val c = prime.when.consistency.getOrElse(Consistency.all)
-      prime.when.query.exists(_.equals(queryText)) && c.contains(execute.parameters.consistency)
-    }
+      criteria.query.equals(queryText) && criteria.consistency.contains(execute.parameters.consistency)
+    }.map(_._2)
 
     prime.map(_.thenDo.prime)
   }
 
+  override def primeCriteria(prime: PrimePreparedSingle): PrimeCriteria =
+    PrimeCriteria(prime.when.query.get, prime.when.consistency.getOrElse(Consistency.all))
 }

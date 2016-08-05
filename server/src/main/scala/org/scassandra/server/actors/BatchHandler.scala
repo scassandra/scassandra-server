@@ -91,7 +91,7 @@ class BatchHandler(activityLog: ActivityLog,
     activityLog.recordBatchExecution(execution)
     val prime = batchPrimeStore(execution)
     prime.foreach(p => log.info("Found prime {} for batch execution {}", p, execution))
-    writePrime(batch, prime, header, recipient=Some(recipient), alternative = Some(Reply(VoidResult)))
+    writePrime(batch, prime, header, recipient=Some(recipient), alternative = Some(Reply(VoidResult)), consistency = Some(batch.consistency))
   }
 }
 
