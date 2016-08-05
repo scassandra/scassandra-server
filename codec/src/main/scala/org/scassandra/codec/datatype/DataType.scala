@@ -103,7 +103,7 @@ object DataType {
     val stringRep = "ascii"
     val codec = ascii.withAny {
       case s: String => s
-      case x: Number => x.toString
+      case x => x.toString
     }
   }
 
@@ -190,7 +190,7 @@ object DataType {
     val stringRep = "varchar"
     val codec = utf8.withAny {
       case s: String => s
-      case x: Number => x.toString
+      case x => x.toString
     }
   }
 
@@ -198,7 +198,7 @@ object DataType {
     val stringRep = "text"
     val codec = utf8.withAny {
       case s: String => s
-      case x: Number => x.toString
+      case x => x.toString
     }
   }
 
