@@ -19,10 +19,10 @@ import akka.actor.{Actor, ActorLogging, ActorRef, ActorRefFactory, Props}
 import akka.io.Tcp
 import akka.io.Tcp.{ConnectionClosed, Received, ResumeReading, Write}
 import akka.pattern.{ask, pipe}
+import akka.util.ByteString.ByteString1C
 import akka.util.{ByteString, Timeout}
 import org.scassandra.codec._
 import scodec.bits.ByteVector
-import scodec.interop.akka._
 
 import scala.annotation.tailrec
 import scala.concurrent.duration._
@@ -36,6 +36,8 @@ class ConnectionHandler(tcpConnection: ActorRef,
                         optionsHandlerFactory: (ActorRefFactory) => ActorRef,
                         prepareHandler: ActorRef,
                         executeHandler: ActorRef) extends Actor with ActorLogging {
+
+  import AkkaScodecInterop._
 
   implicit val timeout: Timeout = 1 seconds
 
@@ -150,3 +152,43 @@ case class AwaitHeader(protocolFlags: ProtocolFlags) extends ParsingState
 case class AwaitBody(frameHeader: FrameHeader) extends ParsingState
 
 case class UnsupportedProtocolException(version: Int) extends Exception(s"Unsupported Protocol Version $version")
+
+/**
+  * A modified version of akka-scodec.  This is used in place of akka-scodec because we need JDK6 support.  As
+  * akka-scodec uses Akka 2.4 and default methods, this was not an option.
+  *
+  * The primary modification is the usage of reflection in EnrichedByteVector.toByteString.  This is used instead of
+  * PrivacyHelper, which uses default interface methods.
+  *
+  * License from akka-scodec:
+  *
+  * Copyright (c) 2015, Michael Pilquist
+  * All rights reserved.
+  *
+  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+  *
+  * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+  * 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+  * 3. Neither the name of the scodec team nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+  *
+  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+object AkkaScodecInterop {
+
+  // ByteString1C's constructor is private, use reflection to resolve it and make it accessible, this can be a
+  // problem depending on the JDK security.
+  // TODO: Fallback to ByteString() if permission failure.
+  private [this] lazy val byte1Ctor = {
+    val ctor = classOf[ByteString1C].getDeclaredConstructor(classOf[Array[Byte]])
+    ctor.setAccessible(true)
+    ctor
+  }
+
+  implicit class EnrichedByteString(val value: ByteString) extends AnyVal {
+    def toByteVector: ByteVector = ByteVector.viewAt((idx: Long) => value(idx.toInt), value.size.toLong)
+  }
+
+  implicit class EnrichedByteVector(val value: ByteVector) extends AnyVal {
+    def toByteString: ByteString = byte1Ctor.newInstance(value.toArray)
+  }
+}

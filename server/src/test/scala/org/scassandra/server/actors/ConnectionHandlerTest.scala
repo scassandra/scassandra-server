@@ -22,13 +22,14 @@ import org.scalatest._
 import org.scassandra.codec._
 import scodec.Codec
 import scodec.bits.ByteVector
-import scodec.interop.akka._
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")) with ProtocolActorTest with Matchers
   with ImplicitSender with FunSuiteLike with BeforeAndAfter {
+
+  import AkkaScodecInterop._
 
   var testActorRef : TestActorRef[ConnectionHandler] = null
 

@@ -78,7 +78,7 @@ class TcpServer(listenAddress: String, port: Int,
     case CommandFailed(_: Bind) =>
       log.error(s"Unable to bind to port $port for Cassandra binary connections. Is it in use?")
       context stop self
-      context.system.terminate()
+      context.system.shutdown()
   }
 
   def listening(listener: ActorRef): Receive = {
