@@ -72,7 +72,7 @@ class BatchHandler(activityLog: ActivityLog,
             case Some((queryText, prepared)) =>
               // Decode query parameters using the prepared statement metadata.
               // TODO: Decoding values from metadata is a common pattern, DRY
-              val dataTypes = prepared.resultMetadata.columnSpec.getOrElse(Nil).map(_.dataType)
+              val dataTypes = prepared.preparedMetadata.columnSpec.map(_.dataType)
               val values = byteValues.zip(dataTypes).map {
                 case ((Bytes(bytes), dataType)) => dataType.codec.decodeValue(bytes.toBitVector).require // TODO: handle decode failure
                 case ((_, dataType)) => null // TODO: Handle Null and Unset case.
