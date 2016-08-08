@@ -126,7 +126,8 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
         assertEquals(1, batches.size());
         assertEquals(BatchExecution.builder().withBatchQueries(
                 BatchQuery.builder().withQuery("query"),
-                BatchQuery.builder().withQuery("prepared statement ? ?").withType(BatchQueryKind.prepared_statement))
+                BatchQuery.builder().withQuery("prepared statement ? ?").withVariables("one", "twp")
+                .withType(BatchQueryKind.prepared_statement))
                 .withConsistency("ONE").withBatchType(BatchType.LOGGED).build(), batches.get(0));
     }
 }
