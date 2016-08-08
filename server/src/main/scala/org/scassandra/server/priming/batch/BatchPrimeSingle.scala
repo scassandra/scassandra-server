@@ -28,7 +28,9 @@ case class BatchPrimeSingle(when: BatchWhen, thenDo: Then) {
     extractPrime(thenDo)
   }
 
-  def withDefaults: BatchPrimeSingle = copy(when.withDefaults, thenDo.withDefaults)
+  def withDefaults: BatchPrimeSingle =
+    // join queries into 1 string so '?' can be counted.
+    copy(when.withDefaults, thenDo.withDefaults(Some(when.queries.map(_.text).mkString("\n"))))
 }
 
 case class BatchWhen(queries: List[BatchQueryPrime], consistency: Option[List[Consistency]] = None, batchType: Option[BatchType] = None) {

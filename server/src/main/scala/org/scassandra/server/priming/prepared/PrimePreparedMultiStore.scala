@@ -33,8 +33,7 @@ class PrimePreparedMultiStore extends PreparedStore[PrimePreparedMulti] with Laz
     // Find the outcome action matching the execute parameters.
     val action = prime.flatMap { p =>
       // decode query parameters using the variable types of the prime.
-      val numberOfParameters = queryText.toCharArray.count(_ == '?')
-      val dataTypes = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, p.thenDo.variable_types.getOrElse(Nil))
+      val dataTypes = Defaulter.defaultVariableTypesToVarChar(Some(queryText), p.thenDo.variable_types).getOrElse(Nil)
       val queryValues = execute.parameters.values.getOrElse(Nil)
       // TODO: handle named and unset values
       val values: List[Option[Any]] = dataTypes.zip(queryValues).map { case (dataType: DataType, queryValue: QueryValue) =>

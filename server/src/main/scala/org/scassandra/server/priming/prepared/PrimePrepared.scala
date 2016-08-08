@@ -47,11 +47,11 @@ sealed trait ThenPrepared {
 }
 
 case class PrimePreparedSingle(when: WhenPrepared, thenDo: ThenPreparedSingle) extends PreparedPrimeIncoming {
-  override def withDefaults: PrimePreparedSingle = copy(when.withDefaults, thenDo.withDefaults)
+  override def withDefaults: PrimePreparedSingle = copy(when.withDefaults, thenDo.withDefaults(when))
 }
 
 case class PrimePreparedMulti(when: WhenPrepared, thenDo: ThenPreparedMulti) extends PreparedPrimeIncoming {
-  override def withDefaults: PrimePreparedMulti = copy(when.withDefaults, thenDo.withDefaults)
+  override def withDefaults: PrimePreparedMulti = copy(when.withDefaults, thenDo.withDefaults(when))
 }
 
 case class WhenPrepared(query: Option[String] = None,
@@ -70,12 +70,14 @@ case class ThenPreparedSingle(rows: Option[List[Map[String, Any]]],
     extractPrime(this)
   }
 
-  def withDefaults: ThenPreparedSingle = copy(column_types = defaultColumnTypesToVarChar(column_types, rows))
+  def withDefaults(when: WhenPrepared): ThenPreparedSingle = copy(variable_types = defaultVariableTypesToVarChar(when.query, variable_types), column_types = defaultColumnTypesToVarChar(column_types, rows))
 }
 
 case class ThenPreparedMulti(variable_types: Option[List[DataType]] = None,
                             outcomes: List[Outcome]) extends ThenPrepared {
-  def withDefaults: ThenPreparedMulti = this.copy(outcomes = outcomes.map(_.withDefaults))
+  def withDefaults(when: WhenPrepared): ThenPreparedMulti =  {
+    this.copy(variable_types = defaultVariableTypesToVarChar(when.query, variable_types), outcomes = outcomes.map(_.withDefaults))
+  }
 }
 
 case class Outcome(criteria: Criteria, action: Action) {

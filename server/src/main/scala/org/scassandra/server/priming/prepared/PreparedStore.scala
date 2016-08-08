@@ -68,8 +68,7 @@ trait PreparedStore[I <: PreparedPrimeIncoming] extends PreparedStoreLookup {
   def prepared(prepare: Prepare, prime: Option[I], preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = {
     prime.map { p =>
       // Prefill variable types with the rows column spec data types + varchars for any extra variables in the query.
-      val numberOfParameters = prepare.query.toCharArray.count(_ == '?')
-      val dataTypes = Defaulter.defaultVariableTypesToVarChar(numberOfParameters, p.thenDo.variable_types.getOrElse(Nil))
+      val dataTypes = Defaulter.defaultVariableTypesToVarChar(Some(prepare.query), p.thenDo.variable_types).getOrElse(Nil)
 
       // build column spec from data types, we name the columns by indices.
       val variableSpec = dataTypes.indices

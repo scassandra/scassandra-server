@@ -21,9 +21,18 @@ import org.scassandra.codec.datatype.DataType
 
 object Defaulter {
 
-  def defaultVariableTypesToVarChar(numberOfVariables : Int, dataTypes : List[DataType]) : List[DataType] = {
-    val defaults = (0 until (numberOfVariables - dataTypes.size)).map(_ => DataType.Varchar).toList
-    dataTypes ++ defaults
+  def defaultVariableTypesToVarChar(query : Option[String], dataTypes : Option[List[DataType]]) : Option[List[DataType]] = query match {
+    case Some(queryText) =>
+      val dTypes = dataTypes.getOrElse(Nil)
+      val numberOfVariables = queryText.toCharArray.count(_ == '?')
+      val deficit = numberOfVariables - dTypes.size
+      if (deficit <= 0) {
+        dataTypes
+      } else {
+        val defaults = (0 until deficit).map(_ => DataType.Varchar).toList
+        Some(dTypes ++ defaults)
+      }
+    case None => dataTypes
   }
 
   def defaultColumnTypesToVarChar(columnTypes: Option[Map[String, DataType]], rows: Option[List[Map[String, Any]]]) = columnTypes match {

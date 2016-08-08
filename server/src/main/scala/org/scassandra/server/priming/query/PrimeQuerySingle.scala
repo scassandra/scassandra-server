@@ -35,7 +35,7 @@ case class PrimeQuerySingle(when: When, thenDo: Then) {
   def withDefaults: PrimeQuerySingle = {
     PrimeQuerySingle(
       when.withDefaults,
-      thenDo.withDefaults
+      thenDo.withDefaults(when.query)
     )
   }
 }
@@ -64,5 +64,9 @@ case class Then(rows: Option[List[Map[String, Any]]] = None,
                 config: Option[Map[String, String]] = None,
                 variable_types: Option[List[DataType]] = None) extends ThenProvider {
 
-  def withDefaults: Then = copy(column_types = defaultColumnTypesToVarChar(column_types, rows))
+  def withDefaults(query: Option[String]): Then =
+    copy(
+      variable_types = defaultVariableTypesToVarChar(query, variable_types),
+      column_types = defaultColumnTypesToVarChar(column_types, rows)
+    )
 }
