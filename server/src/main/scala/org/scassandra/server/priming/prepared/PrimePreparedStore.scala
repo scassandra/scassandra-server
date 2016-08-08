@@ -25,14 +25,15 @@ class PrimePreparedStore extends PreparedStore[PrimePreparedSingle] with LazyLog
   val validator: PrimeValidator = new PrimeValidator
 
   override def record(prime: PrimePreparedSingle) = {
-    val criteria = primeCriteria(prime)
-    validator.validate(criteria, prime.thenDo.prime, primes.keys.toList) match {
+    val p = prime.withDefaults
+    val criteria = primeCriteria(p)
+    validator.validate(criteria, p.thenDo.prime, primes.keys.toList) match {
       case PrimeAddSuccess =>
-        logger.info(s"Storing prime for prepared statement $prime with prime criteria $criteria")
-        primes += (criteria -> prime)
+        logger.info(s"Storing prime for prepared statement $p with prime criteria $criteria")
+        primes += (criteria -> p)
         PrimeAddSuccess
       case notSuccess: PrimeAddResult =>
-        logger.info(s"Storing prime for prepared statement $prime failed due to $notSuccess")
+        logger.info(s"Storing prime for prepared statement $p failed due to $notSuccess")
         notSuccess
     }
   }
@@ -48,5 +49,5 @@ class PrimePreparedStore extends PreparedStore[PrimePreparedSingle] with LazyLog
   }
 
   override def primeCriteria(prime: PrimePreparedSingle): PrimeCriteria =
-    PrimeCriteria(prime.when.query.get, prime.when.consistency.getOrElse(Consistency.all))
+    PrimeCriteria(prime.when.query.get, prime.when.consistency.get)
 }

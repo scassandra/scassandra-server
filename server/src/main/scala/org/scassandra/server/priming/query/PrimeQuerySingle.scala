@@ -17,6 +17,7 @@ package org.scassandra.server.priming.query
 
 import org.scassandra.codec.Consistency.Consistency
 import org.scassandra.codec.datatype.DataType
+import org.scassandra.server.priming.Defaulter._
 import org.scassandra.server.priming.json.ResultJsonRepresentation
 import org.scassandra.server.priming.routes.PrimingJsonHelper.extractPrime
 
@@ -30,6 +31,13 @@ case class PrimeQuerySingle(when: When, thenDo: Then) {
   @transient lazy val prime = {
     extractPrime(thenDo, when.keyspace, when.table)
   }
+
+  def withDefaults: PrimeQuerySingle = {
+    PrimeQuerySingle(
+      when.withDefaults,
+      thenDo.withDefaults
+    )
+  }
 }
 
 case class When(query: Option[String] = None,
@@ -37,7 +45,9 @@ case class When(query: Option[String] = None,
                 consistency: Option[List[Consistency]] = None,
                 keyspace: Option[String] = None,
                 table: Option[String] = None
-                 )
+               ) {
+  def withDefaults: When = copy(consistency = defaultConsistency(consistency))
+}
 
 trait ThenProvider {
   val rows: Option[List[Map[String, Any]]]
@@ -52,5 +62,7 @@ case class Then(rows: Option[List[Map[String, Any]]] = None,
                 column_types: Option[Map[String, DataType]] = None,
                 fixedDelay: Option[Long] = None,
                 config: Option[Map[String, String]] = None,
-                variable_types: Option[List[DataType]] = None) extends ThenProvider
+                variable_types: Option[List[DataType]] = None) extends ThenProvider {
 
+  def withDefaults: Then = copy(column_types = defaultColumnTypesToVarChar(column_types, rows))
+}

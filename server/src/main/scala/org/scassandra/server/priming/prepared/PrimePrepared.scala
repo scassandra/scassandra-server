@@ -18,6 +18,7 @@ package org.scassandra.server.priming.prepared
 import org.scassandra.codec.Consistency.Consistency
 import org.scassandra.codec.datatype.DataType
 import org.scassandra.codec.{Execute, Prepare}
+import org.scassandra.server.priming.Defaulter._
 import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.query.ThenProvider
 import org.scassandra.server.priming.routes.PrimingJsonHelper.extractPrime
@@ -37,18 +38,27 @@ class DefaultPreparedPrimeCriteria(query: String, consistency: List[Consistency]
 sealed trait PreparedPrimeIncoming {
   val when: WhenPrepared
   val thenDo: ThenPrepared
+
+  def withDefaults: PreparedPrimeIncoming
 }
 
 sealed trait ThenPrepared {
   val variable_types: Option[List[DataType]]
 }
 
-case class PrimePreparedSingle(when: WhenPrepared, thenDo: ThenPreparedSingle) extends PreparedPrimeIncoming
-case class PrimePreparedMulti(when: WhenPrepared, thenDo: ThenPreparedMulti) extends PreparedPrimeIncoming
+case class PrimePreparedSingle(when: WhenPrepared, thenDo: ThenPreparedSingle) extends PreparedPrimeIncoming {
+  override def withDefaults: PrimePreparedSingle = copy(when.withDefaults, thenDo.withDefaults)
+}
+
+case class PrimePreparedMulti(when: WhenPrepared, thenDo: ThenPreparedMulti) extends PreparedPrimeIncoming {
+  override def withDefaults: PrimePreparedMulti = copy(when.withDefaults, thenDo.withDefaults)
+}
 
 case class WhenPrepared(query: Option[String] = None,
                         queryPattern: Option[String] = None,
-                        consistency: Option[List[Consistency]] = None)
+                        consistency: Option[List[Consistency]] = None) {
+  def withDefaults: WhenPrepared = copy(consistency = defaultConsistency(consistency))
+}
 
 case class ThenPreparedSingle(rows: Option[List[Map[String, Any]]],
                               variable_types: Option[List[DataType]] = None,
@@ -59,12 +69,18 @@ case class ThenPreparedSingle(rows: Option[List[Map[String, Any]]],
   @transient lazy val prime = {
     extractPrime(this)
   }
+
+  def withDefaults: ThenPreparedSingle = copy(column_types = defaultColumnTypesToVarChar(column_types, rows))
 }
 
 case class ThenPreparedMulti(variable_types: Option[List[DataType]] = None,
-                            outcomes: List[Outcome]) extends ThenPrepared
+                            outcomes: List[Outcome]) extends ThenPrepared {
+  def withDefaults: ThenPreparedMulti = this.copy(outcomes = outcomes.map(_.withDefaults))
+}
 
-case class Outcome(criteria: Criteria, action: Action)
+case class Outcome(criteria: Criteria, action: Action) {
+  def withDefaults: Outcome = copy(action = action.withDefaults)
+}
 
 case class Criteria(variable_matcher: List[VariableMatch])
 
@@ -76,6 +92,8 @@ case class Action(rows: Option[List[Map[String, Any]]],
   @transient lazy val prime = {
     extractPrime(this)
   }
+
+  def withDefaults: Action = this.copy(column_types = defaultColumnTypesToVarChar(column_types, rows))
 }
 
 sealed trait VariableMatch {

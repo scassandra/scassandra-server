@@ -17,7 +17,9 @@ package org.scassandra.server.priming.batch
 
 import org.scassandra.codec.Consistency.Consistency
 import org.scassandra.codec.messages.BatchQueryKind.BatchQueryKind
+import org.scassandra.codec.messages.BatchType
 import org.scassandra.codec.messages.BatchType.BatchType
+import org.scassandra.server.priming.Defaulter
 import org.scassandra.server.priming.query.Then
 import org.scassandra.server.priming.routes.PrimingJsonHelper.extractPrime
 
@@ -25,8 +27,12 @@ case class BatchPrimeSingle(when: BatchWhen, thenDo: Then) {
   @transient lazy val prime = {
     extractPrime(thenDo)
   }
+
+  def withDefaults: BatchPrimeSingle = copy(when.withDefaults, thenDo.withDefaults)
 }
 
-case class BatchWhen(queries: List[BatchQueryPrime], consistency: Option[List[Consistency]] = None, batchType: Option[BatchType] = None)
+case class BatchWhen(queries: List[BatchQueryPrime], consistency: Option[List[Consistency]] = None, batchType: Option[BatchType] = None) {
+  def withDefaults: BatchWhen = copy(batchType = batchType.orElse(Some(BatchType.LOGGED)), consistency = Defaulter.defaultConsistency(consistency))
+}
 
 case class BatchQueryPrime(text: String, kind: BatchQueryKind)

@@ -65,5 +65,5 @@ class PrimePreparedMultiStore extends PreparedStore[PrimePreparedMulti] with Laz
   }
 
   override def primeCriteria(prime: PrimePreparedMulti): PrimeCriteria =
-    PrimeCriteria(prime.when.query.get, prime.when.consistency.getOrElse(Consistency.all))
+    PrimeCriteria(prime.when.query.get, prime.when.consistency.get)
 }

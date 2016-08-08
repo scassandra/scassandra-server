@@ -39,5 +39,5 @@ class PrimePreparedPatternStore extends PreparedStore[PrimePreparedSingle] with 
   }
 
   override def primeCriteria(prime: PrimePreparedSingle): PrimeCriteria =
-    PrimeCriteria(prime.when.queryPattern.get, prime.when.consistency.getOrElse(Consistency.all))
+    PrimeCriteria(prime.when.queryPattern.get, prime.when.consistency.get)
 }

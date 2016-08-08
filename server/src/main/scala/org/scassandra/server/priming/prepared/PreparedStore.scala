@@ -48,7 +48,8 @@ trait PreparedStore[I <: PreparedPrimeIncoming] extends PreparedStoreLookup {
   def primeCriteria(prime: I): PrimeCriteria
 
   def record(prime: I): PrimeAddResult = {
-    primes += primeCriteria(prime) -> prime
+    val p: I = prime.withDefaults.asInstanceOf[I]
+    primes += primeCriteria(p) -> p
     PrimeAddSuccess
   }
 

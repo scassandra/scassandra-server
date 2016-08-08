@@ -15,6 +15,8 @@
  */
 package org.scassandra.server.priming
 
+import org.scassandra.codec.Consistency
+import org.scassandra.codec.Consistency.Consistency
 import org.scassandra.codec.datatype.DataType
 
 object Defaulter {
@@ -22,5 +24,17 @@ object Defaulter {
   def defaultVariableTypesToVarChar(numberOfVariables : Int, dataTypes : List[DataType]) : List[DataType] = {
     val defaults = (0 until (numberOfVariables - dataTypes.size)).map(_ => DataType.Varchar).toList
     dataTypes ++ defaults
+  }
+
+  def defaultColumnTypesToVarChar(columnTypes: Option[Map[String, DataType]], rows: Option[List[Map[String, Any]]]) = columnTypes match {
+    case Some(_) => columnTypes
+    case None =>
+      val names = rows.getOrElse(Nil).flatMap(row => row.keys).distinct
+      Some(names.map(n => (n, DataType.Varchar)).toMap)
+  }
+
+  def defaultConsistency(consistency: Option[List[Consistency]]) = consistency match {
+    case Some(_) => consistency
+    case None => Some(Consistency.all)
   }
 }

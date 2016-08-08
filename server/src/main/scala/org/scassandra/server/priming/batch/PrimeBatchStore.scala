@@ -16,9 +16,8 @@
 package org.scassandra.server.priming.batch
 
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.codec.Consistency
 import org.scassandra.codec.Consistency.Consistency
-import org.scassandra.codec.messages.BatchType.{BatchType, _}
+import org.scassandra.codec.messages.BatchType.BatchType
 import org.scassandra.server.priming.BatchExecution
 import org.scassandra.server.priming.query.Prime
 
@@ -27,9 +26,9 @@ class PrimeBatchStore extends LazyLogging {
   var primes: Map[BatchCriteria, BatchPrimeSingle] = Map()
 
   def record(prime: BatchPrimeSingle): Unit = {
-    val consistencies: List[Consistency] = prime.when.consistency.getOrElse(Consistency.all)
-    val criteria = BatchCriteria(prime.when.queries, consistencies, prime.when.batchType.getOrElse(LOGGED))
-    primes += (criteria -> prime)
+    val p = prime.withDefaults
+    val criteria = BatchCriteria(p.when.queries, p.when.consistency.get, p.when.batchType.get)
+    primes += (criteria -> p)
   }
 
   def apply(primeMatch: BatchExecution): Option[Prime] = {
