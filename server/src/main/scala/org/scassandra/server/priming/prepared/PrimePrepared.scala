@@ -15,6 +15,7 @@
  */
 package org.scassandra.server.priming.prepared
 
+import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec.Consistency.Consistency
 import org.scassandra.codec.datatype.DataType
 import org.scassandra.codec.{Execute, Prepare}
@@ -99,17 +100,26 @@ case class Action(rows: Option[List[Map[String, Any]]],
 }
 
 sealed trait VariableMatch {
-  def test(variable: Any): Boolean
+  def test(variable: Option[Any], dataType: DataType): Boolean
 }
 
-case class ExactMatch(matcher: Option[Any]) extends VariableMatch {
-  def test(variable: Any): Boolean = {
-    matcher.equals(variable)
+case class ExactMatch(matcher: Option[Any]) extends VariableMatch with LazyLogging {
+
+  def test(variable: Option[Any], dataType: DataType): Boolean = {
+    (variable, matcher) match {
+      case (Some(v), Some(x)) if dataType.native.isDefinedAt(x) =>
+        dataType.native(x).equals(v) // convert into data type's native value and then compare.
+      case (Some(v), Some(x)) =>
+        logger.warn("Unsure how to convert matcher value of $x to data type $dataType, forgoing comparison")
+        false
+      case (None, None) => true
+      case _ => false // one is none and another is not.
+    }
   }
 }
 
 case object AnyMatch extends VariableMatch {
-  def test(variable: Any): Boolean = {
+  def test(variable: Option[Any], dataType: DataType): Boolean = {
     true
   }
 }

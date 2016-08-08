@@ -23,7 +23,7 @@ import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
 
 class PrimePreparedMultiStore extends PreparedStore[PrimePreparedMulti] with LazyLogging {
 
-  def apply(queryText: String, execute: Execute): Option[Prime] = {
+  def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion): Option[Prime] = {
     // Find prime matching queryText and execute's consistency.
     val prime = primes.find { case (criteria, _) =>
       // if no consistency specified in the prime, allow all
@@ -48,11 +48,14 @@ class PrimePreparedMultiStore extends PreparedStore[PrimePreparedMulti] with Laz
       p.thenDo.outcomes.find { outcome =>
         val matchers = outcome.criteria.variable_matcher
         // ensure lists are of the same length.
+        logger.info(s"Outcome: $outcome matchers $matchers dataTypes $dataTypes")
         if (values.size == matchers.size) {
-          // Iterate through each value, decode it and check that it matches against the value.
-          values.zip(matchers).forall {
-            case (value, matcher) =>
-              matcher.test(value)
+          // Iterate through each value and check that it matches against the value.
+          (values, dataTypes, matchers).zipped.forall {
+            case (value, dataType, matcher) =>
+              val m = matcher.test(value, dataType)
+              logger.info(s"$value $dataType $matcher $m")
+              m
           }
         } else {
           false

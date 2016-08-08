@@ -38,7 +38,7 @@ class PrimePreparedStore extends PreparedStore[PrimePreparedSingle] with LazyLog
     }
   }
 
-  def apply(queryText: String, execute: Execute) : Option[Prime] = {
+  def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion) : Option[Prime] = {
     // Find prime matching queryText and execute's consistency.
     val prime = primes.find { case (criteria, _) =>
       // if no consistency specified in the prime, allow all

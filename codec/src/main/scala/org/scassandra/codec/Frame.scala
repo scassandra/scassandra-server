@@ -26,6 +26,6 @@ case class Frame(
 object Frame {
   implicit val codec: Codec[Frame] = {
     ("header" | FrameHeader.codec) >>:~ { header =>
-    ("message" | Message.codec(header.opcode)).hlist
+    ("message" | Message.codec(header.opcode)(header.version.version)).hlist
   }}.as[Frame]
 }

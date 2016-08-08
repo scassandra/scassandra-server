@@ -122,7 +122,7 @@ class ConnectionHandler(tcpConnection: ActorRef,
       updateState(buffer, flags.version.headerLength-1, next(flags.headerCodec, _), AwaitBody)
     case AwaitBody(header) =>
       // Header has been parsed, attempt to parse the message body and move back to the Start state.
-      updateState(buffer, header.length, next(Message.codec(header.opcode), _), (m: Message) => {
+      updateState(buffer, header.length, next(Message.codec(header.opcode)(header.version.version), _), (m: Message) => {
         // When the frame has been parsed, forward it on to the protocol handler.
         // We use forward so the sender appears as the tcp connection actor instead of this actor.
         val frame = Frame(header, m)

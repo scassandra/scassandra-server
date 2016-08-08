@@ -26,6 +26,7 @@ class QueryHandler(primeQueryStore: PrimeQueryStore, activityLog: ActivityLog) e
 
   def receive = {
     case ProtocolMessage(Frame(header, query: Query)) =>
+      implicit val protocolVersion = header.version.version
       val prime = primeQueryStore(query)
 
       // Attempt to extract values if variable types are present in the prime.

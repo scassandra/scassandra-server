@@ -16,8 +16,8 @@
 package org.scassandra.server.priming
 
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.codec.Rows
 import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.{ProtocolVersion, Rows}
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, Reply}
 import scodec.Attempt
 import scodec.Attempt.{Failure, Successful}
@@ -81,8 +81,9 @@ class PrimeValidator extends LazyLogging {
   }
 
   private def convertValue(value: Any, columnType: DataType): Attempt[BitVector] = {
-    // TODO: Find way to get protocol version, either implicitly or passed somehow.
-    columnType.codec.encode(value)
+    // Attempt to encode value, chances are that it will succeed in almost all cases.  The protocol version
+    // here doesn't matter too much since we're not actually using the payload.
+    columnType.codec(ProtocolVersion.latest).encode(value)
   }
 }
 

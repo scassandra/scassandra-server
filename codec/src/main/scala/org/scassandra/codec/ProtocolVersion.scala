@@ -24,7 +24,7 @@ import scala.util.{Failure => TFailure}
 sealed trait ProtocolVersion {
   val version: Int
   val streamIdCodec: Codec[Int]
-  val collectionLengthCodec: Codec[Long]
+  val collectionLengthCodec: Codec[Int]
   lazy val headerLength: Long = 7 + (streamIdCodec.sizeBound.exact.get / 8)
 }
 
@@ -37,11 +37,11 @@ sealed trait Int16StreamId {
 }
 
 sealed trait Uint16CollectionLength {
-  val collectionLengthCodec = ulong(16)
+  val collectionLengthCodec = int16
 }
 
 sealed trait Uint32CollectionLength {
-  val collectionLengthCodec = uint32
+  val collectionLengthCodec = int32
 }
 
 case object ProtocolVersionV1 extends ProtocolVersion

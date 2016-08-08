@@ -29,22 +29,19 @@ trait ProtocolActor extends Actor with ActorLogging {
   }
 
   /**
-    * Update the message with the given consistency if the message is an error containing consistency.
+    * Update the message with the given consistency if the message is an error containing consistency and the consistency
+    * wasn't provided by the prime.
     * @param input message to update.
     * @param consistency consistency to update error message with.
     * @return Updated message if applicable.
     */
-  private [this] def messageWithConsistency(input: Message, consistency: Option[Consistency]): Message = consistency match {
-    case Some(c) =>
-      input match {
-        case u @ Unavailable(_, uc, _ , _) if c != uc => u.copy(consistency = c)
-        case w @ WriteTimeout(_, wc, _, _, _) if c != wc => w.copy(consistency = c)
-        case r @ ReadTimeout(_, rc, _, _, _) if c != rc => r.copy(consistency = c)
-        case r @ ReadFailure(_, rc, _, _, _, __) if c != rc => r.copy(consistency = c)
-        case w @ WriteFailure(_, wc, _, _, _, __) if c != wc => w.copy(consistency = c)
-        case _ => input
-      }
-    case None => input
+  private [this] def messageWithConsistency(input: Message, consistency: Consistency): Message = input match {
+    case u @ Unavailable(_, null, _ , _) => u.copy(consistency = consistency)
+    case w @ WriteTimeout(_, null, _, _, _) => w.copy(consistency = consistency)
+    case r @ ReadTimeout(_, null, _, _, _) => r.copy(consistency = consistency)
+    case r @ ReadFailure(_, null, _, _, _, __) => r.copy(consistency = consistency)
+    case w @ WriteFailure(_, null, _, _, _, __) => w.copy(consistency = consistency)
+    case _ => input
   }
 
   def writePrime(input: Message, primeOption: Option[Prime], requestHeader: FrameHeader, recipient: Option[ActorRef] = None, alternative: Option[Prime] = None, consistency: Option[Consistency] = None): Unit = {
@@ -53,7 +50,7 @@ trait ProtocolActor extends Actor with ActorLogging {
       case Some(prime) =>
         prime match {
           case Reply(message, _, _) =>
-            val msg = ProtocolResponse(requestHeader, messageWithConsistency(message, consistency))
+            val msg = ProtocolResponse(requestHeader, messageWithConsistency(message, consistency.getOrElse(Consistency.ONE)))
             prime.fixedDelay match {
               case None => target ! msg
               case Some(duration) => context.system.scheduler.scheduleOnce(duration, target, msg)(context.system.dispatcher)
@@ -70,7 +67,7 @@ trait ProtocolActor extends Actor with ActorLogging {
     }
   }
 
-  def extractQueryVariables(queryText: String, queryValues: Option[List[QueryValue]], variableTypes: List[DataType]): Option[List[Any]] = {
+  def extractQueryVariables(queryText: String, queryValues: Option[List[QueryValue]], variableTypes: List[DataType])(implicit protocolVersion: ProtocolVersion): Option[List[Any]] = {
     queryValues.flatMap { (values: List[QueryValue]) =>
       if (values.length == variableTypes.length) {
         Some(values.zip(variableTypes).map {

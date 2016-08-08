@@ -49,6 +49,10 @@ object PrimingJsonHelper extends LazyLogging {
     val fixedDelay = thenDo.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
     val config = thenDo.config.getOrElse(Map.empty)
 
+    // For errors expecting a consistency level, only provide one if one is present in the prime, otherwise
+    // set it explicitly to null.  This is a bit fragile, but it allows us to detect whether or not we are allowed
+    // to override the error message with the statement used in the query.  Could have used [Option] but in this
+    // case we want to make it required on the Error messages.
     thenDo.result.getOrElse(Success) match {
       // Special case ClosedConnectionReport as it produces a fatal error.
       case ClosedConnection => ClosedConnectionReport(config.getOrElse(ErrorConstants.CloseType, "close"), fixedDelay)
@@ -60,7 +64,7 @@ object PrimingJsonHelper extends LazyLogging {
           case BadCredentials => c.BadCredentials(config.getOrElse(ErrorConstants.Message, "Bad Credentials"))
           case Unavailable => c.Unavailable(
             config.getOrElse(ErrorConstants.Message, "Unavailable Exception"),
-            config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).getOrElse(Consistency.ONE),
+            config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).orNull,
             config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
             config.getOrElse(ErrorConstants.Alive, "0").toInt
           )
@@ -69,21 +73,21 @@ object PrimingJsonHelper extends LazyLogging {
           case TruncateError => c.TruncateError(config.getOrElse(ErrorConstants.Message, "Truncate Error"))
           case WriteTimeout => c.WriteTimeout(
             config.getOrElse(ErrorConstants.Message, "Write Request Timeout"),
-            config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).getOrElse(Consistency.ONE),
+            config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).orNull,
             config.getOrElse(ErrorConstants.ReceivedResponse, "0").toInt,
             config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
             config.getOrElse(ErrorConstants.WriteType, "SIMPLE")
           )
           case ReadTimeout => c.ReadTimeout(
             config.getOrElse(ErrorConstants.Message, "Read Request Timeout"),
-            config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).getOrElse(Consistency.ONE),
+            config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).orNull,
             config.getOrElse(ErrorConstants.ReceivedResponse, "0").toInt,
             config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
             config.getOrElse(ErrorConstants.DataPresent, "false").toBoolean
           )
           case ReadFailure => c.ReadFailure(
             config.getOrElse(ErrorConstants.Message, "Read Failure"),
-            config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).getOrElse(Consistency.ONE),
+            config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).orNull,
             config.getOrElse(ErrorConstants.ReceivedResponse, "0").toInt,
             config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
             config.getOrElse(ErrorConstants.NumberOfFailures, "1").toInt,
@@ -91,7 +95,7 @@ object PrimingJsonHelper extends LazyLogging {
           )
           case WriteFailure => c.WriteFailure(
             config.getOrElse(ErrorConstants.Message, "Write Failure"),
-            config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).getOrElse(Consistency.ONE),
+            config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).orNull,
             config.getOrElse(ErrorConstants.ReceivedResponse, "0").toInt,
             config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
             config.getOrElse(ErrorConstants.NumberOfFailures, "1").toInt,

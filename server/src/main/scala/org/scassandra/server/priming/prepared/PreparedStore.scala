@@ -17,13 +17,13 @@ package org.scassandra.server.priming.prepared
 
 import org.scassandra.codec.datatype.DataType
 import org.scassandra.codec.messages._
-import org.scassandra.codec.{Execute, Prepare, Prepared}
+import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, Reply}
 import org.scassandra.server.priming.{Defaulter, PrimeAddResult, PrimeAddSuccess}
 
 trait PreparedStoreLookup {
   def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime]
-  def apply(queryText: String, execute: Execute) : Option[Prime]
+  def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion) : Option[Prime]
 }
 
 object PreparedStoreLookup {

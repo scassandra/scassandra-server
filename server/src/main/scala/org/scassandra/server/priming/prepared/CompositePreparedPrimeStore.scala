@@ -16,7 +16,7 @@
 package org.scassandra.server.priming.prepared
 
 import org.scassandra.codec.messages.{PreparedMetadata, RowMetadata}
-import org.scassandra.codec.{Execute, Prepare, Prepared}
+import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
 import org.scassandra.server.priming.query.Prime
 
 
@@ -29,7 +29,7 @@ class CompositePreparedPrimeStore(primeStores: PreparedStoreLookup*) extends Pre
     }
   }
 
-  def apply(queryText: String, execute: Execute) : Option[Prime] = {
+  def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion) : Option[Prime] = {
     primeStores.collectFirst {
       case psb if psb(queryText, execute).isDefined => psb(queryText, execute).get
     }

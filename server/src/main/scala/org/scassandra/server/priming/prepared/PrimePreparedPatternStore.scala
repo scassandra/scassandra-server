@@ -28,7 +28,7 @@ class PrimePreparedPatternStore extends PreparedStore[PrimePreparedSingle] with 
     prepared(prepare, prime, preparedFactory)
   }
 
-  def apply(queryText: String, execute: Execute) : Option[Prime] = {
+  def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion) : Option[Prime] = {
     // Find prime with query pattern matching queryText and execute's consistency.
     val prime = primes.find { case (criteria, _) =>
       // if no consistency specified in the prime, allow all

@@ -17,7 +17,7 @@ package org.scassandra.codec.messages
 
 import org.scassandra.codec.Notations.{value, bytes => cbytes, int => cint, string => cstring}
 import org.scassandra.codec.datatype.DataType
-import org.scassandra.codec.{Bytes, Null, Unset}
+import org.scassandra.codec.{Bytes, Null, ProtocolVersion, Unset}
 import scodec.Attempt.{Failure, Successful}
 import scodec.bits.{BitVector, ByteVector}
 import scodec.codecs._
@@ -82,11 +82,11 @@ object ColumnSpec {
 case class Row(columns: Map[String, Any])
 
 object Row {
-  def withColumnSpec(spec: List[ColumnSpec]): Codec[Row] = RowCodec(spec)
+  def withColumnSpec(spec: List[ColumnSpec])(implicit protocolVersion: ProtocolVersion): Codec[Row] = RowCodec(spec)
   def apply(colPairs: (String, Any)*): Row = Row(colPairs.toMap)
 }
 
-case class RowCodec(columnSpecs: List[ColumnSpec]) extends Codec[Row] {
+case class RowCodec(columnSpecs: List[ColumnSpec])(implicit protocolVersion: ProtocolVersion) extends Codec[Row] {
 
   private[this] lazy val columnsWithCodecs: List[(String, Codec[Any])] = columnSpecs.map { (spec: ColumnSpec) =>
     (spec.name, variableSizeBytes(cint, spec.dataType.codec))

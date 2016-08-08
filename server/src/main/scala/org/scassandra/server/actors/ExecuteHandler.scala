@@ -48,6 +48,7 @@ class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
   }
 
   def handleExecute(preparedStatement: Option[(String, Prepared)], header: FrameHeader, execute: Execute, connection: ActorRef) = {
+    implicit val protocolVersion = header.version.version
     preparedStatement match {
       case Some((queryText, prepared)) =>
         val prime = primePreparedStore(queryText, execute)

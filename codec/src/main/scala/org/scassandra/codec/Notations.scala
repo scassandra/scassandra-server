@@ -31,7 +31,7 @@ case class Bytes(bytes: ByteVector) extends Value
 case class QueryValue(name: Option[String], value: Value)
 
 object QueryValue {
-  def value(value: Any, dataType: DataType) = QueryValue(None, Bytes(dataType.codec.encode(value).require.bytes))
+  def value(value: Any, dataType: DataType)(implicit protocolVersion: ProtocolVersion) = QueryValue(None, Bytes(dataType.codec.encode(value).require.bytes))
 }
 
 object ValueCodec extends Codec[Value] {

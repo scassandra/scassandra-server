@@ -16,11 +16,12 @@
 package org.scassandra.codec.messages
 
 import org.scassandra.codec.Notations.{int => cint, short => cshort, string => cstring}
+import org.scassandra.codec.ProtocolVersion
 import scodec.Codec
 import scodec.codecs._
 
 case class PreparedMetadata(
-  partitionKeyIndices: List[Int] = Nil,
+  partitionKeyIndices: Option[List[Int]] = Some(Nil),
   keyspace: Option[String] = None,
   table: Option[String] = None,
   columnSpec: List[ColumnSpec] = Nil
@@ -29,12 +30,12 @@ case class PreparedMetadata(
 object NoPreparedMetadata extends PreparedMetadata()
 
 object PreparedMetadata {
-  implicit val codec: Codec[PreparedMetadata] = {
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[PreparedMetadata] = {
     ("flags"               | cint).consume { (flags: Int) =>
     ("columnCount"         | cint).consume { (columnCount: Int) =>
-    ("partitionKeyIndices" | listOfN(cint, cshort))    ::
-    ("keyspace"            | conditional(flags == 1, cstring)) ::
-    ("table"               | conditional(flags == 1, cstring)) ::
+    ("partitionKeyIndices" | conditional(protocolVersion.version >= 4, listOfN(cint, cshort))) ::
+    ("keyspace"            | conditional(flags == 1, cstring))                                 ::
+    ("table"               | conditional(flags == 1, cstring))                                 ::
     ("columnSpec"          | listOfN(provide(columnCount), ColumnSpec.codec(flags == 0)))
   }(_.tail.tail.tail.head.size) // columnCount = columnSpec.size, TODO: use _(3) instead.
   }(data => if (data.tail.head.isDefined) 1 else 0) // flags.globalTableSpec == keyspace is present.

@@ -365,7 +365,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       Get(primeQuerySinglePath) ~> queryRoute ~> check {
         val response = responseAs[List[PrimeQuerySingle]]
         response.size should equal(1)
-        response.head should equal(primePayload.withDefaults())
+        response.head should equal(primePayload.withDefaults)
       }
     }
 
@@ -380,7 +380,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       Get(primeQuerySinglePath) ~> queryRoute ~> check {
         val response = responseAs[List[PrimeQuerySingle]]
         response.size should equal(1)
-        response.head should equal(primePayload.withDefaults())
+        response.head should equal(primePayload.withDefaults)
       }
     }
 
@@ -396,7 +396,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       Get(primeQuerySinglePath) ~> queryRoute ~> check {
         val response = responseAs[List[PrimeQuerySingle]]
         response.size should equal(1)
-        response.head should equal(primePayload.withDefaults())
+        response.head should equal(primePayload.withDefaults)
       }
     }
 
@@ -411,7 +411,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       Get(primeQuerySinglePath) ~> queryRoute ~> check {
         val response = responseAs[List[PrimeQuerySingle]]
         response.size should equal(1)
-        response.head should equal(primePayload.withDefaults())
+        response.head should equal(primePayload.withDefaults)
       }
     }
 
@@ -443,7 +443,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       Get(primeQuerySinglePath) ~> queryRoute ~> check {
         val response = responseAs[List[PrimeQuerySingle]]
         response.size should equal(1)
-        response.head should equal(primePayload.withDefaults())
+        response.head should equal(primePayload.withDefaults)
       }
     }
 

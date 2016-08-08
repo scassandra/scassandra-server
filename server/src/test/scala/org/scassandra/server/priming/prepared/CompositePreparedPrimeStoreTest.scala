@@ -16,8 +16,8 @@
 package org.scassandra.server.priming.prepared
 
 import org.scalatest.{FunSuite, Matchers}
+import org.scassandra.codec._
 import org.scassandra.codec.messages.{PreparedMetadata, RowMetadata}
-import org.scassandra.codec.{Execute, NoRows, Prepare, Prepared}
 import org.scassandra.server.priming.query.{Prime, Reply}
 import scodec.bits.ByteVector
 
@@ -25,18 +25,18 @@ class CompositePreparedPrimeStoreTest extends FunSuite with Matchers {
 
   val one: PreparedStoreLookup = new PreparedStoreLookup {
     def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = None
-    def apply(queryText: String, execute: Execute) : Option[Prime] = None
+    def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion) : Option[Prime] = None
   }
   val two: PreparedStoreLookup = new PreparedStoreLookup {
     def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = None
-    def apply(queryText: String, execute: Execute) : Option[Prime] = None
+    def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion) : Option[Prime] = None
   }
 
   val result = Some(Reply(NoRows))
 
   val three: PreparedStoreLookup = new PreparedStoreLookup {
     def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = result
-    def apply(queryText: String, execute: Execute) : Option[Prime] = result
+    def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion) : Option[Prime] = result
   }
 
   test("Delegates to all stores - apply for prepared") {

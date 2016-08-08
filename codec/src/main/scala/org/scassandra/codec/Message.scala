@@ -23,6 +23,7 @@ import scodec.Attempt.{Failure, Successful}
 import scodec.Codec
 import scodec.bits.ByteVector
 import scodec.codecs._
+import shapeless.{::, HNil}
 
 import scala.util.{Try, Failure => TFailure}
 
@@ -54,7 +55,7 @@ object Message {
     * @param opcode Opcode of the message to resolve codec for.
     * @return The appropriate [[Codec]] based on the opcode.
     */
-  def codec(opcode: Int) =
+  def codec(opcode: Int)(implicit protocolVersion: ProtocolVersion) =
     // the 'message' codec is resolved from the opcode determined in the header.
     // coproduct gathers all the codecs under that type.
     // discriminatedBy chooses the codec based on the provided opcode.
@@ -172,7 +173,7 @@ sealed trait Result extends Message {
 
 object Result {
   val opcode: Int = 0x8
-  implicit val codec: Codec[Result] = discriminated[Result].by(cint)
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Result] = discriminated[Result].by(cint)
     .typecase(0x1, Codec[VoidResult.type])
     .typecase(0x2, Codec[Rows])
     .typecase(0x3, Codec[SetKeyspace])
@@ -187,7 +188,7 @@ case class Rows(metadata: RowMetadata = NoRowMetadata, rows: List[Row] = Nil) ex
 object NoRows extends Rows()
 
 object Rows {
-  implicit val codec: Codec[Rows] = {
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Rows] = {
     Codec[RowMetadata].flatPrepend{ metadata =>
       listOfN(cint, Row.withColumnSpec(metadata.columnSpec.getOrElse(Nil))).hlist
   }}.as[Rows]
@@ -203,7 +204,7 @@ case class Prepared(id: ByteVector, preparedMetadata: PreparedMetadata = NoPrepa
                     resultMetadata: RowMetadata = NoRowMetadata) extends Result
 
 case object Prepared {
-  implicit val codec: Codec[Prepared] = {
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Prepared] = {
     ("id"               | shortBytes)               ::
     ("preparedMetadata" | Codec[PreparedMetadata])  ::
     ("resultMetadata"   | Codec[RowMetadata])
@@ -257,20 +258,51 @@ case class Batch(
 object Batch {
   val opcode = 0xD
 
-  implicit val codec: Codec[Batch] = {
-    ("batchType"         | Codec[BatchType]) ::
-    ("queries"           | listOfN(cshort, Codec[BatchQuery])) ::
-    ("consistency"       | Consistency.codec) ::
+  // TODO: Refactor this, it's currently really ugly to expand/unexpand values driven by batch flags in a way that
+  // doesn't require any changes to the Batch class.
+
+  /**
+    * Flattens an <code>Option[ Option[Consistency] :: Option[Long] ]</code> HList into
+    * <code>Option[Consistency] :: Option[Long]</code>
+    * @return
+    */
+  def flatten(in: Option[::[Option[Consistency], ::[Option[Long], HNil]]]): ::[Option[Consistency], ::[Option[Long], HNil]] = {
+    val (scon: Option[Consistency], ts: Option[Long]) = in match {
+      case Some(x :: y :: HNil) => (x, y)
+      case None => (None, None)
+    }
+    scon :: ts :: HNil
+  }
+
+  /**
+    * Unflattens an Option[Consistency] :: Option[Long] HList into Option[ Option[Consistency] :: Option[Long] ]
+    * @param in
+    * @return
+    */
+  def unflatten(in: ::[Option[Consistency], ::[Option[Long], HNil]]): Option[::[Option[Consistency], ::[Option[Long], HNil]]] = in match {
+    case None :: None :: HNil => None
+    case Some(x) :: Some(y) :: HNil => Some(Some(x) :: Some(y) :: HNil)
+    case Some(x) :: None :: HNil => Some(Some(x) :: None :: HNil)
+    case None :: Some(y) :: HNil => Some(None :: Some(y) :: HNil)
+  }
+
+  def handleBatchFlags(implicit protocolVersion: ProtocolVersion) = conditional(protocolVersion.version >= ProtocolVersionV3.version,
     ("flags"             | Codec[BatchFlags]).consume { flags =>
     ("serialConsistency" | conditional(flags.withSerialConsistency, consistency)) ::
     ("timestamp"         | conditional(flags.withDefaultTimestamp, clong))
-  } { data => // derive flags from presence of serialConsistency and timestamp.
+    } { data => // derive flags from presence of serialConsistency and timestamp.
       val serialConsistency = data.head
       val timestamp = data.tail.head
       BatchFlags(
         withDefaultTimestamp = timestamp.isDefined,
         withSerialConsistency = serialConsistency.isDefined
       )
-    }
+    }).xmap(flatten, unflatten)
+
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Batch] = {
+    ("batchType"         | Codec[BatchType]) ::
+    ("queries"           | listOfN(cshort, Codec[BatchQuery])) ::
+    ("consistency"       | Consistency.codec) ::
+    ("remaining"         | handleBatchFlags)
   }.as[Batch]
 }
