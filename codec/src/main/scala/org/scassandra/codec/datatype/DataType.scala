@@ -340,7 +340,6 @@ object DataType {
       case t: TraversableOnce[_] => t.toList
     }
 
-    // TODO: Set collection length based on protocol version.
     def baseCodec(implicit protocolVersion: ProtocolVersion) = listOfN(protocolVersion.collectionLengthCodec,
       variableSizeBytes(protocolVersion.collectionLengthCodec, element.codec))
   }

@@ -68,15 +68,12 @@ class BatchHandler(activityLog: ActivityLog,
         case SimpleBatchQuery(query, _) => BatchQuery(query, BatchQueryKind.Simple)
         case PreparedBatchQuery(i, byteValues) =>
           val id = i.toInt()
+          implicit val protocolVersion = header.version.version
           preparedResponse.prepared.get(id) match {
             case Some((queryText, prepared)) =>
               // Decode query parameters using the prepared statement metadata.
-              // TODO: Decoding values from metadata is a common pattern, DRY
               val dataTypes = prepared.preparedMetadata.columnSpec.map(_.dataType)
-              val values = byteValues.zip(dataTypes).map {
-                case ((Bytes(bytes), dataType)) => dataType.codec(header.version.version).decodeValue(bytes.toBitVector).require // TODO: handle decode failure
-                case ((_, dataType)) => null // TODO: Handle Null and Unset case.
-              }
+              val values = extractQueryVariables(queryText, Some(byteValues), dataTypes).getOrElse(Nil)
               BatchQuery(queryText, BatchQueryKind.Prepared, values)
             case None => BatchQuery(
               "A prepared statement was in the batch but couldn't be found - did you prepare against a different  session?",

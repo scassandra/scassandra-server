@@ -57,7 +57,7 @@ class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
         // Decode query parameters using the prepared statement metadata.
         val dataTypes = prepared.preparedMetadata.columnSpec.map(_.dataType)
 
-        val values = extractQueryVariables(queryText, execute.parameters.values, dataTypes)
+        val values = extractQueryVariables(queryText, execute.parameters.values.map(_.map(_.value)), dataTypes)
         values match {
           case Some(v) =>
             activityLog.recordPreparedStatementExecution(queryText, execute.parameters.consistency, v, dataTypes)

@@ -67,12 +67,12 @@ trait ProtocolActor extends Actor with ActorLogging {
     }
   }
 
-  def extractQueryVariables(queryText: String, queryValues: Option[List[QueryValue]], variableTypes: List[DataType])(implicit protocolVersion: ProtocolVersion): Option[List[Any]] = {
-    queryValues.flatMap { (values: List[QueryValue]) =>
+  def extractQueryVariables(queryText: String, queryValues: Option[List[Value]], variableTypes: List[DataType])(implicit protocolVersion: ProtocolVersion): Option[List[Any]] = {
+    queryValues.flatMap { (values: List[Value]) =>
       if (values.length == variableTypes.length) {
         Some(values.zip(variableTypes).map {
-          case ((QueryValue(_, Bytes(bytes)), dataType)) => dataType.codec.decodeValue(bytes.toBitVector).require // TODO: handle decode failure
-          case ((QueryValue(_, _), dataType)) => null // TODO: Handle Null and Unset case.
+          case (Bytes(bytes), dataType) => dataType.codec.decodeValue(bytes.toBitVector).require // TODO: handle decode failure
+          case (_, dataType) => null // TODO: Handle Null and Unset case.
         })
       } else {
         log.warning(s"Mismatch of variables between query $queryText with variable count ${values.length}, but expected ${variableTypes.length} ($variableTypes).")

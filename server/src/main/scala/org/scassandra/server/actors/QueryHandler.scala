@@ -33,7 +33,7 @@ class QueryHandler(primeQueryStore: PrimeQueryStore, activityLog: ActivityLog) e
       val typesAndValues: Option[(List[DataType], List[Any])] = prime
         .flatMap(_.variableTypes)
         .flatMap { variableTypes =>
-          Some(variableTypes).zip(extractQueryVariables(query.query, query.parameters.values, variableTypes)).headOption
+          Some(variableTypes).zip(extractQueryVariables(query.query, query.parameters.values.map(_.map(_.value)), variableTypes)).headOption
         }
 
       val wasSetKeyspace = prime.nonEmpty && prime.forall {
