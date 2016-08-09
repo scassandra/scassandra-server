@@ -189,8 +189,6 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
       ByteVector(1) ++
       uint32.encode(12).require.toByteVector ++
       uint32.encode(15).require.toByteVector).toBitVector)
-
-    println(s"$frame")
   }
 
   it must "behave someway when the message is not large enough." in {
@@ -198,7 +196,5 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
     val frame = codec.decode((ByteVector(4, 0) ++
       int16.encode(1).require.toByteVector ++
       ByteVector(1)).toBitVector)
-
-    println(s"$frame")
   }
 }
