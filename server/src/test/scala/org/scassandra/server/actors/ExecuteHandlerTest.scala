@@ -39,6 +39,7 @@ import scala.language.postfixOps
 class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers with TestKitBase with ImplicitSender
   with BeforeAndAfter with MockitoSugar {
   implicit lazy val system = ActorSystem()
+  implicit val protocolVersion = ProtocolVersion.latest
 
   var underTest: ActorRef = null
   var prepareHandlerTestProbe: TestProbe = _
@@ -54,7 +55,7 @@ class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers w
 
   before {
     reset(primePreparedStore)
-    when(primePreparedStore.apply(any(classOf[String]), any(classOf[Execute]))).thenReturn(None)
+    when(primePreparedStore.apply(any(classOf[String]), any(classOf[Execute]))(any[ProtocolVersion])).thenReturn(None)
     prepareHandlerTestProbe = TestProbe()
     underTest = TestActorRef(new ExecuteHandler(primePreparedStore, activityLog, prepareHandlerTestProbe.ref))
     activityLog.clearPreparedStatementExecutions()
@@ -95,7 +96,7 @@ class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers w
     val id = 1
     val rows = Rows(rows = Row("a" -> 1, "b" -> 2) :: Nil)
     val primeMatch = Some(Reply(rows))
-    when(primePreparedStore.apply(any[String], any[Execute])).thenReturn(primeMatch)
+    when(primePreparedStore.apply(any[String], any[Execute])(any[ProtocolVersion])).thenReturn(primeMatch)
 
     val execute = Execute(preparedIdBytes)
     underTest ! protocolMessage(execute)
@@ -114,7 +115,7 @@ class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers w
     val rows = Rows(rows = Row("a" -> 1, "b" -> 2) :: Nil)
     val primeMatch = Some(Reply(rows))
     val consistency = Consistency.TWO
-    when(primePreparedStore.apply(any[String], any[Execute])).thenReturn(primeMatch)
+    when(primePreparedStore.apply(any[String], any[Execute])(any[ProtocolVersion])).thenReturn(primeMatch)
 
     val values = List(10)
     val variableTypes = List(DataType.Bigint)
@@ -137,7 +138,7 @@ class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers w
     val preparedStatementId = 1
     val consistency = Consistency.TWO
     val primeMatch = Some(Reply(NoRows))
-    when(primePreparedStore.apply(any[String], any[Execute])).thenReturn(primeMatch)
+    when(primePreparedStore.apply(any[String], any[Execute])(any[ProtocolVersion])).thenReturn(primeMatch)
 
 
     // Execute statement with two BigInt variables.
@@ -160,7 +161,7 @@ class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers w
 
   test("Should record execution in activity log event if not primed") {
     // given - Prime store returns None.
-    when(primePreparedStore.apply(any[String], any[Execute])).thenReturn(None)
+    when(primePreparedStore.apply(any[String], any[Execute])(any[ProtocolVersion])).thenReturn(None)
 
     // when - Executing a query.
     val query = "Some query"
@@ -203,7 +204,7 @@ class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers w
 
     val query = "select * from something where name = ?"
     val prime = Reply(VoidResult, fixedDelay = Some(FiniteDuration(1500, TimeUnit.MILLISECONDS)))
-    when(primePreparedStore.apply(any[String], any[Execute])).thenReturn(Some(prime))
+    when(primePreparedStore.apply(any[String], any[Execute])(any[ProtocolVersion])).thenReturn(Some(prime))
 
     val execute = Execute(preparedIdBytes)
     underTest ! protocolMessage(execute)

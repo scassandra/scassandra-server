@@ -16,18 +16,19 @@
 package org.scassandra.server.priming.prepared
 
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-import org.scassandra.codec.Consistency._
+import org.scassandra.codec.Consistency.{all => ALL, _}
 import org.scassandra.codec.QueryValue.{value => v}
 import org.scassandra.codec.datatype.DataType
 import org.scassandra.codec.messages.ColumnSpec._
 import org.scassandra.codec.messages.{PreparedMetadata, QueryParameters, RowMetadata}
-import org.scassandra.codec.{Consistency, Execute, Prepare, Prepared}
+import org.scassandra.codec.{Consistency => _, _}
 import org.scassandra.server.priming.json.{ReadTimeout, Success, WriteTimeout}
 import org.scassandra.server.priming.query.Reply
 import scodec.bits.ByteVector
 
 // todo generalise all the prepared stores, very little difference
 class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndAfter {
+  implicit val protocolVersion = ProtocolVersion.latest
 
   val id = ByteVector(1)
 
@@ -84,7 +85,7 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
 
   test("Returns all the primes") {
     val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(List(DataType.Text)), List())
-    val when: WhenPrepared = WhenPrepared(Some("Some query"), None, Some(Consistency.all))
+    val when: WhenPrepared = WhenPrepared(Some("Some query"), None, Some(ALL))
     val prime: PrimePreparedMulti = PrimePreparedMulti(when, thenDo)
     underTest.record(prime)
 

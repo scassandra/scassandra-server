@@ -22,6 +22,7 @@ import org.scassandra.server.priming.query.{Prime, Reply}
 import scodec.bits.ByteVector
 
 class CompositePreparedPrimeStoreTest extends FunSuite with Matchers {
+  implicit val protocolVersion = ProtocolVersion.latest
 
   val one: PreparedStoreLookup = new PreparedStoreLookup {
     def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = None

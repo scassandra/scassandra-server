@@ -47,6 +47,7 @@ import scala.language.postfixOps
 class QueryHandlerTest extends FunSuite with ImplicitSender with ProtocolActorTest with Matchers with BeforeAndAfter
   with TestKitBase with MockitoSugar {
   implicit lazy val system = ActorSystem()
+  implicit val protocolVersion = ProtocolVersion.latest
 
   var underTest: ActorRef = null
   var testProbeForTcpConnection: TestProbe = null

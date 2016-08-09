@@ -35,12 +35,13 @@ import org.scassandra.codec.Consistency._
 import org.scassandra.codec.datatype.DataType
 import org.scassandra.codec.messages.ColumnSpec.column
 import org.scassandra.codec.messages._
-import org.scassandra.codec.{Execute, Prepare, Prepared}
+import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
 import org.scassandra.server.priming.ConflictingPrimes
 import org.scassandra.server.priming.query.Reply
 import scodec.bits.ByteVector
 
 class PrimePreparedStoreTest extends FunSuite with Matchers {
+  implicit val protocolVersion = ProtocolVersion.latest
 
   val id = ByteVector(1)
 
