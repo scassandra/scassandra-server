@@ -16,8 +16,8 @@
 package org.scassandra
 
 import scodec.Attempt.{Failure, Successful}
-import scodec.bits.ByteVector
-import scodec.{Codec, DecodeResult}
+import scodec.bits.{BitVector, ByteVector}
+import scodec.{Attempt, Codec, DecodeResult}
 
 import scala.util.{Try, Failure => TFailure}
 
@@ -29,6 +29,26 @@ package object codec {
     codec.decode(bytes.toBitVector) match {
       case Successful(DecodeResult(result, remainder)) => Try((result, remainder.bytes))
       case Failure(x) => TFailure(new Exception(x.toString))
+    }
+  }
+
+  /**
+    * Folds all attempts into one [[Attempt]], joining each [[BitVector]].  The first failure encountered will be the
+    * one returned.
+    * @param attempts The attempts to combined.
+    * @return A combined [[Attempt]]
+    */
+  protected[codec] def foldAttempts(attempts: List[Attempt[BitVector]]): Attempt[BitVector] = {
+    // Fold all attempts into one bit vector.  The first failure encountered
+    // will be the one returned.
+    attempts.fold[Attempt[BitVector]](Successful(BitVector.empty)) {
+      (acc, e) => acc match {
+        case Successful(accBits) => e match {
+          case Successful(eBits) => Successful(accBits ++ eBits)
+          case f: Failure => f
+        }
+        case f: Failure => f
+      }
     }
   }
 }

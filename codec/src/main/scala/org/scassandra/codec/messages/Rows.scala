@@ -16,8 +16,8 @@
 package org.scassandra.codec.messages
 
 import org.scassandra.codec.Notations.{value, bytes => cbytes, int => cint, string => cstring}
+import org.scassandra.codec._
 import org.scassandra.codec.datatype.DataType
-import org.scassandra.codec.{Bytes, Null, ProtocolVersion, Unset}
 import scodec.Attempt.{Failure, Successful}
 import scodec.bits.{BitVector, ByteVector}
 import scodec.codecs._
@@ -154,17 +154,7 @@ case class RowCodec(columnSpecs: List[ColumnSpec])(implicit protocolVersion: Pro
       }
     }
 
-    // Fold all attempts into one bit vector.  The first failure encountered
-    // will be the one returned.
-    attempts.fold[Attempt[BitVector]](Successful(BitVector.empty)) {
-      (acc, e) => acc match {
-        case Successful(accBits) => e match {
-          case Successful(eBits) => Successful(accBits ++ eBits)
-          case f: Failure => f
-        }
-        case f: Failure => f
-      }
-    }
+    foldAttempts(attempts)
   }
 
   private [this] lazy val sizes = {

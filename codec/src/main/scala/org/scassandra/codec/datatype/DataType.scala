@@ -18,12 +18,15 @@ package org.scassandra.codec.datatype
 import java.net.{InetAddress, UnknownHostException}
 import java.util.UUID
 
-import org.scassandra.codec.Notations.{map, int => cint, short => cshort}
-import org.scassandra.codec.ProtocolVersion
+import org.scassandra.codec.Notations.{map, value, int => cint, short => cshort}
+import org.scassandra.codec._
 import scodec.Attempt.{Failure, Successful}
 import scodec.bits.{BitVector, ByteVector}
 import scodec.codecs._
-import scodec.{Codec, DecodeResult, Err}
+import scodec.{Attempt, Codec, DecodeResult, Err, SizeBound}
+
+import scala.collection.immutable
+import scala.util.control.Breaks._
 
 sealed trait DataType {
   import DataType.AnyCodecDecorators
@@ -51,7 +54,7 @@ object DataType {
               case(e: Throwable) => Failure(Err(s"${e.getClass.getName}(${e.getMessage})"))
             }
           } else {
-            Failure(Err(s"Unsure how to decode $a"))
+            Failure(Err(s"Unsure how to encode $a"))
           }
         }
       )
@@ -370,15 +373,27 @@ object DataType {
     )
   }
 
+  case class Tuple(elements: scala.List[DataType]) extends DataType {
+
+    val stringRep = s"tuple<${elements.map(_.stringRep).mkString(",")}>"
+
+    val native: PartialFunction[Any, Any] = {
+      case a: TraversableOnce[_] => a.toList
+      // TODO: This allows us to accept Tuples, however it's a bit dangerous since it accepts any product (ie case classes)
+      // Evaluate if it is ok.
+      case p: Product => p.productIterator.toList
+    }
+
+    def baseCodec(implicit protocolVersion: ProtocolVersion) = TupleCodec(this)
+  }
+
+  object Tuple {
+    def apply(elements: DataType*): Tuple = Tuple(elements.toList)
+  }
 
   /**
   case class UDT(keyspace: String, name: String, fields: scala.List[Field]) extends DataType {
   val codec = fields.map(_.dataType.codec).foldLeft[Codec[_]](ignore(0))((acc, c) => acc ~ c).withAny {
-    case a: Any => a
-  }
-}
-case class Tuple(elements: scala.List[DataType]) extends DataType {
-  val codec = elements.map(_.codec).foldLeft[Codec[_]](ignore(0))((acc, c) => acc ~ c).withAny {
     case a: Any => a
   }
 }*/
@@ -388,6 +403,70 @@ case class Tuple(elements: scala.List[DataType]) extends DataType {
   object Field {
     implicit val codec: Codec[Field] = (cstring :: DataType.codec).as[Field]
   }
+}
+
+case class TupleCodec(tuple: DataType.Tuple)(implicit protocolVersion: ProtocolVersion) extends Codec[List[_]] {
+
+  lazy val codecsWithBytes = {
+    tuple.elements.map(dataType => variableSizeBytes(cint, dataType.codec))
+  }
+
+  override def decode(bits: BitVector): Attempt[DecodeResult[List[_]]] = {
+    var remaining = bits
+    val data = immutable.List.newBuilder[Any]
+    var failure: Option[Failure] = None
+
+    breakable {
+      // Decode each tuple element at a type.
+      for (codec <- tuple.elements.map(_.codec)) {
+        // first parse using value codec to detect any possible Null values.
+        value.decode(remaining) match {
+          case Successful(DecodeResult(v, r)) =>
+            remaining = r
+            v match {
+              case Bytes(b) => codec.decode(b.bits) match {
+                case Successful(DecodeResult(aV, rem)) =>
+                  data += aV
+                case f: Failure =>
+                  failure = Some(f)
+                  break
+              }
+              case Null => data += null
+              case Unset => failure = Some(Failure(Err("Found Unset value in data, this unexpected.")))
+            }
+          case f: Failure => failure = Some(f)
+        }
+      }
+    }
+
+    failure match {
+      case Some(f) => f
+      case None => Successful(DecodeResult(data.result, remaining))
+    }
+  }
+
+  override def encode(data: List[_]): Attempt[BitVector] = {
+    if(data.length != tuple.elements.length) {
+      Failure(Err(s"List of size ${data.size} does not match number of expected codec elements for $tuple"))
+    } else {
+      // Encode each element with it's corresponding data type.
+      val attempts: List[Attempt[BitVector]] = data.zip(codecsWithBytes).map {
+        // Special case, encode nulls as -1
+        case (null, _) => value.encode(Null)
+        case (v: Any, codec: Codec[_]) => codec.encode(v)
+      }
+
+      foldAttempts(attempts)
+    }
+  }
+
+  private [this] lazy val sizes = {
+    codecsWithBytes.map(_.sizeBound).fold(SizeBound.exact(0)) { (acc: SizeBound, s: SizeBound) =>
+      acc + s
+    }
+  }
+
+  override def sizeBound: SizeBound = sizes
 }
 
 
