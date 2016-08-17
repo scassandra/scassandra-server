@@ -135,7 +135,8 @@ class ConnectionHandler(tcpConnection: ActorRef,
     if (buffer.data.length >= requiredLength) {
       f(buffer.data.toByteVector).map { d =>
         val parsingState = g(d._1)
-        Buffer(d._2.toByteString, parsingState)
+        // Take the remaining data after what was required.  It's possible the remaining data in the frame is unused.
+        Buffer(buffer.data.drop(requiredLength.toInt), parsingState)
       }
     } else {
       // Does not meet length requirement, return input.
