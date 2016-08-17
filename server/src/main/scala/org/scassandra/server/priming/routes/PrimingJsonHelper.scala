@@ -132,7 +132,7 @@ object PrimingJsonHelper extends LazyLogging {
     }
   }
 
-  def extractRows(thenDo: ThenProvider, keyspace: Option[String] = Some(""), table: Option[String] = Some("")): Rows = {
+  private def extractRows(thenDo: ThenProvider, keyspace: Option[String] = Some(""), table: Option[String] = Some("")): Rows = {
     // Convert Map[String,Any] -> Row
     val cRows: List[Row] = thenDo.rows.getOrElse(Nil).map(columns => Row(columns))
 
