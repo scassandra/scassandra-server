@@ -18,15 +18,12 @@ package org.scassandra.codec.datatype
 import java.net.{InetAddress, UnknownHostException}
 import java.util.UUID
 
-import org.scassandra.codec.Notations.{map, value, int => cint, short => cshort}
+import org.scassandra.codec.Notations.{map, int => cint, short => cshort}
 import org.scassandra.codec._
 import scodec.Attempt.{Failure, Successful}
 import scodec.bits.{BitVector, ByteVector}
 import scodec.codecs._
-import scodec.{Attempt, Codec, DecodeResult, Err, SizeBound}
-
-import scala.collection.immutable
-import scala.util.control.Breaks._
+import scodec.{Codec, DecodeResult, Err, SizeBound}
 
 sealed trait DataType {
   import DataType.AnyCodecDecorators
@@ -96,8 +93,7 @@ object DataType {
     .typecase(0x20, lazily(codec.as[List]))
     .typecase(0x21, lazily((codec :: codec).as[Map]))
     .typecase(0x22, lazily(codec.as[Set]))
-    //.typecase(0x30, (cstring :: cstring :: cshort.consume(count => listOfN(provide(count), Codec[Field]))(_.size)).as[UDT])
-    //.typecase(0x31, cshort.consume(count => listOfN(provide(count), codec))(_.size).as[Tuple])
+    .typecase(0x31, cshort.consume(count => listOfN(provide(count), codec))(_.size).as[Tuple])
 
   case class Custom(className: String) extends DataType {
     val stringRep = s"'$className'"
@@ -106,6 +102,7 @@ object DataType {
       case b: Array[Byte] => ByteVector(b)
       case b: ByteVector => b
       case b: BitVector => b.bytes
+      case s: String => ByteVector.fromValidHex(s.toLowerCase)
     }
 
     def baseCodec(implicit protocolVersion: ProtocolVersion) = bytes
@@ -116,7 +113,7 @@ object DataType {
 
     val native: PartialFunction[Any, Any] = {
       case s: String => s
-      case x: Any => x.toString
+      case x: Any if !x.isInstanceOf[Iterable[_]] && !x.isInstanceOf[scala.Predef.Map[_,_]] => x.toString
     }
 
     def baseCodec(implicit protocolVersion: ProtocolVersion) = ascii
@@ -137,6 +134,9 @@ object DataType {
     val stringRep = "blob"
 
     val native: PartialFunction[Any, Any] = {
+      case b: Array[Byte] => ByteVector(b)
+      case b: ByteVector => b
+      case b: BitVector => b.bytes
       // TODO: What should we do in the case where we can't get hex from string?
       case s: String => ByteVector.fromValidHex(s.toLowerCase)
     }
@@ -153,7 +153,16 @@ object DataType {
       case b: Boolean => b
     }
 
-    def baseCodec(implicit protocolVersion: ProtocolVersion) = bool(8)
+    // a custom codec is used in favor of bool(8) because we want true to be represented as 0x01 instead of 0xFF
+    def baseCodec(implicit protocolVersion: ProtocolVersion) = new Codec[Boolean] {
+      private val zero = BitVector.lowByte
+      private val one = BitVector.fromByte(1)
+      private val codec = bits(8).xmap[Boolean](bits => !(bits == zero), b => if (b) one else zero)
+      def sizeBound = SizeBound.exact(8)
+      def encode(b: Boolean) = codec.encode(b)
+      def decode(b: BitVector) = codec.decode(b)
+      override def toString = s"boolean"
+    }
   }
 
   case object Counter extends PrimitiveType {
@@ -379,8 +388,7 @@ object DataType {
 
     val native: PartialFunction[Any, Any] = {
       case a: TraversableOnce[_] => a.toList
-      // TODO: This allows us to accept Tuples, however it's a bit dangerous since it accepts any product (ie case classes)
-      // Evaluate if it is ok.
+      // Allows encoding of any TupleXX
       case p: Product => p.productIterator.toList
     }
 
@@ -390,83 +398,8 @@ object DataType {
   object Tuple {
     def apply(elements: DataType*): Tuple = Tuple(elements.toList)
   }
-
-  /**
-  case class UDT(keyspace: String, name: String, fields: scala.List[Field]) extends DataType {
-  val codec = fields.map(_.dataType.codec).foldLeft[Codec[_]](ignore(0))((acc, c) => acc ~ c).withAny {
-    case a: Any => a
-  }
-}*/
-
-  case class Field(name: String, dataType: DataType)
-
-  object Field {
-    implicit val codec: Codec[Field] = (cstring :: DataType.codec).as[Field]
-  }
 }
 
-case class TupleCodec(tuple: DataType.Tuple)(implicit protocolVersion: ProtocolVersion) extends Codec[List[_]] {
 
-  lazy val codecsWithBytes = {
-    tuple.elements.map(dataType => variableSizeBytes(cint, dataType.codec))
-  }
-
-  override def decode(bits: BitVector): Attempt[DecodeResult[List[_]]] = {
-    var remaining = bits
-    val data = immutable.List.newBuilder[Any]
-    var failure: Option[Failure] = None
-
-    breakable {
-      // Decode each tuple element at a type.
-      for (codec <- tuple.elements.map(_.codec)) {
-        // first parse using value codec to detect any possible Null values.
-        value.decode(remaining) match {
-          case Successful(DecodeResult(v, r)) =>
-            remaining = r
-            v match {
-              case Bytes(b) => codec.decode(b.bits) match {
-                case Successful(DecodeResult(aV, rem)) =>
-                  data += aV
-                case f: Failure =>
-                  failure = Some(f)
-                  break
-              }
-              case Null => data += null
-              case Unset => failure = Some(Failure(Err("Found Unset value in data, this unexpected.")))
-            }
-          case f: Failure => failure = Some(f)
-        }
-      }
-    }
-
-    failure match {
-      case Some(f) => f
-      case None => Successful(DecodeResult(data.result, remaining))
-    }
-  }
-
-  override def encode(data: List[_]): Attempt[BitVector] = {
-    if(data.length != tuple.elements.length) {
-      Failure(Err(s"List of size ${data.size} does not match number of expected codec elements for $tuple"))
-    } else {
-      // Encode each element with it's corresponding data type.
-      val attempts: List[Attempt[BitVector]] = data.zip(codecsWithBytes).map {
-        // Special case, encode nulls as -1
-        case (null, _) => value.encode(Null)
-        case (v: Any, codec: Codec[_]) => codec.encode(v)
-      }
-
-      foldAttempts(attempts)
-    }
-  }
-
-  private [this] lazy val sizes = {
-    codecsWithBytes.map(_.sizeBound).fold(SizeBound.exact(0)) { (acc: SizeBound, s: SizeBound) =>
-      acc + s
-    }
-  }
-
-  override def sizeBound: SizeBound = sizes
-}
 
 

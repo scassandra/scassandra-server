@@ -43,7 +43,7 @@ object ValueCodec extends Codec[Value] {
         case -1          => Successful(DecodeResult(Null, remainder))
         case -2          => Successful(DecodeResult(Unset, remainder))
         case i if i >= 0 => variableSizeBytes(provide(i), bytes).decode(remainder).map(_.map(Bytes))
-        case _           => Failure(Err(s"Invalid [value] count $count"))
+        case _           => Failure(Err(s"Invalid [value] identifier $count"))
       }
       case f: Failure => f
     }
@@ -55,7 +55,9 @@ object ValueCodec extends Codec[Value] {
     case Bytes(b) => int.encode(b.length.toInt).map(_ ++ b.toBitVector)
   }
 
-  override def sizeBound: SizeBound = int.sizeBound.atLeast
+  // The smallest value is int length
+  // the highest value is int length + max int.
+  override val sizeBound: SizeBound = SizeBound.bounded(int.sizeBound.lowerBound, int.sizeBound.lowerBound + Int.MaxValue.toLong*8)
 }
 
 private[codec] object InetAddressCodec extends Codec[InetSocketAddress] {
