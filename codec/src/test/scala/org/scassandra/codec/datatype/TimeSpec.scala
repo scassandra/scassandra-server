@@ -15,8 +15,16 @@
  */
 package org.scassandra.codec.datatype
 
-import org.scassandra.codec.datatype.DataType.Counter
+import scodec.Attempt.Failure
 
-class CounterSpec extends BigintSpec {
-  override val codec = Counter.codec
+class TimeSpec extends BigintSpec {
+  override val codec = DataType.Time.codec
+
+  it must "fail to encode a number > 86399999999999" in {
+    codec.encode(86400000000000L) should matchPattern { case Failure(_) => }
+  }
+
+  it must "fail to encode a negative number" in {
+    codec.encode(-1) should matchPattern { case Failure(_) => }
+  }
 }

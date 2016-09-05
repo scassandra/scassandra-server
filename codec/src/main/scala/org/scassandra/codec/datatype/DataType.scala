@@ -245,7 +245,7 @@ object DataType {
 
     val native: PartialFunction[Any, Any] = {
       case s: String => s
-      case x: Any => x.toString
+      case x: Any if !x.isInstanceOf[Iterable[_]] && !x.isInstanceOf[scala.Predef.Map[_,_]] => x.toString
     }
 
     def baseCodec(implicit protocolVersion: ProtocolVersion) = utf8
@@ -256,7 +256,7 @@ object DataType {
 
     val native: PartialFunction[Any, Any] = {
       case s: String => s
-      case x: Any => x.toString
+      case x: Any if !x.isInstanceOf[Iterable[_]] && !x.isInstanceOf[scala.Predef.Map[_,_]] => x.toString
     }
 
     def baseCodec(implicit protocolVersion: ProtocolVersion) = utf8
@@ -289,7 +289,8 @@ object DataType {
     val stringRep = "inet"
 
     val native: PartialFunction[Any, Any] = {
-      // TODO avoid DNS lookup
+      // TODO: This will do a DNS lookup if a non-ip address is provided.
+      // Should probably not allow this.
       case s: String => InetAddress.getByName(s)
       case a: InetAddress => a
     }
@@ -308,8 +309,9 @@ object DataType {
     val stringRep = "date"
 
     val native: PartialFunction[Any, Any] = {
-      case s: String => s.toInt
-      case x: Number => x.intValue()
+      // TODO: perhaps parse literal dates, i.e. 1985-01-01
+      case s: String => s.toLong
+      case x: Number => x.longValue()
     }
 
     def baseCodec(implicit protocolVersion: ProtocolVersion) = uint32
@@ -318,9 +320,15 @@ object DataType {
   case object Time extends PrimitiveType {
     val stringRep = "time"
 
-    val native = Bigint.native
+    val native: PartialFunction[Any, Any] = Bigint.native
 
-    def baseCodec(implicit protocolVersion: ProtocolVersion) = Bigint.baseCodec
+    def baseCodec(implicit protocolVersion: ProtocolVersion) = Bigint.baseCodec.widen(
+      (in: Long) => in,
+      (in: Long) => in match {
+        case x if x >= 0 && x <= 86399999999999L => Successful(x)
+        case x => Failure(Err(s"$x is not between 0 and 86399999999999"))
+      }
+    )
   }
 
   case object Smallint extends PrimitiveType {

@@ -15,8 +15,11 @@
  */
 package org.scassandra.codec.datatype
 
-import org.scassandra.codec.datatype.DataType.Counter
+import scodec.bits.ByteVector
 
-class CounterSpec extends BigintSpec {
-  override val codec = Counter.codec
+class TinyintSpec extends IntSpec {
+  override val codec = DataType.Tinyint.codec
+  override val example: Number = BigDecimal("123")
+  override val exampleBytes = ByteVector(123)
+  override val naturalType: Number = 123.toByte
 }

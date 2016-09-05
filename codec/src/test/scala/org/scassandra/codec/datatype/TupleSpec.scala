@@ -62,7 +62,7 @@ class TupleSpec extends DataTypeSpec {
     ).bits
   }
 
-  it must "decode if invalid value identifier" in {
+  it must "fail decode if invalid value identifier" in {
     val tupleType = DataType.Tuple(DataType.Int)
 
     // -3, only -1 (null) and >= 0 should be allowed.
@@ -71,7 +71,7 @@ class TupleSpec extends DataTypeSpec {
     tupleType.codec.decode(invalidBytes) should matchPattern { case Failure(General("Invalid [value] identifier -3", Nil)) => }
   }
 
-  it must "decode if value is unset" in {
+  it must "fail decode if value is unset" in {
     val tupleType = DataType.Tuple(DataType.Int)
 
     // -2, only -1 (null) and >= 0 should be allowed.

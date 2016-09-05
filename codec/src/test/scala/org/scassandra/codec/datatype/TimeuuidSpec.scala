@@ -15,8 +15,6 @@
  */
 package org.scassandra.codec.datatype
 
-import org.scassandra.codec.datatype.DataType.Counter
-
-class CounterSpec extends BigintSpec {
-  override val codec = Counter.codec
+class TimeuuidSpec extends UuidSpec {
+  override val codec = DataType.Timeuuid.codec
 }
