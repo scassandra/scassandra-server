@@ -1,9 +1,23 @@
 plugins {
     id 'net.researchgate.release' version '2.1.2'
+    id 'com.github.hierynomus.license' version '0.11.0'
 }
 apply plugin: 'java'
 apply plugin: 'scala'
 
 task wrapper(type: Wrapper) {
     gradleVersion = '2.5'
+}
+
+subprojects {
+    apply plugin: 'license'
+
+    license {
+        header rootProject.file('LICENSE')
+        strictCheck true
+        mapping {
+            java = 'SLASHSTAR_STYLE'
+            scala = 'SLASHSTAR_STYLE'
+        }
+    }
 }
