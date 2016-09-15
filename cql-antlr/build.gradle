@@ -5,27 +5,22 @@ apply plugin: 'maven'
 
 buildscript {
     repositories {
-        jcenter()
-        maven {
-            name 'JFrog OSS snapshot repo'
-            url  'https://oss.jfrog.org/oss-snapshot-local/'
-        }
         mavenCentral()
-        maven { url "https://oss.sonatype.org/content/groups/public"}
-
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven { url "https://oss.sonatype.org/content/groups/public" }
     }
     dependencies {
-        classpath 'com.github.townsfolk:gradle-release:1.2'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.0'
         classpath 'me.champeau.gradle:antlr4-gradle-plugin:0.1'
     }
 }
 
 apply plugin: 'me.champeau.gradle.antlr4'
-apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'release'
+apply plugin: 'java'
+apply plugin: 'signing'
+apply plugin: 'maven'
 
-createReleaseTag.dependsOn uploadArchives
 group 'org.scassandra'
 jar.baseName = 'cql-antlr'
 
@@ -39,6 +34,16 @@ if (!project.hasProperty("ossrhUsername")) {
 }
 if (!project.hasProperty("ossrhPassword")) {
     ext.ossrhPassword = "dummy"
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
+    maven {
+        url "https://oss.sonatype.org/content/groups/staging"
+    }
 }
 
 task javadocJar(type: Jar) {
@@ -84,9 +89,9 @@ uploadArchives {
                 url 'https://github.com/chbatey/cql-antlr'
 
                 scm {
-                    connection 'scm:git:git@github.com:chbatey/cql-antlr.git'
-                    developerConnection 'git@github.com:chbatey/cql-antlr.git'
-                    url 'https://github.com/chbatey/cql-antlr'
+                    connection 'scm:git:git@github.com:scassandra/scassandra-server.git'
+                    developerConnection 'git@github.com:scassandra/scassandra-server.git'
+                    url 'https://github.com/scassandra/scassandra-server'
                 }
 
                 licenses {
@@ -108,31 +113,14 @@ uploadArchives {
     }
 }
 
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-    maven {
-        url "https://oss.sonatype.org/content/repositories/snapshots"
-    }
-    maven {
-        url "https://oss.sonatype.org/content/groups/staging"
-    }
-}
-
-
 dependencies {
-    compile 'org.antlr:antlr4-runtime:4.5'
-    compile 'org.slf4j:slf4j-api:1.7.10'
-    compile 'commons-codec:commons-codec:1.10'
-    compile 'com.google.guava:guava:17.0'
-    testCompile 'ch.qos.logback:logback-classic:1.1.1'
-    testCompile 'org.mockito:mockito-all:1.9.5'
-    testCompile 'junit:junit:4.11'
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.2.1'
+    compile "org.antlr:antlr4-runtime:$antlrVersion"
+    compile "org.slf4j:slf4j-api:$slf4jVersion"
+    compile "commons-codec:commons-codec:$commonsCodecVersion"
+    compile "com.google.guava:guava:$guavaVersion"
+    testCompile "ch.qos.logback:logback-classic:$logbackVersion"
+    testCompile "org.mockito:mockito-all:$mockitoVersion"
+    testCompile "junit:junit:$junitVersion"
 }
 
 antlr4 {
@@ -140,8 +128,16 @@ antlr4 {
     extraArgs = ['-package', 'org.scassandra.antlr4']
 }
 
+task licenseFormatGenerated (type:nl.javadude.gradle.plugins.license.License) {
+    source = fileTree(dir: "src/main/generated").include("**/*.java")
+}
+
+licenseFormatGenerated.dependsOn antlr4
+
 // make the Java compile task depend on the antlr4 task
 compileJava.dependsOn antlr4
+compileJava.dependsOn licenseFormatGenerated
+
 
 // add the generated source files to the list of java sources
 sourceSets.main.java.srcDirs += 'src/main/generated'
