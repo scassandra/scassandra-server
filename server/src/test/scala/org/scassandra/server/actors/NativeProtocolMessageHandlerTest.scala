@@ -111,6 +111,13 @@ class NativeProtocolMessageHandlerTest extends TestKit(ActorSystem("NativeProtoc
           registerHandlerTestProbe.expectMsg(msg)
         }
 
+        it("should allow Options messages before Startup") {
+          val msg = protocolMessage(Options)
+          testActorRef ! msg
+
+          optionsHandlerTestProbe.expectMsg(msg)
+        }
+
         it("should forward Options to OptionsHandler") {
           sendStartup()
 

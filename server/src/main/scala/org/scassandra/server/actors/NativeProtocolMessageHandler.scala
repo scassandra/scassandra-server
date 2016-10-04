@@ -28,27 +28,29 @@ class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory) => Act
                         prepareHandler: ActorRef,
                         executeHandler: ActorRef) extends ProtocolActor {
 
+  val optionsHandler = optionsHandlerFactory(context)
+
   override def receive: Receive = {
-    case ProtocolMessage(frame) =>
-      val stream = frame.header.stream
+    case message@ProtocolMessage(frame) =>
       frame.message match {
+        case Options =>
+          log.debug("Received options message. Sending to OptionsHandler")
+          optionsHandler forward message
         case Startup(_) =>
           val queryHandler = queryHandlerFactory(context)
           val batchHandler = batchHandlerFactory(context, prepareHandler)
           val registerHandler = registerHandlerFactory(context)
-          val optionsHandler = optionsHandlerFactory(context)
           write(Ready, frame.header)
-          context become initialized(queryHandler, batchHandler, registerHandler, optionsHandler)
+          context become initialized(queryHandler, batchHandler, registerHandler)
         case _ => {
           log.error(s"Received message $frame before Startup.  Sending error.")
           write(ProtocolError("Query sent before Startup message"), frame.header)
         }
-    }
+      }
   }
 
-  def initialized(queryHandler: ActorRef, batchHandler: ActorRef, registerHandler: ActorRef, optionsHandler: ActorRef): Receive = {
-    case message @ ProtocolMessage(frame) =>
-      val stream = frame.header.stream
+  def initialized(queryHandler: ActorRef, batchHandler: ActorRef, registerHandler: ActorRef): Receive = {
+    case message@ProtocolMessage(frame) =>
       frame.message match {
         case query: Query =>
           queryHandler forward message
