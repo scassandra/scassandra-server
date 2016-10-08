@@ -17,7 +17,7 @@ package org.scassandra.codec.messages
 
 import org.scassandra.codec.Consistency._
 import org.scassandra.codec.Notations.{consistency, queryValue, bytes => cbytes, int => cint, long => clong, short => cshort}
-import org.scassandra.codec.{Consistency, QueryValue}
+import org.scassandra.codec.{Consistency, ProtocolVersion, QueryValue}
 import scodec.Codec
 import scodec.bits.ByteVector
 import scodec.codecs._
@@ -35,9 +35,11 @@ case class QueryParameters(
 object DefaultQueryParameters extends QueryParameters()
 
 object QueryParameters {
-  implicit val codec: Codec[QueryParameters] = {
+  private[this] lazy val v1FlagsCodec = provide(QueryFlags())
+
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[QueryParameters] = {
     ("consistency"        | Consistency.codec)                                                                ::
-    ("flags"              | Codec[QueryFlags]).flatPrepend { flags =>
+    ("flags"              | withDefault(conditional(protocolVersion.version > 1, Codec[QueryFlags]), v1FlagsCodec)).flatPrepend { flags =>
     ("values"             | conditional(flags.values, listOfN(cshort, queryValue(flags.namesForValues))))     ::
     ("pageSize"           | conditional(flags.pageSize, cint))                                                ::
     ("pagingState"        | conditional(flags.withPagingState, cbytes))                                       ::

@@ -161,7 +161,7 @@ case class Query(query: String, parameters: QueryParameters = DefaultQueryParame
 object Query {
   val opcode = 0x7
   implicit val discriminator: Discriminator[Message, Query, Int] = Discriminator(opcode)
-  implicit val codec: Codec[Query] = {
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Query] = {
     ("query"      | longString) ::
     ("parameters" | Codec[QueryParameters])
   }.as[Query]
@@ -229,7 +229,7 @@ case class Execute(id: ByteVector, parameters: QueryParameters = DefaultQueryPar
 object Execute {
   val opcode = 0xA
 
-  implicit val codec: Codec[Execute] = {
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Execute] = {
     ("id"              | shortBytes) ::
     ("queryParameters" | Codec[QueryParameters])
   }.as[Execute]
