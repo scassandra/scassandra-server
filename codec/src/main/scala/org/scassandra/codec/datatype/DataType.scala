@@ -65,7 +65,11 @@ object DataType {
   )
 
   lazy val primitiveTypeMap = {
-    primitiveTypes.map(t => (t.stringRep, t)).toMap
+    primitiveTypes.map({
+      // special case for text, treat it as a varchar internally.
+      case Text => (Text.stringRep, Varchar)
+      case t: PrimitiveType => (t.stringRep, t)
+    }).toMap
   }
 
   implicit def codec: Codec[DataType] = discriminated[DataType].by(cshort)
