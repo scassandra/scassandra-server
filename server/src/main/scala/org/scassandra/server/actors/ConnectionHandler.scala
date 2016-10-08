@@ -72,7 +72,11 @@ class ConnectionHandler(tcpConnection: ActorRef,
     case ProtocolResponse(requestHeader, message) =>
       message.toBytes(requestHeader.stream, Response)(requestHeader.version.version) match {
         case Success(bytes) => tcpConnection ! Write(bytes.toByteString)
-        case Failure(t) => log.error(t, "Failure getting message payload to write.")
+        case Failure(t) => {
+          log.error(t, "Failure getting message payload to write.")
+          // TODO: This could cause repeated work if ProtocolError also fails to encode, handle this possible occurrence.
+          self ! ProtocolResponse(requestHeader, ProtocolError(t.getMessage))
+        }
       }
 
     // Forward any TCP commands to the underlying connection.

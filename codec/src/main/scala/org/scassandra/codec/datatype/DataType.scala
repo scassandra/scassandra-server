@@ -65,39 +65,10 @@ object DataType {
   )
 
   lazy val primitiveTypeMap = {
-    primitiveTypes.map({
-      // special case for text, treat it as a varchar internally.
-      case Text => (Text.stringRep, Varchar)
-      case t: PrimitiveType => (t.stringRep, t)
-    }).toMap
+    primitiveTypes.map(t => (t.stringRep, t)).toMap
   }
 
-  implicit def codec: Codec[DataType] = discriminated[DataType].by(cshort)
-    .typecase(0x00, cstring.as[Custom])
-    .typecase(0x01, provide(Ascii))
-    .typecase(0x02, provide(Bigint))
-    .typecase(0x03, provide(Blob))
-    .typecase(0x04, provide(Boolean))
-    .typecase(0x05, provide(Counter))
-    .typecase(0x06, provide(Decimal))
-    .typecase(0x07, provide(Double))
-    .typecase(0x08, provide(Float))
-    .typecase(0x09, provide(Int))
-    .typecase(0x0A, provide(Text))
-    .typecase(0x0B, provide(Timestamp))
-    .typecase(0x0C, provide(Uuid))
-    .typecase(0x0D, provide(Varchar))
-    .typecase(0x0E, provide(Varint))
-    .typecase(0x0F, provide(Timeuuid))
-    .typecase(0x10, provide(Inet))
-    .typecase(0x11, provide(Date))
-    .typecase(0x12, provide(Time))
-    .typecase(0x13, provide(Smallint))
-    .typecase(0x14, provide(Tinyint))
-    .typecase(0x20, lazily(codec.as[List]))
-    .typecase(0x21, lazily((codec :: codec).as[Map]))
-    .typecase(0x22, lazily(codec.as[Set]))
-    .typecase(0x31, cshort.consume(count => listOfN(provide(count), codec))(_.size).as[Tuple])
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[DataType] = protocolVersion.dataTypeCodec
 
   case class Custom(className: String) extends DataType {
     val stringRep = s"'$className'"

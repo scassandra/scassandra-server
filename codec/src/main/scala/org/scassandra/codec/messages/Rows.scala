@@ -37,7 +37,7 @@ case class RowMetadata(
 object NoRowMetadata extends RowMetadata(RowMetadataFlags())
 
 object RowMetadata {
-  implicit val codec: Codec[RowMetadata] = {
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[RowMetadata] = {
     ("flags"       | Codec[RowMetadataFlags]).flatPrepend { flags =>
     ("columnCount" | cint).consume { count =>
     ("pagingState" | conditional(flags.hasMorePages, cbytes))     ::
@@ -68,7 +68,7 @@ case class ColumnSpecWithoutTable(override val name: String, override val dataTy
 case class ColumnSpecWithTable(keyspace: String, table: String, override val name: String, override val dataType: DataType) extends ColumnSpec
 
 object ColumnSpec {
-  def codec(withTable: Boolean): Codec[ColumnSpec] = {
+  def codec(withTable: Boolean)(implicit protocolVersion: ProtocolVersion): Codec[ColumnSpec] = {
     if(withTable) {
       (cstring :: cstring :: cstring  :: Codec[DataType]).as[ColumnSpecWithTable].upcast[ColumnSpec]
     } else {
