@@ -16,6 +16,7 @@
 package org.scassandra.codec
 
 import org.scalatest.{Matchers, WordSpec}
+import scodec.Codec
 
 trait CodecSpec extends WordSpec with Matchers with CodecTablePropertyChecks {
 
@@ -39,5 +40,17 @@ trait CodecSpec extends WordSpec with Matchers with CodecTablePropertyChecks {
     * @param f      enclosing function to wrap.  Provides protocol version under test.
     */
   def withProtocolVersions(f: ProtocolVersion => Unit): Unit = withProtocolVersions(f, _ => true)
+
+  def encodeAndDecode[T](codec: Codec[T], data: T): Unit = {
+    encodeAndDecode(codec, data, data)
+  }
+
+  def encodeAndDecode[T](codec: Codec[T], data: T, expected: Any): Unit = {
+    val encoded = codec.encode(data).require
+    val decoded = codec.decodeValue(encoded).require
+
+    val expectedResult = expected
+    decoded shouldEqual expectedResult
+  }
 }
 

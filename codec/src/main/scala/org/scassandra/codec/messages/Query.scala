@@ -23,6 +23,8 @@ import scodec.bits.ByteVector
 import scodec.codecs._
 import shapeless.{::, HNil}
 
+import scala.{:: => ~~}
+
 case class QueryParameters(
   consistency: Consistency = ONE,
   values: Option[List[QueryValue]] = None,
@@ -53,7 +55,7 @@ object QueryParameters {
       val values :: skipMetadata :: pageSize :: pagingState :: serialConsistency :: timestamp :: HNil = data
       val valuesPresent = values.isDefined && values.getOrElse(Nil).nonEmpty
       val namesForValues = values match {
-        case Some(List(h, _)) => h.name.isDefined
+        case Some(h ~~ tail) => h.name.isDefined
         case _ => false
       }
       QueryFlags(namesForValues, timestamp.isDefined, serialConsistency.isDefined, pagingState.isDefined,

@@ -15,21 +15,24 @@
  */
 package org.scassandra.codec.messages
 
-import org.scassandra.codec.{CodecSpec, Consistency, ProtocolVersion}
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.{CodecSpec, Consistency, ProtocolVersion, QueryValue}
 import scodec.Attempt.Successful
+import scodec.bits.ByteVector
 
 class QuerySpec extends CodecSpec {
 
   "QueryParameters.codec" when {
 
     withProtocolVersions { (protocolVersion: ProtocolVersion) =>
+      implicit val p = protocolVersion
       val codec = QueryParameters.codec(protocolVersion)
 
-      val parametersWithPaging = QueryParameters(Consistency.TWO, pageSize = Some(50))
 
       if(protocolVersion.version == 1) {
         "skip flags even if set" in {
           // we expect flags and their associated values to be truncated for protocol V1.
+          val parametersWithPaging = QueryParameters(Consistency.TWO, pageSize = Some(50))
           val expected = parametersWithPaging.copy(pageSize = None)
           val encoded = codec.encode(parametersWithPaging).require
           val decoded = codec.decodeValue(encoded) should matchPattern {
@@ -37,11 +40,34 @@ class QuerySpec extends CodecSpec {
           }
         }
       } else {
-        "should include flags" in {
-          val encoded = codec.encode(parametersWithPaging).require
-          val decoded = codec.decodeValue(encoded) should matchPattern {
-            case Successful(`parametersWithPaging`) =>
-          }
+        // Test each parameter individually as their presence is based on flag parsing code which could be buggy.
+        "include query parameters with names" in {
+          encodeAndDecode(codec, QueryParameters(values = Some(QueryValue("a", "a", DataType.Text) :: Nil)))
+        }
+
+        "include query parameters without names" in {
+          encodeAndDecode(codec, QueryParameters(values = Some(QueryValue("a", DataType.Text) :: Nil)))
+        }
+
+        "include skipMetadata" in {
+          encodeAndDecode(codec, QueryParameters(skipMetadata = true))
+          encodeAndDecode(codec, QueryParameters(skipMetadata = false))
+        }
+
+        "include pageSize" in {
+          encodeAndDecode(codec, QueryParameters(pageSize = Some(5000)))
+        }
+
+        "include pagingState" in {
+          encodeAndDecode(codec, QueryParameters(pagingState = Some(ByteVector(0x00))))
+        }
+
+        "include serialConsistency" in {
+          encodeAndDecode(codec, QueryParameters(serialConsistency = Some(Consistency.LOCAL_SERIAL)))
+        }
+
+        "include timestamp" in {
+          encodeAndDecode(codec, QueryParameters(timestamp = Some(8675309)))
         }
       }
     }
