@@ -21,11 +21,12 @@ import org.scassandra.codec.{Consistency, ProtocolVersion, QueryValue}
 import scodec.Codec
 import scodec.bits.ByteVector
 import scodec.codecs._
+import shapeless.{::, HNil}
 
 case class QueryParameters(
   consistency: Consistency = ONE,
-  flags: QueryFlags = QueryFlags(),
   values: Option[List[QueryValue]] = None,
+  skipMetadata: Boolean = false,
   pageSize: Option[Int] = None,
   pagingState: Option[ByteVector] = None,
   serialConsistency: Option[Consistency] = None,
@@ -39,17 +40,29 @@ object QueryParameters {
 
   implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[QueryParameters] = {
     ("consistency"        | Consistency.codec)                                                                ::
-    ("flags"              | withDefault(conditional(protocolVersion.version > 1, Codec[QueryFlags]), v1FlagsCodec)).flatPrepend { flags =>
+    ("flags"              | withDefault(conditional(protocolVersion.version > 1, Codec[QueryFlags]), v1FlagsCodec)).consume { flags =>
     ("values"             | conditional(flags.values, listOfN(cshort, queryValue(flags.namesForValues))))     ::
+    ("skipMetadata"       | provide[Boolean](flags.skipMetadata))                                             ::
     ("pageSize"           | conditional(flags.pageSize, cint))                                                ::
     ("pagingState"        | conditional(flags.withPagingState, cbytes))                                       ::
     ("serialConsistency " | conditional(flags.withSerialConsistency, consistency))                            ::
     ("timestamp"          | conditional(flags.withDefaultTimestamp, clong))
-  }
+  } { data =>
+      // This is admittedly contrived, but allows us to forgo making QueryFlags part of QueryParameters as
+      // they should be derivable by the parameters themselves.
+      val values :: skipMetadata :: pageSize :: pagingState :: serialConsistency :: timestamp :: HNil = data
+      val valuesPresent = values.isDefined && values.getOrElse(Nil).nonEmpty
+      val namesForValues = values match {
+        case Some(List(h, _)) => h.name.isDefined
+        case _ => false
+      }
+      QueryFlags(namesForValues, timestamp.isDefined, serialConsistency.isDefined, pagingState.isDefined,
+        pageSize.isDefined, skipMetadata, valuesPresent)
+    }
   }.as[QueryParameters]
 }
 
-case class QueryFlags(
+private[this] case class QueryFlags(
   namesForValues: Boolean = false,
   withDefaultTimestamp: Boolean = false,
   withSerialConsistency: Boolean = false,
@@ -59,7 +72,7 @@ case class QueryFlags(
   values: Boolean = false
 )
 
-object QueryFlags {
+private[this] object QueryFlags {
   implicit val codec: Codec[QueryFlags] = {
     ("reserved"          | ignore(1)) ::
     ("namesForValues"    | bool)      ::
