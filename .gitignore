@@ -7,3 +7,5 @@ _site
 *.iml
 build
 docs/site
+classes
+**/src/main/generated
