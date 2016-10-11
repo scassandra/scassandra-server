@@ -28,7 +28,7 @@ subprojects {
         akkaVersion = '2.3.9'
         commonsCodecVersion = '1.10'
         httpClientVersion = '4.3.3'
-        javaDriverVersion = '2.0.10'
+        javaDriverVersion = '3.1.1'
         junitVersion = '4.11'
         guavaVersion = '17.0'
         gsonVersion = '2.5'

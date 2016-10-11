@@ -136,7 +136,6 @@ dependencies {
     compile "org.scala-lang:scala-library:$scalaVersion"
     compile  project(':codec')
     compile  project(':cql-antlr')
-    compile  "org.scodec:scodec-akka_2.11:0.2.0"
     compile  "ch.qos.logback:logback-classic:$logbackVersion"
     compile  "com.typesafe.akka:akka-actor_2.11:$akkaVersion"
     compile  "com.typesafe.akka:akka-remote_2.11:$akkaVersion"
