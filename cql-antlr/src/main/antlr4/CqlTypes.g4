@@ -37,17 +37,17 @@ native_type
     ;
 
 list_type
-    : 'list' '<' native_type '>'
+    : 'list' '<' data_type '>'
     ;
 
 set_type
-    : 'set' '<' native_type '>'
+    : 'set' '<' data_type '>'
     ;
 
 map_type
-    : 'map' '<' native_type ',' native_type '>'
+    : 'map' '<' data_type ',' data_type '>'
     ;
 
 tuple_type
-    : 'tuple' '<' (native_type ',') + native_type '>'
+    : 'tuple' '<' (data_type ',') + data_type '>'
     ;

@@ -15,6 +15,7 @@
  */
 package org.scassandra.cql;
 
+import com.google.common.base.Preconditions;
 import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.NotNull;
 import org.scassandra.antlr4.CqlTypesBaseListener;
@@ -52,8 +53,31 @@ public class CqlTypeFactory {
 
     private static class CqlTypesBaseListenerImpl extends CqlTypesBaseListener {
 
-        private CqlType cqlType;
+        private Stack<Stack<CqlType>> stack = new Stack<Stack<CqlType>>();
+
         private Stack<CqlType> inProgress = new Stack<CqlType>();
+
+        private CqlType cqlType;
+
+        void pushStack() {
+            if (!inProgress.isEmpty()) {
+                stack.push(inProgress);
+                inProgress = new Stack<CqlType>();
+            }
+        }
+
+        void popStack(CqlType typeInProgress) {
+            Preconditions.checkState(inProgress.isEmpty(), "Current inProgress stack is not empty");
+            // no more stacks, this is the final type.
+            if (stack.isEmpty()) {
+                this.cqlType = typeInProgress;
+                this.inProgress.clear();
+            } else {
+                // remaining stacks, we have more work to do.
+                inProgress = stack.pop();
+                inProgress.push(typeInProgress);
+            }
+        }
 
         @Override
         public void enterData_type(@NotNull CqlTypesParser.Data_typeContext ctx) {
@@ -78,21 +102,21 @@ public class CqlTypeFactory {
 
         @Override
         public void enterMap_type(@NotNull CqlTypesParser.Map_typeContext ctx) {
-            LOGGER.debug("end map:" + ctx.start.getText());
+            pushStack();
             this.inProgress.push(new MapType(null, null));
         }
 
         @Override
         public void exitMap_type(@NotNull CqlTypesParser.Map_typeContext ctx) {
-            LOGGER.debug("start map:" + ctx.start.getText());
             CqlType value = inProgress.pop();
             CqlType key = inProgress.pop();
             inProgress.pop();
-            this.cqlType = new MapType(key, value);
+            popStack(new MapType(key, value));
         }
 
         @Override
         public void enterSet_type(@NotNull CqlTypesParser.Set_typeContext ctx) {
+            pushStack();
             this.inProgress.push(new SetType(null));
         }
 
@@ -100,11 +124,12 @@ public class CqlTypeFactory {
         public void exitSet_type(@NotNull CqlTypesParser.Set_typeContext ctx) {
             CqlType value = inProgress.pop();
             inProgress.pop();
-            this.cqlType = new SetType(value);
+            popStack(new SetType(value));
         }
 
         @Override
         public void enterList_type(@NotNull CqlTypesParser.List_typeContext ctx) {
+            pushStack();
             this.inProgress.push(new ListType(null));
         }
 
@@ -112,11 +137,12 @@ public class CqlTypeFactory {
         public void exitList_type(@NotNull CqlTypesParser.List_typeContext ctx) {
             CqlType value = inProgress.pop();
             inProgress.pop();
-            this.cqlType = new ListType(value);
+            popStack(new ListType(value));
         }
 
         @Override
         public void enterTuple_type(@NotNull CqlTypesParser.Tuple_typeContext ctx) {
+            pushStack();
             this.inProgress.push(new TupleType(null));
         }
 
@@ -130,7 +156,7 @@ public class CqlTypeFactory {
                         // Reverse list as stack is FILO.
                         Collections.reverse(types);
                         // encountered empty tuple, we know to stop.
-                        this.cqlType = new TupleType(types.toArray(new CqlType[types.size()]));
+                        popStack(new TupleType(types.toArray(new CqlType[types.size()])));
                         break;
                     }
                 }
