@@ -21,11 +21,14 @@ import java.nio.ByteBuffer
 import java.util
 import java.util.{Date, UUID}
 
-import com.datastax.driver.core.DataType
+import com.datastax.driver.core.{DataType, TypeTokens}
+import com.google.common.reflect.TypeToken
 import org.scassandra.codec.datatype.{DataType => DType}
 import org.scassandra.server.AbstractIntegrationTest
 import org.scassandra.server.priming.json.Success
 import org.scassandra.server.priming.query.When
+
+import scala.collection.JavaConverters._
 
 class ListPriming extends AbstractIntegrationTest {
 
@@ -287,5 +290,21 @@ class ListPriming extends AbstractIntegrationTest {
 
     val expectedList = util.Arrays.asList(ByteBuffer.wrap(blob), ByteBuffer.wrap(blob))
     singleRow.getList("field", Class.forName("java.nio.ByteBuffer")) should equal(expectedList)
+  }
+
+  test("Test a list of set<text>") {
+    val list = List(Set("one", "two", "three"), Set("four", "five", "six"))
+    val whenQuery = "Test prime with cql list of sets"
+    val rows: List[Map[String, Any]] = List(Map("field" -> list))
+    val columnTypes = Map("field" -> DType.List(DType.Set(DType.Varchar)))
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val singleRow = result.one()
+    singleRow.getColumnDefinitions.getType("field") should equal(DataType.list(DataType.set(DataType.varchar())))
+
+    val expectedList = list.map(_.asJava).asJava
+    singleRow.getList("field", TypeTokens.setOf(TypeToken.of(Class.forName("java.lang.String")))) should equal(expectedList)
   }
 }
