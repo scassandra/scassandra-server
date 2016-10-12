@@ -9,6 +9,7 @@ data_type
     | list_type
     | set_type
     | map_type
+    | tuple_type
     ;
 
 
@@ -18,14 +19,18 @@ native_type
     | 'blob'
     | 'boolean'
     | 'counter'
+    | 'date'
     | 'decimal'
     | 'double'
     | 'float'
     | 'inet'
     | 'int'
+    | 'smallint'
     | 'text'
+    | 'time'
     | 'timestamp'
     | 'timeuuid'
+    | 'tinyint'
     | 'uuid'
     | 'varchar'
     | 'varint'
@@ -41,4 +46,8 @@ set_type
 
 map_type
     : 'map' '<' native_type ',' native_type '>'
+    ;
+
+tuple_type
+    : 'tuple' '<' (native_type ',') + native_type '>'
     ;

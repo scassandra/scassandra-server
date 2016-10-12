@@ -23,6 +23,9 @@ import org.scassandra.antlr4.CqlTypesParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Stack;
 
 public class CqlTypeFactory {
@@ -110,6 +113,29 @@ public class CqlTypeFactory {
             CqlType value = inProgress.pop();
             inProgress.pop();
             this.cqlType = new ListType(value);
+        }
+
+        @Override
+        public void enterTuple_type(@NotNull CqlTypesParser.Tuple_typeContext ctx) {
+            this.inProgress.push(new TupleType(null));
+        }
+
+        @Override
+        public void exitTuple_type(@NotNull CqlTypesParser.Tuple_typeContext ctx) {
+            List<CqlType> types = new ArrayList<CqlType>();
+            while (true) {
+                CqlType type = inProgress.pop();
+                if (type instanceof TupleType) {
+                    if (((TupleType) type).getTypes() == null) {
+                        // Reverse list as stack is FILO.
+                        Collections.reverse(types);
+                        // encountered empty tuple, we know to stop.
+                        this.cqlType = new TupleType(types.toArray(new CqlType[types.size()]));
+                        break;
+                    }
+                }
+                types.add(type);
+            }
         }
 
         public CqlType getCqlType() {

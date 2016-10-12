@@ -38,6 +38,7 @@ public class CqlTypeFactoryTest {
                 {"list<ascii>", new ListType(PrimitiveType.ASCII) },
                 {"list<boolean>", new ListType(PrimitiveType.BOOLEAN) },
                 {"list<decimal>", new ListType(PrimitiveType.DECIMAL) },
+                {"tuple<int,inet,date>", new TupleType(PrimitiveType.INT, PrimitiveType.INET, PrimitiveType.DATE)},
                 {"ascii", PrimitiveType.ASCII},
                 {"varchar", PrimitiveType.VARCHAR},
                 {"bigint", PrimitiveType.BIG_INT},
@@ -52,7 +53,11 @@ public class CqlTypeFactoryTest {
                 {"varint", PrimitiveType.VAR_INT},
                 {"timeuuid", PrimitiveType.TIMEUUID},
                 {"inet", PrimitiveType.INET},
-                {"text", PrimitiveType.TEXT}
+                {"text", PrimitiveType.TEXT},
+                {"date", PrimitiveType.DATE},
+                {"smallint", PrimitiveType.SMALL_INT},
+                {"time", PrimitiveType.TIME},
+                {"tinyint", PrimitiveType.TINY_INT}
         });
     }
 

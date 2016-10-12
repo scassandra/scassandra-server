@@ -96,6 +96,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
       case null => JsNull
       case None => JsNull
       case Some(s) => this.write(s)
+      case p: Product => seqFormat[Any].write(p.productIterator.toList) // To support tuples
       case other => serializationError("Do not understand object of type " + other.getClass.getName)
     }
 
@@ -153,11 +154,12 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
     lazy val cqlTypeFactory = new CqlTypeFactory
 
     def convertJavaToScalaType(javaType: CqlType): DataType = javaType match {
-        // TODO: Update for tuples and udts.
+        // TODO: Update for UDTs when supported.
         case primitive: PrimitiveType => DataType.primitiveTypeMap(primitive.serialise())
         case map: MapType => DataType.Map(convertJavaToScalaType(map.getKeyType), convertJavaToScalaType(map.getValueType))
         case set: SetType => DataType.Set(convertJavaToScalaType(set.getType))
         case list: ListType => DataType.List(convertJavaToScalaType(list.getType))
+        case tuple: TupleType => DataType.Tuple(tuple.getTypes.map(convertJavaToScalaType):_*)
     }
 
     def fromString(typeString: String): Try[DataType] = {
