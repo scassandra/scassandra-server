@@ -42,5 +42,12 @@ class PrimingBatchRouteTest extends FunSpec with Matchers with ScalatestRouteTes
         verify(primeBatchStore).record(prime)
       }
     }
+
+    it("Should allow primes to be deleted") {
+      Delete(primeBatchSinglePath) ~> batchRoute ~> check {
+        status should equal(StatusCodes.OK)
+        verify(primeBatchStore).clear()
+      }
+    }
   }
 }

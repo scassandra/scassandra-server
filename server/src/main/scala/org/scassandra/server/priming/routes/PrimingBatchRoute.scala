@@ -49,7 +49,15 @@ trait PrimingBatchRoute extends HttpService with LazyLogging with CorsSupport {
               }
             }
           }
-        }
+        } ~
+          delete {
+            complete {
+              logger.debug("Deleting all batch primes")
+              primeBatchStore.clear()
+              logger.debug("Return 200")
+              StatusCodes.OK
+            }
+          }
       }
     }
   }

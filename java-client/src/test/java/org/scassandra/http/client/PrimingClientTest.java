@@ -560,15 +560,45 @@ public class PrimingClientTest {
     }
 
     @Test
+    public void testDeletingOfBatchPrimes() {
+        //given
+        stubFor(delete(urlEqualTo(PRIME_BATCH_PATH)).willReturn(aResponse().withStatus(200)));
+        //when
+        underTest.clearBatchPrimes();
+        //then
+        verify(deleteRequestedFor(urlEqualTo(PRIME_BATCH_PATH)));
+    }
+
+    @Test(expected = PrimeFailedException.class)
+    public void testDeletingOfBatchPrimesFailedDueToStatusCode() {
+        //given
+        stubFor(delete(urlEqualTo(PRIME_BATCH_PATH)).willReturn(aResponse().withStatus(300)));
+        //when
+        underTest.clearBatchPrimes();
+    }
+
+    @Test(expected = PrimeFailedException.class)
+    public void testDeletingOfBatchPrimesFailed() {
+        //given
+        stubFor(delete(urlEqualTo(PRIME_BATCH_PATH)).willReturn(aResponse().withFault(Fault.RANDOM_DATA_THEN_CLOSE).withStatus(200)));
+        //when
+        underTest.clearBatchPrimes();
+    }
+
+    @Test
     public void testClearAllPrimes() {
         //given
         stubFor(delete(urlEqualTo(PRIME_PREPARED_PATH)).willReturn(aResponse().withStatus(200)));
         stubFor(delete(urlEqualTo(PRIME_QUERY_PATH)).willReturn(aResponse().withStatus(200)));
+        stubFor(delete(urlEqualTo(PRIME_PREPARED_MULTI_PATH)).willReturn(aResponse().withStatus(200)));
+        stubFor(delete(urlEqualTo(PRIME_BATCH_PATH)).willReturn(aResponse().withStatus(200)));
         //when
         underTest.clearAllPrimes();
         //then
         verify(deleteRequestedFor(urlEqualTo(PRIME_PREPARED_PATH)));
         verify(deleteRequestedFor(urlEqualTo(PRIME_QUERY_PATH)));
+        verify(deleteRequestedFor(urlEqualTo(PRIME_PREPARED_MULTI_PATH)));
+        verify(deleteRequestedFor(urlEqualTo(PRIME_BATCH_PATH)));
     }
 
     @Test

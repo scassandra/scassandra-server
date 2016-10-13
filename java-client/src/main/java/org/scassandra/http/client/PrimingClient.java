@@ -162,6 +162,8 @@ public class PrimingClient {
     public void clearAllPrimes() {
         clearQueryPrimes();
         clearPreparedPrimes();
+        clearPreparedMultiPrimes();
+        clearBatchPrimes();
     }
 
     public void clearQueryPrimes() {
@@ -174,6 +176,10 @@ public class PrimingClient {
 
     public void clearPreparedMultiPrimes() {
         httpDelete(primePreparedMultiUrl);
+    }
+
+    public void clearBatchPrimes() {
+        httpDelete(primeBatchUrl);
     }
 
     private List<PrimingRequest> httpGetSinglePrimingRequests(String url) {
