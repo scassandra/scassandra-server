@@ -34,6 +34,25 @@ POST on http://[host]:[admin-port]/prime-query-single
  }  
 ```
 
+#### Prime by query pattern
+
+In some cases it may be convenient to have a prime match a regular expression.  This can be accomplished by specifying 
+a `queryPattern` instead of a `query` field in the `where` criteria.  Note that this expression must comply to the
+[regular expression format set forth by the JDK](https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html).
+
+The following example primes a query that matches `select * from people` in a case insensitive manner.
+
+```json
+ {
+   "when": {
+    "queryPattern" :"(?i)select \\* from people",
+   },
+   "then": {
+     "rows" :[{"name":"Chris", "age":"28"}, {"name":"Alexandra", "age":"24"}]
+   }
+ } 
+```
+
 #### Unsuccessful response:
 
 By default the above priming primes for queries regardless of consistency.
@@ -68,6 +87,9 @@ config_error
 already_exists
 unprepared
 closed_connection
+read_failure
+write_failure
+function_failure
 ```
 
 
@@ -327,6 +349,22 @@ Varchars can be primed in two ways.
      "column_types" : { "column1" : "set<text>"}
    }
  }
+```
+
+#### Priming tuple
+
+**Since: 1.1.0**
+
+```json
+{
+  "when": {
+    "query": "select * from entries"
+  },
+  "then": {
+    "rows": [{"column1": ["192.168.86.197", "hello"]}],
+    "column_types": {"column1": "tuple<inet,varchar>"}
+  }
+}
 ```
 
 #### Errors when priming
