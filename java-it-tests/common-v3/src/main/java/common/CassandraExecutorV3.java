@@ -13,13 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package queries;
+package common;
 
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.TupleType;
 
-import cassandra.CassandraExecutor30;
+public interface CassandraExecutorV3 extends CassandraExecutor<CassandraResultV3> {
 
-public class PrimingCollectionsForQuery30 extends PrimingMapsForQuery {
-    public PrimingCollectionsForQuery30() {
-        super(new CassandraExecutor30(scassandra.getBinaryPort()));
-    }
+    /**
+     * Create a {@link TupleType} from the given {@link DataType}s.
+     *
+     * This is abstract as the means for creating a {@link TupleType} varies between versions of the driver.
+     * @param dataTypes Types, in order, to be part of the tuple.
+     * @return generated tuple type.
+     */
+    TupleType tupleType(DataType... dataTypes);
 }

@@ -20,7 +20,6 @@ import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import com.datastax.driver.core.utils.UUIDs;
-
 import com.google.common.base.Optional;
 import common.*;
 import io.netty.channel.EventLoopGroup;
@@ -34,12 +33,10 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import static org.scassandra.http.client.Result.*;
-import static org.scassandra.http.client.Result.already_exists;
-
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static org.scassandra.http.client.Result.*;
 
-public class CassandraExecutor30 implements CassandraExecutor {
+public class CassandraExecutor30 implements CassandraExecutorV3 {
     private Cluster cluster;
     private Session session;
 
@@ -59,12 +56,12 @@ public class CassandraExecutor30 implements CassandraExecutor {
     }
 
     @Override
-    public CassandraResult executeQuery(String query) {
+    public CassandraResultV3 executeQuery(String query) {
         return this.execute(session::execute, query);
     }
 
     @Override
-    public CassandraResult executeSimpleStatement(String query, String consistency) {
+    public CassandraResultV3 executeSimpleStatement(String query, String consistency) {
         SimpleStatement simpleStatement = new SimpleStatement(query);
         Statement statement = simpleStatement.setConsistencyLevel(ConsistencyLevel.valueOf(consistency));
         return this.execute(session::execute, statement);
@@ -76,14 +73,14 @@ public class CassandraExecutor30 implements CassandraExecutor {
     }
 
     @Override
-    public CassandraResult prepareAndExecute(String query, Object... variable) {
+    public CassandraResultV3 prepareAndExecute(String query, Object... variable) {
         PreparedStatement prepare = session.prepare(query);
         BoundStatement bind = prepare.bind(variable);
         return this.execute(session::execute, bind);
     }
 
     @Override
-    public CassandraResult prepareAndExecuteWithConsistency(String query, String consistency, Object... vars) {
+    public CassandraResultV3 prepareAndExecuteWithConsistency(String query, String consistency, Object... vars) {
         PreparedStatement prepare = session.prepare(query);
         prepare.setConsistencyLevel(ConsistencyLevel.valueOf(consistency));
         BoundStatement bind = prepare.bind(vars);
@@ -91,7 +88,7 @@ public class CassandraExecutor30 implements CassandraExecutor {
     }
 
     @Override
-    public CassandraResult executeSelectWithBuilder(String table, Optional<WhereEquals> clause) {
+    public CassandraResultV3 executeSelectWithBuilder(String table, Optional<WhereEquals> clause) {
 
         Select query = QueryBuilder.select().all().from(table);
         if (clause.isPresent()) {
@@ -101,12 +98,12 @@ public class CassandraExecutor30 implements CassandraExecutor {
     }
 
     @Override
-    public CassandraResult executeSelectWithBuilder(String table) {
+    public CassandraResultV3 executeSelectWithBuilder(String table) {
         return this.executeSelectWithBuilder(table, Optional.<WhereEquals>absent());
     }
 
     @Override
-    public CassandraResult executeBatch(List<CassandraQuery> queries, BatchType batchType) {
+    public CassandraResultV3 executeBatch(List<CassandraQuery> queries, BatchType batchType) {
         BatchStatement batch = new BatchStatement(BatchStatement.Type.valueOf(batchType.name()));
         queries.forEach(query -> {
             switch (query.getQueryType()) {
@@ -172,9 +169,9 @@ public class CassandraExecutor30 implements CassandraExecutor {
                 // tries another host.
                 if (message.contains("protocol error")) {
                     error = protocol_error;
-                } else if (message.contains("Host overloaded")) {
+                } else if (message.contains("overloaded")) {
                     error = overloaded;
-                } else if (message.contains("Host is bootstrapping")) {
+                } else if (message.contains("bootstrapping")) {
                     error = is_bootstrapping;
                 }
             } catch (Throwable t) {
@@ -206,5 +203,10 @@ public class CassandraExecutor30 implements CassandraExecutor {
             return new CassandraResult30(new CassandraResult.ErrorMessageStatus(already_exists, e.getMessage()));
         }
         return new CassandraResult30(resultSet);
+    }
+
+    @Override
+    public TupleType tupleType(DataType... dataTypes) {
+        return TupleType.of(ProtocolVersion.V4, CodecRegistry.DEFAULT_INSTANCE, dataTypes);
     }
 }

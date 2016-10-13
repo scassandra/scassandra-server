@@ -16,16 +16,18 @@
 package cassandra;
 
 import com.datastax.driver.core.Row;
-import common.CassandraRow;
+import com.datastax.driver.core.TupleValue;
+import common.CassandraRowV3;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.time.LocalDate;
 import java.util.*;
 
 
-public class CassandraRow30 implements CassandraRow {
+public class CassandraRow30 implements CassandraRowV3 {
     private Row cassandraRow;
 
     public CassandraRow30(Row cassandraRow) {
@@ -33,7 +35,7 @@ public class CassandraRow30 implements CassandraRow {
     }
 
     @Override
-    public Date getDate(String columnName) {
+    public Date getTimestamp(String columnName) {
         return this.cassandraRow.getTimestamp(columnName);
     }
 
@@ -105,5 +107,30 @@ public class CassandraRow30 implements CassandraRow {
     @Override
     public UUID getUUID(String name) {
         return cassandraRow.getUUID(name);
+    }
+
+    @Override
+    public Short getShort(String name) {
+        return cassandraRow.getShort(name);
+    }
+
+    @Override
+    public Byte getByte(String name) {
+        return cassandraRow.getByte(name);
+    }
+
+    @Override
+    public long getTime(String name) {
+        return cassandraRow.getTime(name);
+    }
+
+    @Override
+    public LocalDate getDate(String name) {
+        return LocalDate.ofEpochDay(cassandraRow.getDate(name).getDaysSinceEpoch());
+    }
+
+    @Override
+    public TupleValue getTupleValue(String name) {
+        return cassandraRow.getTupleValue(name);
     }
 }

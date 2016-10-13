@@ -16,10 +16,10 @@
 package queries;
 
 
-import cassandra.CassandraExecutor20;
+import cassandra.CassandraExecutor30;
 
-public class PrimingCollectionsForQuery20 extends PrimingMapsForQuery {
-    public PrimingCollectionsForQuery20() {
-        super(new CassandraExecutor20(scassandra.getBinaryPort()));
+public class PrimingMapsForQuery30 extends PrimingMapsForQuery {
+    public PrimingMapsForQuery30() {
+        super(new CassandraExecutor30(scassandra.getBinaryPort()));
     }
 }

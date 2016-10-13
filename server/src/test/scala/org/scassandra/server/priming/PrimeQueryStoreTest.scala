@@ -621,6 +621,114 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       val validationResult = new PrimeQueryStore().add(prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A MAP!", "hasInvalidValue", mapType.stringRep))))
     }
-    // TODO: Add v3/v4 types when supported.
+
+    it("when column value not tuple (uuid, List<Int>)") {
+      // given
+      val uuid = UUID.randomUUID().toString
+      val tupleType = DataType.Tuple(DataType.Uuid, DataType.List(DataType.Int))
+
+      // given
+      val prime = PrimeQuerySingle(
+        When(
+          Some(someQuery)
+        ),
+        Then(
+          rows = Some(List(
+            Map("name" -> "totoro", "hasInvalidValue" -> (uuid, List(1,2,3,4))),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TUPLE!")
+          )),
+          result = Some(Success),
+          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> tupleType))
+        )
+      )
+
+      // when and then
+      val validationResult = new PrimeQueryStore().add(prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TUPLE!", "hasInvalidValue", tupleType.stringRep))))
+    }
+
+    it("when column value not time") {
+      // given
+      val prime = PrimeQuerySingle(
+        When(
+          Some(someQuery)
+        ),
+        Then(
+          rows = Some(List(
+            Map("name" -> "totoro", "hasInvalidValue" -> 1368438171000L),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TIME!")
+          )),
+          result = Some(Success),
+          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Time))
+        )
+      )
+
+      // when and then
+      val validationResult = new PrimeQueryStore().add(prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TIME!", "hasInvalidValue", DataType.Time.stringRep))))
+    }
+
+    it("when column value not date") {
+      // given
+      val prime = PrimeQuerySingle(
+        When(
+          Some(someQuery)
+        ),
+        Then(
+          rows = Some(List(
+            Map("name" -> "totoro", "hasInvalidValue" -> 2147484648L),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A DATE!")
+          )),
+          result = Some(Success),
+          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Date))
+        )
+      )
+
+      // when and then
+      val validationResult = new PrimeQueryStore().add(prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A DATE!", "hasInvalidValue", DataType.Date.stringRep))))
+    }
+
+    it("when column value not smallint") {
+      // given
+      val prime = PrimeQuerySingle(
+        When(
+          Some(someQuery)
+        ),
+        Then(
+          rows = Some(List(
+            Map("name" -> "totoro", "hasInvalidValue" -> 512),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A SMALLINT!")
+          )),
+          result = Some(Success),
+          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Smallint))
+        )
+      )
+
+      // when and then
+      val validationResult = new PrimeQueryStore().add(prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A SMALLINT!", "hasInvalidValue", DataType.Smallint.stringRep))))
+    }
+
+    it("when column value not tinyint") {
+      // given
+      val prime = PrimeQuerySingle(
+        When(
+          Some(someQuery)
+        ),
+        Then(
+          rows = Some(List(
+            Map("name" -> "totoro", "hasInvalidValue" -> 127),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TINYINT!")
+          )),
+          result = Some(Success),
+          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Tinyint))
+        )
+      )
+
+      // when and then
+      val validationResult = new PrimeQueryStore().add(prime)
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TINYINT!", "hasInvalidValue", DataType.Tinyint.stringRep))))
+    }
   }
 }

@@ -15,17 +15,16 @@
  */
 package common;
 
-import com.google.common.collect.ImmutableMap;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.time.LocalDate;
 import java.util.*;
 
 public interface CassandraRow {
 
-    Date getDate(String columnName);
+    Date getTimestamp(String columnName);
 
     String getString(String name);
 
@@ -54,4 +53,12 @@ public interface CassandraRow {
     double getDouble(String name);
 
     UUID getUUID(String name);
+
+    Short getShort(String name);
+
+    Byte getByte(String name);
+
+    long getTime(String name);
+
+    LocalDate getDate(String name);
 }

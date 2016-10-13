@@ -17,13 +17,13 @@ package cassandra;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
-import common.CassandraResult;
-import common.CassandraRow;
+import common.CassandraResultV3;
+import common.CassandraRowV3;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CassandraResult21 implements CassandraResult {
+public class CassandraResult21 implements CassandraResultV3 {
 
     private ResultSet resultSet;
     private ResponseStatus result;
@@ -38,7 +38,7 @@ public class CassandraResult21 implements CassandraResult {
     }
 
     @Override
-    public List<CassandraRow> rows() {
+    public List<CassandraRowV3> rows() {
         List<Row> all = resultSet.all();
         return all.stream().map(CassandraRow21::new).collect(Collectors.toList());
     }

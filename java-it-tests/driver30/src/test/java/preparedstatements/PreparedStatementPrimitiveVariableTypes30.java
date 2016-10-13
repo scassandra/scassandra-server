@@ -16,10 +16,92 @@
 package preparedstatements;
 
 import cassandra.CassandraExecutor30;
+import com.datastax.driver.core.LocalDate;
+import org.junit.Test;
+import org.scassandra.cql.PrimitiveType;
+import org.scassandra.http.client.PreparedStatementExecution;
+import org.scassandra.http.client.PrimingRequest;
+
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 public class PreparedStatementPrimitiveVariableTypes30 extends PreparedStatementPrimitiveVariableTypes {
 
     public PreparedStatementPrimitiveVariableTypes30() {
         super(new CassandraExecutor30(scassandra.getBinaryPort()));
+    }
+
+    @Test
+    public void testSmallint() {
+        short variable = 512;
+        String query = "select * from blah where id = ?";
+        PrimingRequest primingRequest = PrimingRequest.preparedStatementBuilder()
+                .withQuery(query)
+                .withVariableTypes(PrimitiveType.SMALL_INT)
+                .build();
+        primingClient.prime(primingRequest);
+
+        cassandra().prepareAndExecute(query, variable);
+
+        List<PreparedStatementExecution> preparedStatementExecutions = activityClient.retrievePreparedStatementExecutions();
+        assertEquals(1, preparedStatementExecutions.size());
+        PreparedStatementExecution preparedStatementExecution = preparedStatementExecutions.get(0);
+        assertEquals(512.0, preparedStatementExecution.getVariables().get(0));
+    }
+
+    @Test
+    public void testTinyint() {
+        byte variable = 127;
+        String query = "select * from blah where id = ?";
+        PrimingRequest primingRequest = PrimingRequest.preparedStatementBuilder()
+                .withQuery(query)
+                .withVariableTypes(PrimitiveType.TINY_INT)
+                .build();
+        primingClient.prime(primingRequest);
+
+        cassandra().prepareAndExecute(query, variable);
+
+        List<PreparedStatementExecution> preparedStatementExecutions = activityClient.retrievePreparedStatementExecutions();
+        assertEquals(1, preparedStatementExecutions.size());
+        PreparedStatementExecution preparedStatementExecution = preparedStatementExecutions.get(0);
+        assertEquals(127.0, preparedStatementExecution.getVariables().get(0));
+    }
+
+    @Test
+    public void testDate() {
+        LocalDate variable = LocalDate.fromYearMonthDay(2012, 8, 4);
+        String query = "select * from blah where id = ?";
+        PrimingRequest primingRequest = PrimingRequest.preparedStatementBuilder()
+                .withQuery(query)
+                .withVariableTypes(PrimitiveType.DATE)
+                .build();
+        primingClient.prime(primingRequest);
+
+        cassandra().prepareAndExecute(query, variable);
+
+        List<PreparedStatementExecution> preparedStatementExecutions = activityClient.retrievePreparedStatementExecutions();
+        assertEquals(1, preparedStatementExecutions.size());
+        PreparedStatementExecution preparedStatementExecution = preparedStatementExecutions.get(0);
+        // Date is epoch at 2^31 + days since epoch.
+        assertEquals(2147499204.0, preparedStatementExecution.getVariables().get(0));
+    }
+
+    @Test
+    public void testTime() {
+        long variable = 83458345843858438L;
+        String query = "select * from blah where id = ?";
+        PrimingRequest primingRequest = PrimingRequest.preparedStatementBuilder()
+                .withQuery(query)
+                .withVariableTypes(PrimitiveType.TIME)
+                .build();
+        primingClient.prime(primingRequest);
+
+        cassandra().prepareAndExecute(query, variable);
+
+        List<PreparedStatementExecution> preparedStatementExecutions = activityClient.retrievePreparedStatementExecutions();
+        assertEquals(1, preparedStatementExecutions.size());
+        PreparedStatementExecution preparedStatementExecution = preparedStatementExecutions.get(0);
+        assertEquals(83458345843858438.0, preparedStatementExecution.getVariables().get(0));
     }
 }

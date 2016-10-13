@@ -15,11 +15,10 @@
  */
 package queries;
 
-
 import cassandra.CassandraExecutor21;
 
-public class PrimingCollectionsForQuery21 extends PrimingMapsForQuery {
-    public PrimingCollectionsForQuery21() {
+public class PrimingTuplesForQuery21 extends PrimingTuplesForQuery {
+    public PrimingTuplesForQuery21() {
         super(new CassandraExecutor21(scassandra.getBinaryPort()));
     }
 }

@@ -20,8 +20,8 @@ import org.scassandra.http.client.WriteTypePrime;
 
 import java.util.List;
 
-public interface CassandraResult {
-    List<CassandraRow> rows();
+public interface CassandraResult<C extends CassandraRow> {
+    List<C> rows();
 
     ResponseStatus status();
 

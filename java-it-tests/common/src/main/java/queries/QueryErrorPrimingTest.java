@@ -22,12 +22,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.scassandra.http.client.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.scassandra.http.client.Result.*;
 import static org.scassandra.http.client.WriteTypePrime.BATCH_LOG;
-import static org.scassandra.http.client.WriteTypePrime.SIMPLE;
 
 abstract public class QueryErrorPrimingTest extends AbstractScassandraTest {
 
@@ -131,7 +128,7 @@ abstract public class QueryErrorPrimingTest extends AbstractScassandraTest {
     public void testPrimingServerError() {
         String errorMessage = "Arbitrary Server Error";
         ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
-        assertErrorMessageStatus(server_error, config, "Host replied with server error: " + errorMessage);
+        assertErrorMessageStatus(server_error, config, errorMessage);
     }
 
     @Test
@@ -152,14 +149,14 @@ abstract public class QueryErrorPrimingTest extends AbstractScassandraTest {
     @Test
     public void testOverloadedError() {
         ErrorMessageConfig config = new ErrorMessageConfig("");
-        assertErrorMessageStatus(overloaded, config, "Host overloaded");
+        assertErrorMessageStatus(overloaded, config, "overloaded");
     }
 
     @Test
     public void testIsBootstrapping() {
         String errorMessage = "Lay off, i'm bootstrapping.";
         ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
-        assertErrorMessageStatus(is_bootstrapping, config, "Host is bootstrapping");
+        assertErrorMessageStatus(is_bootstrapping, config, "bootstrapping");
     }
 
     @Test
