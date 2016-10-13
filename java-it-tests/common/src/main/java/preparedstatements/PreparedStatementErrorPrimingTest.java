@@ -218,8 +218,7 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
     public void testClosedOnRequest() {
         ClosedConnectionConfig config = new ClosedConnectionConfig(ClosedConnectionConfig.CloseType.CLOSE);
         assertErrorMessageStatus(closed_connection, config,
-            String.format("All host(s) tried for query failed (tried: localhost/127.0.0.1:%s (com.datastax.driver.core.TransportException: [localhost/127.0.0.1:%s] Connection has been closed))",
-                    scassandra.getBinaryPort(), scassandra.getBinaryPort()),
+            String.format("[localhost/127.0.0.1:%s] Connection has been closed", scassandra.getBinaryPort()),
             server_error);
     }
 

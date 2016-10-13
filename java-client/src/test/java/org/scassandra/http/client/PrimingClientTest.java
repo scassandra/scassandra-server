@@ -232,6 +232,71 @@ public class PrimingClientTest {
                         "}}}")));
     }
 
+    @Test
+    public void testPrimingQueryReadFailure() {
+        //given
+        stubFor(post(urlEqualTo(PRIME_QUERY_PATH)).willReturn(aResponse().withStatus(200)));
+        ReadFailureConfig readFailureConfig = new ReadFailureConfig(0, 2, 1, false);
+        PrimingRequest pr = PrimingRequest.queryBuilder()
+                .withQuery("select * from people")
+                .withResult(Result.read_failure)
+                .withConfig(readFailureConfig)
+                .build();
+        //when
+        underTest.primeQuery(pr);
+        //then
+        verify(postRequestedFor(urlEqualTo(PRIME_QUERY_PATH))
+                .withHeader("Content-Type", equalTo("application/json; charset=UTF-8"))
+                .withRequestBody(equalToJson("{\"when\":{\"query\":\"select * from people\"},\"then\":{\"result\":\"read_failure\", \"config\": {\n" +
+                        "  \"error.required_responses\":\"2\",\n" +
+                        "  \"error.received_responses\":\"0\",\n" +
+                        "  \"error.num_failures\":\"1\",\n" +
+                        "  \"error.data_present\":\"false\"}}}")));
+    }
+
+    @Test
+    public void testPrimingQueryWriteFailure() {
+        //given
+        stubFor(post(urlEqualTo(PRIME_QUERY_PATH)).willReturn(aResponse().withStatus(200)));
+        WriteFailureConfig writeFailureConfig = new WriteFailureConfig(WriteTypePrime.BATCH, 0, 2, 1);
+        PrimingRequest pr = PrimingRequest.queryBuilder()
+                .withQuery("select * from people")
+                .withResult(Result.write_failure)
+                .withConfig(writeFailureConfig)
+                .build();
+        //when
+        underTest.primeQuery(pr);
+        //then
+        verify(postRequestedFor(urlEqualTo(PRIME_QUERY_PATH))
+                .withHeader("Content-Type", equalTo("application/json; charset=UTF-8"))
+                .withRequestBody(equalToJson("{\"when\":{\"query\":\"select * from people\"},\"then\":{\"result\":\"write_failure\", \"config\": {\n" +
+                        "  \"error.required_responses\":\"2\",\n" +
+                        "  \"error.received_responses\":\"0\",\n" +
+                        "  \"error.num_failures\":\"1\",\n" +
+                        "  \"error.write_type\":\"BATCH\"}}}")));
+    }
+
+    @Test
+    public void testPrimingQueryFunctionFailure() {
+        //given
+        stubFor(post(urlEqualTo(PRIME_QUERY_PATH)).willReturn(aResponse().withStatus(200)));
+        FunctionFailureConfig functionFailureConfig = new FunctionFailureConfig("ks", "myfun", "int,varchar,blob");
+        PrimingRequest pr = PrimingRequest.queryBuilder()
+                .withQuery("select myfun(x,y,z) from people")
+                .withResult(Result.function_failure)
+                .withConfig(functionFailureConfig)
+                .build();
+        //when
+        underTest.primeQuery(pr);
+        //then
+        verify(postRequestedFor(urlEqualTo(PRIME_QUERY_PATH))
+                .withHeader("Content-Type", equalTo("application/json; charset=UTF-8"))
+                .withRequestBody(equalToJson("{\"when\":{\"query\":\"select myfun(x,y,z) from people\"},\"then\":{\"result\":\"function_failure\", \"config\": {\n" +
+                        "  \"error.keyspace\":\"ks\",\n" +
+                        "  \"error.function\":\"myfun\",\n" +
+                        "  \"error.arg_types\":\"int,varchar,blob\"}}}")));
+    }
+
     @Test(expected = PrimeFailedException.class)
     public void testPrimeQueryFailed() {
         //given

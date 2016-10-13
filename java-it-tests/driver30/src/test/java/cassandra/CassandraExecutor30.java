@@ -132,6 +132,8 @@ public class CassandraExecutor30 implements CassandraExecutorV3 {
         ResultSet resultSet;
         try {
             resultSet = function.apply(input);
+        } catch (TransportException e) {
+            return new CassandraResult30(new CassandraResult.ErrorMessageStatus(server_error, e.getMessage()));
         } catch (ReadTimeoutException e) {
             return new CassandraResult30(new CassandraResult.ReadTimeoutStatus(
                     e.getConsistencyLevel().toString(),
@@ -149,7 +151,37 @@ public class CassandraExecutor30 implements CassandraExecutorV3 {
                     new CassandraResult.UnavailableStatus(e.getConsistencyLevel().toString(),
                             e.getRequiredReplicas(),
                             e.getAliveReplicas()));
-        } catch (NoHostAvailableException e) {
+        } catch (ReadFailureException e) {
+            return new CassandraResult30(
+                    new CassandraResult.ReadFailureStatus(
+                            e.getConsistencyLevel().toString(),
+                            e.getReceivedAcknowledgements(),
+                            e.getRequiredAcknowledgements(),
+                            e.getFailures(),
+                            e.wasDataRetrieved()
+                    )
+            );
+        } catch (WriteFailureException e) {
+            return new CassandraResult30(
+                    new CassandraResult.WriteFailureStatus(
+                            e.getConsistencyLevel().toString(),
+                            e.getReceivedAcknowledgements(),
+                            e.getRequiredAcknowledgements(),
+                            e.getFailures(),
+                            WriteTypePrime.valueOf(e.getWriteType().toString())
+                    )
+            );
+        } catch (FunctionExecutionException e) {
+            return new CassandraResult30(
+                    // Java driver doesn't currently surface this.
+                    new CassandraResult.FunctionFailureStatus(
+                            null,
+                            null,
+                            null
+                    )
+            );
+        }
+        catch (NoHostAvailableException e) {
             Result error = server_error;
             String message = e.getMessage();
             InetSocketAddress addr = e.getErrors().keySet().iterator().next();
@@ -177,6 +209,8 @@ public class CassandraExecutor30 implements CassandraExecutorV3 {
             } catch (Throwable t) {
             } // unknown error we can handle later.
             return new CassandraResult30(new CassandraResult.ErrorMessageStatus(error, message));
+        } catch (ServerError e) {
+            return new CassandraResult30(new CassandraResult.ErrorMessageStatus(server_error, e.getMessage()));
         } catch (DriverInternalError e) {
             Result error = protocol_error;
             String message = e.getMessage();
@@ -201,6 +235,8 @@ public class CassandraExecutor30 implements CassandraExecutorV3 {
             return new CassandraResult30(new CassandraResult.ErrorMessageStatus(invalid, e.getMessage()));
         } catch (AlreadyExistsException e) {
             return new CassandraResult30(new CassandraResult.ErrorMessageStatus(already_exists, e.getMessage()));
+        } catch (OverloadedException e) {
+            return new CassandraResult30(new CassandraResult.ErrorMessageStatus(overloaded, e.getMessage()));
         }
         return new CassandraResult30(resultSet);
     }

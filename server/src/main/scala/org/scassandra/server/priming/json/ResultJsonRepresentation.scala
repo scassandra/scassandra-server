@@ -79,6 +79,9 @@ object ResultJsonRepresentation {
       case AlreadyExists.string => AlreadyExists
       case Unprepared.string => Unprepared
       case ClosedConnection.string => ClosedConnection
+      case ReadFailure.string => ReadFailure
+      case WriteFailure.string => WriteFailure
+      case FunctionFailure.string => FunctionFailure
       case Success.string => Success
       case _ => Success
     }
