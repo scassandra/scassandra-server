@@ -39,7 +39,7 @@ class PrimeQueryStore() extends LazyLogging {
 
   var queryPatternPrimes: Map[PrimeCriteria, PrimeQuerySingle] = Map()
 
-  def getAllPrimes: List[PrimeQuerySingle] = queryPrimes.values.toList
+  def getAllPrimes: List[PrimeQuerySingle] = queryPrimes.values.toList ++ queryPatternPrimes.values.toList
 
   def add(primeQuerySingle: PrimeQuerySingle): PrimeAddResult = {
     val p = primeQuerySingle.withDefaults
