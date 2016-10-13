@@ -38,9 +38,12 @@ case class QueryParameters(
 object DefaultQueryParameters extends QueryParameters()
 
 object QueryParameters {
-  private[this] lazy val v1FlagsCodec = provide(QueryFlags())
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[QueryParameters] =
+    protocolVersion.queryParametersCodec
 
-  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[QueryParameters] = {
+  private[this] lazy val v1FlagsCodec: Codec[QueryFlags] = provide(DefaultQueryFlags)
+
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
     ("consistency"        | Consistency.codec)                                                                ::
     ("flags"              | withDefault(conditional(protocolVersion.version > 1, Codec[QueryFlags]), v1FlagsCodec)).consume { flags =>
     ("values"             | conditional(flags.values, listOfN(cshort, queryValue(flags.namesForValues))))     ::
@@ -73,6 +76,8 @@ private[this] case class QueryFlags(
   skipMetadata: Boolean = false,
   values: Boolean = false
 )
+
+private[this] object DefaultQueryFlags extends QueryFlags()
 
 private[this] object QueryFlags {
   implicit val codec: Codec[QueryFlags] = {

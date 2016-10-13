@@ -15,20 +15,43 @@
  */
 package org.scassandra.codec
 
+import java.util.concurrent.ConcurrentHashMap
+
 import org.scassandra.codec.Notations.{short => cshort, string => cstring}
 import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.messages.{ColumnSpec, PreparedMetadata, QueryParameters, RowMetadata}
 import scodec.Attempt.Successful
 import scodec.Codec
 import scodec.codecs._
 
-import scala.util.{Failure => TFailure}
+import scala.collection.convert.decorateAsScala._
+import scalaz.Memo
 
 sealed trait ProtocolVersion {
   val version: Int
-  val streamIdCodec: Codec[Int]
-  val collectionLengthCodec: Codec[Int]
-  val dataTypeCodec: Codec[DataType]
   lazy val headerLength: Long = 7 + (streamIdCodec.sizeBound.exact.get / 8)
+
+  // cache message codecs as they are requested.  This prevents repeated creation of codecs.
+  private[codec] lazy val memo = Memo.mutableMapMemo(new ConcurrentHashMap[Int, Codec[Message]]().asScala) {
+    o: Int => Message.codecForVersion(this, o)
+  }
+
+  // codecs that have protocol version specific behavior.
+  private[codec] val streamIdCodec: Codec[Int]
+  private[codec] val collectionLengthCodec: Codec[Int]
+  private[codec] val dataTypeCodec: Codec[DataType]
+  private[codec] def messageCodec(opcode: Int): Codec[Message] = memo(opcode)
+  private[codec] lazy val batchCodec: Codec[Batch] = Batch.codecForVersion(this)
+  private[codec] lazy val executeCodec: Codec[Execute] = Execute.codecForVersion(this)
+  private[codec] lazy val preparedCodec: Codec[Prepared] = Prepared.codecForVersion(this)
+  private[codec] lazy val preparedMetadataCodec: Codec[PreparedMetadata] = PreparedMetadata.codecForVersion(this)
+  private[codec] lazy val queryCodec: Codec[Query] = Query.codecForVersion(this)
+  private[codec] lazy val queryParametersCodec: Codec[QueryParameters] = QueryParameters.codecForVersion(this)
+  private[codec] lazy val resultCodec: Codec[Result] = Result.codecForVersion(this)
+  private[codec] lazy val rowMetadataCodec: Codec[RowMetadata] = RowMetadata.codecForVersion(this)
+  private[codec] lazy val rowsCodec: Codec[Rows] = Rows.codecForVersion(this)
+  private[codec] lazy val columnSpecWithTableCodec: Codec[ColumnSpec] = ColumnSpec.codecForVersion(withTable = true)(this)
+  private[codec] lazy val columnSpecWithoutTableCodec: Codec[ColumnSpec] = ColumnSpec.codecForVersion(withTable = false)(this)
 }
 
 sealed trait Int8StreamId {

@@ -37,7 +37,9 @@ case class RowMetadata(
 object NoRowMetadata extends RowMetadata(RowMetadataFlags())
 
 object RowMetadata {
-  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[RowMetadata] = {
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[RowMetadata] = protocolVersion.rowMetadataCodec
+
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
     ("flags"       | Codec[RowMetadataFlags]).flatPrepend { flags =>
     ("columnCount" | cint).consume { count =>
     ("pagingState" | conditional(flags.hasMorePages, cbytes))     ::
@@ -70,18 +72,27 @@ case class ColumnSpecWithTable(keyspace: String, table: String, override val nam
 object ColumnSpec {
   def codec(withTable: Boolean)(implicit protocolVersion: ProtocolVersion): Codec[ColumnSpec] = {
     if(withTable) {
+      protocolVersion.columnSpecWithTableCodec
+    } else {
+      protocolVersion.columnSpecWithoutTableCodec
+    }
+  }
+
+  def column(name: String, dataType: DataType) = ColumnSpecWithoutTable(name, dataType)
+
+  private[codec] def codecForVersion(withTable: Boolean)(implicit protocolVersion: ProtocolVersion): Codec[ColumnSpec] = {
+    if(withTable) {
       (cstring :: cstring :: cstring  :: Codec[DataType]).as[ColumnSpecWithTable].upcast[ColumnSpec]
     } else {
       (cstring :: Codec[DataType]).as[ColumnSpecWithoutTable].upcast[ColumnSpec]
     }
   }
-
-  def column(name: String, dataType: DataType) = ColumnSpecWithoutTable(name, dataType)
 }
 
 case class Row(columns: Map[String, Any])
 
 object Row {
+  // TODO: Consider caching RowCodecs by ColumnSpec.
   def withColumnSpec(spec: List[ColumnSpec])(implicit protocolVersion: ProtocolVersion): Codec[Row] = RowCodec(spec)
   def apply(colPairs: (String, Any)*): Row = Row(colPairs.toMap)
 }

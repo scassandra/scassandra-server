@@ -16,7 +16,7 @@
 package org.scassandra.codec
 
 import org.scassandra.codec.Consistency.Consistency
-import org.scassandra.codec.Notations.{bytes => cbytes, int => cint, long => clong, short => cshort, string => cstring, _}
+import org.scassandra.codec.Notations.{int => cint, long => clong, short => cshort, string => cstring, _}
 import org.scassandra.codec.messages.BatchType.BatchType
 import org.scassandra.codec.messages._
 import scodec.Attempt.{Failure, Successful}
@@ -50,33 +50,32 @@ sealed trait Message {
 
 object Message {
 
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion, opcode: Int): Codec[Message] = opcode match {
+    case ErrorMessage.opcode => Codec[ErrorMessage].upcast[Message]
+    case Startup.opcode => Codec[Startup].upcast[Message]
+    case Ready.opcode => Codec[Ready.type].upcast[Message]
+    case Options.opcode => Codec[Options.type].upcast[Message]
+    // TODO: Authenticate
+    case Supported.opcode => Codec[Supported].upcast[Message]
+    case Query.opcode => Codec[Query].upcast[Message]
+    case Result.opcode => Codec[Result].upcast[Message]
+    case Prepare.opcode => Codec[Prepare].upcast[Message]
+    case Execute.opcode => Codec[Execute].upcast[Message]
+    case Register.opcode => Codec[Register].upcast[Message]
+    // TODO: Event
+    case Batch.opcode => Codec[Batch].upcast[Message]
+    // TODO: AuthChallenge
+    // TODO: AuthResponse
+    // TODO: AuthSuccess
+    case _ => provide(ProtocolError(s"Unknown opcode: $opcode")).upcast[Message]
+  }
+
   /**
     * Resolves the appropriate [[Message]] codec based on the opcode.
     * @param opcode Opcode of the message to resolve codec for.
     * @return The appropriate [[Codec]] based on the opcode.
     */
-  def codec(opcode: Int)(implicit protocolVersion: ProtocolVersion) =
-    // the 'message' codec is resolved from the opcode determined in the header.
-    // coproduct gathers all the codecs under that type.
-    // discriminatedBy chooses the codec based on the provided opcode.
-    // TODO: Consider switching to implicit discriminators, which currently isn't too IDE friendly.
-    discriminated[Message].by(provide(opcode))
-      .typecase(ErrorMessage.opcode, Codec[ErrorMessage])
-      .typecase(Startup.opcode, Codec[Startup])
-      .typecase(Ready.opcode, Codec[Ready.type])
-      // TODO: Authenticate
-      .typecase(Options.opcode, Codec[Options.type])
-      .typecase(Supported.opcode, Codec[Supported])
-      .typecase(Query.opcode, Codec[Query])
-      .typecase(Result.opcode, Codec[Result])
-      .typecase(Prepare.opcode, Codec[Prepare])
-      .typecase(Execute.opcode, Codec[Execute])
-      .typecase(Register.opcode, Codec[Register])
-      // TODO: Event
-      .typecase(Batch.opcode, Codec[Batch])
-      // TODO: AuthChallenge
-      // TODO: AuthResponse
-      // TODO: AuthSuccess
+  def codec(opcode: Int)(implicit protocolVersion: ProtocolVersion) = protocolVersion.messageCodec(opcode)
 }
 
 sealed abstract class ErrorMessage(message: String) extends Message {
@@ -161,7 +160,9 @@ case class Query(query: String, parameters: QueryParameters = DefaultQueryParame
 object Query {
   val opcode = 0x7
   implicit val discriminator: Discriminator[Message, Query, Int] = Discriminator(opcode)
-  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Query] = {
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Query] = protocolVersion.queryCodec
+
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
     ("query"      | longString) ::
     ("parameters" | Codec[QueryParameters])
   }.as[Query]
@@ -173,7 +174,9 @@ sealed trait Result extends Message {
 
 object Result {
   val opcode: Int = 0x8
-  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Result] = discriminated[Result].by(cint)
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Result] = protocolVersion.resultCodec
+
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = discriminated[Result].by(cint)
     .typecase(0x1, Codec[VoidResult.type])
     .typecase(0x2, Codec[Rows])
     .typecase(0x3, Codec[SetKeyspace])
@@ -188,7 +191,10 @@ case class Rows(metadata: RowMetadata = NoRowMetadata, rows: List[Row] = Nil) ex
 object NoRows extends Rows()
 
 object Rows {
-  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Rows] = {
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Rows] =
+    protocolVersion.rowsCodec
+
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
     Codec[RowMetadata].flatPrepend{ metadata =>
       listOfN(cint, Row.withColumnSpec(metadata.columnSpec.getOrElse(Nil))).hlist
   }}.as[Rows]
@@ -204,7 +210,10 @@ case class Prepared(id: ByteVector, preparedMetadata: PreparedMetadata = NoPrepa
                     resultMetadata: RowMetadata = NoRowMetadata) extends Result
 
 case object Prepared {
-  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Prepared] = {
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Prepared] =
+    protocolVersion.preparedCodec
+
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
     ("id"               | shortBytes)               ::
     ("preparedMetadata" | Codec[PreparedMetadata])  ::
     ("resultMetadata"   | Codec[RowMetadata])
@@ -229,7 +238,10 @@ case class Execute(id: ByteVector, parameters: QueryParameters = DefaultQueryPar
 object Execute {
   val opcode = 0xA
 
-  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Execute] = {
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Execute] =
+    protocolVersion.executeCodec
+
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
     ("id"              | shortBytes) ::
     ("queryParameters" | Codec[QueryParameters])
   }.as[Execute]
@@ -258,15 +270,14 @@ case class Batch(
 object Batch {
   val opcode = 0xD
 
-  // TODO: Refactor this, it's currently really ugly to expand/unexpand values driven by batch flags in a way that
-  // doesn't require any changes to the Batch class.
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Batch] = protocolVersion.batchCodec
 
   /**
     * Flattens an <code>Option[ Option[Consistency] :: Option[Long] ]</code> HList into
     * <code>Option[Consistency] :: Option[Long]</code>
     * @return
     */
-  def flatten(in: Option[::[Option[Consistency], ::[Option[Long], HNil]]]): ::[Option[Consistency], ::[Option[Long], HNil]] = {
+  private[this] def flatten(in: Option[::[Option[Consistency], ::[Option[Long], HNil]]]): ::[Option[Consistency], ::[Option[Long], HNil]] = {
     val (scon: Option[Consistency], ts: Option[Long]) = in match {
       case Some(x :: y :: HNil) => (x, y)
       case None => (None, None)
@@ -279,14 +290,14 @@ object Batch {
     * @param in
     * @return
     */
-  def unflatten(in: ::[Option[Consistency], ::[Option[Long], HNil]]): Option[::[Option[Consistency], ::[Option[Long], HNil]]] = in match {
+  private[this] def unflatten(in: ::[Option[Consistency], ::[Option[Long], HNil]]): Option[::[Option[Consistency], ::[Option[Long], HNil]]] = in match {
     case None :: None :: HNil => None
     case Some(x) :: Some(y) :: HNil => Some(Some(x) :: Some(y) :: HNil)
     case Some(x) :: None :: HNil => Some(Some(x) :: None :: HNil)
     case None :: Some(y) :: HNil => Some(None :: Some(y) :: HNil)
   }
 
-  def handleBatchFlags(implicit protocolVersion: ProtocolVersion) = conditional(protocolVersion.version >= ProtocolVersionV3.version,
+  private[this] def handleBatchFlags(protocolVersion: ProtocolVersion) = conditional(protocolVersion.version >= ProtocolVersionV3.version,
     ("flags"             | Codec[BatchFlags]).consume { flags =>
     ("serialConsistency" | conditional(flags.withSerialConsistency, consistency)) ::
     ("timestamp"         | conditional(flags.withDefaultTimestamp, clong))
@@ -299,10 +310,10 @@ object Batch {
       )
     }).xmap(flatten, unflatten)
 
-  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Batch] = {
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
     ("batchType"         | Codec[BatchType]) ::
     ("queries"           | listOfN(cshort, Codec[BatchQuery])) ::
     ("consistency"       | Consistency.codec) ::
-    ("remaining"         | handleBatchFlags)
+    ("remaining"         | handleBatchFlags(protocolVersion))
   }.as[Batch]
 }

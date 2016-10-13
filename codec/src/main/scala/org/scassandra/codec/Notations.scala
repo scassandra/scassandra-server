@@ -128,8 +128,8 @@ object Notations {
   val stringMultimap = map(short, string, stringList)
   val bytesMap = map(short, string, bytes)
 
-  val queryValueWithName = (conditional(true, cstring) :: value).as[QueryValue]
-  val queryValueWithoutName = (conditional(false, cstring) :: value).as[QueryValue]
+  val queryValueWithName = (conditional(included=true, cstring) :: value).as[QueryValue]
+  val queryValueWithoutName = (conditional(included=false, cstring) :: value).as[QueryValue]
   def queryValue(includeName: Boolean) = if(includeName) queryValueWithName else queryValueWithoutName
 
   def map[K,V](countCodec: Codec[Int], keyCodec: Codec[K], valCodec: Codec[V]): Codec[Map[K,V]] =

@@ -113,6 +113,7 @@ uploadArchives {
 dependencies {
     compile 'org.scala-lang:scala-library:2.11.8'
     compile 'org.scodec:scodec-core_2.11:1.10.2'
+    compile 'org.scalaz:scalaz-core_2.11:7.2.6'
 
     testCompile 'org.scalacheck:scalacheck_2.11:1.12.4'
     testCompile "org.scalatest:scalatest_2.11:2.2.3"

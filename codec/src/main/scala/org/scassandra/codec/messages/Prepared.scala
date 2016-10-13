@@ -30,7 +30,8 @@ case class PreparedMetadata(
 object NoPreparedMetadata extends PreparedMetadata()
 
 object PreparedMetadata {
-  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[PreparedMetadata] = {
+
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
     ("flags"               | cint).consume { (flags: Int) =>
     ("columnCount"         | cint).consume { (columnCount: Int) =>
     ("partitionKeyIndices" | conditional(protocolVersion.version >= 4, listOfN(cint, cshort))) ::
@@ -40,4 +41,7 @@ object PreparedMetadata {
   }(_.tail.tail.tail.head.size) // columnCount = columnSpec.size, TODO: use _(3) instead.
   }(data => if (data.tail.head.isDefined) 1 else 0) // flags.globalTableSpec == keyspace is present.
   }.as[PreparedMetadata]
+
+  implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[PreparedMetadata] =
+    protocolVersion.preparedMetadataCodec
 }
