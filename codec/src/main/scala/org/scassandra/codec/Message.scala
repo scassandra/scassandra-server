@@ -194,7 +194,7 @@ object Rows {
 
   private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
     Codec[RowMetadata].flatPrepend{ metadata =>
-      listOfN(cint, Row.withColumnSpec(metadata.columnSpec.getOrElse(Nil))).hlist
+      listOfN(cint, Row.withColumnSpec(metadata.columnSpec)).hlist
   }}.as[Rows]
 }
 
@@ -270,13 +270,11 @@ object Batch {
 
   implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Batch] = protocolVersion.batchCodec
 
-  private [this] val v1v2FlagsCodec: Codec[BatchFlags] = provide(DefaultBatchFlags)
-
   private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
     ("batchType"         | Codec[BatchType]) ::
     ("queries"           | listOfN(cshort, Codec[BatchQuery])) ::
     ("consistency"       | Consistency.codec) ::
-    ("flags"             | withDefault(conditional(protocolVersion.version > 2, Codec[BatchFlags]), v1v2FlagsCodec)).consume { flags =>
+    ("flags"             | withDefaultValue(conditional(protocolVersion.version > 2, Codec[BatchFlags]), DefaultBatchFlags)).consume { flags =>
     ("serialConsistency" | conditional(flags.withSerialConsistency, consistency)) ::
     ("timestamp"         | conditional(flags.withDefaultTimestamp, clong))
     } { data => // derive flags from presence of serialConsistency and timestamp.

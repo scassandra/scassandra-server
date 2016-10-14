@@ -21,7 +21,7 @@ import scodec.Codec
 import scodec.codecs._
 
 case class PreparedMetadata(
-  partitionKeyIndices: Option[List[Int]] = Some(Nil),
+  partitionKeyIndices: List[Int] = Nil,
   keyspace: Option[String] = None,
   table: Option[String] = None,
   columnSpec: List[ColumnSpec] = Nil
@@ -34,7 +34,7 @@ object PreparedMetadata {
   private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
     ("flags"               | cint).consume { (flags: Int) =>
     ("columnCount"         | cint).consume { (columnCount: Int) =>
-    ("partitionKeyIndices" | conditional(protocolVersion.version >= 4, listOfN(cint, cshort))) ::
+    ("partitionKeyIndices" | withDefaultValue(conditional(protocolVersion.version >= 4, listOfN(cint, cshort)), Nil)) ::
     ("keyspace"            | conditional(flags == 1, cstring))                                 ::
     ("table"               | conditional(flags == 1, cstring))                                 ::
     ("columnSpec"          | listOfN(provide(columnCount), ColumnSpec.codec(flags == 0)))

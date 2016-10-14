@@ -27,7 +27,7 @@ trait CodecSpec extends WordSpec with Matchers with CodecTablePropertyChecks {
     * @param filter filter to apply to specify explicit protocol versions to test.
     */
   def withProtocolVersions(f: ProtocolVersion => Unit, filter: ProtocolVersion => Boolean): Unit = {
-    forAll(versions) { (protocolVersion: ProtocolVersion) =>
+    forAll(versions.filter(filter)) { (protocolVersion: ProtocolVersion) =>
       "using " + protocolVersion should {
         f(protocolVersion)
       }

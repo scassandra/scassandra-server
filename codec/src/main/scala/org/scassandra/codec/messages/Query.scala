@@ -41,11 +41,9 @@ object QueryParameters {
   implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[QueryParameters] =
     protocolVersion.queryParametersCodec
 
-  private[this] lazy val v1FlagsCodec: Codec[QueryFlags] = provide(DefaultQueryFlags)
-
   private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
     ("consistency"        | Consistency.codec)                                                                ::
-    ("flags"              | withDefault(conditional(protocolVersion.version > 1, Codec[QueryFlags]), v1FlagsCodec)).consume { flags =>
+    ("flags"              | withDefaultValue(conditional(protocolVersion.version > 1, Codec[QueryFlags]), DefaultQueryFlags)).consume { flags =>
     ("values"             | conditional(flags.values, listOfN(cshort, queryValue(flags.namesForValues))))     ::
     ("skipMetadata"       | provide[Boolean](flags.skipMetadata))                                             ::
     ("pageSize"           | conditional(flags.pageSize, cint))                                                ::

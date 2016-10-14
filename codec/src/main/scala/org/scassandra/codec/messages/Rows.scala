@@ -22,31 +22,37 @@ import scodec.Attempt.{Failure, Successful}
 import scodec.bits.{BitVector, ByteVector}
 import scodec.codecs._
 import scodec.{Attempt, Codec, DecodeResult, SizeBound}
+import shapeless.{::, HNil}
 
 import scala.collection.immutable
 import scala.util.control.Breaks._
 
 case class RowMetadata(
-  flags: RowMetadataFlags = RowMetadataFlags(),
   pagingState: Option[ByteVector] = None,
   keyspace: Option[String] = None,
   table: Option[String] = None,
-  columnSpec: Option[List[ColumnSpec]] = None
+  columnSpec: List[ColumnSpec] = Nil
 )
 
-object NoRowMetadata extends RowMetadata(RowMetadataFlags())
+object NoRowMetadata extends RowMetadata()
 
 object RowMetadata {
   implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[RowMetadata] = protocolVersion.rowMetadataCodec
 
   private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
-    ("flags"       | Codec[RowMetadataFlags]).flatPrepend { flags =>
+    ("flags"       | Codec[RowMetadataFlags]).consume { flags =>
     ("columnCount" | cint).consume { count =>
     ("pagingState" | conditional(flags.hasMorePages, cbytes))     ::
     ("keyspace"    | conditional(flags.globalTableSpec, cstring)) ::
     ("table"       | conditional(!flags.noMetadata && flags.globalTableSpec, cstring)) ::
-    ("columnSpec"  | conditional(!flags.noMetadata, listOfN(provide(count), ColumnSpec.codec(!flags.globalTableSpec))))
-  }(_.tail.tail.tail.head.getOrElse(Nil).size) // Extract column count from columnSpec, TODO: alternatively use _(3).getOrElse(Nil).size, it compiles but IDEs might not like it.
+    ("columnSpec"  | withDefaultValue(conditional(!flags.noMetadata, listOfN(provide(count), ColumnSpec.codec(!flags.globalTableSpec))), Nil))
+  }(_.tail.tail.tail.head.size) // Extract column count from columnSpec, TODO: alternatively use _(3).size, it compiles but IDEs might not like it.
+  }{ case pagingState :: keyspace :: table :: columnSpec :: HNil =>
+     RowMetadataFlags(
+       noMetadata = keyspace.isEmpty && table.isEmpty && columnSpec == Nil,
+       hasMorePages = pagingState.isDefined,
+       globalTableSpec = keyspace.isDefined && table.isDefined
+     )
   }}.as[RowMetadata]
 }
 
