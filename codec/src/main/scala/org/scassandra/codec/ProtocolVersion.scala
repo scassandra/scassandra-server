@@ -32,15 +32,20 @@ sealed trait ProtocolVersion {
   lazy val headerLength: Long = 7 + (streamIdCodec.sizeBound.exact.get / 8)
 
   // cache message codecs as they are requested.  This prevents repeated creation of codecs.
-  private[codec] lazy val memo = Memo.mutableMapMemo(new ConcurrentHashMap[Int, Codec[Message]]().asScala) {
+  private[this] lazy val messageCodecs = Memo.mutableMapMemo(new ConcurrentHashMap[Int, Codec[Message]]().asScala) {
     o: Int => Message.codecForVersion(this, o)
+  }
+
+  // cache data types as they are requested.
+  private[this] lazy val dataTypeCodecs = Memo.mutableMapMemo(new ConcurrentHashMap[DataType, DataTypeCodecs]().asScala) {
+    d: DataType => DataTypeCodecs(d)
   }
 
   // codecs that have protocol version specific behavior.
   private[codec] val streamIdCodec: Codec[Int]
   private[codec] val collectionLengthCodec: Codec[Int]
   private[codec] val dataTypeCodec: Codec[DataType]
-  private[codec] def messageCodec(opcode: Int): Codec[Message] = memo(opcode)
+  private[codec] def messageCodec(opcode: Int): Codec[Message] = messageCodecs(opcode)
   private[codec] lazy val batchCodec: Codec[Batch] = Batch.codecForVersion(this)
   private[codec] lazy val executeCodec: Codec[Execute] = Execute.codecForVersion(this)
   private[codec] lazy val preparedCodec: Codec[Prepared] = Prepared.codecForVersion(this)
@@ -52,7 +57,16 @@ sealed trait ProtocolVersion {
   private[codec] lazy val rowsCodec: Codec[Rows] = Rows.codecForVersion(this)
   private[codec] lazy val columnSpecWithTableCodec: Codec[ColumnSpec] = ColumnSpec.codecForVersion(withTable = true)(this)
   private[codec] lazy val columnSpecWithoutTableCodec: Codec[ColumnSpec] = ColumnSpec.codecForVersion(withTable = false)(this)
+  private[codec] def dataTypeCodec(dataType: DataType): Codec[Any] = dataTypeCodecs(dataType).codec
+
+  // Maintains a baseCodec and any codec instance for given data type.
+  private[this] case class DataTypeCodecs(dataType: DataType) {
+    import DataType._
+    val baseCodec = dataType.baseCodec(ProtocolVersion.this)
+    val codec = baseCodec.asInstanceOf[Codec[Any]].withAny(dataType.native)
+  }
 }
+
 
 sealed trait Int8StreamId {
   val streamIdCodec = int8

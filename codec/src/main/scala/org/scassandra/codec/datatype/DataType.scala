@@ -26,11 +26,10 @@ import scodec.codecs._
 import scodec.{Codec, DecodeResult, Err, SizeBound}
 
 sealed trait DataType {
-  import DataType.AnyCodecDecorators
 
   val native: PartialFunction[Any, Any]
-  def baseCodec(implicit protocolVersion: ProtocolVersion): Codec[_]
-  def codec(implicit protocolVersion: ProtocolVersion): Codec[Any] = baseCodec.asInstanceOf[Codec[Any]].withAny(native)
+  protected[codec] def baseCodec(implicit protocolVersion: ProtocolVersion): Codec[_]
+  def codec(implicit protocolVersion: ProtocolVersion): Codec[Any] = protocolVersion.dataTypeCodec(this)
   val stringRep: String
 }
 
