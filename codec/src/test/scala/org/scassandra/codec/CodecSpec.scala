@@ -41,6 +41,14 @@ trait CodecSpec extends WordSpec with Matchers with CodecTablePropertyChecks {
     */
   def withProtocolVersions(f: ProtocolVersion => Unit): Unit = withProtocolVersions(f, _ => true)
 
+  def encodeAndDecode[T](data: T)(implicit codec: Codec[T]): Unit = {
+    encodeAndDecode(codec, data)
+  }
+
+  def encodeAndDecode[T](data: T, expected: Any)(implicit codec: Codec[T]): Unit = {
+    encodeAndDecode(codec, data, expected)
+  }
+
   def encodeAndDecode[T](codec: Codec[T], data: T): Unit = {
     encodeAndDecode(codec, data, data)
   }

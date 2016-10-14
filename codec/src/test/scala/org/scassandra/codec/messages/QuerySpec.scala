@@ -15,18 +15,30 @@
  */
 package org.scassandra.codec.messages
 
+import org.scassandra.codec._
 import org.scassandra.codec.datatype.DataType
-import org.scassandra.codec.{CodecSpec, Consistency, ProtocolVersion, QueryValue}
 import scodec.Attempt.Successful
+import scodec.Codec
 import scodec.bits.ByteVector
 
 class QuerySpec extends CodecSpec {
+
+  "Query.codec" when {
+    withProtocolVersions { (protocolVersion: ProtocolVersion) =>
+      implicit val p = protocolVersion
+      val codec = Codec[Query]
+
+      "include query string" in {
+        encodeAndDecode(codec, Query("select * from system.local"))
+      }
+    }
+  }
 
   "QueryParameters.codec" when {
 
     withProtocolVersions { (protocolVersion: ProtocolVersion) =>
       implicit val p = protocolVersion
-      val codec = QueryParameters.codec(protocolVersion)
+      val codec = Codec[QueryParameters]
 
 
       if(protocolVersion.version == 1) {

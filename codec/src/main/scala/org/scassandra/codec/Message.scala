@@ -23,7 +23,6 @@ import scodec.Attempt.{Failure, Successful}
 import scodec.Codec
 import scodec.bits.ByteVector
 import scodec.codecs._
-import shapeless.{::, HNil}
 
 import scala.util.{Try, Failure => TFailure}
 
@@ -85,14 +84,13 @@ sealed abstract class ErrorMessage(message: String) extends Message {
 case class ServerError(message: String) extends ErrorMessage(message)
 case class ProtocolError(message: String) extends ErrorMessage(message)
 case class BadCredentials(message: String) extends ErrorMessage(message)
-case class Unavailable(message: String = "Unavailable Exception", consistency: Consistency = Consistency.ONE, required: Int = 1, alive: Int = 0) extends ErrorMessage(message)
+case class Unavailable(message: String = "Unavailable Exception", consistency: Consistency, required: Int, alive: Int) extends ErrorMessage(message)
 case class Overloaded(message: String) extends ErrorMessage(message)
 case class IsBootstrapping(message: String) extends ErrorMessage(message)
 case class TruncateError(message: String) extends ErrorMessage(message)
-// TODO: WriteType to its own type
-case class WriteTimeout(message: String = "Write Request Timeout", consistency: Consistency = Consistency.ONE, received: Int = 1, blockFor: Int = 1, writeType: String = "SIMPLE") extends ErrorMessage(message)
-case class ReadTimeout(message: String = "Read Request Timeout", consistency: Consistency = Consistency.ONE, received: Int = 1, blockFor: Int = 1, dataPresent: Boolean = false) extends ErrorMessage(message)
-case class ReadFailure(message: String = "Read Failure", consistency: Consistency, received: Int = 1, blockFor: Int = 1, numFailures: Int = 1, dataPresent: Boolean = false) extends ErrorMessage(message)
+case class WriteTimeout(message: String = "Write Request Timeout", consistency: Consistency, received: Int, blockFor: Int, writeType: String) extends ErrorMessage(message)
+case class ReadTimeout(message: String = "Read Request Timeout", consistency: Consistency, received: Int, blockFor: Int, dataPresent: Boolean) extends ErrorMessage(message)
+case class ReadFailure(message: String = "Read Failure", consistency: Consistency, received: Int, blockFor: Int, numFailures: Int, dataPresent: Boolean) extends ErrorMessage(message)
 case class FunctionFailure(message: String = "Function Failure", keyspace: String, function: String, argTypes: List[String]) extends ErrorMessage(message)
 case class WriteFailure(message: String = "Write Failure", consistency: Consistency, received: Int, blockFor: Int, numFailures: Int, writeType: String) extends ErrorMessage(message)
 case class SyntaxError(message: String) extends ErrorMessage(message)
@@ -272,33 +270,13 @@ object Batch {
 
   implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Batch] = protocolVersion.batchCodec
 
-  /**
-    * Flattens an <code>Option[ Option[Consistency] :: Option[Long] ]</code> HList into
-    * <code>Option[Consistency] :: Option[Long]</code>
-    * @return
-    */
-  private[this] def flatten(in: Option[::[Option[Consistency], ::[Option[Long], HNil]]]): ::[Option[Consistency], ::[Option[Long], HNil]] = {
-    val (scon: Option[Consistency], ts: Option[Long]) = in match {
-      case Some(x :: y :: HNil) => (x, y)
-      case None => (None, None)
-    }
-    scon :: ts :: HNil
-  }
+  private [this] val v1v2FlagsCodec: Codec[BatchFlags] = provide(DefaultBatchFlags)
 
-  /**
-    * Unflattens an Option[Consistency] :: Option[Long] HList into Option[ Option[Consistency] :: Option[Long] ]
-    * @param in
-    * @return
-    */
-  private[this] def unflatten(in: ::[Option[Consistency], ::[Option[Long], HNil]]): Option[::[Option[Consistency], ::[Option[Long], HNil]]] = in match {
-    case None :: None :: HNil => None
-    case Some(x) :: Some(y) :: HNil => Some(Some(x) :: Some(y) :: HNil)
-    case Some(x) :: None :: HNil => Some(Some(x) :: None :: HNil)
-    case None :: Some(y) :: HNil => Some(None :: Some(y) :: HNil)
-  }
-
-  private[this] def handleBatchFlags(protocolVersion: ProtocolVersion) = conditional(protocolVersion.version >= ProtocolVersionV3.version,
-    ("flags"             | Codec[BatchFlags]).consume { flags =>
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
+    ("batchType"         | Codec[BatchType]) ::
+    ("queries"           | listOfN(cshort, Codec[BatchQuery])) ::
+    ("consistency"       | Consistency.codec) ::
+    ("flags"             | withDefault(conditional(protocolVersion.version > 2, Codec[BatchFlags]), v1v2FlagsCodec)).consume { flags =>
     ("serialConsistency" | conditional(flags.withSerialConsistency, consistency)) ::
     ("timestamp"         | conditional(flags.withDefaultTimestamp, clong))
     } { data => // derive flags from presence of serialConsistency and timestamp.
@@ -308,12 +286,6 @@ object Batch {
         withDefaultTimestamp = timestamp.isDefined,
         withSerialConsistency = serialConsistency.isDefined
       )
-    }).xmap(flatten, unflatten)
-
-  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
-    ("batchType"         | Codec[BatchType]) ::
-    ("queries"           | listOfN(cshort, Codec[BatchQuery])) ::
-    ("consistency"       | Consistency.codec) ::
-    ("remaining"         | handleBatchFlags(protocolVersion))
+    }
   }.as[Batch]
 }

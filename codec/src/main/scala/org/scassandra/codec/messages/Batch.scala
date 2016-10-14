@@ -50,6 +50,8 @@ object BatchFlags {
   }.as[BatchFlags]
 }
 
+object DefaultBatchFlags extends BatchFlags()
+
 sealed trait BatchQuery {
   val values: List[Value]
 }
