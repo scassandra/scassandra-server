@@ -54,7 +54,7 @@ class PrimeValidator extends LazyLogging {
     case Reply(message, _, _) =>
       val typeMismatches = message match {
         case Rows(metadata, rows) =>
-          val columnSpec = metadata.columnSpec.map(spec => (spec.name, spec.dataType)).toMap
+          val columnSpec = metadata.columnSpec.getOrElse(Nil).map(spec => (spec.name, spec.dataType)).toMap
           for {
             row <- rows
             (column, value) <- row.columns

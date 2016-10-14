@@ -194,7 +194,7 @@ object Rows {
 
   private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
     Codec[RowMetadata].flatPrepend{ metadata =>
-      listOfN(cint, Row.withColumnSpec(metadata.columnSpec)).hlist
+      listOfN(cint, Row.withColumnSpec(metadata.columnSpec.getOrElse(Nil))).hlist
   }}.as[Rows]
 }
 

@@ -155,7 +155,7 @@ object PrimingJsonHelper extends LazyLogging {
     val metadata = RowMetadata(
       keyspace = keyspace.orElse(Some("")),
       table = table.orElse(Some("")),
-      columnSpec = columnSpec
+      columnSpec = Some(columnSpec)
     )
 
     Rows(metadata, cRows)

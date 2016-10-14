@@ -31,10 +31,14 @@ case class RowMetadata(
   pagingState: Option[ByteVector] = None,
   keyspace: Option[String] = None,
   table: Option[String] = None,
-  columnSpec: List[ColumnSpec] = Nil
+  columnSpec: Option[List[ColumnSpec]] = None
 )
 
-object NoRowMetadata extends RowMetadata()
+// Configure with no columns
+object NoRowMetadata extends RowMetadata(columnSpec = Some(Nil))
+
+// Used when the client requests to skip metadata
+object NoRowMetadataRequested extends RowMetadata()
 
 object RowMetadata {
   implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[RowMetadata] = protocolVersion.rowMetadataCodec
@@ -45,12 +49,11 @@ object RowMetadata {
     ("pagingState" | conditional(flags.hasMorePages, cbytes))     ::
     ("keyspace"    | conditional(!flags.noMetadata && flags.globalTableSpec, cstring)) ::
     ("table"       | conditional(!flags.noMetadata && flags.globalTableSpec, cstring)) ::
-    ("columnSpec"  | withDefaultValue(conditional(!flags.noMetadata, listOfN(provide(count), ColumnSpec.codec(!flags.globalTableSpec))), Nil))
-  }(_.tail.tail.tail.head.size) // Extract column count from columnSpec, TODO: alternatively use _(3).size, it compiles but IDEs might not like it.
+    ("columnSpec"  | conditional(!flags.noMetadata, listOfN(provide(count), ColumnSpec.codec(!flags.globalTableSpec))))
+  }(_.tail.tail.tail.head.getOrElse(Nil).size) // Extract column count from columnSpec, TODO: alternatively use _(3).size, it compiles but IDEs might not like it.
   }{ case pagingState :: keyspace :: table :: columnSpec :: HNil =>
      RowMetadataFlags(
-       noMetadata = false, // workaround, always claim there is metadata to work around java driver issue.
-       //noMetadata = keyspace.isEmpty && table.isEmpty && columnSpec == Nil,
+       noMetadata = keyspace.isEmpty && table.isEmpty && columnSpec.isEmpty,
        hasMorePages = pagingState.isDefined,
        globalTableSpec = keyspace.isDefined && table.isDefined
      )
