@@ -82,7 +82,7 @@ class PrepareHandlerTest extends FunSuite with ProtocolActorTest with ImplicitSe
     underTest ! protocolMessage(Prepare("select * from something"))
 
     expectMsgPF() {
-      case ProtocolResponse(_, Prepared(_, PreparedMetadata(Some(Nil), Some("keyspace"), Some("table"), Nil), NoRowMetadata)) => true
+      case ProtocolResponse(_, Prepared(_, PreparedMetadata(Nil, Some("keyspace"), Some("table"), Nil), NoRowMetadata)) => true
     }
   }
 
@@ -90,7 +90,7 @@ class PrepareHandlerTest extends FunSuite with ProtocolActorTest with ImplicitSe
     underTest ! protocolMessage(Prepare("select * from something where name = ?"))
 
     expectMsgPF() {
-      case ProtocolResponse(_, Prepared(_, PreparedMetadata(Some(Nil), Some("keyspace"), Some("table"),
+      case ProtocolResponse(_, Prepared(_, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
         List(ColumnSpecWithoutTable("0", DataType.Varchar))), NoRowMetadata)) => true
     }
   }
@@ -98,7 +98,7 @@ class PrepareHandlerTest extends FunSuite with ProtocolActorTest with ImplicitSe
   test("Priming variable types - Should use types from Prime") {
     val query = "select * from something where name = ?"
     val prepare = Prepare("select * from something where name = ?")
-    val prepared = Prepared(id, PreparedMetadata(Some(Nil), Some("keyspace"), Some("table"),
+    val prepared = Prepared(id, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
       List(ColumnSpecWithoutTable("0", DataType.Int))))
 
     when(primePreparedStore.apply(any(classOf[Prepare]), any[Function2[PreparedMetadata, RowMetadata, Prepared]]))
@@ -147,7 +147,7 @@ class PrepareHandlerTest extends FunSuite with ProtocolActorTest with ImplicitSe
 
   test("Should answer queries for prepared statement - exists") {
     val query = "select * from something where name = ?"
-    val prepared = Prepared(id, PreparedMetadata(Some(Nil), Some("keyspace"), Some("table"),
+    val prepared = Prepared(id, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
       List(ColumnSpecWithoutTable("0", DataType.Int))))
     when(primePreparedStore.apply(any(classOf[Prepare]), any[Function2[PreparedMetadata, RowMetadata, Prepared]]))
       .thenReturn(Some(Reply(prepared)))

@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec.datatype.DataType
-import org.scassandra.codec.messages.{ColumnSpecWithoutTable, Row, RowMetadata, RowMetadataFlags}
+import org.scassandra.codec.messages.{ColumnSpecWithoutTable, Row, RowMetadata}
 import org.scassandra.codec.{Consistency, Rows}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
@@ -153,10 +153,9 @@ object PrimingJsonHelper extends LazyLogging {
     }.toList
 
     val metadata = RowMetadata(
-      RowMetadataFlags(globalTableSpec = true),
       keyspace = keyspace.orElse(Some("")),
       table = table.orElse(Some("")),
-      columnSpec = Some(columnSpec)
+      columnSpec = columnSpec
     )
 
     Rows(metadata, cRows)

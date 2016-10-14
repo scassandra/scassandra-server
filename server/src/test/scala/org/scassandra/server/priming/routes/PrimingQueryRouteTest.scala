@@ -225,7 +225,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
           val prime = primeQueryStore(CQuery(query, QueryParameters(consistency = ONE)))
           prime should matchPattern {
-            case Some(Reply(Rows(RowMetadata(_, _, Some(`defaultKeyspace`), _, _), _), _, _)) =>
+            case Some(Reply(Rows(RowMetadata(_, Some(`defaultKeyspace`), _, _), _), _, _)) =>
           }
         }
       }
@@ -241,7 +241,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
           val prime = primeQueryStore(CQuery(query, QueryParameters(consistency = ONE)))
           prime should matchPattern {
-            case Some(Reply(Rows(RowMetadata(_, _, Some(`expectedKeyspace`), _, _), _), _, _)) =>
+            case Some(Reply(Rows(RowMetadata(_, Some(`expectedKeyspace`), _, _), _), _, _)) =>
           }
         }
       }
@@ -259,7 +259,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
           val prime = primeQueryStore(CQuery(query, QueryParameters(consistency = ONE)))
           prime should matchPattern {
-            case Some(Reply(Rows(RowMetadata(_, _, _, Some(`defaultTable`), _), _), _, _)) =>
+            case Some(Reply(Rows(RowMetadata(_, _, Some(`defaultTable`), _), _), _, _)) =>
           }
         }
       }
@@ -275,7 +275,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
           val prime = primeQueryStore(CQuery(query, QueryParameters(consistency = ONE)))
           prime should matchPattern {
-            case Some(Reply(Rows(RowMetadata(_, _, _, Some(`expectedTable`), _), _), _, _)) =>
+            case Some(Reply(Rows(RowMetadata(_, _, Some(`expectedTable`), _), _), _, _)) =>
           }
         }
       }
@@ -303,7 +303,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         val prime = primeQueryStore(CQuery(whenQuery.query.get, QueryParameters(consistency = ONE)))
 
         prime should matchPattern {
-          case Some(Reply(Rows(RowMetadata(_, _, _, _, Some(`expectedColumnTypes`)), _), _, _)) =>
+          case Some(Reply(Rows(RowMetadata(_, _, _, `expectedColumnTypes`), _), _, _)) =>
         }
       }
     }
@@ -328,7 +328,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         val prime = primeQueryStore(CQuery(whenQuery.query.get, QueryParameters(consistency = ONE)))
 
         prime should matchPattern {
-          case Some(Reply(Rows(RowMetadata(_, _, _, _, Some(`expectedColumnTypes`)), _), _, _)) =>
+          case Some(Reply(Rows(RowMetadata(_, _, _, `expectedColumnTypes`), _), _, _)) =>
         }
       }
     }
@@ -345,7 +345,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         val prime = primeQueryStore(CQuery(whenQuery.query.get, QueryParameters(consistency = ONE)))
 
         prime should matchPattern {
-          case Some(Reply(Rows(RowMetadata(_, _, _, _, Some(`expectedColumnTypes`)), _), _, _)) =>
+          case Some(Reply(Rows(RowMetadata(_, _, _, `expectedColumnTypes`), _), _, _)) =>
         }
       }
     }

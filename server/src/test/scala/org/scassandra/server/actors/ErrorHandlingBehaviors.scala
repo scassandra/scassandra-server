@@ -27,15 +27,15 @@ trait ErrorHandlingBehaviors {
   def executeWithError(result: ErrorResult, expectedError: (Consistency) => ErrorMessage): Unit
 
   test("Execute with read time out") {
-    executeWithError(ReadRequestTimeoutResult(), (c) => ReadTimeout(consistency = c))
+    executeWithError(ReadRequestTimeoutResult(), (c) => ReadTimeout(consistency = c, received = 0, blockFor = 3, dataPresent = false))
   }
 
   test("Execute with write time out") {
-    executeWithError(WriteRequestTimeoutResult(), (c) => WriteTimeout(consistency = c))
+    executeWithError(WriteRequestTimeoutResult(), (c) => WriteTimeout(consistency = c, received = 0, blockFor = 2, writeType = "SIMPLE"))
   }
 
   test("Execute with unavailable") {
-    executeWithError(UnavailableResult(), (c) => Unavailable(consistency = c))
+    executeWithError(UnavailableResult(), (c) => Unavailable(consistency = c, required = 3, alive = 2))
   }
 
   test("Execute with server error") {

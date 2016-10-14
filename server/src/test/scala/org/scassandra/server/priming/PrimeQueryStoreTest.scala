@@ -68,9 +68,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
 
   // What we expect the Prime message to be.
   val someRows = Rows(
-    RowMetadata(RowMetadataFlags(globalTableSpec = true), keyspace = Some(""), table = Some(""),
-      columnSpec = Some(List(column("name", DataType.Varchar), column("age", DataType.Int)))
-    ),
+    RowMetadata(keyspace = Some(""), table = Some(""), columnSpec = List(column("name", DataType.Varchar), column("age", DataType.Int))),
     List(Row("name" -> "Mickey", "age" -> 99), Row("name" -> "Mario", "age" -> 12))
   )
 

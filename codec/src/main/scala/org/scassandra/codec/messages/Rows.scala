@@ -43,13 +43,14 @@ object RowMetadata {
     ("flags"       | Codec[RowMetadataFlags]).consume { flags =>
     ("columnCount" | cint).consume { count =>
     ("pagingState" | conditional(flags.hasMorePages, cbytes))     ::
-    ("keyspace"    | conditional(flags.globalTableSpec, cstring)) ::
+    ("keyspace"    | conditional(!flags.noMetadata && flags.globalTableSpec, cstring)) ::
     ("table"       | conditional(!flags.noMetadata && flags.globalTableSpec, cstring)) ::
     ("columnSpec"  | withDefaultValue(conditional(!flags.noMetadata, listOfN(provide(count), ColumnSpec.codec(!flags.globalTableSpec))), Nil))
   }(_.tail.tail.tail.head.size) // Extract column count from columnSpec, TODO: alternatively use _(3).size, it compiles but IDEs might not like it.
   }{ case pagingState :: keyspace :: table :: columnSpec :: HNil =>
      RowMetadataFlags(
-       noMetadata = keyspace.isEmpty && table.isEmpty && columnSpec == Nil,
+       noMetadata = false, // workaround, always claim there is metadata to work around java driver issue.
+       //noMetadata = keyspace.isEmpty && table.isEmpty && columnSpec == Nil,
        hasMorePages = pagingState.isDefined,
        globalTableSpec = keyspace.isDefined && table.isDefined
      )
