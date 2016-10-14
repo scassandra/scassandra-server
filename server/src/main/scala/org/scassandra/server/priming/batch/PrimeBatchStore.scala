@@ -39,6 +39,9 @@ class PrimeBatchStore extends LazyLogging {
           batchCriteria.batchType == primeMatch.batchType
     } map(_._2)
   }
+  def clear() = {
+    primes = Map()
+  }
 }
 
 case class BatchCriteria(queries: Seq[BatchQueryPrime], consistency: List[Consistency], batchType: BatchType)
