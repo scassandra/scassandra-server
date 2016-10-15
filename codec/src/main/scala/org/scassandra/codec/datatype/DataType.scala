@@ -16,8 +16,10 @@
 package org.scassandra.codec.datatype
 
 import java.net.{InetAddress, UnknownHostException}
+import java.nio.ByteBuffer
 import java.util.UUID
 
+import com.google.common.net.InetAddresses
 import org.scassandra.codec.Notations.{map, int => cint, short => cshort}
 import org.scassandra.codec._
 import scodec.Attempt.{Failure, Successful}
@@ -25,23 +27,57 @@ import scodec.bits.{BitVector, ByteVector}
 import scodec.codecs._
 import scodec.{Codec, DecodeResult, Err, SizeBound}
 
+/**
+  * Represents a [[DataType]] defined by the protocol.  See section 6 for a description of the various data types.
+  */
 sealed trait DataType {
 
+  /**
+    * A partial function defining hwo to transform a value into a format that the data type's [[Codec]] knows
+    * how to interpret.
+    */
   val native: PartialFunction[Any, Any]
+
+  /**
+    * @param protocolVersion protocol version to use to encode/decode.
+    * @return The [[Codec]] of the data type that knows how to encode/decode the data type's value.
+    */
   protected[codec] def baseCodec(implicit protocolVersion: ProtocolVersion): Codec[_]
+
+  /**
+    * @param protocolVersion protocol version to use to encode/decode.
+    * @return The [[Codec]] of teh data type that knows how to encode/decode the data type from any format that
+    *         [[native]] accepts.
+    */
   def codec(implicit protocolVersion: ProtocolVersion): Codec[Any] = protocolVersion.dataTypeCodec(this)
+
+  /**
+    * The string representation of the data type in cql.
+    */
   val stringRep: String
 }
 
 object DataType {
 
+  /**
+    * A data type that is primitive in that its definition is not configurable.
+    */
   sealed trait PrimitiveType extends DataType
 
+  /**
+    * An implicit that allows decorating a codec in a way that uses the given partial function to go from
+    * the type the function allows to a type that the underlying codec understands.   For example if a 'Int' is
+    * passed into the codec, but it only understands 'String', the partial function could convert the int value
+    * into a string.
+    * @param codec the codec to decorate with the partial function.
+    */
   implicit class AnyCodecDecorators(codec: Codec[Any]) {
     def withAny(f: PartialFunction[Any, Any]): Codec[Any] = {
+      // Widen the codec on the encode side by allowing it to accept what the partial function accepts.
       codec.widen(
         x => x,
         (a: Any) => {
+          // Can only be successful if the partial function accepts the value.
           if (f.isDefinedAt(a)) {
             try {
               val res = f(a)
@@ -63,21 +99,26 @@ object DataType {
     Timeuuid, Inet, Date, Time, Smallint, Tinyint
   )
 
+  /**
+    * A listing of all primtive data types.
+    */
   lazy val primitiveTypeMap = {
     primitiveTypes.map(t => (t.stringRep, t)).toMap
   }
 
+  /**
+    * @param protocolVersion protocol version to use to encode/decode.
+    * @return Codec for [[DataType]].
+    */
   implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[DataType] = protocolVersion.dataTypeCodec
 
   case class Custom(className: String) extends DataType {
     val stringRep = s"'$className'"
 
-    val native: PartialFunction[Any, Any] = {
-      case b: Array[Byte] => ByteVector(b)
-      case b: ByteVector => b
-      case b: BitVector => b.bytes
-      case s: String => ByteVector.fromValidHex(s.toLowerCase)
-    }
+    /**
+      * @see [[Blob#native]]
+      */
+    val native: PartialFunction[Any, Any] = Blob.native
 
     def baseCodec(implicit protocolVersion: ProtocolVersion) = bytes
   }
@@ -85,6 +126,9 @@ object DataType {
   case object Ascii extends PrimitiveType {
     val stringRep = "ascii"
 
+    /**
+      * Accepts any String as is, and converts anything that isn't a collection to its toString implementation.
+      */
     val native: PartialFunction[Any, Any] = {
       case s: String => s
       case x: Any if !x.isInstanceOf[Iterable[_]] && !x.isInstanceOf[scala.Predef.Map[_,_]] => x.toString
@@ -96,6 +140,9 @@ object DataType {
   case object Bigint extends PrimitiveType {
     val stringRep = "bigint"
 
+    /**
+      * Converts String using [[String#toLong]] and any Number using [[Number#longValue]]
+      */
     val native: PartialFunction[Any, Any] = {
       case s: String => s.toLong
       case x: Number => x.longValue()
@@ -107,12 +154,16 @@ object DataType {
   case object Blob extends PrimitiveType {
     val stringRep = "blob"
 
+    /**
+      * Accepts [[Array]] of [[Byte]], [[ByteVector]], [[BitVector]], [[ByteBuffer]] and converts [[String]] using
+      * [[ByteVector#fromValidHex]] if it is valid hex.
+      */
     val native: PartialFunction[Any, Any] = {
       case b: Array[Byte] => ByteVector(b)
       case b: ByteVector => b
       case b: BitVector => b.bytes
-      // TODO: What should we do in the case where we can't get hex from string?
-      case s: String => ByteVector.fromValidHex(s.toLowerCase)
+      case b: ByteBuffer => ByteVector(b)
+      case s: String if ByteVector.fromHex(s.toLowerCase).isDefined => ByteVector.fromValidHex(s.toLowerCase)
     }
 
     def baseCodec(implicit protocolVersion: ProtocolVersion) = bytes
@@ -121,6 +172,10 @@ object DataType {
   case object Boolean extends PrimitiveType {
     val stringRep = "boolean"
 
+    /**
+      * Converts [[String]] using [[String#toBoolean]], [[Number]] by converting to [[String]] and using
+      * [[String#toBoolean]].  Accepts [[Boolean]].
+      */
     val native: PartialFunction[Any, Any] = {
       case s: String => s.toBoolean
       case x: Number => x.toString.toBoolean
@@ -142,6 +197,9 @@ object DataType {
   case object Counter extends PrimitiveType {
     val stringRep = "counter"
 
+    /**
+      * @see [[BigInt#native]]
+      */
     val native = Bigint.native
 
     def baseCodec(implicit protocolVersion: ProtocolVersion) = Bigint.baseCodec
@@ -150,6 +208,9 @@ object DataType {
   case object Decimal extends PrimitiveType {
     val stringRep = "decimal"
 
+    /**
+      * Converts [[String]] and [[Number]] to [[BigDecimal]].  Accepts [[BigDecimal]].
+      */
     val native: PartialFunction[Any, Any] = {
       case s: String => BigDecimal(s)
       case b: BigDecimal => b
@@ -165,6 +226,9 @@ object DataType {
   case object Double extends PrimitiveType {
     val stringRep = "double"
 
+    /**
+      * Converts [[String]] using [[String#toDouble]].  [[Number]] using [[Number#doubleValue]].
+      */
     val native: PartialFunction[Any, Any] = {
       case s: String => s.toDouble
       case x: Number => x.doubleValue()
@@ -176,6 +240,9 @@ object DataType {
   case object Float extends PrimitiveType {
     val stringRep = "float"
 
+    /**
+      * Converts [[String]] using [[String#toFloat]].  [[Number]] using [[Number#floatValue]].
+      */
     val native: PartialFunction[Any, Any] = {
       case s: String => s.toFloat
       case x: Number => x.floatValue()
@@ -187,6 +254,9 @@ object DataType {
   case object Int extends PrimitiveType {
     val stringRep = "int"
 
+    /**
+      * Converts [[String]] using [[String#toInt]].  [[Number]] using [[Number#intValue]].
+      */
     val native: PartialFunction[Any, Any] = {
       case s: String => s.toInt
       case x: Number => x.intValue()
@@ -198,6 +268,9 @@ object DataType {
   case object Timestamp extends PrimitiveType {
     val stringRep = "timestamp"
 
+    /**
+      * @see [[Bigint#native]]
+      */
     val native = Bigint.native
 
     def baseCodec(implicit protocolVersion: ProtocolVersion) = Bigint.baseCodec
@@ -206,6 +279,9 @@ object DataType {
   case object Uuid extends PrimitiveType {
     val stringRep = "uuid"
 
+    /**
+      * Converts [[String]] using [[UUID#fromString]].  Accepts [[UUID]].
+      */
     val native: PartialFunction[Any, Any] = {
       case s: String => UUID.fromString(s)
       case u: UUID => u
@@ -217,6 +293,9 @@ object DataType {
   case object Varchar extends PrimitiveType {
     val stringRep = "varchar"
 
+    /**
+      * Accepts any String as is, and converts anything that isn't a collection to its toString implementation.
+      */
     val native: PartialFunction[Any, Any] = {
       case s: String => s
       case x: Any if !x.isInstanceOf[Iterable[_]] && !x.isInstanceOf[scala.Predef.Map[_,_]] => x.toString
@@ -228,10 +307,10 @@ object DataType {
   case object Text extends PrimitiveType {
     val stringRep = "text"
 
-    val native: PartialFunction[Any, Any] = {
-      case s: String => s
-      case x: Any if !x.isInstanceOf[Iterable[_]] && !x.isInstanceOf[scala.Predef.Map[_,_]] => x.toString
-    }
+    /**
+      * @see [[Varchar#native]]
+      */
+    val native: PartialFunction[Any, Any] = Varchar.native
 
     def baseCodec(implicit protocolVersion: ProtocolVersion) = utf8
   }
@@ -239,6 +318,10 @@ object DataType {
   case object Varint extends PrimitiveType {
     val stringRep = "varint"
 
+    /**
+      * Converts [[String]] using [[BigInt]].  Converts [[Number]] using [[BigInt]] with [[Number#longValue]].
+      * Accepts [[BigInt]].
+      */
     val native: PartialFunction[Any, Any] = {
       case s: String => BigInt(s)
       case b: BigInt => b
@@ -254,6 +337,9 @@ object DataType {
   case object Timeuuid extends PrimitiveType {
     val stringRep = "timeuuid"
 
+    /**
+      * @see [[Uuid#native]]
+      */
     val native = Uuid.native
 
     def baseCodec(implicit protocolVersion: ProtocolVersion) = Uuid.baseCodec
@@ -262,10 +348,11 @@ object DataType {
   case object Inet extends PrimitiveType {
     val stringRep = "inet"
 
+    /**
+      * Converts [[String]] using [[InetAddresses#forString]] if its a valid ip address.  Accepts [[InetAddress]].
+      */
     val native: PartialFunction[Any, Any] = {
-      // TODO: This will do a DNS lookup if a non-ip address is provided.
-      // Should probably not allow this.
-      case s: String => InetAddress.getByName(s)
+      case s: String if InetAddresses.isInetAddress(s) => InetAddresses.forString(s)
       case a: InetAddress => a
     }
 
@@ -282,6 +369,9 @@ object DataType {
   case object Date extends PrimitiveType {
     val stringRep = "date"
 
+    /**
+      * Converts [[String]] using [[String#toLong]], converts [[Number]] using [[Number#longValue]].
+      */
     val native: PartialFunction[Any, Any] = {
       // TODO: perhaps parse literal dates, i.e. 1985-01-01
       case s: String => s.toLong
@@ -294,6 +384,9 @@ object DataType {
   case object Time extends PrimitiveType {
     val stringRep = "time"
 
+    /**
+      * @see [[Bigint#native]]
+      */
     val native: PartialFunction[Any, Any] = Bigint.native
 
     def baseCodec(implicit protocolVersion: ProtocolVersion) = Bigint.baseCodec.widen(
@@ -308,6 +401,9 @@ object DataType {
   case object Smallint extends PrimitiveType {
     val stringRep = "smallint"
 
+    /**
+      * Converts [[String]] using [[String#toShort]], converts [[Number]] using [[Number#shortValue]].
+      */
     val native: PartialFunction[Any, Any] = {
       case s: String => s.toShort
       case x: Number => x.shortValue()
@@ -319,6 +415,9 @@ object DataType {
   case object Tinyint extends PrimitiveType {
     val stringRep = "tinyint"
 
+    /**
+      * Converts [[String]] using [[String#toByte]], converts [[Number]] using [[Number#byteValue]].
+      */
     val native: PartialFunction[Any, Any] = {
       case s: String => s.toByte
       case x: Number => x.byteValue()
@@ -330,6 +429,9 @@ object DataType {
   case class List(element: DataType) extends DataType {
     val stringRep = s"list<${element.stringRep}>"
 
+    /**
+      * Accepts any [[TraversableOnce]].
+      */
     val native: PartialFunction[Any, Any] = {
       case t: TraversableOnce[_] => t.toList
     }
@@ -341,6 +443,9 @@ object DataType {
   case class Map(key: DataType, value: DataType) extends DataType {
     val stringRep = s"map<${key.stringRep},${value.stringRep}>"
 
+    /**
+      * Accepts any [[scala.Predef.Map]].
+      */
     val native: PartialFunction[Any, Any] = {
       case m: scala.Predef.Map[_, _] => m
     }
@@ -353,6 +458,9 @@ object DataType {
   case class Set(element: DataType) extends DataType {
     val stringRep = s"set<${element.stringRep}>"
 
+    /**
+      * Accepts any [[TraversableOnce]] as a [[scala.Predef.Set]].
+      */
     val native: PartialFunction[Any, Any] = {
       case t: TraversableOnce[_] => t.toSet
     }
@@ -368,6 +476,10 @@ object DataType {
 
     val stringRep = s"tuple<${elements.map(_.stringRep).mkString(",")}>"
 
+    /**
+      * Accepts any [[TraversableOnce]] as a [[scala.List]].  Accepts any [[Product]] by converting to list
+      * using [[Product#productIterator]].  Note that this can be problematic for unterminating product iterators.
+      */
     val native: PartialFunction[Any, Any] = {
       case a: TraversableOnce[_] => a.toList
       // Allows encoding of any TupleXX
@@ -378,10 +490,11 @@ object DataType {
   }
 
   object Tuple {
+    /**
+      * Convenience method to create a [[Tuple]] from [[DataType]] arguments.
+      * @param elements [[DataType]] to create [[Tuple]] from.
+      * @return The created [[Tuple]] type.
+      */
     def apply(elements: DataType*): Tuple = Tuple(elements.toList)
   }
 }
-
-
-
-

@@ -25,6 +25,15 @@ import scodec.{Attempt, Codec, DecodeResult, Err, SizeBound}
 import scala.collection.immutable
 import scala.util.control.Breaks._
 
+/**
+  * Codec for parsing a given [[DataType.Tuple]] definition.
+  *
+  * This works similarly to [[org.scassandra.codec.messages.RowCodec]] in that it takes the ordering of the tuple's
+  * elements to decode and encode in order.
+  *
+  * @param tuple The tuple definition to provide [[Codec]] facilities for.
+  * @param protocolVersion protocol version to use to encode/decode.
+  */
 case class TupleCodec(tuple: DataType.Tuple)(implicit protocolVersion: ProtocolVersion) extends Codec[List[_]] {
 
   lazy val codecsWithBytes = {

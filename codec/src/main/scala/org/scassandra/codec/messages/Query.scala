@@ -25,6 +25,18 @@ import shapeless.{::, HNil}
 
 import scala.{:: => ~~}
 
+/**
+  * Defines the query parameters attached to a [[org.scassandra.codec.Query]] or [[org.scassandra.codec.Execute]]
+  * of a [[org.scassandra.codec.Prepared]] statement.  See section 4.1.4 of the spec.
+  *
+  * @param consistency consistency level of the operation.
+  * @param values the values provided with the query.
+  * @param skipMetadata whether or not metadata should be included in the response.
+  * @param pageSize page size of the result
+  * @param pagingState the paging state that indicates where to continue a query
+  * @param serialConsistency the consistency level for serial phase of conditional updates
+  * @param timestamp the timestamp for mutations (overrides the server timestamp).
+  */
 case class QueryParameters(
   consistency: Consistency = ONE,
   values: Option[List[QueryValue]] = None,
@@ -35,15 +47,25 @@ case class QueryParameters(
   timestamp: Option[Long] = None
 )
 
+/**
+  * Default query parameters to use.  This is to avoid repeated creation of default query parameters.
+  */
 object DefaultQueryParameters extends QueryParameters()
 
 object QueryParameters {
+
+  /**
+    * @param protocolVersion protocol version to use to encode/decode.
+    * @return Codec for [[QueryParameters]] which parses the query flags to determine which fields are present.
+    */
   implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[QueryParameters] =
     protocolVersion.queryParametersCodec
 
   private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
     ("consistency"        | Consistency.codec)                                                                ::
-    ("flags"              | withDefaultValue(conditional(protocolVersion.version > 1, Codec[QueryFlags]), DefaultQueryFlags)).consume { flags =>
+    // flags were introduce in protocol version 2.
+    // consume flags and use them to determine presence of fields.
+    ("flags"              | withDefaultValue(conditional(protocolVersion.version >= 2, Codec[QueryFlags]), DefaultQueryFlags)).consume { flags =>
     ("values"             | conditional(flags.values, listOfN(cshort, queryValue(flags.namesForValues))))     ::
     ("skipMetadata"       | provide[Boolean](flags.skipMetadata))                                             ::
     ("pageSize"           | conditional(flags.pageSize, cint))                                                ::
