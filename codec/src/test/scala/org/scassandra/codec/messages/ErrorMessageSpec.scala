@@ -29,7 +29,7 @@ class ErrorMessageSpec extends CodecSpec {
       val messages = List(
         ServerError("server error"),
         ProtocolError("protocol error"),
-        BadCredentials("bad credentials error"),
+        AuthenticationError("bad credentials error"),
         Unavailable("unavailable exception", Consistency.TWO, 5, 3),
         Overloaded("overloaded error"),
         IsBootstrapping("is bootstrapping error"),

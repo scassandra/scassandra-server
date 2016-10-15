@@ -50,7 +50,7 @@ trait ErrorHandlingBehaviors {
 
   test("Execute with bad credentials") {
     val message = "Bad Credentials"
-    executeWithError(BadCredentialsResult(message), (c) => BadCredentials(message))
+    executeWithError(BadCredentialsResult(message), (c) => AuthenticationError(message))
   }
 
   test("Execute with overloaded") {

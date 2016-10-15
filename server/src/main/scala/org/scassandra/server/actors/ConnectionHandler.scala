@@ -44,6 +44,9 @@ class ConnectionHandler(tcpConnection: ActorRef,
   val system = context.system
   import system.dispatcher
 
+  // Used to prevent repeated attempts at sending same error message.
+  var errorMessage: Option[Message] = None
+
   // Extracted to handle full messages
   val cqlMessageHandler = context.actorOf(Props(classOf[NativeProtocolMessageHandler],
     queryHandlerFactory,
@@ -70,12 +73,23 @@ class ConnectionHandler(tcpConnection: ActorRef,
 
     // Message generated from another actor to be sent back to the tcp connection.
     case ProtocolResponse(requestHeader, message) =>
-      message.toBytes(requestHeader.stream, Response)(requestHeader.version.version) match {
+      message.toBytes(requestHeader.stream)(requestHeader.version.version) match {
         case Success(bytes) => tcpConnection ! Write(bytes.toByteString)
         case Failure(t) => {
-          log.error(t, "Failure getting message payload to write.")
-          // TODO: This could cause repeated work if ProtocolError also fails to encode, handle this possible occurrence.
-          self ! ProtocolResponse(requestHeader, ProtocolError(t.getMessage))
+          // In the failure case, send a protocol error back to the client, however
+          // if the message we tried to serialize was the error itself, log an error
+          // and abort.
+          errorMessage match {
+            case Some(`message`) =>
+              log.error("Failure writing error, closing connection to client", t)
+              tcpConnection ! Tcp.Abort
+              context stop self
+            case _ =>
+              val error = ProtocolError(t.getMessage)
+              errorMessage = Some(error)
+              log.error(t, "Failure getting message payload to write.")
+              self ! ProtocolResponse(requestHeader, error)
+          }
         }
       }
 

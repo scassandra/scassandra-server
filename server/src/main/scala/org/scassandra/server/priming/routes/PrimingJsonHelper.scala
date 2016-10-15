@@ -61,7 +61,7 @@ object PrimingJsonHelper extends LazyLogging {
           case Success => extractRows(thenDo, keyspace, table)
           case ServerError => c.ServerError(config.getOrElse(ErrorConstants.Message, "Server Error"))
           case ProtocolError => c.ProtocolError(config.getOrElse(ErrorConstants.Message, "Protocol Error"))
-          case BadCredentials => c.BadCredentials(config.getOrElse(ErrorConstants.Message, "Bad Credentials"))
+          case BadCredentials => c.AuthenticationError(config.getOrElse(ErrorConstants.Message, "Bad Credentials"))
           case Unavailable => c.Unavailable(
             config.getOrElse(ErrorConstants.Message, "Unavailable Exception"),
             config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).orNull,

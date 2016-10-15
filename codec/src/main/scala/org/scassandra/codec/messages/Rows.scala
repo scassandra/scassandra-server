@@ -102,7 +102,6 @@ object ColumnSpec {
 case class Row(columns: Map[String, Any])
 
 object Row {
-  // TODO: Consider caching RowCodecs by ColumnSpec.
   def withColumnSpec(spec: List[ColumnSpec])(implicit protocolVersion: ProtocolVersion): Codec[Row] = RowCodec(spec)
   def apply(colPairs: (String, Any)*): Row = Row(colPairs.toMap)
 }

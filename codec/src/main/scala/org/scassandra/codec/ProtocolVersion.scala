@@ -15,17 +15,13 @@
  */
 package org.scassandra.codec
 
-import java.util.concurrent.ConcurrentHashMap
-
+import com.google.common.cache.{CacheBuilder, CacheLoader}
 import org.scassandra.codec.Notations.{short => cshort, string => cstring}
 import org.scassandra.codec.datatype.DataType
-import org.scassandra.codec.messages.{ColumnSpec, PreparedMetadata, QueryParameters, RowMetadata}
+import org.scassandra.codec.messages._
 import scodec.Attempt.Successful
 import scodec.Codec
 import scodec.codecs._
-
-import scala.collection.convert.decorateAsScala._
-import scalaz.Memo
 
 /**
   * As the native protocol is versioned, we tie protocol-version specific behavior to this trait.
@@ -45,24 +41,35 @@ sealed trait ProtocolVersion {
   lazy val headerLength: Long = 7 + (streamIdCodec.sizeBound.exact.get / 8)
 
   /**
-    * [[Memo]] used to cache [[Message]] codecs as they are created.  This prevents repeated creation of codecs.
+    * Used to cache [[Message]] codecs as they are created.  This prevents repeated creation of codecs.
     */
-  private[this] lazy val messageCodecs = Memo.mutableMapMemo(new ConcurrentHashMap[Int, Codec[Message]]().asScala) {
-    o: Int => Message.codecForVersion(this, o)
-  }
+  private[this] lazy val messageCodecCache = CacheBuilder.newBuilder
+    .build(new CacheLoader[Integer, Codec[Message]]() {
+      override def load(key: Integer): Codec[Message] = Message.codecForVersion(ProtocolVersion.this, key)
+    })
 
   /**
-    * [[Memo]] used to cache [[DataType]] codecs as they are created.
+    * Used to cache [[DataType]] codecs as they are created.
     */
-  private[this] lazy val dataTypeCodecs = Memo.mutableMapMemo(new ConcurrentHashMap[DataType, DataTypeCodecs]().asScala) {
-    d: DataType => DataTypeCodecs(d)
-  }
+  private[this] lazy val dataTypeCodecCache = CacheBuilder.newBuilder
+    .build(new CacheLoader[DataType,DataTypeCodecs]() {
+      override def load(key: DataType): DataTypeCodecs = DataTypeCodecs(key)
+    })
+
+  /**
+    * Used to cache [[Row]] codecs as they are created.
+    */
+  private[this] lazy val rowCodecCache = CacheBuilder.newBuilder
+    .maximumSize(1000)
+    .build(new CacheLoader[List[ColumnSpec], Codec[Row]]() {
+      override def load(key: List[ColumnSpec]): Codec[Row] = Row.withColumnSpec(key)(ProtocolVersion.this)
+    })
 
   // codecs that have protocol version specific behavior.
   private[codec] val streamIdCodec: Codec[Int]
   private[codec] val collectionLengthCodec: Codec[Int]
   private[codec] val dataTypeCodec: Codec[DataType]
-  private[codec] def messageCodec(opcode: Int): Codec[Message] = messageCodecs(opcode)
+  private[codec] def messageCodec(opcode: Int): Codec[Message] = messageCodecCache.get(opcode)
   private[codec] lazy val batchCodec: Codec[Batch] = Batch.codecForVersion(this)
   private[codec] lazy val executeCodec: Codec[Execute] = Execute.codecForVersion(this)
   private[codec] lazy val preparedCodec: Codec[Prepared] = Prepared.codecForVersion(this)
@@ -74,13 +81,17 @@ sealed trait ProtocolVersion {
   private[codec] lazy val rowsCodec: Codec[Rows] = Rows.codecForVersion(this)
   private[codec] lazy val columnSpecWithTableCodec: Codec[ColumnSpec] = ColumnSpec.codecForVersion(withTable = true)(this)
   private[codec] lazy val columnSpecWithoutTableCodec: Codec[ColumnSpec] = ColumnSpec.codecForVersion(withTable = false)(this)
-  private[codec] def dataTypeCodec(dataType: DataType): Codec[Any] = dataTypeCodecs(dataType).codec
+  private[codec] def dataTypeCodec(dataType: DataType): Codec[Any] = dataTypeCodecCache.get(dataType).codec
+  private[codec] def rowCodec(columnSpec: List[ColumnSpec]): Codec[Row] = rowCodecCache.get(columnSpec)
 
   private[this] def createHeaderCodec(protocolFlags: ProtocolFlags) =
     provide(protocolFlags).flatPrepend(FrameHeader.withProtocol).as[FrameHeader]
 
-  private[this] lazy val requestHeaderCodec: Codec[FrameHeader] = createHeaderCodec(ProtocolFlags(Request, this))
-  private[this] lazy val responseHeaderCodec: Codec[FrameHeader] = createHeaderCodec(ProtocolFlags(Response, this))
+  private[this] lazy val requestFlags = ProtocolFlags(Request, this)
+  private[this] lazy val responseFlags = ProtocolFlags(Response, this)
+
+  private[this] lazy val requestHeaderCodec: Codec[FrameHeader] = createHeaderCodec(requestFlags)
+  private[this] lazy val responseHeaderCodec: Codec[FrameHeader] = createHeaderCodec(responseFlags)
 
   private[codec] def headerCodec(direction: MessageDirection): Codec[FrameHeader] = direction match {
     case Request => requestHeaderCodec
