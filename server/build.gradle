@@ -103,9 +103,9 @@ uploadArchives {
                 url 'https://github.com/scassandra/'
 
                 scm {
-                    connection 'scm:git:git@github.com:scassandra/scassandra-java-client.git'
-                    developerConnection 'git@github.com:scassandra/scassandra-java-client.git'
-                    url 'https://github.com/scassandra/scassandra-java-client'
+                    connection 'scm:git:git@github.com:scassandra/scassandra-server.git'
+                    developerConnection 'git@github.com:scassandra/scassandra-server.git'
+                    url 'https://github.com/scassandra/scassandra-server'
                 }
 
                 licenses {

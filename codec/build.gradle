@@ -36,6 +36,17 @@ repositories {
     }
 }
 
+compileJava {
+    sourceCompatibility = "1.6"
+    targetCompatibility = "1.6"
+}
+
+
+compileScala {
+    sourceCompatibility = "1.6"
+    targetCompatibility = "1.6"
+}
+
 task sourceJar(type: Jar) {
     classifier = 'sources'
     baseName = 'scassandra-codec_2.11'
@@ -71,7 +82,7 @@ uploadArchives {
             snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
                 authentication(userName: ossrhUsername, password: ossrhPassword)
             }
-            pom.artifactId = 'scassandra-server_2.11'
+            pom.artifactId = 'scassandra-codec_2.11'
 
             pom.project {
                 name 'Scassandra codec'
@@ -81,9 +92,9 @@ uploadArchives {
                 url 'https://github.com/scassandra/'
 
                 scm {
-                    connection 'scm:git:git@github.com:scassandra/scassandra-java-client.git'
-                    developerConnection 'git@github.com:scassandra/scassandra-java-client.git'
-                    url 'https://github.com/scassandra/scassandra-java-client'
+                    connection 'scm:git:git@github.com:scassandra/scassandra-server.git'
+                    developerConnection 'git@github.com:scassandra/scassandra-server.git'
+                    url 'https://github.com/scassandra/scassandra-server'
                 }
 
                 licenses {
