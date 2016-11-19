@@ -142,7 +142,7 @@ dependencies {
     compile  "com.typesafe.akka:akka-slf4j_2.11:$akkaVersion"
     compile  "io.spray:spray-json_2.11:$sprayJsonVersion"
     compile  "io.spray:spray-can_2.11:$sprayVersion"
-    compile  "io.spray:spray-routing-shapeless2_2.11:$sprayVersion"
+    compile  "io.spray:spray-routing-shapeless23_2.11:$sprayVersion"
     compile  "com.typesafe.scala-logging:scala-logging_2.11:3.1.0"
     compile  "com.google.guava:guava:$guavaVersion"
 
