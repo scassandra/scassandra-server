@@ -28,7 +28,7 @@ class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory) => Act
                         prepareHandler: ActorRef,
                         executeHandler: ActorRef) extends ProtocolActor {
 
-  val optionsHandler = optionsHandlerFactory(context)
+  private val optionsHandler = optionsHandlerFactory(context)
 
   override def receive: Receive = {
     case message@ProtocolMessage(frame) =>
@@ -42,10 +42,9 @@ class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory) => Act
           val registerHandler = registerHandlerFactory(context)
           write(Ready, frame.header)
           context become initialized(queryHandler, batchHandler, registerHandler)
-        case _ => {
+        case _ =>
           log.error(s"Received message $frame before Startup.  Sending error.")
           write(ProtocolError("Query sent before Startup message"), frame.header)
-        }
       }
   }
 

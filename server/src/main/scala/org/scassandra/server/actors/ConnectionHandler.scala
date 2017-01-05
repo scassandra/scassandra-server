@@ -125,7 +125,7 @@ class ConnectionHandler(tcpConnection: ActorRef,
   private[this] def inspectProtocolVersion(input: ByteVector): Try[(ProtocolFlags, ByteVector)] = {
     next[ProtocolFlags](input).flatMap {
       case ((ProtocolFlags(_, UnsupportedProtocolVersion(v)), _)) =>
-        Failure(new UnsupportedProtocolException(v))
+        Failure(UnsupportedProtocolException(v))
       case x => Success(x)
     }
   }
