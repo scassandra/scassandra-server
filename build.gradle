@@ -41,5 +41,4 @@ subprojects {
         sprayJsonVersion = '1.3.2'
     }
 
-    afterReleaseBuild.dependsOn uploadArchives
 }
