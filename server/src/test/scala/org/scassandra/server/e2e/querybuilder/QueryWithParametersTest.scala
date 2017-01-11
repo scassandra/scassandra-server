@@ -41,7 +41,7 @@ class QueryWithParametersTest extends AbstractIntegrationTest {
 
     val result = session.execute(query, "chris")
 
-    getRecordedQueries() shouldEqual List(Query(query, ONE, List("chris"), List(DataType.Text)))
+    getRecordedQueries() should contain(Query(query, ONE, List("chris"), List(DataType.Text)))
   }
 
   test("Prime using int parameter") {
@@ -56,6 +56,6 @@ class QueryWithParametersTest extends AbstractIntegrationTest {
 
     val result = session.execute(query, new Integer(15))
 
-    getRecordedQueries() shouldEqual List(Query(query, ONE, List(15), List(DataType.Int)))
+    getRecordedQueries() should contain(Query(query, ONE, List(15), List(DataType.Int)))
   }
 }

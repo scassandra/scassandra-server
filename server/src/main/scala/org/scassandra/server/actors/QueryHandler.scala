@@ -16,7 +16,7 @@
 package org.scassandra.server.actors
 
 import org.scassandra.codec.datatype.DataType
-import org.scassandra.codec.{Frame, NoRows, Query, SetKeyspace}
+import org.scassandra.codec.{Frame, NoRows, Query}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.query.{PrimeQueryStore, Reply}
 
@@ -36,19 +36,11 @@ class QueryHandler(primeQueryStore: PrimeQueryStore, activityLog: ActivityLog) e
           Some(variableTypes).zip(extractQueryVariables(query.query, query.parameters.values.map(_.map(_.value)), variableTypes)).headOption
         }
 
-      val wasSetKeyspace = prime.nonEmpty && prime.forall {
-        // Skip 'use keyspace' queries for legacy compatibility
-        case Reply(s: SetKeyspace, _, _) => true
-        case _ => false
-      }
-
-      if(!wasSetKeyspace) {
-        typesAndValues match {
-          case Some((variableTypes, values)) =>
-            activityLog.recordQuery(query.query, query.parameters.consistency, values, variableTypes)
-          case None =>
-            activityLog.recordQuery(query.query, query.parameters.consistency)
-        }
+      typesAndValues match {
+        case Some((variableTypes, values)) =>
+          activityLog.recordQuery(query.query, query.parameters.consistency, values, variableTypes)
+        case None =>
+          activityLog.recordQuery(query.query, query.parameters.consistency)
       }
 
       writePrime(query, prime, header, alternative = noRows, consistency = Some(query.parameters.consistency))
