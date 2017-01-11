@@ -16,86 +16,84 @@
 package org.scassandra.server.actors
 
 import org.scalatest.FunSuite
-import org.scassandra.server.cqlmessages.{ProtocolProvider, Consistency}
-import org.scassandra.server.cqlmessages.response._
+import org.scassandra.codec.Consistency.Consistency
+import org.scassandra.codec._
 import org.scassandra.server.priming._
+import scodec.bits.ByteVector
 
-trait ErrorHandlingBehaviors extends ProtocolProvider {
+trait ErrorHandlingBehaviors {
   this: FunSuite =>
 
-  def executeWithError(result: ErrorResult, expectedError: (Byte, Consistency) => Error): Unit
+  def executeWithError(result: ErrorResult, expectedError: (Consistency) => ErrorMessage): Unit
 
   test("Execute with read time out") {
-    val result = ReadRequestTimeoutResult()
-    executeWithError(result, (b, c) => ReadRequestTimeout(b, c, result))
+    executeWithError(ReadRequestTimeoutResult(), (c) => ReadTimeout(consistency = c, received = 0, blockFor = 3, dataPresent = false))
   }
 
   test("Execute with write time out") {
-    val result = WriteRequestTimeoutResult()
-    executeWithError(result, (b, c) => WriteRequestTimeout(b, c, result))
+    executeWithError(WriteRequestTimeoutResult(), (c) => WriteTimeout(consistency = c, received = 0, blockFor = 2, writeType = "SIMPLE"))
   }
 
   test("Execute with unavailable") {
-    val result: UnavailableResult = UnavailableResult()
-    executeWithError(result, (b, c) => UnavailableException(b, c, result))
+    executeWithError(UnavailableResult(), (c) => Unavailable(consistency = c, required = 3, alive = 2))
   }
 
   test("Execute with server error") {
     val message = "Server Error"
-    executeWithError(ServerErrorResult(message), (b, c) => ServerError(b, message))
+    executeWithError(ServerErrorResult(message), (c) => ServerError(message))
   }
 
   test("Execute with protocol error") {
     val message = "Protocol Error"
-    executeWithError(ProtocolErrorResult(message), (b, c) => ProtocolError(b, message))
+    executeWithError(ProtocolErrorResult(message), (c) => ProtocolError(message))
   }
 
   test("Execute with bad credentials") {
     val message = "Bad Credentials"
-    executeWithError(BadCredentialsResult(message), (b, c) => BadCredentials(b, message))
+    executeWithError(BadCredentialsResult(message), (c) => AuthenticationError(message))
   }
 
   test("Execute with overloaded") {
     val message = "Overloaded"
-    executeWithError(OverloadedResult(message), (b, c) => Overloaded(b, message))
+    executeWithError(OverloadedResult(message), (c) => Overloaded(message))
   }
 
   test("Execute with is bootstrapping") {
     val message = "I'm bootstrapping"
-    executeWithError(IsBootstrappingResult(message), (b, c) => IsBootstrapping(b, message))
+    executeWithError(IsBootstrappingResult(message), (c) => IsBootstrapping(message))
   }
 
   test("Execute with truncate error") {
     val message = "Truncate Error"
-    executeWithError(TruncateErrorResult(message), (b, c) => TruncateError(b, message))
+    executeWithError(TruncateErrorResult(message), (c) => TruncateError(message))
   }
 
   test("Execute with syntax error") {
     val message = "Syntax Error"
-    executeWithError(SyntaxErrorResult(message), (b, c) => SyntaxError(b, message))
+    executeWithError(SyntaxErrorResult(message), (c) => SyntaxError(message))
   }
 
   test("Execute with invalid") {
     val message = "Invalid"
-    executeWithError(InvalidResult(message), (b, c) => Invalid(b, message))
+    executeWithError(InvalidResult(message), (c) => Invalid(message))
   }
 
   test("Execute with config error") {
     val message = "Config Error"
-    executeWithError(ConfigErrorResult(message), (b, c) => ConfigError(b, message))
+    executeWithError(ConfigErrorResult(message), (c) => ConfigError(message))
   }
 
   test("Execute with already exists") {
     val message = "Already Exists"
     val keyspace = "keyspace"
     val table = "table"
-    executeWithError(AlreadyExistsResult(message, keyspace, table),  (b, c) => AlreadyExists(b, message, keyspace, table))
+    executeWithError(AlreadyExistsResult(message, keyspace, table),  (c) => AlreadyExists(message, keyspace, table))
   }
 
   test("Execute with unprepared") {
     val message = "Unprepared"
     val id: Array[Byte] = Array[Byte](0x00, 0x12, 0x13, 0x14)
-    executeWithError(UnpreparedResult(message, id), (b, c) => Unprepared(b, message, id))
+    executeWithError(UnpreparedResult(message, id), (c) => Unprepared(message, ByteVector(id)))
   }
 }
 

@@ -16,17 +16,20 @@
 package org.scassandra.server.actors
 
 import akka.actor.ActorSystem
-import akka.io.Tcp.{ResumeReading, Received, Write}
+import akka.io.Tcp.{Received, ResumeReading, Write}
 import akka.testkit._
-import akka.util.ByteString
 import org.scalatest._
-import org.scassandra.server.cqlmessages._
-import org.scassandra.server.cqlmessages.response._
-import org.scassandra.server.actors.QueryHandler.Query
-import scala.language.postfixOps
-import scala.concurrent.duration._
+import org.scassandra.codec._
+import scodec.Codec
+import scodec.bits.ByteVector
 
-class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter {
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
+class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")) with ProtocolActorTest with Matchers
+  with ImplicitSender with FunSuiteLike with BeforeAndAfter {
+
+  import AkkaScodecInterop._
 
   var testActorRef : TestActorRef[ConnectionHandler] = null
 
@@ -38,10 +41,6 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
   var prepareHandlerTestProbe : TestProbe = null
   var executeHandlerTestProbe : TestProbe = null
 
-  var lastMsgFactoryUsedForQuery : CqlMessageFactory = null
-  var lastMsgFactoryUsedForRegister : CqlMessageFactory = null
-  var lastMsgFactoryUsedForPrepare : CqlMessageFactory = null
-
   before {
     tcpConnectionTestProbe = TestProbe()
     queryHandlerTestProbe = TestProbe()
@@ -52,21 +51,10 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
     batchHandlerTestProbe = TestProbe()
     testActorRef = TestActorRef(new ConnectionHandler(
       self,
-      (_,_,msgFactory) => {
-        lastMsgFactoryUsedForQuery = msgFactory
-        queryHandlerTestProbe.ref
-      },
-      (_,_,msgFactory, _) => {
-        lastMsgFactoryUsedForQuery = msgFactory
-        batchHandlerTestProbe.ref
-      },
-      (_,_,msgFactory) => {
-        lastMsgFactoryUsedForRegister = msgFactory
-        registerHandlerTestProbe.ref
-      },
-      (_,_,msgFactory) => {
-        optionsHandlerTestProbe.ref
-      },
+      (_) => queryHandlerTestProbe.ref,
+      (_, _) => batchHandlerTestProbe.ref,
+      (_) => registerHandlerTestProbe.ref,
+      (_) => optionsHandlerTestProbe.ref,
       prepareHandlerTestProbe.ref,
       executeHandlerTestProbe.ref
     ))
@@ -77,18 +65,16 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
       case _ => false
     }
 
-    lastMsgFactoryUsedForQuery = null
-    clear()
+    receiveWhile(10 milliseconds) {
+      case msg @ _ =>
+    }
   }
 
   test("Should do nothing if not a full message") {
-    val partialMessage = ByteString(
-      Array[Byte](
-        ProtocolVersion.ServerProtocolVersionTwo, 0x0, 0x0, OpCodes.Query, // header
-        0x0, 0x0, 0x0, 0x5,  // length
-        0x0 // 4 bytes missing
-      )
-    )
+    val requestHeader = FrameHeader(ProtocolFlags(Request, ProtocolVersionV4), EmptyHeaderFlags, 0, Query.opcode, 5)
+
+    // A request header expecting a 5 byte body + 1 byte for the body.
+    val partialMessage = (Codec[FrameHeader].encode(requestHeader).require.toByteVector ++ ByteVector(0x00)).toByteString
 
     testActorRef ! Received(partialMessage)
 
@@ -96,65 +82,56 @@ class ConnectionHandlerTest extends TestKit(ActorSystem("ConnectionHandlerTest")
   }
 
   test("Should handle query message coming in two parts") {
-    sendStartupMessage()
-    val query = "select * from people"
-    val stream : Byte = 0x05
-    val queryLength = Array[Byte](0x0, 0x0, 0x0, query.length.toByte)
-    val queryOptions = Array[Byte](0,1,0)
-    val queryWithLengthAndOptions = queryLength ++ query.getBytes ++ queryOptions
-    val queryMessage = MessageHelper.createQueryMessage(query, stream)
-    
-    val queryMessageFirstHalf = queryMessage take 5 toArray
-    val queryMessageSecondHalf = queryMessage drop 5 toArray
+    implicit val protocolVersion = ProtocolVersionV2
+    val message = Startup()
+    val bytes = message.toBytes(0, Request).get.toByteString
+    testActorRef ! Received(bytes)
 
-    testActorRef ! Received(ByteString(queryMessageFirstHalf))
+    val queryString = "select * from people"
+    val query = Query(queryString)
+
+    val queryMessage = query.toBytes(5, Request).get.toByteString
+
+    val (queryMessageFirstHalf, queryMessageSecondHalf) = queryMessage.splitAt(queryMessage.length / 2)
+
+    testActorRef ! Received(queryMessageFirstHalf)
     queryHandlerTestProbe.expectNoMsg()
     
-    testActorRef ! Received(ByteString(queryMessageSecondHalf))
-    queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
+    testActorRef ! Received(queryMessageSecondHalf)
+    queryHandlerTestProbe.expectMsgPF() {
+      case ProtocolMessage(Frame(_, `query`)) => true
+    }
   }
 
   test("Should handle two cql messages in the same data message") {
-    val startupMessage = MessageHelper.createStartupMessage()
-    val stream : Byte = 0x04
-    val query = "select * from people"
-    val queryLength = Array[Byte](0x0, 0x0, 0x0, query.length.toByte)
-    val queryOptions = Array[Byte](0,1,0)
-    val queryWithLengthAndOptions = queryLength ++ query.getBytes ++ queryOptions
-    val queryMessage = MessageHelper.createQueryMessage(query, stream)
+    implicit val protocolVersion = ProtocolVersionV4
+    val startupMessage = Startup()
+    val queryMessage = Query("select * from people")
 
-    val twoMessages: List[Byte] = startupMessage ++ queryMessage
+    val twoMessages = startupMessage.toBytes(0, Request).get ++ queryMessage.toBytes(1, Request).get
 
-    testActorRef ! Received(ByteString(twoMessages.toArray))
+    testActorRef ! Received(twoMessages.toByteString)
 
-    queryHandlerTestProbe.expectMsg(Query(ByteString(queryWithLengthAndOptions), stream))
+    queryHandlerTestProbe.expectMsgPF() {
+      case ProtocolMessage(Frame(_, `queryMessage`)) => true
+    }
   }
 
-  test("Should send unsupported version if protocol 3+") {
-    implicit val protocolVersion = VersionTwo
-    val stream : Byte = 0x0 // hard coded for now
-    val startupMessage = MessageHelper.createStartupMessage(VersionThree)
+  test("Should send unsupported version if unknown protocol version") {
+    implicit val protocolVersion = UnsupportedProtocolVersion(5)
+    val startupMessage = Startup()
 
-    testActorRef ! Received(ByteString(startupMessage.toArray))
+    testActorRef ! Received(startupMessage.toBytes(0, Request).get.toByteString)
 
-    expectMsg(Write(UnsupportedProtocolVersion(stream).serialize()))
-
-    case object VersionFive extends ProtocolVersion(0x5, (0x85 & 0xFF).toByte, 5)
-    val v5StartupMessage = MessageHelper.createStartupMessage(VersionFive)
-
-    testActorRef ! Received(ByteString(v5StartupMessage.toArray))
-
-    expectMsg(Write(UnsupportedProtocolVersion(stream).serialize()))
-  }
-
-  private def sendStartupMessage(protocolVersion: ProtocolVersion = VersionTwo) = {
-    val startupMessage = MessageHelper.createStartupMessage(protocolVersion)
-    testActorRef ! Received(ByteString(startupMessage.toArray))
-  }
-
-  private def clear(): Unit = {
-    receiveWhile(10 milliseconds) {
-      case msg @ _ =>
+    receiveOne(3 seconds) match {
+      case Write(bytes, _) => {
+        val frame = Codec[Frame].decodeValue(bytes.toByteVector.bits).require
+        frame match {
+          case Frame(_, ProtocolError("Invalid or unsupported protocol version")) => ()
+          case x => fail(s"Received unexpected message $x instead of ProtocolError")
+        }
+      }
+      case x => fail(s"Received $x instead of a Write")
     }
   }
 }

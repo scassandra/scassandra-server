@@ -16,29 +16,30 @@
 package org.scassandra.server.priming
 
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.cqlmessages.VersionTwo
-import scala.collection.immutable.Map
-import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
-import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.{ProtocolVersion, Rows}
+import org.scassandra.server.priming.query.{Prime, PrimeCriteria, Reply}
+import scodec.Attempt
+import scodec.Attempt.{Failure, Successful}
+import scodec.bits.BitVector
 
 class PrimeValidator extends LazyLogging {
-
-  def validate(criteria: PrimeCriteria, prime: Prime, queryToResults: Map[PrimeCriteria, Prime]): PrimeAddResult = {
+  def validate(criteria: PrimeCriteria, prime: Prime, existingCriteria: List[PrimeCriteria]): PrimeAddResult = {
     // 1. Validate consistency
-    validateConsistency(criteria, queryToResults) match {
+    validateConsistency(criteria, existingCriteria) match {
       case c: ConflictingPrimes => c
       // 2. Then validate column types
       case _ => validateColumnTypes(prime)
     }
   }
 
-  private def validateConsistency(criteria: PrimeCriteria, queryToResults: Map[PrimeCriteria, Prime]): PrimeAddResult = {
+  private def validateConsistency(criteria: PrimeCriteria, existingCriteria: List[PrimeCriteria]): PrimeAddResult = {
 
     def intersectsExistingCriteria: (PrimeCriteria) => Boolean = {
-      existing => existing.query == criteria.query && existing.consistency.intersect(criteria.consistency).size > 0
+      existing => existing.query == criteria.query && existing.consistency.intersect(criteria.consistency).nonEmpty
     }
 
-    val intersectingCriteria = queryToResults.filterKeys(intersectsExistingCriteria).keySet.toList
+    val intersectingCriteria = existingCriteria.filter(intersectsExistingCriteria)
     intersectingCriteria match {
       // exactly one intersecting criteria: if the criteria is the newly passed one, this is just an override. Otherwise, conflict.
       case list @ head :: Nil if head != criteria => ConflictingPrimes(list)
@@ -49,40 +50,40 @@ class PrimeValidator extends LazyLogging {
     }
   }
 
-  private def validateColumnTypes(prime: Prime): PrimeAddResult = {
-    val typeMismatches = {
-      for {
-        row <- prime.rows
-        (column, value) <- row
-        columnType = prime.columnTypes(column)
-        if isTypeMismatch(value, columnType)
-      } yield {
-        TypeMismatch(value, column, columnType.stringRep)
+  private def validateColumnTypes(prime: Prime): PrimeAddResult = prime match {
+    case Reply(message, _, _) =>
+      val typeMismatches = message match {
+        case Rows(metadata, rows) =>
+          val columnSpec = metadata.columnSpec.getOrElse(Nil).map(spec => (spec.name, spec.dataType)).toMap
+          for {
+            row <- rows
+            (column, value) <- row.columns
+            columnType = columnSpec.getOrElse(column, DataType.Varchar)
+            if isTypeMismatch(value, columnType)
+          } yield TypeMismatch(value, column, columnType.stringRep)
+        case _ => Nil
       }
-    }
 
-    typeMismatches match {
-      case Nil => PrimeAddSuccess
-      case l: List[TypeMismatch] => TypeMismatches(typeMismatches)
+      typeMismatches match {
+        case Nil => PrimeAddSuccess
+        case l: List[TypeMismatch] => TypeMismatches(typeMismatches)
+      }
+    case _ => PrimeAddSuccess
+  }
+
+  private def isTypeMismatch(value: Any, dataType: DataType): Boolean = {
+    convertValue(value, dataType) match {
+      case Successful(_) => false
+      case Failure(x) =>
+        logger.warn(s"Unable to use provided prime value '$value' for given type ${dataType.stringRep}, Error Message: ${x.message}")
+        true
     }
   }
 
-  private def isTypeMismatch(value: Any, columnType: ColumnType[_]): Boolean = {
-    try {
-      convertValue(value, columnType)
-      false
-    } catch {
-      case
-        e: Exception =>
-          logger.warn(s"Unable to use provided prime for the given type", e)
-
-          true
-    }
-  }
-
-  private def convertValue(value: Any, columnType: ColumnType[_]): Any = {
-    // TODO: Find way to get protocol version, either implicitly or passed somehow.
-    columnType.writeValue(value)(VersionTwo)
+  private def convertValue(value: Any, columnType: DataType): Attempt[BitVector] = {
+    // Attempt to encode value, chances are that it will succeed in almost all cases.  The protocol version
+    // here doesn't matter too much since we're not actually using the payload.
+    columnType.codec(ProtocolVersion.latest).encode(value)
   }
 }
 
@@ -96,8 +97,4 @@ case class ConflictingPrimes(existingPrimes: List[PrimeCriteria]) extends PrimeA
 
 case class TypeMismatch(value: Any, name: String, columnType: String)
 
-object PrimeValidator {
-  def apply() = {
-    new PrimeValidator
-  }
-}
+case class BadCriteria(message: String) extends PrimeAddResult

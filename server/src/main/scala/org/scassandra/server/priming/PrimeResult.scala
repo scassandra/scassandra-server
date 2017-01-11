@@ -17,7 +17,7 @@ package org.scassandra.server.priming
 
 import akka.actor.ActorRef
 import akka.io.Tcp
-import org.scassandra.server.cqlmessages.Consistency
+import org.scassandra.codec.Consistency.Consistency
 
 object WriteType extends Enumeration {
   val SIMPLE, BATCH, UNLOGGED_BATCH, COUNTER, BATCH_LOG, CAS = Value

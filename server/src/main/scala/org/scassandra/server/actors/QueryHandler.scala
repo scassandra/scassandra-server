@@ -15,83 +15,43 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.{ActorLogging, Actor, ActorRef}
-import akka.util.ByteString
-import org.scassandra.server.cqlmessages.{Consistency, CqlMessageFactory}
-import org.scassandra.server.cqlmessages.CqlProtocolHelper._
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.{Frame, NoRows, Query, SetKeyspace}
 import org.scassandra.server.priming._
-import org.scassandra.server.priming.query.{Prime, PrimeMatch, PrimeQueryStore}
+import org.scassandra.server.priming.query.{PrimeQueryStore, Reply}
 
-import scala.concurrent.duration.FiniteDuration
+class QueryHandler(primeQueryStore: PrimeQueryStore, activityLog: ActivityLog) extends ProtocolActor {
 
-class QueryHandler(tcpConnection: ActorRef, primeQueryStore: PrimeQueryStore, msgFactory: CqlMessageFactory, activityLog: ActivityLog) extends Actor with ActorLogging {
+  val noRows = Some(Reply(NoRows))
 
   def receive = {
-    case QueryHandler.Query(queryBody, stream) =>
-      val iterator = queryBody.iterator
-      // the first 4 bytes are an int which is the length of the query
-      val queryLength = iterator.getInt
-      val bodyAsBytes = new Array[Byte](queryLength)
-      iterator.getBytes(bodyAsBytes)
-      val queryText = new String(bodyAsBytes)
-      val consistency = Consistency.fromCode(iterator.getShort)
+    case ProtocolMessage(Frame(header, query: Query)) =>
+      implicit val protocolVersion = header.version.version
+      val prime = primeQueryStore(query)
 
-      if (queryText.startsWith("use ")) {
-        val keyspaceName: String = queryText.substring(4, queryLength)
-        log.debug(s"Use keyspace $keyspaceName")
-        sendMessage(None, tcpConnection, msgFactory.createSetKeyspaceMessage(keyspaceName, stream))
-        activityLog.recordQuery(queryText, consistency)
-      } else {
-        val primeForIncomingQuery: Option[Prime] = primeQueryStore.get(PrimeMatch(queryText, consistency))
-        primeForIncomingQuery match {
-          case Some(prime) =>
-            val message = prime.result match {
-              case SuccessResult =>
-                log.info(s"Found matching prime $prime for query $queryText")
-                msgFactory.createRowsMessage(prime, stream)
-              case result: ErrorResult => msgFactory.createErrorMessage(result, stream, consistency)
-              case result: FatalResult => result.produceFatalError(tcpConnection)
-            }
-            val queryRequest = msgFactory.parseQueryRequest(stream, queryBody, prime.variableTypes)
-            log.info(s"Parsed query request $queryRequest")
-            activityLog.recordQuery(queryRequest.query, consistency, queryRequest.parameters, prime.variableTypes)
-            sendMessage(prime.fixedDelay, tcpConnection, message)
+      // Attempt to extract values if variable types are present in the prime.
+      val typesAndValues: Option[(List[DataType], List[Any])] = prime
+        .flatMap(_.variableTypes)
+        .flatMap { variableTypes =>
+          Some(variableTypes).zip(extractQueryVariables(query.query, query.parameters.values.map(_.map(_.value)), variableTypes)).headOption
+        }
+
+      val wasSetKeyspace = prime.nonEmpty && prime.forall {
+        // Skip 'use keyspace' queries for legacy compatibility
+        case Reply(s: SetKeyspace, _, _) => true
+        case _ => false
+      }
+
+      if(!wasSetKeyspace) {
+        typesAndValues match {
+          case Some((variableTypes, values)) =>
+            activityLog.recordQuery(query.query, query.parameters.consistency, values, variableTypes)
           case None =>
-            log.info(s"No prime found for $queryText")
-            sendMessage(None, tcpConnection, msgFactory.createEmptyRowsMessage(stream))
-            activityLog.recordQuery(queryText, consistency)
+            activityLog.recordQuery(query.query, query.parameters.consistency)
         }
       }
-      log.info(s"Incoming query: $queryText at consistency: $consistency")
-  }
 
-  private def sendMessage(delay: Option[FiniteDuration], receiver: ActorRef, message: Any) = {
-    delay match {
-      case None => receiver ! message
-      case Some(duration) =>
-        log.info(s"Delaying response by $duration")
-        context.system.scheduler.scheduleOnce(duration, receiver, message)(context.system.dispatcher)
-    }
+      writePrime(query, prime, header, alternative = noRows, consistency = Some(query.parameters.consistency))
+      log.info(s"Incoming query: $query")
   }
 }
-
-
-object QueryHandler {
-  case class Query(queryBody: ByteString, stream: Byte)
-}
-
-
-object QueryFlagParser {
-  def hasFlag(flag : Byte, value : Byte) = {
-    (value & flag) == flag
-  }
-}
-
-object QueryFlags {
-  val Values : Byte = (1 << 0).toByte
-  val SkipMetadata : Byte = (1 << 1).toByte
-  val PageSize : Byte = (1 << 3).toByte
-  val PagingState : Byte = (1 << 4).toByte
-  val SerialConsistency : Byte = (1 << 5).toByte
-}
-

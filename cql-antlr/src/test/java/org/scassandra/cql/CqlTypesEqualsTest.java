@@ -38,6 +38,7 @@ import static org.scassandra.cql.ListType.list;
 import static org.scassandra.cql.MapType.map;
 import static org.scassandra.cql.PrimitiveType.*;
 import static org.scassandra.cql.SetType.set;
+import static org.scassandra.cql.TupleType.tuple;
 
 @RunWith(Parameterized.class)
 public class CqlTypesEqualsTest {
@@ -221,6 +222,43 @@ public class CqlTypesEqualsTest {
                 {INET, 1, InetAddress.getLocalHost().getHostAddress(), ILLEGAL_ARGUMENT},
                 {INET, new BigInteger("1"), InetAddress.getLocalHost().getHostAddress(), ILLEGAL_ARGUMENT},
 
+                {INET, new Date(1l), InetAddress.getLocalHost().getHostAddress(), ILLEGAL_ARGUMENT},
+                {INET, 1l, InetAddress.getLocalHost().getHostAddress(), ILLEGAL_ARGUMENT},
+                {INET, 1, InetAddress.getLocalHost().getHostAddress(), ILLEGAL_ARGUMENT},
+                {INET, new BigInteger("1"), InetAddress.getLocalHost().getHostAddress(), ILLEGAL_ARGUMENT},
+
+                {DATE, 1, "1", MATCH},
+                {DATE, 1, 1d, MATCH},
+                {DATE, "1", 1d, MATCH},
+                {DATE, new BigInteger("1"), 1d, MATCH},
+
+                {DATE, null, 1, NO_MATCH},
+                {DATE, "hello", 1d, ILLEGAL_ARGUMENT},
+
+                {TIME, 1, "1", MATCH},
+                {TIME, 1, 1d, MATCH},
+                {TIME, "1", 1d, MATCH},
+                {TIME, new BigInteger("1"), 1d, MATCH},
+
+                {TIME, null, 1, NO_MATCH},
+                {TIME, "hello", 1d, ILLEGAL_ARGUMENT},
+
+                {TINY_INT, 1, "1", MATCH},
+                {TINY_INT, 1, 1d, MATCH},
+                {TINY_INT, "1", 1d, MATCH},
+                {TINY_INT, new BigInteger("1"), 1d, MATCH},
+
+                {TINY_INT, null, 1, NO_MATCH},
+                {TINY_INT, "hello", 1d, ILLEGAL_ARGUMENT},
+
+                {SMALL_INT, 1, "1", MATCH},
+                {SMALL_INT, 1, 1d, MATCH},
+                {SMALL_INT, "1", 1d, MATCH},
+                {SMALL_INT, new BigInteger("1"), 1d, MATCH},
+
+                {SMALL_INT, null, 1, NO_MATCH},
+                {SMALL_INT, "hello", 1d, ILLEGAL_ARGUMENT},
+
                 {new SetType(TEXT), Sets.newHashSet("one"), Lists.newArrayList("one"), MATCH},
                 {new SetType(TEXT), Sets.newHashSet("one"), Lists.newArrayList("two"), NO_MATCH},
                 {new SetType(TEXT), Sets.newHashSet("one"), Lists.newArrayList("one", "two"), NO_MATCH},
@@ -291,6 +329,20 @@ public class CqlTypesEqualsTest {
                 {map(TEXT, TEXT), 1l, ImmutableMap.of("ONE", "1"), ILLEGAL_ARGUMENT},
                 {map(TEXT, TEXT), 1, ImmutableMap.of("ONE", "1"), ILLEGAL_ARGUMENT},
                 {map(TEXT, TEXT), new BigInteger("1"), ImmutableMap.of("ONE", "1"), ILLEGAL_ARGUMENT},
+
+                {tuple(TEXT, INT), Lists.newArrayList("one", 1), Lists.newArrayList("one", 1), MATCH},
+                {tuple(TEXT, INT), Lists.newArrayList("one", 1), Lists.newArrayList("two", 1), NO_MATCH},
+                {tuple(TEXT, INT), Lists.newArrayList("one", 1), Lists.newArrayList("one", 2), NO_MATCH},
+
+                {tuple(TEXT, INT), null, Lists.newArrayList("one", 1), NO_MATCH},
+                {tuple(TEXT, INT), Lists.newArrayList("one", 1), null, NO_MATCH},
+
+                {tuple(TEXT, INT), new Date(1l), Lists.newArrayList("one", 1), ILLEGAL_ARGUMENT},
+                {tuple(TEXT, INT), 1l, Lists.newArrayList("one", 1), ILLEGAL_ARGUMENT},
+                {tuple(TEXT, INT), 1, Lists.newArrayList("one", 1), ILLEGAL_ARGUMENT},
+                {tuple(TEXT, INT), new BigInteger("1"), Lists.newArrayList("one", 1), ILLEGAL_ARGUMENT},
+
+                {tuple(TEXT, INT), Lists.newArrayList("one"), Lists.newArrayList("one"), ILLEGAL_ARGUMENT},
         });
     }
 

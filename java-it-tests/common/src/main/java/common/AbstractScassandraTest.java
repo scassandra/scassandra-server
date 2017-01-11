@@ -15,9 +15,6 @@
  */
 package common;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
-
 import com.google.common.collect.Maps;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -30,16 +27,19 @@ import org.scassandra.http.client.ActivityClient;
 import org.scassandra.http.client.ColumnTypes;
 import org.scassandra.http.client.PrimingClient;
 
-import static common.PortLocator.*;
+import java.nio.ByteBuffer;
+import java.util.Map;
 
-abstract public class AbstractScassandraTest {
+import static common.PortLocator.findFreePort;
+
+abstract public class AbstractScassandraTest<C extends CassandraExecutor> {
     protected static Scassandra scassandra;
     protected static PrimingClient primingClient;
     protected static ActivityClient activityClient;
 
-    private CassandraExecutor cassandraExecutor;
+    private C cassandraExecutor;
 
-    public AbstractScassandraTest(CassandraExecutor cassandraExecutor) {
+    public AbstractScassandraTest(C cassandraExecutor) {
         this.cassandraExecutor = cassandraExecutor;
     }
 
@@ -68,7 +68,7 @@ abstract public class AbstractScassandraTest {
         cassandraExecutor.close();
     }
 
-    public CassandraExecutor cassandra() {
+    public C cassandra() {
         return cassandraExecutor;
     }
 

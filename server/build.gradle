@@ -43,10 +43,14 @@ compileJava {
     targetCompatibility = "1.6"
 }
 
+
 compileScala {
     sourceCompatibility = "1.6"
     targetCompatibility = "1.6"
 }
+
+compileScala.scalaCompileOptions.failOnError = false
+compileTestScala.scalaCompileOptions.failOnError = false
 
 task sourceJar(type: Jar) {
     classifier = 'sources'
@@ -99,9 +103,9 @@ uploadArchives {
                 url 'https://github.com/scassandra/'
 
                 scm {
-                    connection 'scm:git:git@github.com:scassandra/scassandra-java-client.git'
-                    developerConnection 'git@github.com:scassandra/scassandra-java-client.git'
-                    url 'https://github.com/scassandra/scassandra-java-client'
+                    connection 'scm:git:git@github.com:scassandra/scassandra-server.git'
+                    developerConnection 'git@github.com:scassandra/scassandra-server.git'
+                    url 'https://github.com/scassandra/scassandra-server'
                 }
 
                 licenses {
@@ -130,6 +134,7 @@ uploadArchives {
 
 dependencies {
     compile "org.scala-lang:scala-library:$scalaVersion"
+    compile  project(':codec')
     compile  project(':cql-antlr')
     compile  "ch.qos.logback:logback-classic:$logbackVersion"
     compile  "com.typesafe.akka:akka-actor_2.11:$akkaVersion"
@@ -137,13 +142,13 @@ dependencies {
     compile  "com.typesafe.akka:akka-slf4j_2.11:$akkaVersion"
     compile  "io.spray:spray-json_2.11:$sprayJsonVersion"
     compile  "io.spray:spray-can_2.11:$sprayVersion"
-    compile  "io.spray:spray-routing-shapeless2_2.11:$sprayVersion"
+    compile  "io.spray:spray-routing-shapeless23_2.11:$sprayVersion"
     compile  "com.typesafe.scala-logging:scala-logging_2.11:3.1.0"
     compile  "com.google.guava:guava:$guavaVersion"
 
     testCompile "com.typesafe.akka:akka-testkit_2.11:$akkaVersion"
     testCompile "io.spray:spray-testkit_2.11:$sprayVersion"
-    testCompile "com.datastax.cassandra:cassandra-driver-core:2.0.10" //exclude("com.google.guava", "guava"),
+    testCompile "com.datastax.cassandra:cassandra-driver-core:3.1.0" //exclude("com.google.guava", "guava"),
     testCompile "net.databinder.dispatch:dispatch-core_2.11:0.11.0"
     testCompile "org.scalatest:scalatest_2.11:2.2.3"
     testCompile "org.mockito:mockito-core:$mockitoVersion"

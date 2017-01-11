@@ -40,6 +40,10 @@ abstract public class PrimitiveType extends CqlType {
     public static final PrimitiveType BOOLEAN = registerPrimitive(new CqlBoolean());
     public static final PrimitiveType COUNTER = registerPrimitive(new CqlCounter());
     public static final PrimitiveType DECIMAL = registerPrimitive(new CqlDecimal());
+    public static final PrimitiveType DATE = registerPrimitive(new CqlDate());
+    public static final PrimitiveType SMALL_INT = registerPrimitive(new CqlSmallInt());
+    public static final PrimitiveType TIME = registerPrimitive(new CqlTime());
+    public static final PrimitiveType TINY_INT = registerPrimitive(new CqlTinyInt());
 
     private final String columnType;
 
@@ -106,6 +110,7 @@ abstract public class PrimitiveType extends CqlType {
             throw throwInvalidType(expected, actual, instance);
         }
     }
+
     protected IllegalArgumentException throwNullError(Object actual, CqlType instance) {
         return new IllegalArgumentException(String.format("Invalid expected value (null) for variable of types %s, the value was %s for valid types see: %s",
                 instance.serialise(),

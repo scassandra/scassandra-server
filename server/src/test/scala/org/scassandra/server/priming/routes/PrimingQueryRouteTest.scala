@@ -13,29 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
-* Copyright (C) 2014 Christopher Batey and Dogan Narinc
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+
 package org.scassandra.server.priming.routes
 
 import org.scalatest._
-import org.scassandra.server.cqlmessages._
-import org.scassandra.server.cqlmessages.types._
-import org.scassandra.server.priming.{ConflictingPrimes, TypeMismatch, TypeMismatches, _}
+import org.scassandra.codec.Consistency._
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.messages.ColumnSpec.column
+import org.scassandra.codec.messages.{QueryParameters, RowMetadata}
+import org.scassandra.codec.{Rows, Query => CQuery}
 import org.scassandra.server.priming.json._
-import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch, PrimeQuerySingle, Then, When, _}
+import org.scassandra.server.priming.query.{PrimeQuerySingle, Then, When, _}
+import org.scassandra.server.priming.{ConflictingPrimes, TypeMismatch, TypeMismatches}
 import spray.http.StatusCodes.{BadRequest, OK}
 import spray.testkit.ScalatestRouteTest
 
@@ -46,7 +35,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
 
   implicit def actorRefFactory = system
 
-  implicit val primeQueryStore = PrimeQueryStore()
+  implicit val primeQueryStore = new PrimeQueryStore
 
   val primeQuerySinglePath: String = "/prime-query-single"
 
@@ -74,7 +63,6 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
           )
         )
 
-
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults)))) ~> queryRoute ~> check {
         status should equal(OK)
       }
@@ -94,10 +82,10 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
             "age" -> "12"
           )
         )
-      val defaultedColumnTypes = Map("name" -> CqlVarchar, "age" -> CqlVarchar)
+      val prime = PrimeQuerySingle(whenQuery, Then(Some(thenResults)))
 
-      Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults)))) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, SuccessResult, defaultedColumnTypes))
+      Post(primeQuerySinglePath, prime) ~> queryRoute ~> check {
+        primeQueryStore(CQuery(whenQuery.query.get, QueryParameters(consistency = ONE))).get should equal(prime.prime)
       }
     }
 
@@ -106,20 +94,10 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val whenQuery = When(query = Some(query))
       val thenResults = List[Map[String, String]]()
       val result = Some(ReadTimeout)
+      val prime = PrimeQuerySingle(whenQuery, Then(Some(thenResults), result))
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), result))) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, ReadRequestTimeoutResult()))
-      }
-    }
-
-    it("should populate PrimedResults with WriteTimeout when result is write_request_timeout") {
-      val query = "insert into something"
-      val whenQuery = When(query = Some(query))
-      val thenResults = List[Map[String, String]]()
-      val result = Some(WriteTimeout)
-
-      Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), result))) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, WriteRequestTimeoutResult()))
+        primeQueryStore(CQuery(whenQuery.query.get, QueryParameters(consistency = ONE))).get should equal(prime.prime)
       }
     }
 
@@ -129,28 +107,19 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val thenResults = List[Map[String, String]]()
       val result = Some(Success)
 
-      Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), result))) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, SuccessResult))
-      }
-    }
+      val prime = PrimeQuerySingle(whenQuery, Then(Some(thenResults), result))
 
-    it("should populate PrimedResults with Unavailable for result unavailable") {
-      val query = "select * from users"
-      val whenQuery = When(query = Some(query))
-      val thenResults = List[Map[String, String]]()
-      val result = Some(Unavailable)
-
-      Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), result))) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenResults, UnavailableResult()))
+      Post(primeQuerySinglePath, prime) ~> queryRoute ~> check {
+        primeQueryStore(CQuery(whenQuery.query.get, QueryParameters(consistency = ONE))).get should equal(prime.prime)
       }
     }
 
     it("should delete all primes for a HTTP delete") {
-      val whenQuery = PrimeCriteria("anything", List())
-      primeQueryStore.add(whenQuery, Prime(List()))
+      val prime = PrimeQuerySingle(When(query = Some("anything")), Then(None, Some(ReadTimeout)))
+      primeQueryStore.add(prime)
 
       Delete(primeQuerySinglePath) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query, ONE)) should equal(None)
+        primeQueryStore(CQuery("anything", QueryParameters(consistency = ONE))) should equal(None)
       }
     }
 
@@ -161,7 +130,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         List(
           Map("mapValue" -> Map())
         )
-      val columnTypes = Some(Map[String, ColumnType[_]]("mapValue" -> new CqlMap(CqlVarchar, CqlVarchar)))
+      val columnTypes = Some(Map[String, DataType]("mapValue" -> DataType.Map(DataType.Varchar, DataType.Varchar)))
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), column_types = columnTypes))) ~> queryRoute ~> check {
         println(body)
@@ -178,11 +147,12 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         List(
           Map("name" -> "Mickey", "age" -> "99")
         )
-      val defaultedColumnTypes = Map("name" -> CqlVarchar, "age" -> CqlVarchar)
+
+      val prime = PrimeQuerySingle(whenQuery, Then(Some(thenResults)))
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults)))) ~> queryRoute ~> check {
         status should equal(OK)
-        primeQueryStore.get(PrimeMatch(query = "select * from users")) should equal(Some(Prime(thenResults, SuccessResult, columnTypes = defaultedColumnTypes)))
+        primeQueryStore(CQuery("select * from users")) should equal(Some(prime.prime))
       }
     }
 
@@ -205,7 +175,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
     it("should reject conflicting primes as bad request") {
       val consistencies: List[Consistency] = List(ONE, TWO)
       val query: String = "select * from people"
-      primeQueryStore.add(PrimeCriteria(query, consistencies), Prime(List[Map[String, Any]]()))
+      primeQueryStore.add(PrimeQuerySingle(When(Some(query), consistency = Some(consistencies)), Then(None)))
 
       val whenQuery = When(query = Some("select * from people"))
       val thenResults = List[Map[String, String]]()
@@ -231,7 +201,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
             "age" -> "12"
           )
         )
-      val thenColumnTypes = Map("age" -> CqlBoolean)
+      val thenColumnTypes = Map("age" -> DataType.Boolean)
 
       val thenDo = Then(Some(thenResults), Some(Success), Some(thenColumnTypes))
 
@@ -245,6 +215,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
   describe("Setting optional values in 'when'") {
     describe("keyspace") {
       it("should correctly populate PrimedResults with empty string if keyspace name not set") {
+        val defaultKeyspace = ""
         val query = "select * from users"
         val whenQuery = When(query = Some(query))
         val thenRows = List()
@@ -252,14 +223,15 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows)))
 
         Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-          val prime = primeQueryStore.get(PrimeMatch(query, ONE)).get
-          prime.keyspace should equal("")
+          val prime = primeQueryStore(CQuery(query, QueryParameters(consistency = ONE)))
+          prime should matchPattern {
+            case Some(Reply(Rows(RowMetadata(_, Some(`defaultKeyspace`), _, _), _), _, _)) =>
+          }
         }
-
       }
 
       it("should correctly populate PrimedResults if keyspace name is set") {
-        val expectedKeyspace = "mykeyspace"
+        val expectedKeyspace = "keyspace"
         val query = "select * from users"
         val whenQuery = When(query = Some(query), keyspace = Some(expectedKeyspace))
         val thenRows = List()
@@ -267,15 +239,17 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows)))
 
         Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-          val prime = primeQueryStore.get(PrimeMatch(query, ONE)).get
-          prime.keyspace should equal(expectedKeyspace)
+          val prime = primeQueryStore(CQuery(query, QueryParameters(consistency = ONE)))
+          prime should matchPattern {
+            case Some(Reply(Rows(RowMetadata(_, Some(`expectedKeyspace`), _, _), _), _, _)) =>
+          }
         }
-
       }
     }
 
     describe("table") {
       it("should correctly populate PrimedResults with empty string if table name not set") {
+        val defaultTable = ""
         val query = "select * from users"
         val whenQuery = When(query = Some(query))
         val thenRows = List()
@@ -283,23 +257,26 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows)))
 
         Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-          val prime = primeQueryStore.get(PrimeMatch(query, ONE)).get
-          prime.table should equal("")
+          val prime = primeQueryStore(CQuery(query, QueryParameters(consistency = ONE)))
+          prime should matchPattern {
+            case Some(Reply(Rows(RowMetadata(_, _, Some(`defaultTable`), _), _), _, _)) =>
+          }
         }
-
       }
 
       it("should correctly populate PrimedResults if table name is set") {
         val expectedTable = "mytable"
-        val query = Some("select * from users")
-        val whenQuery = When(query, table = Some(expectedTable))
+        val query = "select * from users"
+        val whenQuery = When(Some(query), table = Some(expectedTable))
         val thenRows = List()
 
         val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows)))
 
         Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-          val prime = primeQueryStore.get(PrimeMatch(query.get, ONE)).get
-          prime.table should equal(expectedTable)
+          val prime = primeQueryStore(CQuery(query, QueryParameters(consistency = ONE)))
+          prime should matchPattern {
+            case Some(Reply(Rows(RowMetadata(_, _, Some(`expectedTable`), _), _), _, _)) =>
+          }
         }
       }
     }
@@ -318,11 +295,16 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
             "age" -> "12"
           )
         )
-      val thenColumnTypes = Map("age" -> CqlInt)
+      val expectedColumnTypes = column("age", DataType.Int) :: Nil
+      val thenColumnTypes = Map("age" -> DataType.Int)
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenRows, SuccessResult, columnTypes = thenColumnTypes))
+        val prime = primeQueryStore(CQuery(whenQuery.query.get, QueryParameters(consistency = ONE)))
+
+        prime should matchPattern {
+          case Some(Reply(Rows(RowMetadata(_, _, _, Some(`expectedColumnTypes`)), _), _, _)) =>
+        }
       }
     }
 
@@ -338,26 +320,35 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
             "age" -> "12"
           )
         )
-      val thenColumnTypes = Map("age" -> CqlInt, "abigD" -> CqlDecimal)
+      val expectedColumnTypes = column("age", DataType.Int) :: column("abigD", DataType.Bigint) :: Nil
+      val thenColumnTypes = Map("age" -> DataType.Int, "abigD" -> DataType.Bigint)
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-        primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenRows, SuccessResult, columnTypes = thenColumnTypes))
+        val prime = primeQueryStore(CQuery(whenQuery.query.get, QueryParameters(consistency = ONE)))
+
+        prime should matchPattern {
+          case Some(Reply(Rows(RowMetadata(_, _, _, Some(`expectedColumnTypes`)), _), _, _)) =>
+        }
       }
     }
 
     it("Should handle floats as JSON strings") {
-        val query = "select * from users"
-        val whenQuery = When(query = Some(query))
-        val thenRows = List(Map("age" -> "7.7"))
-        val thenColumnTypes = Map("age" -> CqlDouble)
-        val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
+      val query = "select * from users"
+      val whenQuery = When(query = Some(query))
+      val thenRows = List(Map("age" -> "7.7"))
+      val expectedColumnTypes = column("age", DataType.Double) :: Nil
+      val thenColumnTypes = Map("age" -> DataType.Double)
+      val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
-        Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
-          primeQueryStore.get(PrimeMatch(whenQuery.query.get, ONE)).get should equal(Prime(thenRows, SuccessResult, columnTypes = thenColumnTypes))
+      Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
+        val prime = primeQueryStore(CQuery(whenQuery.query.get, QueryParameters(consistency = ONE)))
+
+        prime should matchPattern {
+          case Some(Reply(Rows(RowMetadata(_, _, _, Some(`expectedColumnTypes`)), _), _, _)) =>
         }
+      }
     }
-
   }
 
   describe("Retrieving of primes") {
@@ -366,65 +357,61 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val whenQuery = When(query = Some(query))
       val thenRows = Some(List(Map("field" -> "2c530380-b9f9-11e3-850e-338bb2a2e74f",
         "set_field" -> List("one", "two"))))
-      val thenColumnTypes = Some(Map("field" -> CqlTimeUUID, "set_field" -> CqlSet(CqlVarchar)))
+      val thenColumnTypes = Some(Map("field" -> DataType.Timeuuid, "set_field" -> DataType.Set(DataType.Varchar)))
       val primePayload = PrimeQuerySingle(whenQuery, Then(thenRows, column_types = thenColumnTypes))
-      val expectedPrimePayloadWithDefaults = createPrimeQueryResultWithDefaults(query, thenRows = thenRows, columnTypes = thenColumnTypes)
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute
 
       Get(primeQuerySinglePath) ~> queryRoute ~> check {
         val response = responseAs[List[PrimeQuerySingle]]
         response.size should equal(1)
-        response(0) should equal(expectedPrimePayloadWithDefaults)
+        response.head should equal(primePayload.withDefaults)
       }
     }
 
-    it ("should convert result back to original JSON format") {
+    it("should convert result back to original JSON format") {
       val query = "select * from users"
       val whenQuery = When(query = Some(query))
-      val thenRows = Some(List(Map("one"->"two")))
+      val thenRows = Some(List(Map("one" -> "two")))
       val result = ReadTimeout
       val primePayload = PrimeQuerySingle(whenQuery, Then(thenRows, Some(result)))
-      val expectedPrimePayloadWithDefaults = createPrimeQueryResultWithDefaults(query, thenRows = thenRows, result = result)
       Post(primeQuerySinglePath, primePayload) ~> queryRoute
 
       Get(primeQuerySinglePath) ~> queryRoute ~> check {
         val response = responseAs[List[PrimeQuerySingle]]
         response.size should equal(1)
-        response(0) should equal(expectedPrimePayloadWithDefaults)
+        response.head should equal(primePayload.withDefaults)
       }
     }
 
     it("Should return keyspace passed into prime") {
       val query = Some("select * from users")
       val whenQuery = When(query, keyspace = Some("myKeyspace"))
-      val thenRows = Some(List(Map("one"->"two")))
-      val columnTypes = Map("one"->CqlVarchar)
-      val primePayload = PrimeQuerySingle(whenQuery, Then(thenRows, column_types =  Some(columnTypes)))
-      val expectedPrimePayloadWithDefaults = createPrimeQueryResultWithDefaults(query.get, thenRows = thenRows, keyspace = "myKeyspace")
+      val thenRows = Some(List(Map("one" -> "two")))
+      val columnTypes = Map("one" -> DataType.Varchar)
+      val primePayload = PrimeQuerySingle(whenQuery, Then(thenRows, column_types = Some(columnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute
 
       Get(primeQuerySinglePath) ~> queryRoute ~> check {
         val response = responseAs[List[PrimeQuerySingle]]
         response.size should equal(1)
-        response(0) should equal(expectedPrimePayloadWithDefaults)
+        response.head should equal(primePayload.withDefaults)
       }
     }
 
     it("Should return table passed into prime") {
       val query = "select * from users"
       val whenQuery = When(query = Some(query), table = Some("tablename"))
-      val thenRows = Some(List(Map("one"->"two")))
+      val thenRows = Some(List(Map("one" -> "two")))
       val primePayload = PrimeQuerySingle(whenQuery, Then(thenRows))
-      val expectedPrimePayloadWithDefaults = createPrimeQueryResultWithDefaults(query, thenRows = thenRows, table = "tablename")
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute
 
       Get(primeQuerySinglePath) ~> queryRoute ~> check {
         val response = responseAs[List[PrimeQuerySingle]]
         response.size should equal(1)
-        response(0) should equal(expectedPrimePayloadWithDefaults)
+        response.head should equal(primePayload.withDefaults)
       }
     }
 
@@ -432,7 +419,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val query = "select * from users"
       val consistencies = Some(List(ONE, ALL))
       val whenQuery = When(query = Some(query), consistency = consistencies)
-      val thenRows = Some(List(Map("one"->"two")))
+      val thenRows = Some(List(Map("one" -> "two")))
       val primePayload = PrimeQuerySingle(whenQuery, Then(rows = thenRows, fixedDelay = Some(123l)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute
@@ -440,7 +427,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       Get(primeQuerySinglePath) ~> queryRoute ~> check {
         val response = responseAs[List[PrimeQuerySingle]]
         response.size should equal(1)
-        response(0).thenDo.fixedDelay should equal(Some(123l))
+        response.head.thenDo.fixedDelay should equal(Some(123l))
       }
     }
 
@@ -448,42 +435,17 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val query = "select * from users"
       val consistencies = Some(List(ONE, ALL))
       val whenQuery = When(query = Some(query), consistency = consistencies)
-      val thenRows = Some(List(Map("one"->"two")))
+      val thenRows = Some(List(Map("one" -> "two")))
       val primePayload = PrimeQuerySingle(whenQuery, Then(thenRows))
-      val expectedPrimePayloadWithDefaults = createPrimeQueryResultWithDefaults(query, thenRows = thenRows, consistencies = consistencies)
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute
 
       Get(primeQuerySinglePath) ~> queryRoute ~> check {
         val response = responseAs[List[PrimeQuerySingle]]
         response.size should equal(1)
-        response(0) should equal(expectedPrimePayloadWithDefaults)
+        response.head should equal(primePayload.withDefaults)
       }
     }
 
-  }
-
-
-  private def createPrimeQueryResultWithDefaults(query: String,
-                                                 keyspace : String = "",
-                                                 table : String = "",
-                                                 thenRows : Option[List[Map[String, Any]]] = None,
-                                                 result : ResultJsonRepresentation = Success,
-                                                 columnTypes : Option[Map[String, ColumnType[_]]] = None,
-                                                 consistencies : Option[List[Consistency]] = None,
-                                                 fixedDelay : Option[Long] = None) = {
-
-
-
-    val consistenciesDefaultingToAll = consistencies.getOrElse(Consistency.all)
-
-    val colTypesDefaultingToVarchar = if (columnTypes.isDefined) {
-      columnTypes.get
-    } else {
-      // check that all the columns in the rows have a type
-      val columnNamesInAllRows = thenRows.get.flatMap(row => row.keys).distinct
-      columnNamesInAllRows.map(colName => (colName, CqlVarchar)).toMap
-    }
-    PrimeQuerySingle(When(query = Some(query), keyspace = Some(keyspace), table = Some(table), consistency = Some(consistenciesDefaultingToAll)), Then(thenRows, Some(result), Some(colTypesDefaultingToVarchar), fixedDelay))
   }
 }

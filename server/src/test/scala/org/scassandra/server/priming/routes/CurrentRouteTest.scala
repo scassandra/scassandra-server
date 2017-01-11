@@ -65,28 +65,28 @@ class CurrentRouteTest extends FunSpec with ScalatestRouteTest with CurrentRoute
   override implicit val timeout = Timeout(5 seconds)
   override implicit val dispatcher = ExecutionContext.Implicits.global
 
-  describe("Should get all client connections") {
+  it("Should get all client connections") {
     Get("/current/connections") ~> currentRoute ~> check {
       val response = responseAs[ClientConnections]
       response.connections should equal (allConnections)
     }
   }
 
-  describe("Should get all client connections by ip") {
+  it("Should get all client connections by ip") {
     Get("/current/connections/127.0.0.1") ~> currentRoute ~> check {
       val response = responseAs[ClientConnections]
       response.connections should equal (_1connections)
     }
   }
 
-  describe("Should get connection by ip and port") {
+  it("Should get connection by ip and port") {
     Get("/current/connections/127.0.0.1/9042") ~> currentRoute ~> check {
       val response = responseAs[ClientConnections]
       response.connections should equal (_1connections.filter(_.port == 9042))
     }
   }
 
-  describe("Should close all client connections") {
+  it("Should close all client connections") {
     Delete("/current/connections") ~> currentRoute ~> check {
       val response = responseAs[ClosedConnections]
       response.connections should equal (allConnections)
@@ -94,7 +94,7 @@ class CurrentRouteTest extends FunSpec with ScalatestRouteTest with CurrentRoute
     }
   }
 
-  describe("Should halfclose all client connections") {
+  it("Should halfclose all client connections") {
     Delete("/current/connections?type=halfclose") ~> currentRoute ~> check {
       val response = responseAs[ClosedConnections]
       response.connections should equal (allConnections)
@@ -102,7 +102,7 @@ class CurrentRouteTest extends FunSpec with ScalatestRouteTest with CurrentRoute
     }
   }
 
-  describe("Should reset all client connections") {
+  it("Should reset all client connections") {
     Delete("/current/connections?type=reset") ~> currentRoute ~> check {
       val response = responseAs[ClosedConnections]
       response.connections should equal (allConnections)
@@ -110,7 +110,7 @@ class CurrentRouteTest extends FunSpec with ScalatestRouteTest with CurrentRoute
     }
   }
 
-  describe("Should close client connections by ip") {
+  it("Should close client connections by ip") {
     Delete("/current/connections/127.0.0.1") ~> currentRoute ~> check {
       val response = responseAs[ClosedConnections]
       response.connections should equal (_1connections)
@@ -118,7 +118,7 @@ class CurrentRouteTest extends FunSpec with ScalatestRouteTest with CurrentRoute
     }
   }
 
-  describe("Should close client connection by ip and port") {
+  it("Should close client connection by ip and port") {
     Delete("/current/connections/127.0.0.1/9042") ~> currentRoute ~> check {
       val response = responseAs[ClosedConnections]
       response.connections should equal (_1connections.filter(_.port == 9042))
@@ -126,14 +126,14 @@ class CurrentRouteTest extends FunSpec with ScalatestRouteTest with CurrentRoute
     }
   }
 
-  describe("Should enable listening.") {
+  it("Should enable listening.") {
     Put("/current/listener") ~> currentRoute ~> check {
       val response = responseAs[AcceptNewConnectionsEnabled]
       response.changed should equal(false)
     }
   }
 
-  describe("Should disable listening.") {
+  it("Should disable listening.") {
     Delete("/current/listener") ~> currentRoute ~> check {
       val response = responseAs[RejectNewConnectionsEnabled]
       response.changed should equal(true)

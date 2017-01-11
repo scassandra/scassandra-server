@@ -15,13 +15,14 @@
  */
 package org.scassandra.server.e2e.query
 
-import org.scassandra.server.AbstractIntegrationTest
-import org.scalatest.concurrent.ScalaFutures
 import com.datastax.driver.core.{ConsistencyLevel, SimpleStatement}
-import dispatch._, Defaults._
-import org.scassandra.server.priming.query.When
-import org.scassandra.server.cqlmessages._
+import dispatch.Defaults._
+import dispatch._
+import org.scalatest.concurrent.ScalaFutures
+import org.scassandra.codec.Consistency._
+import org.scassandra.server.AbstractIntegrationTest
 import org.scassandra.server.priming.json.Success
+import org.scassandra.server.priming.query.When
 
 class AdvancedPrimeCriteriaTest extends AbstractIntegrationTest with ScalaFutures {
 

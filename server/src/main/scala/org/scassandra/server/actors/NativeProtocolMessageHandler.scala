@@ -15,85 +15,61 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.{ActorRef, ActorRefFactory, ActorLogging, Actor}
-import akka.io.Tcp.Write
-import akka.util.ByteString
-import org.scassandra.server.RegisterHandlerMessages
-import org.scassandra.server.actors.NativeProtocolMessageHandler.Process
-import org.scassandra.server.cqlmessages._
+import akka.actor.{ActorRef, ActorRefFactory}
+import org.scassandra.codec._
 
 /*
  * Expects full native protocol messages.
  */
-class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
-                        batchHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory, ActorRef) => ActorRef,
-                        registerHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
-                        optionsHandlerFactory: (ActorRefFactory, ActorRef, CqlMessageFactory) => ActorRef,
+class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory) => ActorRef,
+                        batchHandlerFactory: (ActorRefFactory, ActorRef) => ActorRef,
+                        registerHandlerFactory: (ActorRefFactory) => ActorRef,
+                        optionsHandlerFactory: (ActorRefFactory) => ActorRef,
                         prepareHandler: ActorRef,
-                        executeHandler: ActorRef) extends Actor with ActorLogging {
+                        executeHandler: ActorRef) extends ProtocolActor {
 
-  var messageFactory: CqlMessageFactory = _
+  private val optionsHandler = optionsHandlerFactory(context)
 
-  var registerHandler: ActorRef = _
-  var queryHandler: ActorRef = _
-  var batchHandler: ActorRef = _
-  var optionsHandler: ActorRef = _
-  var ready = false
-
-  def receive: Receive = {
-    case Process(opCode, stream, messageBody, protocolVersion) => {
-      opCode match {
-        case OpCodes.Startup =>
-          log.info(s"Sending ready message to ${sender()}")
-          initialiseMessageFactory(protocolVersion)
-          queryHandler = queryHandlerFactory(context, sender(), messageFactory)
-          batchHandler = batchHandlerFactory(context, sender(), messageFactory, prepareHandler)
-          registerHandler = registerHandlerFactory(context, sender(), messageFactory)
-          optionsHandler = optionsHandlerFactory(context, sender(), messageFactory)
-          sender ! messageFactory.createReadyMessage(stream)
-          ready = true
-        case OpCodes.Query =>
-          if (!ready) {
-            initialiseMessageFactory(protocolVersion)
-            log.info("Received query before startup message, sending error")
-            sender ! Write(messageFactory.createQueryBeforeErrorMessage().serialize())
-          } else {
-            queryHandler ! QueryHandler.Query(messageBody, stream)
-          }
-        case OpCodes.Batch =>
-          log.debug("Received register message. Sending to BatchHandler")
-          batchHandler ! BatchHandler.Execute(messageBody, stream)
-        case OpCodes.Register =>
-          log.debug("Received register message. Sending to RegisterHandler")
-          registerHandler ! RegisterHandlerMessages.Register(messageBody, stream)
-        case OpCodes.Options =>
+  override def receive: Receive = {
+    case message@ProtocolMessage(frame) =>
+      frame.message match {
+        case Options =>
           log.debug("Received options message. Sending to OptionsHandler")
-          optionsHandler ! OptionsHandlerMessages.OptionsMessage(stream)
-        case OpCodes.Prepare =>
-          log.debug("Received prepare message. Sending to PrepareHandler")
-          prepareHandler ! PrepareHandler.Prepare(messageBody, stream, messageFactory, sender())
-        case OpCodes.Execute =>
-          log.debug("Received execute message. Sending to ExecuteHandler")
-          executeHandler ! ExecuteHandler.Execute(messageBody, stream, messageFactory, sender())
-        case opCode @ _ =>
-          log.warning(s"Received unknown opcode $opCode this probably means this feature is yet to be implemented the message body is $messageBody")
+          optionsHandler forward message
+        case Startup(_) =>
+          val queryHandler = queryHandlerFactory(context)
+          val batchHandler = batchHandlerFactory(context, prepareHandler)
+          val registerHandler = registerHandlerFactory(context)
+          write(Ready, frame.header)
+          context become initialized(queryHandler, batchHandler, registerHandler)
+        case _ =>
+          log.error(s"Received message $frame before Startup.  Sending error.")
+          write(ProtocolError("Query sent before Startup message"), frame.header)
       }
-    }
   }
 
-
-  def initialiseMessageFactory(protocolVersion: Byte) = {
-    messageFactory = if (protocolVersion == ProtocolVersion.ClientProtocolVersionOne) {
-      log.debug("Connection is for protocol version one")
-      VersionOneMessageFactory
-    } else {
-      log.debug("Connection is for protocol version two")
-      VersionTwoMessageFactory
-    }
+  def initialized(queryHandler: ActorRef, batchHandler: ActorRef, registerHandler: ActorRef): Receive = {
+    case message@ProtocolMessage(frame) =>
+      frame.message match {
+        case query: Query =>
+          queryHandler forward message
+        case batch: Batch =>
+          log.debug("Received batch message.  Sending to BatchHandler")
+          batchHandler forward message
+        case register: Register =>
+          log.debug("Received register message. Sending to RegisterHandler")
+          registerHandler forward message
+        case Options =>
+          log.debug("Received options message. Sending to OptionsHandler")
+          optionsHandler forward message
+        case prepare: Prepare =>
+          log.debug("Received prepare message. Sending to PrepareHandler")
+          prepareHandler forward message
+        case execute: Execute =>
+          log.debug("Received execute message. Sending to ExecuteHandler")
+          executeHandler forward message
+        case _ =>
+          log.warning(s"Received currently unhandled message ${frame.message}, discarding.")
+      }
   }
-
-}
-
-object NativeProtocolMessageHandler {
-  case class Process(opCode: Byte, stream: Byte, messageBody: ByteString, protocolVersion: Byte)
 }

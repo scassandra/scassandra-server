@@ -15,12 +15,12 @@
  */
 package org.scassandra.server.e2e.querybuilder
 
+import org.scassandra.codec.Consistency._
+import org.scassandra.codec.datatype.DataType
 import org.scassandra.server.AbstractIntegrationTest
-import org.scassandra.server.cqlmessages.ONE
-import org.scassandra.server.cqlmessages.types.{CqlText, CqlInt, CqlVarchar}
+import org.scassandra.server.PrimingHelper._
 import org.scassandra.server.priming.Query
 import org.scassandra.server.priming.query.{Then, When}
-import org.scassandra.server.PrimingHelper._
 
 class QueryWithParametersTest extends AbstractIntegrationTest {
 
@@ -33,29 +33,29 @@ class QueryWithParametersTest extends AbstractIntegrationTest {
     val query = "select * from people where name = ?"
     val rowOne = Map("name" -> "Chris", "age" -> 15)
     val columnTypes = Map(
-      "name" -> CqlVarchar,
-      "age" -> CqlInt)
-    val variableTypes = List(CqlText)
+      "name" -> DataType.Varchar,
+      "age" -> DataType.Int)
+    val variableTypes = List(DataType.Text)
     val thenDo = Then(rows = Some(List(rowOne)), column_types = Some(columnTypes), variable_types = Some(variableTypes))
     prime(When(query = Some(query)), thenDo)
 
     val result = session.execute(query, "chris")
 
-    getRecordedQueries() shouldEqual List(Query(query, ONE, List("chris"), List(CqlText)))
+    getRecordedQueries() shouldEqual List(Query(query, ONE, List("chris"), List(DataType.Text)))
   }
 
   test("Prime using int parameter") {
     val query = "select * from people where age = ?"
     val rowOne = Map("name" -> "Chris", "age" -> 15)
     val columnTypes = Map(
-      "name" -> CqlVarchar,
-      "age" -> CqlInt)
-    val variableTypes = List(CqlInt)
+      "name" -> DataType.Varchar,
+      "age" -> DataType.Int)
+    val variableTypes = List(DataType.Int)
     val thenDo = Then(Some(List(rowOne)), column_types = Some(columnTypes), variable_types = Some(variableTypes))
     prime(When(query = Some(query)), thenDo)
 
     val result = session.execute(query, new Integer(15))
 
-    getRecordedQueries() shouldEqual List(Query(query, ONE, List(15), List(CqlInt)))
+    getRecordedQueries() shouldEqual List(Query(query, ONE, List(15), List(DataType.Int)))
   }
 }

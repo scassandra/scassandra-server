@@ -141,7 +141,6 @@ public final class MultiPrimeRequest {
                 return this;
             }
 
-            @SafeVarargs
             final public Builder withRows(Map<String, ? extends Object>... rows) {
                 this.rows = Arrays.asList(rows);
                 return this;

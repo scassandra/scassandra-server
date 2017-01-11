@@ -15,9 +15,9 @@
  */
 package org.scassandra.server.e2e.prepared
 
-import org.scassandra.server.cqlmessages.types.{CqlText, CqlInt}
-import org.scassandra.server.{PrimingHelper, AbstractIntegrationTest}
+import org.scassandra.codec.datatype.DataType
 import org.scassandra.server.priming.prepared.{ThenPreparedSingle, WhenPrepared}
+import org.scassandra.server.{AbstractIntegrationTest, PrimingHelper}
 
 class PatternMatchingTest extends AbstractIntegrationTest {
 
@@ -48,7 +48,7 @@ class PatternMatchingTest extends AbstractIntegrationTest {
       WhenPrepared(None, Some(preparedStatementRegex)),
       ThenPreparedSingle(
         Some(List(Map("name" -> "Chris"))),
-        Some(List(CqlText, CqlInt))
+        Some(List(DataType.Text, DataType.Int))
         )
     )
 
@@ -71,7 +71,7 @@ class PatternMatchingTest extends AbstractIntegrationTest {
       WhenPrepared(None, Some(preparedStatementRegex)),
       ThenPreparedSingle(
         Some(List(Map("name" -> "Chris"))),
-        Some(List(CqlInt))
+        Some(List(DataType.Int))
       )
     )
 

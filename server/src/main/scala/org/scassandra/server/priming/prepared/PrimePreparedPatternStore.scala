@@ -15,49 +15,29 @@
  */
 package org.scassandra.server.priming.prepared
 
-import java.util.concurrent.TimeUnit
-
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.cqlmessages.Consistency
-import org.scassandra.server.priming.query.{Prime, PrimeCriteria, PrimeMatch}
-import org.scassandra.server.priming.routes.PrimingJsonHelper
-import org.scassandra.server.priming.{PrimeAddResult, Defaulter, PrimeAddSuccess}
-import org.scassandra.server.priming.json.Success
+import org.scassandra.codec._
+import org.scassandra.codec.messages.{PreparedMetadata, RowMetadata}
+import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
 
-import scala.concurrent.duration.FiniteDuration
+class PrimePreparedPatternStore extends PreparedStore[PrimePreparedSingle] with LazyLogging {
 
-class PrimePreparedPatternStore extends PreparedStore[PrimePreparedSingle, PreparedPrime] with PreparedStoreLookup with LazyLogging {
-
-  def record(incomingPrime: PrimePreparedSingle): PrimeAddResult = {
-    val primeCriteria = PrimeCriteria(incomingPrime.when.queryPattern.get, incomingPrime.when.consistency.getOrElse(Consistency.all))
-    val thenDo: ThenPreparedSingle = incomingPrime.thenDo
-    val rows = thenDo.rows.getOrElse(List())
-    val columnTypes = Defaulter.defaultColumnTypesToVarchar(thenDo.column_types, rows)
-    val result = PrimingJsonHelper.convertToPrimeResult(thenDo.config.getOrElse(Map()), thenDo.result.getOrElse(Success))
-    val fixedDelay = thenDo.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
-    val prime = Prime(rows, columnTypes = columnTypes, result = result, fixedDelay = fixedDelay)
-    val preparedPrime = PreparedPrime(thenDo.variable_types.getOrElse(List()), prime)
-    logger.info(s"Storing prime for prepared statement $preparedPrime with prime criteria $primeCriteria")
-    state += (primeCriteria -> preparedPrime)
-    PrimeAddSuccess
+  override def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = {
+    // Find prime by pattern.
+    val prime = primes.find(_._1.query.r.findFirstIn(prepare.query).isDefined).map(_._2)
+    prepared(prepare, prime, preparedFactory)
   }
 
-  def findPrime(primeMatch: PrimeMatch): Option[PreparedPrimeResult] = {
-    def findWithRegex: ((PrimeCriteria, PreparedPrime)) => Boolean = {
-      entry => {
-        entry._1.query.r.findFirstIn(primeMatch.query) match {
-          case Some(_) => entry._1.consistency.contains(primeMatch.consistency)
-          case None => false
-        }
-      }
-    }
+  def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion) : Option[Prime] = {
+    // Find prime with query pattern matching queryText and execute's consistency.
+    val prime = primes.find { case (criteria, _) =>
+      // if no consistency specified in the prime, allow all
+      criteria.query.r.findFirstIn(queryText).isDefined && criteria.consistency.contains(execute.parameters.consistency)
+    }.map(_._2)
 
-    state.find(findWithRegex).map(_._2).map(
-      variablesAndPrime => {
-        val numberOfVariables = primeMatch.query.toCharArray.count(_ == '?')
-        val variableTypesDefaulted = Defaulter.defaultVariableTypesToVarChar(numberOfVariables, Some(variablesAndPrime.variableTypes))
-        PreparedPrime(variableTypesDefaulted, variablesAndPrime.getPrime(List()))
-      })
+    prime.map(_.thenDo.prime)
   }
 
+  override def primeCriteria(prime: PrimePreparedSingle): PrimeCriteria =
+    PrimeCriteria(prime.when.queryPattern.get, prime.when.consistency.get)
 }

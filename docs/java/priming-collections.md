@@ -62,3 +62,23 @@ Same as Lists apart from it is set(INT) etc
 ### Priming Maps
 
 Maps require two types so you need to give the static method map two arguments e.g. map(TEXT, INT) represents map<text, int>
+
+### Priming Tuples
+
+**Since: 1.1.0**
+
+Tuples (supported since Apache Cassandra 2.1) allow fixed-length sequences with typed positional fields.  In absence of
+a concrete tuple type in java tuple values can be specified a `List<Object>`.  It is important that the column types are 
+appropriately defined so Scassandra knows how to serialize and deserialize the tuples over the protocol:
+
+```java
+PrimingRequest preparedStatementPrime = PrimingRequest.preparedStatementBuilder()
+        .withQuery("select * from person where name = ?")
+        .withThen(then()
+            .withColumnTypes(column("tuple_type", tuple(INET, VARCHAR)))
+            .withRows(ImmutableMap.of("tuple_type", Arrays.asList(InetAddress.getLocalHost(), "hello")))
+        ).build();
+primingClient.prime(preparedStatementPrime);
+```
+
+

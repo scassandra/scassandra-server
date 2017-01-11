@@ -18,10 +18,11 @@ package org.scassandra.server.e2e.verification
 import dispatch.Defaults._
 import dispatch._
 import org.scalatest.concurrent.ScalaFutures
-import org.scassandra.server.priming.json.PrimingJsonImplicits
+import org.scassandra.codec.Consistency
+import org.scassandra.codec.datatype.DataType
 import org.scassandra.server.AbstractIntegrationTest
-import org.scassandra.server.cqlmessages.ONE
 import org.scassandra.server.priming.PreparedStatementExecution
+import org.scassandra.server.priming.json.PrimingJsonImplicits
 import spray.json._
 
 class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest with ScalaFutures {
@@ -66,7 +67,7 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
       println(result)
       val preparedStatementExecutions = JsonParser(result).convertTo[List[PreparedStatementExecution]]
       preparedStatementExecutions.size should equal(1)
-      preparedStatementExecutions.head should equal(PreparedStatementExecution(queryString, ONE, List(), List()))
+      preparedStatementExecutions.head should equal(PreparedStatementExecution(queryString, Consistency.ONE, List("Chris"), List(DataType.Varchar)))
     }
   }
 }

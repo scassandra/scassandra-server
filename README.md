@@ -1,4 +1,4 @@
-# Scassandra - Making testing Cassandra easy
+# Scassandra - Making testing Apache Cassandra easy
 
 
 ## Migrating to Version 1.*
@@ -16,7 +16,9 @@ HTTP JSON API:
 ![TravisCI](https://travis-ci.org/scassandra/scassandra-server.svg?branch=master) 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/scassandra/scassandra-server?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Datastax Java 2.2, 2.1, 2.0 and 1.0 support. 
+Supports Apache Cassandra Protocol Versions 1 through 4.
+
+Datastax Java 3.x and 2.x support.
 
 Stubbed Cassandra runs as a separate process that your application will believe is a real Cassandra node. 
 It does this by implementing the server side of the binary protocol. 
@@ -38,6 +40,8 @@ To run all tests:
 
 It is made up of:
 
+* cql-antlr - parses cql types using an [antlr4](http://www.antlr.org/) grammar.
+* codec - parses Apache Cassandra's native protocol using [scodec](http://scodec.org/).
 * server - accepts requests over the native protocol and priming over JSON/HTTP. Written in Scala
 * java-client - wrapper for starting the sever in the same JVM as unit/integration tests and a Java API for the priming endpoinds
 * java-it-tests - integration tests against multiple versions of the DataStax Java driver

@@ -15,11 +15,11 @@
  */
 package preparedstatements;
 
-import common.*;
-import org.junit.Ignore;
+import common.AbstractScassandraTest;
+import common.CassandraExecutor;
+import common.CassandraResult;
 import org.junit.Test;
 import org.scassandra.http.client.*;
-import org.scassandra.http.client.Config;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -128,7 +128,7 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
     public void testPrimingServerError() {
         String errorMessage = "Arbitrary Server Error";
         ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
-        assertErrorMessageStatus(server_error, config, "Host replied with server error: " + errorMessage);
+        assertErrorMessageStatus(server_error, config, errorMessage);
     }
 
     @Test
@@ -149,14 +149,14 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
     @Test
     public void testOverloadedError() {
         ErrorMessageConfig config = new ErrorMessageConfig("");
-        assertErrorMessageStatus(overloaded, config, "Host overloaded");
+        assertErrorMessageStatus(overloaded, config, "overloaded");
     }
 
     @Test
     public void testIsBootstrapping() {
         String errorMessage = "Lay off, i'm bootstrapping.";
         ErrorMessageConfig config = new ErrorMessageConfig(errorMessage);
-        assertErrorMessageStatus(is_bootstrapping, config, "Host is bootstrapping");
+        assertErrorMessageStatus(is_bootstrapping, config, "bootstrapping");
     }
 
     @Test
@@ -218,8 +218,7 @@ abstract public class PreparedStatementErrorPrimingTest extends AbstractScassand
     public void testClosedOnRequest() {
         ClosedConnectionConfig config = new ClosedConnectionConfig(ClosedConnectionConfig.CloseType.CLOSE);
         assertErrorMessageStatus(closed_connection, config,
-            String.format("All host(s) tried for query failed (tried: localhost/127.0.0.1:%s (com.datastax.driver.core.TransportException: [localhost/127.0.0.1:%s] Connection has been closed))",
-                    scassandra.getBinaryPort(), scassandra.getBinaryPort()),
+            String.format("[localhost/127.0.0.1:%s] Connection has been closed", scassandra.getBinaryPort()),
             server_error);
     }
 

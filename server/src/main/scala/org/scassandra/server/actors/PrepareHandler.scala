@@ -15,60 +15,59 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
-import akka.util.ByteString
-import org.scassandra.server.actors.PrepareHandler.{PreparedStatementResponse, PreparedStatementQuery}
-import org.scassandra.server.cqlmessages.CqlMessageFactory
-import org.scassandra.server.cqlmessages.response.Result
-import org.scassandra.server.cqlmessages.types.CqlVarchar
+import akka.actor.Actor
+import com.google.common.annotations.VisibleForTesting
+import org.scassandra.codec._
+import org.scassandra.codec.messages.{PreparedMetadata, RowMetadata}
+import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
 import org.scassandra.server.priming._
-import org.scassandra.server.priming.prepared.{PreparedPrime, PreparedStoreLookup}
-import org.scassandra.server.priming.query.PrimeMatch
+import org.scassandra.server.priming.prepared.PreparedStoreLookup
+import org.scassandra.server.priming.query.{Fatal, Reply}
+import scodec.bits.ByteVector
 
 
-class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActivityLog) extends Actor with ActorLogging {
-
-  import org.scassandra.server.cqlmessages.CqlProtocolHelper._
+class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActivityLog) extends ProtocolActor {
 
   private var nextId: Int = 1
-  private var idToStatement: Map[Int, String] = Map()
+  private var idToStatement: Map[Int, (String, Prepared)] = Map()
+
+  @VisibleForTesting
+  val generatePrepared = (p: PreparedMetadata, r: RowMetadata) => {
+    val prepared = Prepared(ByteVector(nextId), preparedMetadata = p, resultMetadata = r)
+    nextId += 1
+    prepared
+  }
 
   def receive: Actor.Receive = {
-    case PrepareHandler.Prepare(body, stream, msgFactory: CqlMessageFactory, connection) =>
-      val preparedResult: PrepareResponse = handlePrepare(body, stream, msgFactory)
-      activityLog.recordPreparedStatementPreparation(preparedResult.activity)
-      connection ! preparedResult.result
-
+    case ProtocolMessage(Frame(header, p: Prepare)) =>
+      activityLog.recordPreparedStatementPreparation(PreparedStatementPreparation(p.query))
+      handlePrepare(header, p)
     case PreparedStatementQuery(ids) =>
       sender() ! PreparedStatementResponse(ids.flatMap(id => idToStatement.get(id) match {
-        case Some(text) => Seq(id -> text)
+        case Some(p) => Seq(id -> p)
         case None => Seq()
       }) toMap)
   }
 
-  case class PrepareResponse(activity: PreparedStatementPreparation, result: Result)
+  private def handlePrepare(header: FrameHeader, prepare: Prepare) = {
+    val prime = primePreparedStore(prepare, generatePrepared)
+      .getOrElse(PreparedStoreLookup.defaultPrepared(prepare, generatePrepared))
 
-  private def handlePrepare(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory): PrepareResponse = {
-    val query: String = readLongString(body.iterator).get
-    val preparedPrime = primePreparedStore.findPrime(PrimeMatch(query))
+    prime match {
+      case Reply(p: Prepared, _, _) =>
+        idToStatement += (p.id.toInt() -> (prepare.query, p))
+        log.info(s"Prepared Statement has been prepared: |$prepare.query|. Prepared result is: $p")
+      case Reply(m: Message, _, _) =>
+        log.info(s"Got non-prepared response for query: |$prepare.query|. Result was: $m")
+      case f: Fatal =>
+        log.info(s"Got non-prepared response for query: |$prepare.query|. Result was: $f")
+    }
 
-    val preparedResult: Result = preparedPrime
-      .map(prime => msgFactory.createPreparedResult(stream, nextId, prime.variableTypes))
-      .getOrElse({
-      val numberOfParameters = query.toCharArray.count(_ == '?')
-      val variableTypes = (0 until numberOfParameters).map(num => CqlVarchar).toList
-      msgFactory.createPreparedResult(stream, nextId, variableTypes)
-    })
-    idToStatement += (nextId -> query)
-    nextId = nextId + 1
-    log.info(s"Prepared Statement has been prepared: |$query|. Prepared result is: $preparedResult")
-
-    PrepareResponse(PreparedStatementPreparation(query), preparedResult)
+    writePrime(prepare, Some(prime), header)
   }
 }
 
 object PrepareHandler {
-  case class Prepare(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
   case class PreparedStatementQuery(id: List[Int])
-  case class PreparedStatementResponse(preparedStatementText: Map[Int, String])
+  case class PreparedStatementResponse(prepared: Map[Int, (String, Prepared)])
 }

@@ -121,7 +121,6 @@ public final class PrimingRequest {
          * @deprecated Use ThenBuilder instead.
          */
         @Deprecated
-        @SafeVarargs
         public final PrimingRequestBuilder withRows(Map<String, ? extends Object>... rows) {
             this.rows = Arrays.asList(rows);
             return this;
@@ -380,7 +379,6 @@ public final class PrimingRequest {
                 return this;
             }
 
-            @SafeVarargs
             public final ThenBuilder withRows(Map<String, ? extends Object>... rows) {
                 this.rows = Arrays.asList(rows);
                 return this;

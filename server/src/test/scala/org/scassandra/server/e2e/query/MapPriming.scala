@@ -15,13 +15,16 @@
  */
 package org.scassandra.server.e2e.query
 
+import com.datastax.driver.core.{DataType, TypeTokens}
+import com.google.common.reflect.TypeToken
+import dispatch.Defaults._
+import dispatch._
+import org.scassandra.codec.datatype.{DataType => DType}
 import org.scassandra.server.AbstractIntegrationTest
-import dispatch._, Defaults._
-import java.util
-import org.scassandra.server.cqlmessages.types.{CqlMap, CqlVarchar, CqlSet}
-import org.scassandra.server.priming.query.When
 import org.scassandra.server.priming.json.Success
-import com.datastax.driver.core.DataType
+import org.scassandra.server.priming.query.When
+
+import scala.collection.JavaConverters._
 
 class MapPriming extends AbstractIntegrationTest {
 
@@ -35,7 +38,7 @@ class MapPriming extends AbstractIntegrationTest {
     val map = Map("one" -> "valueOne", "two" -> "valueTwo", "three" -> "valueThree")
     val whenQuery = "Test prime with cql map"
     val rows: List[Map[String, Any]] = List(Map("field" -> map))
-    val mapOfVarcharToVarchar = CqlMap(CqlVarchar, CqlVarchar)
+    val mapOfVarcharToVarchar = DType.Map(DType.Varchar, DType.Varchar)
     val columnTypes  = Map("field" -> mapOfVarcharToVarchar)
     prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
 
@@ -46,10 +49,26 @@ class MapPriming extends AbstractIntegrationTest {
     results.get(0).getColumnDefinitions.getType("field") should equal(DataType.map(DataType.varchar(), DataType.varchar()))
 
     val c: Class[_] = Class.forName("java.lang.String")
-    val expectedMap = new util.HashMap[String, String]() // comes back as a java set
-    expectedMap.put("one","valueOne")
-    expectedMap.put("two","valueTwo")
-    expectedMap.put("three","valueThree")
+    val expectedMap = map.asJava
     results.get(0).getMap("field", c, c) should equal(expectedMap)
+  }
+
+  test("Test a map of string key, list<varchar> value") {
+    val map = Map("one" -> List("valueOne", "valueOne1"), "two" -> List("valueTwo"), "three" -> List("valueThree"))
+    val whenQuery = "Test prime with cql map"
+    val rows: List[Map[String, Any]] = List(Map("field" -> map))
+    val mapOfVarcharToListVarchar = DType.Map(DType.Varchar, DType.List(DType.Varchar))
+    val columnTypes  = Map("field" -> mapOfVarcharToListVarchar)
+    prime(When(query = Some(whenQuery)), rows, Success, columnTypes)
+
+    val result = session.execute(whenQuery)
+
+    val results = result.all()
+    results.size() should equal(1)
+    results.get(0).getColumnDefinitions.getType("field") should equal(DataType.map(DataType.varchar(), DataType.list(DataType.varchar())))
+
+    val expectedMap = map.mapValues(_.asJava).asJava
+    val stringToken = TypeToken.of(Class.forName("java.lang.String"))
+    results.get(0).getMap("field", stringToken, TypeTokens.listOf(stringToken)) should equal(expectedMap)
   }
 }

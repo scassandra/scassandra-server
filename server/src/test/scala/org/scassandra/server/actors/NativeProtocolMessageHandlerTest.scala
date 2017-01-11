@@ -15,26 +15,21 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.{ActorRef, ActorSystem}
-import akka.io.Tcp.{Received, Write}
-import akka.testkit.{TestActorRef, TestKit, TestProbe}
-import akka.util.ByteString
-import org.scalatest.{BeforeAndAfter, FunSuiteLike, Matchers}
-import org.scassandra.server.RegisterHandlerMessages
-import org.scassandra.server.actors.MessageHelper.SimpleQuery
-import org.scassandra.server.actors.NativeProtocolMessageHandler._
-import org.scassandra.server.actors.OptionsHandlerMessages.OptionsMessage
-import org.scassandra.server.cqlmessages.OpCodes.Query
-import org.scassandra.server.cqlmessages.OpCodes._
-import org.scassandra.server.cqlmessages.response.{QueryBeforeReadyMessage, Ready}
-import org.scassandra.server.cqlmessages._
+import akka.actor.ActorSystem
+import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
+import org.scalatest.prop.TableDrivenPropertyChecks
+import org.scalatest.{BeforeAndAfter, FunSpecLike, Matchers}
+import org.scassandra.codec._
+import org.scassandra.codec.messages.{BatchType, SimpleBatchQuery}
+import scodec.bits.ByteVector
 
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
-class NativeProtocolMessageHandlerTest extends TestKit(ActorSystem("NativeProtocolMessageHandlerTest")) with Matchers with FunSuiteLike with BeforeAndAfter {
+class NativeProtocolMessageHandlerTest extends TestKit(ActorSystem("NativeProtocolMessageHandlerTest"))
+  with ProtocolActorTest with Matchers with ImplicitSender with FunSpecLike with BeforeAndAfter with TableDrivenPropertyChecks {
 
   var testActorRef: TestActorRef[NativeProtocolMessageHandler] = null
-  var tcpConnectionTestProbe: TestProbe = null
   var queryHandlerTestProbe: TestProbe = null
   var batchHandlerTestProbe: TestProbe = null
   var registerHandlerTestProbe: TestProbe = null
@@ -42,12 +37,7 @@ class NativeProtocolMessageHandlerTest extends TestKit(ActorSystem("NativeProtoc
   var prepareHandlerTestProbe: TestProbe = null
   var executeHandlerTestProbe: TestProbe = null
 
-  var lastMsgFactoryUsedForQuery: CqlMessageFactory = null
-  var lastMsgFactoryUsedForRegister: CqlMessageFactory = null
-  var lastMsgFactoryUsedForPrepare: CqlMessageFactory = null
-
   before {
-    tcpConnectionTestProbe = TestProbe()
     queryHandlerTestProbe = TestProbe()
     registerHandlerTestProbe = TestProbe()
     prepareHandlerTestProbe = TestProbe()
@@ -55,187 +45,116 @@ class NativeProtocolMessageHandlerTest extends TestKit(ActorSystem("NativeProtoc
     optionsHandlerTestProbe = TestProbe()
     batchHandlerTestProbe = TestProbe()
     testActorRef = TestActorRef(new NativeProtocolMessageHandler(
-      (_, _, msgFactory) => {
-        lastMsgFactoryUsedForQuery = msgFactory
-        queryHandlerTestProbe.ref
-      },
-      (_, _, msgFactory, _) => {
-        lastMsgFactoryUsedForQuery = msgFactory
-        batchHandlerTestProbe.ref
-      },
-      (_, _, msgFactory) => {
-        lastMsgFactoryUsedForRegister = msgFactory
-        registerHandlerTestProbe.ref
-      },
-      (_, _, msgFactory) => {
-        optionsHandlerTestProbe.ref
-      },
+      (_) => queryHandlerTestProbe.ref,
+      (_,_) => batchHandlerTestProbe.ref,
+      (_) => registerHandlerTestProbe.ref,
+      (_) => optionsHandlerTestProbe.ref,
       prepareHandlerTestProbe.ref,
       executeHandlerTestProbe.ref
     ))
   }
 
-  test("Should send ready message when startup message sent - version one") {
-    implicit val protocolVersion = VersionOne
-    val process = Process(opCode = Startup, stream = 0x0, messageBody = ByteString(), protocolVersion = protocolVersion.clientCode)
+  val protocolVersions = Table("Protocol Version", ProtocolVersion.versions:_*)
 
-    val senderProbe = TestProbe()
-    implicit val sender: ActorRef = senderProbe.ref
+  describe("NativeProtocolMessageHandler") {
+    forAll (protocolVersions) { (protocolVersion: ProtocolVersion) =>
+      implicit val protocol: ProtocolVersion = protocolVersion
 
-    testActorRef ! process
+      def sendStartup() = {
+        testActorRef ! protocolMessage(Startup())
 
-    senderProbe.expectMsg(Ready(0x0.toByte))
-  }
+        expectMsgPF() {
+          case ProtocolResponse(_, Ready) => true
+        }
+      }
 
-  test("Should send ready message when startup message sent - version two") {
-    implicit val protocolVersion = VersionTwo
-    val process = Process(opCode = Startup, stream = 0x0, messageBody = ByteString(), protocolVersion = protocolVersion.clientCode)
+      describe("with " + protocolVersion + " messages") {
+        it("should send ready message when startup message sent") {
+          testActorRef ! protocolMessage(Startup())
 
-    val senderProbe = TestProbe()
-    implicit val sender: ActorRef = senderProbe.ref
+          expectMsgPF() {
+            case ProtocolResponse(_, Ready) => true
+          }
+        }
 
-    testActorRef ! process
+        it("should send back error if query before ready message") {
+          testActorRef ! protocolMessage(Query("select * from system.local"))
 
-    senderProbe.expectMsg(Ready(0x0.toByte))
-  }
+          expectMsgPF() {
+            case ProtocolResponse(_, ProtocolError("Query sent before Startup message")) => true
+          }
+        }
 
-  test("Should send back error if query before ready message") {
-    implicit val protocolVersion = VersionTwo
-    val process = Process(opCode = Query, stream = 0x0, messageBody = ByteString(), protocolVersion = protocolVersion.clientCode)
+        it("should do nothing if an unrecognised opcode") {
+          sendStartup()
 
-    val senderProbe = TestProbe()
-    implicit val sender: ActorRef = senderProbe.ref
+          testActorRef ! protocolMessage(Supported())
 
-    testActorRef ! process
+          expectNoMsg(100 millisecond)
+        }
 
-    senderProbe.expectMsg(Write(QueryBeforeReadyMessage().serialize()))
-  }
+        it("should forward Query to QueryHandler") {
+          sendStartup()
 
-  test("Should do nothing if an unrecognised opcode") {
-    val timeout: FiniteDuration = 1 second
-    implicit val protocolVersion = VersionTwo
-    val process = Process(opCode = 0x56, stream = 0x0, messageBody = ByteString(), protocolVersion = protocolVersion.clientCode)
+          val msg = protocolMessage(Query("select * from system.local"))
+          testActorRef ! msg
 
-    val senderProbe = TestProbe()
-    implicit val sender: ActorRef = senderProbe.ref
+          queryHandlerTestProbe.expectMsg(msg)
+        }
 
-    testActorRef ! process
+        it("should forward Register to RegisterHandler") {
+          sendStartup()
 
-    senderProbe.expectNoMsg(timeout)
-    queryHandlerTestProbe.expectNoMsg(timeout)
-  }
+          val msg = protocolMessage(Register("TOPOLOGY_CHANGE" :: Nil))
+          testActorRef ! msg
 
-  test("Should forward query to a new QueryHandler - version two of protocol") {
-    sendStartupMessage()
-    val stream: Byte = 0x04
-    val query = "select * from people"
-    val queryLength = Array[Byte](0x0, 0x0, 0x0, query.length.toByte)
-    val queryOptions = Array[Byte](0, 1, 0)
-    val queryWithLengthAndOptions = queryLength ++ query.getBytes ++ queryOptions
-    val messageBody = MessageHelper.createQueryMessageBody(query).toArray
+          registerHandlerTestProbe.expectMsg(msg)
+        }
 
-    testActorRef ! NativeProtocolMessageHandler.Process(OpCodes.Query, stream, ByteString(messageBody), ProtocolVersion.ClientProtocolVersionTwo)
+        it("should allow Options messages before Startup") {
+          val msg = protocolMessage(Options)
+          testActorRef ! msg
 
-    queryHandlerTestProbe.expectMsg(org.scassandra.server.actors.QueryHandler.Query(ByteString(queryWithLengthAndOptions), stream))
-    lastMsgFactoryUsedForQuery should equal(VersionTwoMessageFactory)
-  }
+          optionsHandlerTestProbe.expectMsg(msg)
+        }
 
-  test("Should forward query to a new QueryHandler - version one of protocol") {
-    sendStartupMessage(VersionOne)
-    val stream: Byte = 0x04
-    val query = "select * from people"
-    val queryLength = Array[Byte](0x0, 0x0, 0x0, query.length.toByte)
-    val queryOptions = Array[Byte](0, 1, 0)
-    val queryWithLengthAndOptions = queryLength ++ query.getBytes ++ queryOptions
-    val messageBody = MessageHelper.createQueryMessageBody(query).toArray
+        it("should forward Options to OptionsHandler") {
+          sendStartup()
 
-    testActorRef ! NativeProtocolMessageHandler.Process(OpCodes.Query, stream, ByteString(messageBody), ProtocolVersion.ClientProtocolVersionOne)
+          val msg = protocolMessage(Options)
+          testActorRef ! msg
 
-    queryHandlerTestProbe.expectMsg(org.scassandra.server.actors.QueryHandler.Query(ByteString(queryWithLengthAndOptions), stream))
-    lastMsgFactoryUsedForQuery should equal(VersionOneMessageFactory)
-  }
+          optionsHandlerTestProbe.expectMsg(msg)
+        }
 
-  test("Should forward register message to RegisterHandler - version two protocol") {
-    sendStartupMessage()
-    val stream: Byte = 1
 
-    val registerMessage = MessageHelper.createRegisterMessage(ProtocolVersion.ClientProtocolVersionTwo, stream)
-    val messageBody = MessageHelper.createRegisterMessageBody().toArray
+        it("should forward Prepare to PrepareHandler") {
+          sendStartup()
 
-    testActorRef ! NativeProtocolMessageHandler.Process(OpCodes.Register, stream, ByteString(messageBody), ProtocolVersion.ClientProtocolVersionTwo)
+          val msg = protocolMessage(Prepare("select * from system.local"))
+          testActorRef ! msg
 
-    registerHandlerTestProbe.expectMsg(RegisterHandlerMessages.Register(ByteString(MessageHelper.dropHeaderAndLength(registerMessage.toArray)), stream))
-    lastMsgFactoryUsedForRegister should equal(VersionTwoMessageFactory)
-  }
+          prepareHandlerTestProbe.expectMsg(msg)
+        }
 
-  test("Should forward register message to RegisterHandler - version one protocol") {
-    sendStartupMessage(VersionOne)
-    val stream: Byte = 1
+        it("should forward Execute to ExecuteHandler") {
+          sendStartup()
 
-    val registerMessage = MessageHelper.createRegisterMessage(ProtocolVersion.ClientProtocolVersionOne, stream)
-    val messageBody = MessageHelper.createRegisterMessageBody().toArray
+          val msg = protocolMessage(Execute(ByteVector(1)))
+          testActorRef ! msg
 
-    testActorRef ! NativeProtocolMessageHandler.Process(OpCodes.Register, stream, ByteString(messageBody), ProtocolVersion.ClientProtocolVersionOne)
+          executeHandlerTestProbe.expectMsg(msg)
+        }
 
-    registerHandlerTestProbe.expectMsg(RegisterHandlerMessages.Register(ByteString(MessageHelper.dropHeaderAndLength(registerMessage.toArray)), stream))
-    lastMsgFactoryUsedForRegister should equal(VersionOneMessageFactory)
-  }
+        it("should forward Batch to BatchHandler") {
+          sendStartup()
 
-  test("Should forward options to OptionsHandler - version two protocol") {
-    sendStartupMessage()
+          val msg = protocolMessage(Batch(BatchType.UNLOGGED, SimpleBatchQuery("query") :: SimpleBatchQuery("query2") :: Nil))
+          testActorRef ! msg
 
-    val stream: Byte = 0x04
-
-    testActorRef ! NativeProtocolMessageHandler.Process(OpCodes.Options, stream, ByteString(0), ProtocolVersion.ClientProtocolVersionTwo)
-
-    optionsHandlerTestProbe.expectMsg(OptionsMessage(stream))
-  }
-
-  test("Should forward options to OptionsHandler - version one protocol") {
-    sendStartupMessage(VersionOne)
-
-    val stream: Byte = 0x04
-
-    testActorRef ! NativeProtocolMessageHandler.Process(OpCodes.Options, stream, ByteString(0), ProtocolVersion.ClientProtocolVersionOne)
-
-    optionsHandlerTestProbe.expectMsg(OptionsMessage(stream))
-  }
-
-  test("Should forward Prepare messages to the prepare handler") {
-    sendStartupMessage()
-    val streamId: Byte = 0x1
-    val emptyBody = ByteString()
-    val sender = TestProbe()
-
-    sender.send(testActorRef, NativeProtocolMessageHandler.Process(OpCodes.Prepare, streamId, emptyBody, ProtocolVersion.ClientProtocolVersionTwo))
-
-    prepareHandlerTestProbe.expectMsg(PrepareHandler.Prepare(ByteString(), streamId, VersionTwoMessageFactory, sender.ref))
-  }
-
-  test("Should forward Execute messages to the execute handler") {
-    sendStartupMessage()
-    val streamId: Byte = 0x1
-    val emptyBody = ByteString()
-    val sender = TestProbe()
-
-    sender.send(testActorRef, NativeProtocolMessageHandler.Process(OpCodes.Execute, streamId, emptyBody, ProtocolVersion.ClientProtocolVersionTwo))
-
-    executeHandlerTestProbe.expectMsg(ExecuteHandler.Execute(ByteString(), streamId, VersionTwoMessageFactory, sender.ref))
-  }
-
-  test("Should forward Batch messages to the batch handler") {
-    sendStartupMessage()
-    val streamId : Byte = 0x1
-    val queries = List(SimpleQuery("insert into something"), SimpleQuery("insert into something else"))
-    val messageBody = MessageHelper.createBatchMessageBody(queries, TWO).toArray
-
-    testActorRef ! NativeProtocolMessageHandler.Process(OpCodes.Batch, streamId, ByteString(messageBody), ProtocolVersion.ClientProtocolVersionTwo)
-
-    batchHandlerTestProbe.expectMsg(BatchHandler.Execute(ByteString(messageBody), streamId))
-  }
-
-  private def sendStartupMessage(protocolVersion: ProtocolVersion = VersionTwo) = {
-    val process = Process(opCode = Startup, stream = 0x0, messageBody = ByteString(), protocolVersion = protocolVersion.clientCode)
-    testActorRef ! process
+          batchHandlerTestProbe.expectMsg(msg)
+        }
+      }
+    }
   }
 }

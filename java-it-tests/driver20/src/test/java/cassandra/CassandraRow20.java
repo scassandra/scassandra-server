@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.time.LocalDate;
 import java.util.*;
 
 
@@ -33,7 +34,7 @@ public class CassandraRow20 implements CassandraRow {
     }
 
     @Override
-    public Date getDate(String columnName) {
+    public Date getTimestamp(String columnName) {
         return this.cassandraRow.getDate(columnName);
     }
 
@@ -105,5 +106,25 @@ public class CassandraRow20 implements CassandraRow {
     @Override
     public UUID getUUID(String name) {
         return cassandraRow.getUUID(name);
+    }
+
+    @Override
+    public Short getShort(String name) {
+        throw new UnsupportedOperationException("smallint not supported in C* 2.0");
+    }
+
+    @Override
+    public Byte getByte(String name) {
+        throw new UnsupportedOperationException("tinyint not supported in C* 2.0");
+    }
+
+    @Override
+    public long getTime(String name) {
+        throw new UnsupportedOperationException("time not supported in C* 2.0");
+    }
+
+    @Override
+    public LocalDate getDate(String name) {
+        throw new UnsupportedOperationException("date not supported in C* 2.0");
     }
 }

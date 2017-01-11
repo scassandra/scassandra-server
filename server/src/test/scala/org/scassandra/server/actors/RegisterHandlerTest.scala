@@ -16,24 +16,19 @@
 package org.scassandra.server.actors
 
 import akka.actor.ActorSystem
-import akka.testkit.{TestActorRef, TestProbe, TestKit}
-import akka.util.ByteString
-import org.scalatest.{Matchers, FunSuiteLike}
-import org.scalatest.matchers.ShouldMatchers
-import org.scassandra.server.{RegisterHandlerMessages, RegisterHandler}
-import org.scassandra.server.cqlmessages.VersionTwoMessageFactory
+import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
+import org.scalatest.{FunSuiteLike, Matchers}
+import org.scassandra.codec.{Ready, Register}
+import org.scassandra.server.RegisterHandler
 
-class RegisterHandlerTest extends TestKit(ActorSystem("TestSystem")) with FunSuiteLike with Matchers {
+class RegisterHandlerTest extends TestKit(ActorSystem("TestSystem")) with ProtocolActorTest with ImplicitSender with FunSuiteLike with Matchers {
   test("Should send Ready message on any Register message") {
-    val senderTestProbe = TestProbe()
-    val cqlMessageFactory = VersionTwoMessageFactory
-    val stream : Byte = 10
-    val expectedReadyMessage = cqlMessageFactory.createReadyMessage(stream)
-    val underTest = TestActorRef(new RegisterHandler(senderTestProbe.ref, cqlMessageFactory))
-    val registerBody = MessageHelper.createRegisterMessageBody()
+    val underTest = TestActorRef(new RegisterHandler)
 
-    underTest ! RegisterHandlerMessages.Register(ByteString(registerBody.toArray), stream)
+    underTest ! protocolMessage(Register("TOPOLOGY_CHANGE" :: Nil))
 
-    senderTestProbe.expectMsg(expectedReadyMessage)
+    expectMsgPF() {
+      case ProtocolResponse(_, Ready) => true
+    }
   }
 }

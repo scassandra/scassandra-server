@@ -16,28 +16,29 @@
 package org.scassandra.server.priming.batch
 
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.cqlmessages.{BatchType, Consistency, LOGGED}
-import org.scassandra.server.priming.json.Success
-import org.scassandra.server.priming.routes.PrimingJsonHelper
-import org.scassandra.server.priming.{BatchExecution, PrimeResult}
+import org.scassandra.codec.Consistency.Consistency
+import org.scassandra.codec.messages.BatchType.BatchType
+import org.scassandra.server.priming.BatchExecution
+import org.scassandra.server.priming.query.Prime
 
 class PrimeBatchStore extends LazyLogging {
 
-  var primes: Map[BatchCriteria, BatchPrime] = Map()
-  
+  var primes: Map[BatchCriteria, BatchPrimeSingle] = Map()
+
   def record(prime: BatchPrimeSingle): Unit = {
-    val result: PrimeResult = PrimingJsonHelper.convertToPrimeResult(prime.thenDo.config.getOrElse(Map()), prime.thenDo.result.getOrElse(Success))
-    val consistencies: List[Consistency] = prime.when.consistency.getOrElse(Consistency.all)
-    primes += (BatchCriteria(prime.when.queries, consistencies, prime.when.batchType.getOrElse(LOGGED)) -> BatchPrime(result, prime.thenDo.fixedDelay))
+    val p = prime.withDefaults
+    val criteria = BatchCriteria(p.when.queries, p.when.consistency.get, p.when.batchType.get)
+    primes += (criteria -> p)
   }
-  def findPrime(primeMatch: BatchExecution): Option[BatchPrime] = {
+
+  def apply(primeMatch: BatchExecution): Option[Prime] = {
     logger.debug("Batch Prime Match {} current primes {}", primeMatch, primes)
     primes.find {
       case (batchCriteria, _) =>
         batchCriteria.queries == primeMatch.batchQueries.map(bq => BatchQueryPrime(bq.query, bq.batchQueryKind)) &&
           batchCriteria.consistency.contains(primeMatch.consistency) &&
           batchCriteria.batchType == primeMatch.batchType
-    } map(_._2)
+    } map(_._2.prime)
   }
   def clear() = {
     primes = Map()
@@ -45,5 +46,3 @@ class PrimeBatchStore extends LazyLogging {
 }
 
 case class BatchCriteria(queries: Seq[BatchQueryPrime], consistency: List[Consistency], batchType: BatchType)
-// batches can only be DML statements
-case class BatchPrime(result: PrimeResult, delay: Option[Long])

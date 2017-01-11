@@ -18,17 +18,18 @@ package org.scassandra.server
 import java.net.{ConnectException, Socket}
 import java.util.concurrent.TimeUnit
 
-import com.datastax.driver.core.{NettyOptions, Cluster, Session}
+import com.datastax.driver.core._
+import com.datastax.driver.core.policies.FallthroughRetryPolicy
 import dispatch.Defaults._
 import dispatch._
 import io.netty.channel.EventLoopGroup
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FunSuite, Matchers}
+import org.scassandra.codec.datatype.DataType
 import org.scassandra.server.actors._
-import org.scassandra.server.cqlmessages.types.ColumnType
+import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.prepared.{PrimePreparedSingle, ThenPreparedSingle, WhenPrepared}
 import org.scassandra.server.priming.query.{PrimeQuerySingle, Then, When}
-import org.scassandra.server.priming._
 import spray.json._
 
 object PrimingHelper {
@@ -36,7 +37,7 @@ object PrimingHelper {
   import PrimingJsonImplicits._
   val DefaultHost = "http://localhost:8043/"
 
-  def primeQuery(when: When, rows: List[Map[String, Any]], result: ResultJsonRepresentation = Success, columnTypes: Map[String, ColumnType[_]] = Map()): String = {
+  def primeQuery(when: When, rows: List[Map[String, Any]], result: ResultJsonRepresentation = Success, columnTypes: Map[String, DataType] = Map()): String = {
     primeQuery(when, Then(Some(rows), Some(result), Some(columnTypes)))
   }
 
@@ -137,7 +138,7 @@ abstract class AbstractIntegrationTest(clusterConnect: Boolean = true) extends F
   var cluster: Cluster = _
   var session: Session = _
 
-  def prime(when: When, rows: List[Map[String, Any]], result: ResultJsonRepresentation = Success, columnTypes: Map[String, ColumnType[_]] = Map()) = {
+  def prime(when: When, rows: List[Map[String, Any]], result: ResultJsonRepresentation = Success, columnTypes: Map[String, DataType] = Map()) = {
     PrimingHelper.primeQuery(when, rows, result, columnTypes)
   }
 
@@ -164,6 +165,8 @@ abstract class AbstractIntegrationTest(clusterConnect: Boolean = true) extends F
     Cluster.builder()
       .addContactPoint(ConnectionToServerStub.ServerHost)
       .withPort(ConnectionToServerStub.ServerPort)
+      .withRetryPolicy(FallthroughRetryPolicy.INSTANCE)
+      .withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.ONE))
       .withNettyOptions(closeQuickly)
   }
 

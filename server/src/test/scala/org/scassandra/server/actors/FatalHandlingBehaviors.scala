@@ -17,10 +17,9 @@ package org.scassandra.server.actors
 
 import akka.io.Tcp
 import org.scalatest.FunSuite
-import org.scassandra.server.cqlmessages.ProtocolProvider
 import org.scassandra.server.priming.{ClosedConnectionResult, FatalResult}
 
-trait FatalHandlingBehaviors extends ProtocolProvider {
+trait FatalHandlingBehaviors {
   this: FunSuite =>
 
   def executeWithFatal(result: FatalResult, expectedCommand: Tcp.CloseCommand)

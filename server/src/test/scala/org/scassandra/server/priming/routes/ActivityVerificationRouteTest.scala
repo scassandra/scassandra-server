@@ -15,14 +15,14 @@
  */
 package org.scassandra.server.priming.routes
 
-import org.scalatest.{Matchers, BeforeAndAfter, FunSpec}
-import org.scassandra.server.priming.json.PrimingJsonImplicits
-import spray.testkit.ScalatestRouteTest
+import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
+import org.scassandra.codec.Consistency.ONE
+import org.scassandra.codec.messages.BatchQueryKind.Simple
+import org.scassandra.codec.messages.BatchType._
 import org.scassandra.server.priming._
+import org.scassandra.server.priming.json.PrimingJsonImplicits
 import spray.json.JsonParser
-import org.scassandra.server.cqlmessages.{QueryKind, UNLOGGED, LOGGED, ONE}
-import org.scassandra.server.priming.Connection
-import org.scassandra.server.priming.Query
+import spray.testkit.ScalatestRouteTest
 
 class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with ActivityVerificationRoute {
 
@@ -167,13 +167,13 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
   describe("Batch execution") {
     it("Should return executions from ActivityLog") {
       activityLog.clearBatchExecutions()
-      activityLog.recordBatchExecution(BatchExecution(List(BatchQuery("Query", QueryKind)), ONE, LOGGED))
+      activityLog.recordBatchExecution(BatchExecution(List(BatchQuery("Query", Simple)), ONE, LOGGED))
 
       Get("/batch-execution") ~> activityVerificationRoute ~> check {
         val response = responseAs[List[BatchExecution]]
 
         response.size should equal(1)
-        response.head.batchQueries should equal(List(BatchQuery("Query", QueryKind)))
+        response.head.batchQueries should equal(List(BatchQuery("Query", Simple)))
         response.head.consistency should equal(ONE)
         response.head.batchType should equal(LOGGED)
       }

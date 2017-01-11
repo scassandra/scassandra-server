@@ -15,9 +15,11 @@
  */
 package org.scassandra.server.priming
 
-import org.scalatest.{BeforeAndAfter, Matchers, FunSuite}
-import org.scassandra.server.cqlmessages.types.{CqlText, CqlBigint, CqlAscii}
-import org.scassandra.server.cqlmessages._
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scassandra.codec.Consistency._
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.messages.BatchQueryKind.Simple
+import org.scassandra.codec.messages.BatchType.LOGGED
 
 class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
 
@@ -61,7 +63,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
     val preparedStatementText = "select * from people where name = ?"
     val variables = List("Chris")
     val consistency = ONE
-    val variableTypes = List(CqlAscii, CqlBigint)
+    val variableTypes = List(DataType.Ascii, DataType.Bigint)
 
     underTest.recordPreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes)
     val preparedStatementRecord = underTest.retrievePreparedStatementExecutions()
@@ -95,14 +97,14 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
   }
   
   test("Records query parameters") {
-    underTest.recordQuery("query", ONE, List("Hello"), List(CqlText))
+    underTest.recordQuery("query", ONE, List("Hello"), List(DataType.Text))
 
-    underTest.retrieveQueries() should equal(List(Query("query", ONE, List("Hello"), List(CqlText))))
+    underTest.retrieveQueries() should equal(List(Query("query", ONE, List("Hello"), List(DataType.Text))))
   }
 
   test("Record batch execution") {
     val consistency: Consistency = ONE
-    val statements: List[BatchQuery] = List(BatchQuery("select * from hello", QueryKind))
+    val statements: List[BatchQuery] = List(BatchQuery("select * from hello", Simple))
     val execution: BatchExecution = BatchExecution(statements, consistency, LOGGED)
     underTest.recordBatchExecution(execution)
 
@@ -112,7 +114,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Clear batch execution") {
-    underTest.recordBatchExecution(BatchExecution(List(BatchQuery("select * from hello", QueryKind)), ONE, LOGGED))
+    underTest.recordBatchExecution(BatchExecution(List(BatchQuery("select * from hello", Simple)), ONE, LOGGED))
 
     underTest.clearBatchExecutions()
 

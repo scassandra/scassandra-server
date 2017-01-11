@@ -15,12 +15,11 @@
  */
 package cassandra;
 
-import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.datastax.driver.core.querybuilder.Select;
+import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.base.Optional;
 import common.*;
 import io.netty.channel.EventLoopGroup;
@@ -28,17 +27,16 @@ import org.scassandra.http.client.BatchType;
 import org.scassandra.http.client.Result;
 import org.scassandra.http.client.WriteTypePrime;
 
-import static org.scassandra.http.client.Result.*;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
-import com.datastax.driver.core.querybuilder.Select;
-import com.datastax.driver.core.utils.UUIDs;
+import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static org.scassandra.http.client.Result.*;
 
-public class CassandraExecutor20 implements CassandraExecutor {
+public class CassandraExecutor20 implements CassandraExecutor<CassandraResult> {
     private Cluster cluster;
     private Session session;
 

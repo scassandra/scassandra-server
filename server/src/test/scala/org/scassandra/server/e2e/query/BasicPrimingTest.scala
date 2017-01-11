@@ -15,9 +15,9 @@
  */
 package org.scassandra.server.e2e.query
 
+import org.scassandra.codec.datatype.DataType
 import org.scassandra.server.AbstractIntegrationTest
-import org.scassandra.server.priming.query.{Then, When}
-import org.scassandra.server.cqlmessages.types.{CqlVarchar, CqlInt}
+import org.scassandra.server.priming.query.When
 
 class BasicPrimingTest extends AbstractIntegrationTest {
   test("Priming Rows With Different Columns") {
@@ -26,8 +26,8 @@ class BasicPrimingTest extends AbstractIntegrationTest {
     val rowTwo = Map("age" -> 15)
     val rows = List(rowOne, rowTwo)
     val columnTypes = Map(
-      "name" -> CqlVarchar,
-      "age" -> CqlInt)
+      "name" -> DataType.Varchar,
+      "age" -> DataType.Int)
     prime(When(query = Some(query)), rows, columnTypes = columnTypes)
 
     val result = session.execute(query)

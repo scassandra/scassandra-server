@@ -16,7 +16,6 @@
 package org.scassandra.server.e2e.query.delays
 
 import org.scassandra.server.AbstractIntegrationTest
-import org.scassandra.server.cqlmessages.types.{CqlInt, CqlVarchar}
 import org.scassandra.server.priming.query.{Then, When}
 
 class BasicDelaysPrimingTest extends AbstractIntegrationTest {

@@ -23,7 +23,7 @@ import common.CassandraRow;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CassandraResult20 implements CassandraResult {
+public class CassandraResult20 implements CassandraResult<CassandraRow> {
 
     private ResultSet resultSet;
     private ResponseStatus result;

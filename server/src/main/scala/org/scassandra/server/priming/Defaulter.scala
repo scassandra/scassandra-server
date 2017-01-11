@@ -15,32 +15,35 @@
  */
 package org.scassandra.server.priming
 
-import org.scassandra.server.cqlmessages.types.{CqlVarchar, ColumnType}
+import org.scassandra.codec.Consistency
+import org.scassandra.codec.Consistency.Consistency
+import org.scassandra.codec.datatype.DataType
 
 object Defaulter {
-  def defaultColumnTypesToVarchar(columnTypes: Option[Map[String, ColumnType[_]]], resultsAsList: List[Map[String, Any]]) = {
-    val colTypes: Map[String, ColumnType[_]] =  columnTypes.getOrElse(Map[String, ColumnType[_]]())
 
-    // check that all the columns in the rows have a type
-    val columnNamesInAllRows: List[String] = resultsAsList.flatMap(row => row.keys).distinct
-    val colNamesWithOnesNotInRows = (columnNamesInAllRows ++ colTypes.keys).distinct
-
-    val colTypesWithDefaults : Map[String, ColumnType[_]] = colNamesWithOnesNotInRows.map(columnName => colTypes.get(columnName) match {
-      case Some(columnType) => (columnName, columnType)
-      case None => (columnName, CqlVarchar)
-    }).toMap
-
-    colTypesWithDefaults
+  def defaultVariableTypesToVarChar(query : Option[String], dataTypes : Option[List[DataType]]) : Option[List[DataType]] = query match {
+    case Some(queryText) =>
+      val dTypes = dataTypes.getOrElse(Nil)
+      val numberOfVariables = queryText.toCharArray.count(_ == '?')
+      val deficit = numberOfVariables - dTypes.size
+      if (deficit <= 0) {
+        dataTypes
+      } else {
+        val defaults = (0 until deficit).map(_ => DataType.Varchar).toList
+        Some(dTypes ++ defaults)
+      }
+    case None => dataTypes
   }
 
-  def defaultVariableTypesToVarChar(numberOfVariables : Int, providedVariableTypes : Option[List[ColumnType[_]]]) : List[ColumnType[_]] = {
-    providedVariableTypes match {
-      case Some(varTypes) =>
-        val defaults = (0 until numberOfVariables).map(num => CqlVarchar).toList
-        varTypes ++ (defaults drop varTypes.size)
-      case None =>
-        (0 until numberOfVariables).map(num => CqlVarchar).toList
-    }
+  def defaultColumnTypesToVarChar(columnTypes: Option[Map[String, DataType]], rows: Option[List[Map[String, Any]]]) = columnTypes match {
+    case Some(_) => columnTypes
+    case None =>
+      val names = rows.getOrElse(Nil).flatMap(row => row.keys).distinct
+      Some(names.map(n => (n, DataType.Varchar)).toMap)
   }
 
+  def defaultConsistency(consistency: Option[List[Consistency]]) = consistency match {
+    case Some(_) => consistency
+    case None => Some(Consistency.all)
+  }
 }

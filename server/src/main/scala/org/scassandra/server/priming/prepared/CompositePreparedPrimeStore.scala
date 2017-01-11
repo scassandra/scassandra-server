@@ -15,12 +15,23 @@
  */
 package org.scassandra.server.priming.prepared
 
-import org.scassandra.server.priming.query.PrimeMatch
+import org.scassandra.codec.messages.{PreparedMetadata, RowMetadata}
+import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
+import org.scassandra.server.priming.query.Prime
+
 
 class CompositePreparedPrimeStore(primeStores: PreparedStoreLookup*) extends PreparedStoreLookup {
-  def findPrime(primeMatch: PrimeMatch): Option[PreparedPrimeResult] = {
-    primeStores.collectFirst({
-      case psb if psb.findPrime(primeMatch).isDefined => psb.findPrime(primeMatch).get
-    })
+
+  def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = {
+    // TODO: Fix duplicate lookup
+    primeStores.collectFirst {
+      case psb if psb(prepare, preparedFactory).isDefined => psb(prepare, preparedFactory).get
+    }
+  }
+
+  def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion) : Option[Prime] = {
+    primeStores.collectFirst {
+      case psb if psb(queryText, execute).isDefined => psb(queryText, execute).get
+    }
   }
 }

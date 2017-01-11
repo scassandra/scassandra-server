@@ -12,7 +12,7 @@ You'll need to checkout ```https://github.com/scassandra/scassandra-server``` an
 This will build you a standalone jar in server/build/libs that you can start with:
 
 ```
-java -jar <jar>
+java -jar server/build/libs/scassandra-server_2.1.1-<version>-standalone.jar
 ```
 
 The default ports are:
@@ -31,7 +31,7 @@ To override the ports / log level use the following java properties:
 E.g
 
 ```
-java -jar -Dscassandra.binary.port=1234 -Dscassandra.admin.port=4566 -Dscassandra.log.level=INFO scassandra-server_2.11-0.8.1-standalone.jar
+java -jar -Dscassandra.binary.port=1234 -Dscassandra.admin.port=4566 -Dscassandra.log.level=INFO scassandra-server_2.11-1.1.0-standalone.jar
 ```
 
 Once you have the server up and running see all the pages in the menu for how to prime/verify activity.

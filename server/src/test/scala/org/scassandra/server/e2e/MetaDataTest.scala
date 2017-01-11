@@ -15,18 +15,17 @@
  */
 package org.scassandra.server.e2e
 
-import org.scassandra.server.{PrimingHelper, ConnectionToServerStub, AbstractIntegrationTest}
 import com.datastax.driver.core.Cluster
+import org.scassandra.codec.datatype.DataType
 import org.scassandra.server.priming.query.When
-import org.scassandra.server.cqlmessages.types.{CqlSet, CqlVarchar}
+import org.scassandra.server.{AbstractIntegrationTest, ConnectionToServerStub, PrimingHelper}
 
 class MetaDataTest extends AbstractIntegrationTest(false) {
-
 
   test("Cluster name") {
     val when = When(query = Some("SELECT * FROM system.local WHERE key='local'"))
     val clusterName = "ACCluster"
-    val columnTypes = Map("tokens" -> CqlSet(CqlVarchar))
+    val columnTypes = Map("tokens" -> DataType.Set(DataType.Varchar))
     val rows = List(Map("cluster_name" -> clusterName,
       "partitioner" -> "org.apache.cassandra.dht.Murmur3Partitioner",
       "data_center" -> "dc1",

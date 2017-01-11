@@ -13,21 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package queries;/*
- * Copyright (C) 2014 Christopher Batey
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+package queries;
+
 import com.google.common.collect.ImmutableMap;
 import common.AbstractScassandraTest;
 import common.CassandraExecutor;
@@ -73,7 +60,7 @@ public class PrimingTimestamps extends AbstractScassandraTest {
 
         List<CassandraRow> allRows = result.rows();
         assertEquals(1, allRows.size());
-        assertEquals(nowAsDate, allRows.get(0).getDate("atimestamp"));
-        assertEquals(new Date(Long.valueOf(nowAsString)), allRows.get(0).getDate("atimestamp2"));
+        assertEquals(nowAsDate, allRows.get(0).getTimestamp("atimestamp"));
+        assertEquals(new Date(Long.valueOf(nowAsString)), allRows.get(0).getTimestamp("atimestamp2"));
     }
 }

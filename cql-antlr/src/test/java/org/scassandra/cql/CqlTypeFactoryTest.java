@@ -30,14 +30,18 @@ public class CqlTypeFactoryTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {"map<ascii,ascii>", new MapType(PrimitiveType.ASCII, PrimitiveType.ASCII) },
-                {"map<blob,inet>", new MapType(PrimitiveType.BLOB, PrimitiveType.INET) },
-                {"map<uuid,timeuuid>", new MapType(PrimitiveType.UUID, PrimitiveType.TIMEUUID) },
-                {"set<ascii>", new SetType(PrimitiveType.ASCII) },
-                {"set<inet>", new SetType(PrimitiveType.INET) },
-                {"list<ascii>", new ListType(PrimitiveType.ASCII) },
-                {"list<boolean>", new ListType(PrimitiveType.BOOLEAN) },
-                {"list<decimal>", new ListType(PrimitiveType.DECIMAL) },
+                {"map<ascii,ascii>", new MapType(PrimitiveType.ASCII, PrimitiveType.ASCII)},
+                {"map<blob,inet>", new MapType(PrimitiveType.BLOB, PrimitiveType.INET)},
+                {"map<uuid,timeuuid>", new MapType(PrimitiveType.UUID, PrimitiveType.TIMEUUID)},
+                {"map<list<text>,set<int>>", new MapType(new ListType(PrimitiveType.TEXT), new SetType(PrimitiveType.INT))},
+                {"set<ascii>", new SetType(PrimitiveType.ASCII)},
+                {"set<inet>", new SetType(PrimitiveType.INET)},
+                {"set<map<int,text>>", new SetType(new MapType(PrimitiveType.INT, PrimitiveType.TEXT))},
+                {"list<ascii>", new ListType(PrimitiveType.ASCII)},
+                {"list<boolean>", new ListType(PrimitiveType.BOOLEAN)},
+                {"list<decimal>", new ListType(PrimitiveType.DECIMAL)},
+                {"list<set<text>>", new ListType(new SetType(PrimitiveType.TEXT))},
+                {"tuple<int,inet,date>", new TupleType(PrimitiveType.INT, PrimitiveType.INET, PrimitiveType.DATE)},
                 {"ascii", PrimitiveType.ASCII},
                 {"varchar", PrimitiveType.VARCHAR},
                 {"bigint", PrimitiveType.BIG_INT},
@@ -52,7 +56,15 @@ public class CqlTypeFactoryTest {
                 {"varint", PrimitiveType.VAR_INT},
                 {"timeuuid", PrimitiveType.TIMEUUID},
                 {"inet", PrimitiveType.INET},
-                {"text", PrimitiveType.TEXT}
+                {"text", PrimitiveType.TEXT},
+                {"date", PrimitiveType.DATE},
+                {"smallint", PrimitiveType.SMALL_INT},
+                {"time", PrimitiveType.TIME},
+                {"tinyint", PrimitiveType.TINY_INT},
+                {"tuple<tuple<int,inet,list<date>>,map<text,set<varchar>>>",
+                        new TupleType(
+                                new TupleType(PrimitiveType.INT, PrimitiveType.INET, new ListType(PrimitiveType.DATE)),
+                                new MapType(PrimitiveType.TEXT, new SetType(PrimitiveType.VARCHAR)))},
         });
     }
 

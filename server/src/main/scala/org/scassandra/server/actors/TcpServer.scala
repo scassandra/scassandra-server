@@ -21,18 +21,15 @@ import akka.actor._
 import akka.io.{IO, Tcp}
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
-import org.scassandra.server.cqlmessages.CqlMessageFactory
 import org.scassandra.server.priming.ActivityLog
 import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import org.scassandra.server.priming.query.PrimeQueryStore
-import org.scassandra.server.{ShutdownServer, Shutdown, RegisterHandler, ServerReady}
-import spray.can.Http
-
-import scala.concurrent.duration._
-import scala.language.postfixOps
+import org.scassandra.server.{RegisterHandler, ServerReady, Shutdown}
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
 class TcpServer(listenAddress: String, port: Int,
                 primedResults: PrimeQueryStore,
@@ -52,8 +49,7 @@ class TcpServer(listenAddress: String, port: Int,
   }
 
   import akka.io.Tcp._
-  import context.system
-  import context.dispatcher
+  import context.{dispatcher, system}
 
   // whether or not to accept connections.
   var acceptConnections = true
@@ -89,11 +85,11 @@ class TcpServer(listenAddress: String, port: Int,
     case c @ Connected(remote, local) =>
       activityLog.recordConnection()
       val handler = context.actorOf(Props(classOf[ConnectionHandler], sender(),
-        (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[QueryHandler], tcpConnection, primedResults, msgFactory, activityLog)),
-        (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory, prepareHandler: ActorRef) => af.actorOf(Props(classOf[BatchHandler],
-          tcpConnection, msgFactory, activityLog, prepareHandler, primeBatchStore, primePrepareStore)),
-        (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[RegisterHandler], tcpConnection, msgFactory)),
-        (af: ActorRefFactory, tcpConnection: ActorRef, msgFactory: CqlMessageFactory) => af.actorOf(Props(classOf[OptionsHandler], tcpConnection, msgFactory)),
+        (af: ActorRefFactory) => af.actorOf(Props(classOf[QueryHandler], primedResults, activityLog)),
+        (af: ActorRefFactory, prepareHandler: ActorRef) => af.actorOf(Props(classOf[BatchHandler],
+          activityLog, prepareHandler, primeBatchStore, primePrepareStore)),
+        (af: ActorRefFactory) => af.actorOf(Props(classOf[RegisterHandler])),
+        (af: ActorRefFactory) => af.actorOf(Props(classOf[OptionsHandler])),
         preparedHandler,
         executeHandler),
       name = s"${remote.getAddress.getHostAddress}:${remote.getPort}")

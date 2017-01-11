@@ -15,11 +15,26 @@
  */
 package org.scassandra.server.priming.batch
 
-import org.scassandra.server.cqlmessages.{BatchType, Consistency, BatchQueryKind}
+import org.scassandra.codec.Consistency.Consistency
+import org.scassandra.codec.messages.BatchQueryKind.BatchQueryKind
+import org.scassandra.codec.messages.BatchType
+import org.scassandra.codec.messages.BatchType.BatchType
+import org.scassandra.server.priming.Defaulter
 import org.scassandra.server.priming.query.Then
+import org.scassandra.server.priming.routes.PrimingJsonHelper.extractPrime
 
-case class BatchPrimeSingle(when: BatchWhen, thenDo: Then)
+case class BatchPrimeSingle(when: BatchWhen, thenDo: Then) {
+  @transient lazy val prime = {
+    extractPrime(thenDo)
+  }
 
-case class BatchWhen(queries: List[BatchQueryPrime], consistency: Option[List[Consistency]] = None, batchType: Option[BatchType] = None)
+  def withDefaults: BatchPrimeSingle =
+    // join queries into 1 string so '?' can be counted.
+    copy(when.withDefaults, thenDo.withDefaults(Some(when.queries.map(_.text).mkString("\n"))))
+}
+
+case class BatchWhen(queries: List[BatchQueryPrime], consistency: Option[List[Consistency]] = None, batchType: Option[BatchType] = None) {
+  def withDefaults: BatchWhen = copy(batchType = batchType.orElse(Some(BatchType.LOGGED)), consistency = Defaulter.defaultConsistency(consistency))
+}
 
 case class BatchQueryPrime(text: String, kind: BatchQueryKind)

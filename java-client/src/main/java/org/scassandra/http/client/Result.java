@@ -32,5 +32,8 @@ public enum Result {
     config_error,
     already_exists,
     unprepared,
-    closed_connection
+    closed_connection,
+    read_failure,
+    write_failure,
+    function_failure
 }

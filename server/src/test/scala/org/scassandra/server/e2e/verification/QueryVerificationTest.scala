@@ -17,9 +17,9 @@ package org.scassandra.server.e2e.verification
 
 import com.datastax.driver.core.{ConsistencyLevel, SimpleStatement}
 import org.scalatest.concurrent.ScalaFutures
+import org.scassandra.codec.Consistency
 import org.scassandra.server.AbstractIntegrationTest
 import org.scassandra.server.PrimingHelper._
-import org.scassandra.server.cqlmessages.TWO
 import org.scassandra.server.priming.Query
 
 class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
@@ -44,6 +44,6 @@ class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
     session.execute(statement)
 
     val queryList = getRecordedQueries()
-    queryList shouldEqual List(Query(queryString, TWO))
+    queryList shouldEqual List(Query(queryString, Consistency.TWO))
   }
 }

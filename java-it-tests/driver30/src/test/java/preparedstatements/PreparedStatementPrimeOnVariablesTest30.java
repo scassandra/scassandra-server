@@ -16,9 +16,47 @@
 package preparedstatements;
 
 import cassandra.CassandraExecutor30;
+import common.CassandraResult;
+import org.junit.Test;
+import org.scassandra.http.client.MultiPrimeRequest;
+import org.scassandra.http.client.Result;
+
+import static org.junit.Assert.assertEquals;
+import static org.scassandra.cql.PrimitiveType.SMALL_INT;
+import static org.scassandra.cql.PrimitiveType.TINY_INT;
+import static org.scassandra.http.client.MultiPrimeRequest.*;
 
 public class PreparedStatementPrimeOnVariablesTest30 extends PreparedStatementPrimeOnVariables {
     public PreparedStatementPrimeOnVariablesTest30() {
         super(new CassandraExecutor30(scassandra.getBinaryPort()));
+    }
+
+    @Test
+    public void testPrimeBasedOnMatcherNewNumericTypes() {
+        String query = "select * from person where sint = ? tint = ?";
+        MultiPrimeRequest prime = MultiPrimeRequest.request()
+                .withWhen(when()
+                        .withQuery(query))
+                .withThen(then()
+                        .withVariableTypes(SMALL_INT, TINY_INT)
+                        .withOutcomes(
+                                outcome(match().withVariableMatchers(
+                                        exactMatch((short)512),
+                                        exactMatch((byte)127)), action().withResult(Result.unavailable)),
+                                outcome(match().withVariableMatchers(
+                                        exactMatch((short)632),
+                                        exactMatch((byte)8)), action().withResult(Result.write_request_timeout))
+
+                        )
+                )
+                .build();
+
+        primingClient.multiPrime(prime);
+
+        CassandraResult unavailable = cassandra().prepareAndExecute(query, (short)512, (byte)127);
+        CassandraResult writeTimeout = cassandra().prepareAndExecute(query, (short)632, (byte)8);
+
+        assertEquals(Result.unavailable, unavailable.status().getResult());
+        assertEquals(Result.write_request_timeout, writeTimeout.status().getResult());
     }
 }

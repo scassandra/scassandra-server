@@ -20,8 +20,8 @@ import org.scassandra.http.client.WriteTypePrime;
 
 import java.util.List;
 
-public interface CassandraResult {
-    List<CassandraRow> rows();
+public interface CassandraResult<C extends CassandraRow> {
+    List<C> rows();
 
     ResponseStatus status();
 
@@ -95,6 +95,37 @@ public interface CassandraResult {
         }
     }
 
+    public static class ReadFailureStatus extends ErrorStatus {
+        private final int receivedAcknowledgements;
+        private final int requiredAcknowledgements;
+        private final int numberOfFailures;
+        private final boolean wasDataRetrieved;
+
+        public ReadFailureStatus(String consistency, int receivedAcknowledgements, int requiredAcknowledgements, int numberOfFailures, boolean wasDataRetrieved) {
+            super(Result.read_failure, consistency);
+            this.receivedAcknowledgements = receivedAcknowledgements;
+            this.requiredAcknowledgements = requiredAcknowledgements;
+            this.numberOfFailures = numberOfFailures;
+            this.wasDataRetrieved = wasDataRetrieved;
+        }
+
+        public int getReceivedAcknowledgements() {
+            return receivedAcknowledgements;
+        }
+
+        public int getRequiredAcknowledgements() {
+            return requiredAcknowledgements;
+        }
+
+        public int getNumberOfFailures() {
+            return numberOfFailures;
+        }
+
+        public boolean WasDataRetrieved() {
+            return wasDataRetrieved;
+        }
+    }
+
     public static class WriteTimeoutStatus extends ErrorStatus {
         private final int receivedAcknowledgements;
         private final int requiredAcknowledgements;
@@ -120,6 +151,37 @@ public interface CassandraResult {
         }
     }
 
+    public static class WriteFailureStatus extends ErrorStatus {
+        private final int receivedAcknowledgements;
+        private final int requiredAcknowledgements;
+        private final int numberOfFailures;
+        private final WriteTypePrime writeTypePrime;
+
+        public WriteFailureStatus(String consistency, int receivedAcknowledgements, int requiredAcknowledgements, int numberOfFailures, WriteTypePrime writeTypePrime) {
+            super(Result.write_failure, consistency);
+            this.receivedAcknowledgements = receivedAcknowledgements;
+            this.requiredAcknowledgements = requiredAcknowledgements;
+            this.numberOfFailures = numberOfFailures;
+            this.writeTypePrime = writeTypePrime;
+        }
+
+        public int getReceivedAcknowledgements() {
+            return receivedAcknowledgements;
+        }
+
+        public int getRequiredAcknowledgements() {
+            return requiredAcknowledgements;
+        }
+
+        public int getNumberOfFailures() {
+            return numberOfFailures;
+        }
+
+        public WriteTypePrime getWriteTypePrime() {
+            return writeTypePrime;
+        }
+    }
+
     public static class UnavailableStatus extends ErrorStatus {
         private final int requiredAcknowledgements;
         private final int alive;
@@ -138,5 +200,30 @@ public interface CassandraResult {
             return alive;
         }
 
+    }
+
+    public static class FunctionFailureStatus extends ErrorStatus {
+        private final String keyspace;
+        private final String function;
+        private final String argTypes;
+
+        public FunctionFailureStatus(String keyspace, String function, String argTypes) {
+            super(Result.function_failure, null);
+            this.keyspace = keyspace;
+            this.function = function;
+            this.argTypes = argTypes;
+        }
+
+        public String getKeyspace() {
+            return keyspace;
+        }
+
+        public String getFunction() {
+            return function;
+        }
+
+        public String getArgTypes() {
+            return argTypes;
+        }
     }
 }

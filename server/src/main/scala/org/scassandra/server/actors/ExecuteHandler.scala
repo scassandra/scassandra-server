@@ -15,115 +15,67 @@
  */
 package org.scassandra.server.actors
 
-
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.ActorRef
 import akka.pattern.{ask, pipe}
-import akka.util.{ByteString, Timeout}
-import org.scassandra.server.actors.ExecuteHandler.DeserializedExecute
+import akka.util.Timeout
+import org.scassandra.codec._
+import org.scassandra.server.actors.ExecuteHandler.HandleExecute
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.cqlmessages.CqlMessageFactory
-import org.scassandra.server.cqlmessages.CqlProtocolHelper.{bytes2Hex, serializeInt}
-import org.scassandra.server.cqlmessages.request.ExecuteRequest
 import org.scassandra.server.priming._
-import org.scassandra.server.priming.prepared.{PreparedPrimeResult, PreparedStoreLookup}
-import org.scassandra.server.priming.query.{Prime, PrimeMatch}
+import org.scassandra.server.priming.prepared.PreparedStoreLookup
+import org.scassandra.server.priming.query.Reply
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-
-class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActivityLog, prepareHandler: ActorRef) extends Actor with ActorLogging {
+class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActivityLog, prepareHandler: ActorRef) extends ProtocolActor {
 
   import context.dispatcher
   implicit val timeout: Timeout = 1 second
 
   def receive: Receive = {
-    case ExecuteHandler.Execute(body, stream, msgFactory, connection) =>
-      val executeRequest = msgFactory.parseExecuteRequestWithoutVariables(stream, body)
-      val prepStatement = (prepareHandler ? PreparedStatementQuery(List(executeRequest.id)))
+    case ProtocolMessage(Frame(header, e: Execute)) =>
+      val id = e.id.toInt()
+      val recipient = sender
+      // Lookup the associated prepared statement for this execute and on completion
+      // send a message to self indicating to handle the request.
+      val executeRequest = (prepareHandler ? PreparedStatementQuery(List(id)))
         .mapTo[PreparedStatementResponse]
-        .map(res => DeserializedExecute(executeRequest, res.preparedStatementText.get(executeRequest.id), body, stream, msgFactory, connection))
-      prepStatement.pipeTo(self)
-
-    case DeserializedExecute(request, text, body, stream, msgFactory, connection) =>
-      val action = handleExecute(body, stream, msgFactory, text, request, connection)
-      action.activity.foreach(activityLog.recordPreparedStatementExecution)
-      sendMessage(action.msg, connection)
+        .map(res => HandleExecute(res.prepared.get(id), header, e, recipient))
+      executeRequest.pipeTo(self)
+    case HandleExecute(query, header, execute, connection) =>
+      handleExecute(query, header, execute, connection)
   }
 
-  private def handleExecute(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, prepStatement: Option[String], executeRequest: ExecuteRequest, connection: ActorRef): ExecuteResponse = {
-    val action = prepStatement match {
-      case Some(preparedStatementText) =>
-        val foundPrime: Option[PreparedPrimeResult] = primePreparedStore.findPrime(PrimeMatch(preparedStatementText, executeRequest.consistency))
-        foundPrime.foreach(p => log.info("Found prime {}", p))
-        val matchingPrimedAction = for {
-          prime <- foundPrime
-          if executeRequest.numberOfVariables == prime.variableTypes.size
-          parsed = msgFactory.parseExecuteRequestWithVariables(stream, body, prime.variableTypes)
-          pse = PreparedStatementExecution(preparedStatementText, parsed.consistency, parsed.variables, prime.variableTypes)
-        } yield {
-          val primeResult = prime.getPrime(parsed.variables)
-          ExecuteResponse(Some(pse), MessageWithDelay(createMessage(primeResult, executeRequest, stream, msgFactory, connection), primeResult.fixedDelay))
+  def handleExecute(preparedStatement: Option[(String, Prepared)], header: FrameHeader, execute: Execute, connection: ActorRef) = {
+    implicit val protocolVersion = header.version.version
+    preparedStatement match {
+      case Some((queryText, prepared)) =>
+        val prime = primePreparedStore(queryText, execute)
+        prime.foreach(p => log.info("Found prime {}", p))
+
+        // Decode query parameters using the prepared statement metadata.
+        val dataTypes = prepared.preparedMetadata.columnSpec.map(_.dataType)
+
+        val values = extractQueryVariables(queryText, execute.parameters.values.map(_.map(_.value)), dataTypes)
+        values match {
+          case Some(v) =>
+            activityLog.recordPreparedStatementExecution(queryText, execute.parameters.consistency, v, dataTypes)
+          case None =>
+            activityLog.recordPreparedStatementExecution(queryText, execute.parameters.consistency, Nil, Nil)
         }
 
-        lazy val defaultAction = ExecuteResponse(Some(PreparedStatementExecution(preparedStatementText, executeRequest.consistency, List(), List())),
-          MessageWithDelay(msgFactory.createVoidMessage(stream)))
-        matchingPrimedAction.getOrElse(defaultAction)
+
+        writePrime(execute, prime, header, Some(connection), alternative=Some(Reply(VoidResult)), consistency = Some(execute.parameters.consistency))
       case None =>
-        statementNotRecognised(stream, msgFactory, executeRequest)
-    }
-    action
-  }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  private def statementNotRecognised(stream: Byte, msgFactory: CqlMessageFactory, executeRequest: ExecuteRequest): ExecuteResponse = {
-    val id = serializeInt(executeRequest.id)
-    val errMsg = s"Could not find prepared statement with id: ${bytes2Hex(id)}"
-    ExecuteResponse(Some(PreparedStatementExecution(errMsg, executeRequest.consistency, List(), List())),
-      MessageWithDelay(msgFactory.createErrorMessage(UnpreparedResult(errMsg, id), stream, executeRequest.consistency)))
-  }
-
-
-  private def sendMessage(msgAndDelay: MessageWithDelay, receiver: ActorRef) = {
-    msgAndDelay.delay match {
-      case None => receiver ! msgAndDelay.msg
-      case Some(duration) =>
-        log.info(s"Delaying response of prepared statement by $duration")
-        context.system.scheduler.scheduleOnce(duration, receiver, msgAndDelay.msg)(context.system.dispatcher)
+        val errMsg = s"Could not find prepared statement with id: 0x${execute.id.toHex}"
+        activityLog.recordPreparedStatementExecution(errMsg, execute.parameters.consistency, Nil, Nil)
+        val unprepared = Unprepared(errMsg, execute.id)
+        write(unprepared, header, Some(connection))
     }
   }
-
-  private def createMessage(preparedPrime: Prime, executeRequest: ExecuteRequest ,stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef) = {
-    preparedPrime.result match {
-      case SuccessResult => msgFactory.createRowsMessage(preparedPrime, stream)
-      case result: ErrorResult => msgFactory.createErrorMessage(result, stream, executeRequest.consistency)
-      case result: FatalResult => result.produceFatalError(connection)
-    }
-  }
-
 }
 
-private case class ExecuteResponse(activity: Option[PreparedStatementExecution], msg: MessageWithDelay)
-private case class MessageWithDelay(msg: Any, delay: Option[FiniteDuration] = None)
-
 object ExecuteHandler {
-  case class Execute(body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
-  private case class DeserializedExecute(request: ExecuteRequest, text: Option[String], body: ByteString, stream: Byte, msgFactory: CqlMessageFactory, connection: ActorRef)
+  case class HandleExecute(query: Option[(String, Prepared)], header: FrameHeader, execute: Execute, connection: ActorRef)
 }

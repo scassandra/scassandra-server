@@ -16,16 +16,18 @@
 package cassandra;
 
 import com.datastax.driver.core.Row;
-import common.CassandraRow;
+import com.datastax.driver.core.TupleValue;
+import common.CassandraRowV3;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.time.LocalDate;
 import java.util.*;
 
 
-public class CassandraRow21 implements CassandraRow {
+public class CassandraRow21 implements CassandraRowV3 {
     private Row cassandraRow;
 
     public CassandraRow21(Row cassandraRow) {
@@ -33,7 +35,7 @@ public class CassandraRow21 implements CassandraRow {
     }
 
     @Override
-    public Date getDate(String columnName) {
+    public Date getTimestamp(String columnName) {
         return this.cassandraRow.getDate(columnName);
     }
 
@@ -105,5 +107,30 @@ public class CassandraRow21 implements CassandraRow {
     @Override
     public UUID getUUID(String name) {
         return cassandraRow.getUUID(name);
+    }
+
+    @Override
+    public Short getShort(String name) {
+        throw new UnsupportedOperationException("smallint not supported in C* 2.1");
+    }
+
+    @Override
+    public Byte getByte(String name) {
+        throw new UnsupportedOperationException("tinyint not supported in C* 2.1");
+    }
+
+    @Override
+    public long getTime(String name) {
+        throw new UnsupportedOperationException("time not supported in C* 2.1");
+    }
+
+    @Override
+    public LocalDate getDate(String name) {
+        throw new UnsupportedOperationException("date not supported in C* 2.1");
+    }
+
+    @Override
+    public TupleValue getTupleValue(String name) {
+        return cassandraRow.getTupleValue(name);
     }
 }

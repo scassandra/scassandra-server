@@ -20,15 +20,12 @@ import java.net.Socket
 import java.util
 
 import akka.util.ByteString
-import org.scassandra.server.actors.MessageHelper
-import org.scassandra.server.cqlmessages.CqlProtocolHelper._
-import org.scassandra.server.cqlmessages.OpCodes
-import org.scassandra.server.cqlmessages.response.ResultKinds
+import org.scassandra.codec._
 
 import scala.collection.immutable.IndexedSeq
 
 class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
-  var connectionToServerStub: Socket = null
+  var connectionToServerStub: Socket = _
 
   before {
     connectionToServerStub = ConnectionToServerStub()
@@ -48,16 +45,6 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
 
     val bytesAfterStartupMessage = availableBytes(200)
     bytesAfterStartupMessage should equal(8)
-  }
-
-  test("return nothing if an options message is received") {
-    val bytes = availableBytes(200)
-    bytes should equal(0)
-
-    sendOptionsMessage()
-
-    val bytesAfterOptionsMessage = availableBytes(200)
-    bytesAfterOptionsMessage should equal(0)
   }
 
   test("return a version byte in the response header") {
@@ -108,7 +95,7 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
 
     val responseHeaderOpCode: Int = readResponseHeaderOpCode
 
-    responseHeaderOpCode should equal(OpCodes.Ready)
+    responseHeaderOpCode should equal(Ready.opcode)
   }
 
   test("return length field with all 4 bytes set to 0 on STARTUP request") {
@@ -140,7 +127,7 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
 
     val responseHeaderOpCode: Int = readResponseHeaderOpCode
 
-    responseHeaderOpCode should equal(OpCodes.Result)
+    responseHeaderOpCode should equal(Result.opcode)
   }
 
   test("should reject query message if startup message has not been sent") {
@@ -150,15 +137,16 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
     // read fourth byte
     val responseHeaderOpCode: Int = readResponseHeaderOpCode()
 
-    responseHeaderOpCode should equal(OpCodes.Error)
+    responseHeaderOpCode should equal(ErrorMessage.opcode)
   }
 
   test("test receiving size separately from opcode") {
     val stream: OutputStream = connectionToServerStub.getOutputStream
-    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Startup))
+    stream.write(Array[Byte](0x02, 0x00, 0x00, Startup.opcode.toByte))
     stream.flush()
     Thread.sleep(500)
-    stream.write(Array[Byte](0x00, 0x00, 0x00, 0x0)) // empty body
+    stream.write(Array[Byte](0x00, 0x00, 0x00, 0x04)) // 4 byte body for empty map.
+    stream.write(Array[Byte](0x00, 0x00, 0x00, 0x00)) // empty STARTUP map.
     stream.flush()
 
     readReadyMessage()
@@ -166,7 +154,7 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
 
   test("test receiving body separately from opcode and size") {
     val stream: OutputStream = connectionToServerStub.getOutputStream
-    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Startup, 0x00, 0x00, 0x00, 0x16))
+    stream.write(Array[Byte](0x02, 0x00, 0x00, Startup.opcode.toByte, 0x00, 0x00, 0x00, 0x16))
     stream.flush()
     Thread.sleep(500)
     stream.write(Array[Byte](0x0,0x1,0x0,0xb,0x43,0x51,0x4c,0x5f,0x56,0x45,0x52,0x53,0x49,0x4f,0x4e,0x00,0x05,0x33,0x2e,30,0x2e,30))
@@ -180,7 +168,8 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
     stream.write(Array[Byte](0x02, 0x00))
     stream.flush()
     Thread.sleep(500)
-    stream.write(Array[Byte](0x00, OpCodes.Startup, 0x00, 0x00, 0x00, 0x0)) // empty body
+    stream.write(Array[Byte](0x00, Startup.opcode.toByte, 0x00, 0x00, 0x00, 0x04)) // 4 byte body for empty map.
+    stream.write(Array[Byte](0x00, 0x00, 0x00, 0x00)) // empty STARTUP map.
     stream.flush()
 
     readReadyMessage()
@@ -188,7 +177,7 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
 
   test("test receiving message in three parts") {
     val stream: OutputStream = connectionToServerStub.getOutputStream
-    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Startup, 0x00, 0x00, 0x00, 0x16))
+    stream.write(Array[Byte](0x02, 0x00, 0x00, Startup.opcode.toByte, 0x00, 0x00, 0x00, 0x16))
     stream.flush()
     Thread.sleep(500)
     stream.write(Array[Byte](0x0,0x1,0x0,0xb,0x43,0x51))
@@ -203,7 +192,7 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
     implicit val stream: OutputStream = connectionToServerStub.getOutputStream
     implicit val inputStream : DataInputStream = new DataInputStream(connectionToServerStub.getInputStream)
 
-    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Startup, 0x00, 0x00, 0x00, 0x16))
+    stream.write(Array[Byte](0x02, 0x00, 0x00, Startup.opcode.toByte, 0x00, 0x00, 0x00, 0x16))
     stream.flush()
     Thread.sleep(500)
     stream.write(Array[Byte](0x0,0x1,0x0,0xb,0x43,0x51))
@@ -214,7 +203,7 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
     readReadyMessage()
     sendQueryMessage("select * from people")
     val responseHeaderOpCode: Int = readResponseHeaderOpCode
-    responseHeaderOpCode should equal(OpCodes.Result)
+    responseHeaderOpCode should equal(Result.opcode)
   }
 
   test("should return a result message with keyspace name on use statement") {
@@ -227,13 +216,13 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
     sendQueryMessage("use people")
 
     val responseOpCode = readResponseHeaderOpCode()
-    responseOpCode should equal(OpCodes.Result)
+    responseOpCode should equal(Result.opcode)
 
     val message = readMessageBody()
     println(s"Message body received ${util.Arrays.toString(message)}")
 
     val responseType = takeInt(message)
-    responseType shouldEqual ResultKinds.SetKeyspace
+    responseType shouldEqual 0x3
 
     val cqlString = takeString(message.drop(4))
     cqlString.trim should equal("people")
@@ -247,12 +236,12 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
     readReadyMessage()
 
     // send a register message
-    val registerMessage = MessageHelper.createRegisterMessage()
+    val registerMessage = Register().toBytes(0, Request)(ProtocolVersionV2).get
     stream.write(registerMessage.toArray)
 
     // read the op code
     val opCode = readResponseHeaderOpCode()
-    opCode should equal(OpCodes.Ready)
+    opCode should equal(Ready.opcode)
   }
 
   def takeInt(bytes : Array[Byte]) = {
@@ -303,7 +292,7 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
 
   def sendStartupMessage(streamId : Byte = 0x00) = {
     val stream: OutputStream = connectionToServerStub.getOutputStream
-    stream.write(Array[Byte](0x02, 0x00, streamId, OpCodes.Startup))
+    stream.write(Array[Byte](0x02, 0x00, streamId, Startup.opcode.toByte))
     stream.write(Array[Byte](0x00, 0x00, 0x00, 0x16))
     val fakeBody: IndexedSeq[Byte] = for (i <- 0 until 22) yield 0x00.toByte
     stream.write(fakeBody.toArray)
@@ -312,13 +301,13 @@ class ServerStubRunnerIntegrationTest extends AbstractIntegrationTest {
 
   def sendQueryMessage(queryString : String = "select * from people") = {
     val stream: OutputStream = connectionToServerStub.getOutputStream
-    val queryMessage = MessageHelper.createQueryMessage(queryString)
+    val queryMessage = Query(queryString).toBytes(0, Request)(ProtocolVersionV2).get
     stream.write(queryMessage.toArray)
   }
 
   def sendOptionsMessage() {
     val stream: OutputStream = connectionToServerStub.getOutputStream
-    stream.write(Array[Byte](0x02, 0x00, 0x00, OpCodes.Options))
+    stream.write(Array[Byte](0x02, 0x00, 0x00, Options.opcode.toByte))
     sendFakeLengthAndBody(stream)
   }
 
