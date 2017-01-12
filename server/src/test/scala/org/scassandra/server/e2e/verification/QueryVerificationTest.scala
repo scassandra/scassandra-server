@@ -44,6 +44,6 @@ class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
     session.execute(statement)
 
     val queryList = getRecordedQueries()
-    queryList shouldEqual List(Query(queryString, Consistency.TWO))
+    queryList should contain(Query(queryString, Consistency.TWO))
   }
 }
