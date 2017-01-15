@@ -15,6 +15,7 @@
  */
 package org.scassandra.matchers;
 
+import org.scassandra.http.client.BatchExecution;
 import org.scassandra.http.client.PreparedStatementExecution;
 import org.scassandra.http.client.Query;
 
@@ -26,6 +27,10 @@ public class Matchers {
 
     public static PreparedStatementMatcher preparedStatementRecorded(PreparedStatementExecution query) {
         return new PreparedStatementMatcher(query);
+    }
+
+    public static BatchExecutionMatcher batchExecutionRecorded(BatchExecution batchExecution) {
+        return new BatchExecutionMatcher(batchExecution);
     }
 
 }

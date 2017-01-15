@@ -22,10 +22,12 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.codec._
-import org.scassandra.codec.messages.{BatchQueryKind, BatchType, PreparedBatchQuery, SimpleBatchQuery}
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.messages._
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.batch.PrimeBatchStore
+import org.scassandra.server.priming.BatchQuery
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import scodec.bits.ByteVector
 
@@ -83,14 +85,21 @@ class BatchHandlerTest extends FunSuite with ProtocolActorTest with TestKitBase 
     val id = 1
     val idBytes = ByteVector(id)
 
+    implicit val protocolVersion = ProtocolVersion.latest
+
     val batch = Batch(BatchType.LOGGED, List(
-      PreparedBatchQuery(idBytes)
+      PreparedBatchQuery(idBytes, List(QueryValue(1, DataType.Int).value))
     ))
 
     underTest ! protocolMessage(batch)
 
     prepareHandlerProbe.expectMsg(PreparedStatementQuery(List(id)))
-    prepareHandlerProbe.reply(PreparedStatementResponse(Map(id -> ("insert into something", Prepared(idBytes)))))
+
+    val prepared = Prepared(
+      idBytes,
+      PreparedMetadata(Nil, Some("keyspace"), Some("table"), List(ColumnSpecWithoutTable("0", DataType.Int))))
+
+    prepareHandlerProbe.reply(PreparedStatementResponse(Map(id -> ("insert into something", prepared))))
 
     expectMsgPF() {
       case ProtocolResponse(_, VoidResult) => true
@@ -98,7 +107,7 @@ class BatchHandlerTest extends FunSuite with ProtocolActorTest with TestKitBase 
 
     activityLog.retrieveBatchExecutions() should equal(List(
       BatchExecution(List(
-        BatchQuery("insert into something", BatchQueryKind.Prepared)
+        BatchQuery("insert into something", BatchQueryKind.Prepared, List(1), List(DataType.Int))
       ), Consistency.ONE, BatchType.LOGGED))
     )
   }
