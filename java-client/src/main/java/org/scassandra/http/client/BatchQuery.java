@@ -17,18 +17,23 @@ package org.scassandra.http.client;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+
+import org.scassandra.cql.CqlType;
 
 public final class BatchQuery {
 
     private final String query;
     private final BatchQueryKind batchQueryKind;
     private final List<Object> variables;
+    private final List<CqlType> variableTypes;
 
-    private BatchQuery(String query, BatchQueryKind batchQueryKind, List<Object> variables) {
+    private BatchQuery(String query, BatchQueryKind batchQueryKind, List<Object> variables, List<CqlType> variableTypes) {
         this.query = query;
         this.batchQueryKind = batchQueryKind;
         this.variables = variables;
+        this.variableTypes = variableTypes;
     }
 
     public String getQuery() {
@@ -43,12 +48,17 @@ public final class BatchQuery {
         return variables;
     }
 
+    public List<CqlType> getVariableTypes() {
+        return variableTypes;
+    }
+
     @Override
     public String toString() {
         return "BatchQuery{" +
                 "query='" + query + '\'' +
                 ", batchQueryKind=" + batchQueryKind +
                 ", variables=" + variables +
+                ", variableTypes=" + variableTypes +
                 '}';
     }
 
@@ -61,8 +71,8 @@ public final class BatchQuery {
 
         if (query != null ? !query.equals(that.query) : that.query != null) return false;
         if (batchQueryKind != that.batchQueryKind) return false;
-        return !(variables != null ? !variables.equals(that.variables) : that.variables != null);
-
+        if (variables != null ? !variables.equals(that.variables) : that.variables != null) return false;
+        return variableTypes != null ? variableTypes.equals(that.variableTypes) : that.variableTypes == null;
     }
 
     @Override
@@ -70,6 +80,7 @@ public final class BatchQuery {
         int result = query != null ? query.hashCode() : 0;
         result = 31 * result + (batchQueryKind != null ? batchQueryKind.hashCode() : 0);
         result = 31 * result + (variables != null ? variables.hashCode() : 0);
+        result = 31 * result + (variableTypes != null ? variableTypes.hashCode() : 0);
         return result;
     }
 
@@ -81,6 +92,7 @@ public final class BatchQuery {
         private String query;
         private BatchQueryKind batchQueryKind = BatchQueryKind.query;
         private List<Object> variables = new ArrayList<Object>();
+        private List<CqlType> variableTypes = Collections.emptyList();
 
         private BatchQueryBuilder() {
         }
@@ -100,8 +112,13 @@ public final class BatchQuery {
             return this;
         }
 
+        public BatchQueryBuilder withVariableTypes(CqlType... variableTypes) {
+            this.variableTypes = Arrays.asList(variableTypes);
+            return this;
+        }
+
         public BatchQuery build() {
-            return new BatchQuery(query, batchQueryKind, variables);
+            return new BatchQuery(query, batchQueryKind, variables, variableTypes);
         }
     }
 }
