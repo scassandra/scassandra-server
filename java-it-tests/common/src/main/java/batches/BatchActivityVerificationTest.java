@@ -28,6 +28,7 @@ import org.scassandra.http.client.BatchType;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.scassandra.cql.PrimitiveType.VARCHAR;
 
 abstract public class BatchActivityVerificationTest extends AbstractScassandraTest {
     public BatchActivityVerificationTest(CassandraExecutor cassandraExecutor) {
@@ -127,7 +128,8 @@ abstract public class BatchActivityVerificationTest extends AbstractScassandraTe
         assertEquals(BatchExecution.builder().withBatchQueries(
                 BatchQuery.builder().withQuery("query"),
                 BatchQuery.builder().withQuery("prepared statement ? ?").withVariables("one", "twp")
-                .withType(BatchQueryKind.prepared_statement))
+                        .withVariableTypes(VARCHAR, VARCHAR)
+                        .withType(BatchQueryKind.prepared_statement))
                 .withConsistency("ONE").withBatchType(BatchType.LOGGED).build(), batches.get(0));
     }
 }

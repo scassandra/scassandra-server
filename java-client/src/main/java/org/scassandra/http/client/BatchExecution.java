@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.scassandra.http.client.BatchType.LOGGED;
+
 public final class BatchExecution {
 
     private final List<BatchQuery> batchQueries;
@@ -37,6 +39,10 @@ public final class BatchExecution {
 
     public String getConsistency() {
         return consistency;
+    }
+
+    public BatchType getBatchType() {
+        return batchType;
     }
 
     @Override
@@ -78,8 +84,8 @@ public final class BatchExecution {
 
     public static class BatchExecutionBuilder {
         private List<BatchQuery> batchQueries;
-        private String consistency;
-        private BatchType batchType;
+        private String consistency = "ONE";
+        private BatchType batchType = LOGGED;
 
         private BatchExecutionBuilder() {
         }
@@ -102,11 +108,23 @@ public final class BatchExecution {
             return this;
         }
 
+        /**
+         * Defaults to ONE if not set.
+         *
+         * @param consistency Query consistency
+         * @return this builder
+         */
         public BatchExecutionBuilder withConsistency(String consistency) {
             this.consistency = consistency;
             return this;
         }
 
+        /**
+         * Defaults to LOGGED if not set.
+         *
+         * @param batchType Batch type
+         * @return this builder
+         */
         public BatchExecutionBuilder withBatchType(BatchType batchType) {
             this.batchType = batchType;
             return this;

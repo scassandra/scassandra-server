@@ -74,7 +74,7 @@ class BatchHandler(activityLog: ActivityLog,
               // Decode query parameters using the prepared statement metadata.
               val dataTypes = prepared.preparedMetadata.columnSpec.map(_.dataType)
               val values = extractQueryVariables(queryText, Some(byteValues), dataTypes).getOrElse(Nil)
-              BatchQuery(queryText, BatchQueryKind.Prepared, values)
+              BatchQuery(queryText, BatchQueryKind.Prepared, values, dataTypes)
             case None => BatchQuery(
               "A prepared statement was in the batch but couldn't be found - did you prepare against a different  session?",
               BatchQueryKind.Prepared)

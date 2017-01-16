@@ -192,6 +192,32 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
     }
 
     @Test
+    public void capturesPreparedStatementVariableTypes() {
+        primingClient.prime(PrimingRequest.preparedStatementBuilder()
+                .withQuery("insert ? ?")
+                .withThen(then().withVariableTypes(ASCII, INT))
+        );
+        primingClient.primeBatch(
+                BatchPrimingRequest.batchPrimingRequest()
+                        .withQueries(
+                                batchQueryPrime("insert ? ?", prepared_statement))
+                        .withThen(then().withResult(success))
+
+        );
+
+        cassandra().executeBatch(newArrayList(
+                new CassandraQuery("insert ? ?",
+                        PREPARED_STATEMENT, "one", 2)
+                ), BatchType.LOGGED
+        );
+
+        List<BatchExecution> recordedBatchExecutions = activityClient.retrieveBatches();
+        assertEquals(1, recordedBatchExecutions.size());
+        List<BatchQuery> queries = recordedBatchExecutions.get(0).getBatchQueries();
+        assertEquals(newArrayList(ASCII, INT), queries.get(0).getVariableTypes());
+    }
+
+    @Test
     public void primeBatchWithReadTimeout() {
 
         primingClient.primeBatch(BatchPrimingRequest.batchPrimingRequest()

@@ -110,6 +110,6 @@ class ActivityLog extends LazyLogging {
 case class Query(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[DataType] = List())
 case class Connection(result: String = "success")
 case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[DataType])
-case class BatchQuery(query: String, batchQueryKind: BatchQueryKind, variables: List[Any] = List())
+case class BatchQuery(query: String, batchQueryKind: BatchQueryKind, variables: List[Any] = List(), variableTypes: List[DataType] = List())
 case class BatchExecution(batchQueries: Seq[BatchQuery], consistency: Consistency, batchType: BatchType)
 case class PreparedStatementPreparation(preparedStatementText: String)
