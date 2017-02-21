@@ -65,7 +65,7 @@ class BatchHandlerTest extends FunSuite with ProtocolActorTest with TestKitBase 
   test("Records batch statement with ActivityLog") {
     val batch = Batch(BatchType.LOGGED, List(
       SimpleBatchQuery("insert into something"), SimpleBatchQuery("insert into something else")
-    ))
+    ), serialConsistency = Some(Consistency.LOCAL_SERIAL), timestamp = Some(8675309))
 
     underTest ! protocolMessage(batch)
 
@@ -77,7 +77,7 @@ class BatchHandlerTest extends FunSuite with ProtocolActorTest with TestKitBase 
       BatchExecution(List(
         BatchQuery("insert into something", BatchQueryKind.Simple),
         BatchQuery("insert into something else", BatchQueryKind.Simple)
-      ), Consistency.ONE, BatchType.LOGGED))
+      ), Consistency.ONE, Some(Consistency.LOCAL_SERIAL), BatchType.LOGGED, Some(8675309)))
     )
   }
 
@@ -108,7 +108,7 @@ class BatchHandlerTest extends FunSuite with ProtocolActorTest with TestKitBase 
     activityLog.retrieveBatchExecutions() should equal(List(
       BatchExecution(List(
         BatchQuery("insert into something", BatchQueryKind.Prepared, List(1), List(DataType.Int))
-      ), Consistency.ONE, BatchType.LOGGED))
+      ), Consistency.ONE, None, BatchType.LOGGED, None))
     )
   }
 
@@ -133,7 +133,7 @@ class BatchHandlerTest extends FunSuite with ProtocolActorTest with TestKitBase 
     activityLog.retrieveBatchExecutions() should equal(List(
       BatchExecution(List(
         BatchQuery("A prepared statement was in the batch but couldn't be found - did you prepare against a different  session?", BatchQueryKind.Prepared)
-      ), Consistency.ONE, BatchType.LOGGED))
+      ), Consistency.ONE, None, BatchType.LOGGED, None))
     )
   }
 }

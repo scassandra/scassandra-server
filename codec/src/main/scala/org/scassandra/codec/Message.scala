@@ -543,7 +543,7 @@ object Batch {
     ("consistency"       | Consistency.codec) ::
     // only parse flags for protocol version 2+ since that's when they were added.
     ("flags"             | withDefaultValue(conditional(protocolVersion.version > 2, Codec[BatchFlags]), DefaultBatchFlags)).consume { flags =>
-    ("serialConsistency" | conditional(flags.withSerialConsistency, consistency)) ::
+    ("serialConsistency" | conditional(flags.withSerialConsistency, Consistency.codec)) ::
     ("timestamp"         | conditional(flags.withDefaultTimestamp, clong))
     } { data => // derive flags from presence of serialConsistency and timestamp.
       val serialConsistency = data.head

@@ -16,6 +16,7 @@
 package org.scassandra.server.priming
 
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scassandra.codec.Consistency
 import org.scassandra.codec.Consistency._
 import org.scassandra.codec.datatype.DataType
 import org.scassandra.codec.messages.BatchQueryKind.Simple
@@ -36,7 +37,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Clear query activity log") {
-    underTest.recordQuery("select * from people", ONE)
+    underTest.recordQuery("select * from people", ONE, None)
     underTest.clearQueries()
     underTest.retrieveQueries().size should equal(0)
   }
@@ -52,7 +53,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Store query and retrieve connection") {
     val query: String = "select * from people"
-    underTest.recordQuery(query, ONE)
+    underTest.recordQuery(query, ONE, None)
     underTest.retrieveQueries().size should equal(1)
     underTest.retrieveQueries().head.query should equal(query)
     underTest.retrieveQueries().head.consistency should equal(ONE)
@@ -65,15 +66,15 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
     val consistency = ONE
     val variableTypes = List(DataType.Ascii, DataType.Bigint)
 
-    underTest.recordPreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes)
+    underTest.recordPreparedStatementExecution(preparedStatementText, consistency, Some(Consistency.LOCAL_SERIAL), variables, variableTypes, Some(1))
     val preparedStatementRecord = underTest.retrievePreparedStatementExecutions()
 
     preparedStatementRecord.size should equal(1)
-    preparedStatementRecord.head should equal(PreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes))
+    preparedStatementRecord.head should equal(PreparedStatementExecution(preparedStatementText, consistency, Some(Consistency.LOCAL_SERIAL), variables, variableTypes, Some(1)))
   }
 
   test("Clear prepared statement execution log") {
-    underTest.recordPreparedStatementExecution("anything", TWO, List(), List())
+    underTest.recordPreparedStatementExecution("anything", TWO, None, List(), List(), None)
     underTest.clearPreparedStatementExecutions()
     underTest.retrievePreparedStatementExecutions().size should equal(0)
   }
@@ -97,15 +98,15 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
   }
   
   test("Records query parameters") {
-    underTest.recordQuery("query", ONE, List("Hello"), List(DataType.Text))
+    underTest.recordQuery("query", ONE, None, List("Hello"), List(DataType.Text))
 
-    underTest.retrieveQueries() should equal(List(Query("query", ONE, List("Hello"), List(DataType.Text))))
+    underTest.retrieveQueries() should equal(List(Query("query", ONE, None, List("Hello"), List(DataType.Text))))
   }
 
   test("Record batch execution") {
     val consistency: Consistency = ONE
     val statements: List[BatchQuery] = List(BatchQuery("select * from hello", Simple))
-    val execution: BatchExecution = BatchExecution(statements, consistency, LOGGED)
+    val execution: BatchExecution = BatchExecution(statements, consistency, None, LOGGED, None)
     underTest.recordBatchExecution(execution)
 
     val executions: List[BatchExecution] = underTest.retrieveBatchExecutions()
@@ -114,7 +115,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Clear batch execution") {
-    underTest.recordBatchExecution(BatchExecution(List(BatchQuery("select * from hello", Simple)), ONE, LOGGED))
+    underTest.recordBatchExecution(BatchExecution(List(BatchQuery("select * from hello", Simple)), ONE, None, LOGGED, None))
 
     underTest.clearBatchExecutions()
 

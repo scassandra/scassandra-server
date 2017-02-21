@@ -25,12 +25,18 @@ public final class BatchExecution {
 
     private final List<BatchQuery> batchQueries;
     private final String consistency;
+    private final String serialConsistency;
     private final BatchType batchType;
+    private final Long timestamp;
 
-    private BatchExecution(List<BatchQuery> batchQueries, String consistency, BatchType batchType) {
+
+    private BatchExecution(List<BatchQuery> batchQueries, String consistency, String serialConsistency,
+                           BatchType batchType, Long timestamp) {
         this.batchQueries = batchQueries;
         this.consistency = consistency;
+        this.serialConsistency = serialConsistency;
         this.batchType = batchType;
+        this.timestamp = timestamp;
     }
 
     public List<BatchQuery> getBatchQueries() {
@@ -41,30 +47,40 @@ public final class BatchExecution {
         return consistency;
     }
 
+    public String getSerialConsistency() {
+        return serialConsistency;
+    }
+
     public BatchType getBatchType() {
         return batchType;
     }
 
+    public Long getTimestamp() {
+        return timestamp;
+    }
+
     @Override
     public boolean equals(Object o) {
-
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
         BatchExecution that = (BatchExecution) o;
 
-        if (batchQueries != null ? !batchQueries.equals(that.batchQueries) : that.batchQueries != null)
-            return false;
+        if (batchQueries != null ? !batchQueries.equals(that.batchQueries) : that.batchQueries != null) return false;
         if (consistency != null ? !consistency.equals(that.consistency) : that.consistency != null) return false;
-        return batchType == that.batchType;
-
+        if (serialConsistency != null ? !serialConsistency.equals(that.serialConsistency) : that.serialConsistency != null)
+            return false;
+        if (batchType != that.batchType) return false;
+        return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
     }
 
     @Override
     public int hashCode() {
         int result = batchQueries != null ? batchQueries.hashCode() : 0;
         result = 31 * result + (consistency != null ? consistency.hashCode() : 0);
+        result = 31 * result + (serialConsistency != null ? serialConsistency.hashCode() : 0);
         result = 31 * result + (batchType != null ? batchType.hashCode() : 0);
+        result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         return result;
     }
 
@@ -73,7 +89,9 @@ public final class BatchExecution {
         return "BatchExecution{" +
                 "batchQueries=" + batchQueries +
                 ", consistency='" + consistency + '\'' +
+                ", serialConsistency='" + serialConsistency + '\'' +
                 ", batchType=" + batchType +
+                ", timestamp=" + timestamp +
                 '}';
     }
 
@@ -85,7 +103,9 @@ public final class BatchExecution {
     public static class BatchExecutionBuilder {
         private List<BatchQuery> batchQueries;
         private String consistency = "ONE";
+        private String serialConsistency;
         private BatchType batchType = LOGGED;
+        private Long timestamp;
 
         private BatchExecutionBuilder() {
         }
@@ -119,6 +139,11 @@ public final class BatchExecution {
             return this;
         }
 
+        public BatchExecutionBuilder withSerialConsistency(String serialConsistency) {
+            this.serialConsistency = serialConsistency;
+            return this;
+        }
+
         /**
          * Defaults to LOGGED if not set.
          *
@@ -130,8 +155,13 @@ public final class BatchExecution {
             return this;
         }
 
+        public BatchExecutionBuilder withTimestamp(Long timestamp) {
+            this.timestamp = timestamp;
+            return this;
+        }
+
         public BatchExecution build() {
-            return new BatchExecution(batchQueries, consistency, batchType);
+            return new BatchExecution(batchQueries, consistency, serialConsistency, batchType, timestamp);
         }
     }
 }

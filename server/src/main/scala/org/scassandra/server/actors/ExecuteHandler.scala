@@ -60,16 +60,19 @@ class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
         val values = extractQueryVariables(queryText, execute.parameters.values.map(_.map(_.value)), dataTypes)
         values match {
           case Some(v) =>
-            activityLog.recordPreparedStatementExecution(queryText, execute.parameters.consistency, v, dataTypes)
+            activityLog.recordPreparedStatementExecution(queryText, execute.parameters.consistency,
+              execute.parameters.serialConsistency, v, dataTypes, execute.parameters.timestamp)
           case None =>
-            activityLog.recordPreparedStatementExecution(queryText, execute.parameters.consistency, Nil, Nil)
+            activityLog.recordPreparedStatementExecution(queryText, execute.parameters.consistency,
+              execute.parameters.serialConsistency, Nil, Nil, execute.parameters.timestamp)
         }
 
 
         writePrime(execute, prime, header, Some(connection), alternative=Some(Reply(VoidResult)), consistency = Some(execute.parameters.consistency))
       case None =>
         val errMsg = s"Could not find prepared statement with id: 0x${execute.id.toHex}"
-        activityLog.recordPreparedStatementExecution(errMsg, execute.parameters.consistency, Nil, Nil)
+        activityLog.recordPreparedStatementExecution(errMsg, execute.parameters.consistency,
+          execute.parameters.serialConsistency, Nil, Nil, execute.parameters.timestamp)
         val unprepared = Unprepared(errMsg, execute.id)
         write(unprepared, header, Some(connection))
     }

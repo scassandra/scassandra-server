@@ -16,6 +16,7 @@
 package org.scassandra.server.priming.batch
 
 import org.scalatest.{FunSpec, Matchers}
+import org.scassandra.codec.Consistency
 import org.scassandra.codec.Consistency._
 import org.scassandra.codec.messages.BatchQueryKind._
 import org.scassandra.codec.messages.BatchType._
@@ -33,7 +34,8 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
 
       underTest.record(primeRequest)
 
-      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, LOGGED))
+      val ts = System.currentTimeMillis()
+      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, Some(Consistency.SERIAL), LOGGED, Some(ts)))
 
       prime should equal(Some(primeRequest.prime))
     }
@@ -43,7 +45,7 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
 
       underTest.record(primeRequest)
 
-      val prime = underTest(BatchExecution(Seq(BatchQuery("I am do different", Simple)), ONE, LOGGED))
+      val prime = underTest(BatchExecution(Seq(BatchQuery("I am do different", Simple)), ONE, None, LOGGED, None))
 
       prime should equal(None)
     }
@@ -56,7 +58,7 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
           BatchQueryPrime("select * wah", Prepared))),
         Then(result = Some(Success))))
 
-      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, LOGGED))
+      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, None, LOGGED, None))
 
       prime should equal(None)
     }
@@ -73,7 +75,7 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
 
       val prime = underTest(BatchExecution(Seq(
         BatchQuery("select * blah", Simple),
-        BatchQuery("select * wah", Prepared)), ONE, LOGGED))
+        BatchQuery("select * wah", Prepared)), ONE, None, LOGGED, None))
 
       prime should equal(Some(batchRequest.prime))
     }
@@ -89,7 +91,7 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
 
       val prime = underTest.apply(BatchExecution(Seq(
         BatchQuery("select * blah", Simple),
-        BatchQuery("select * wah", Prepared)), ONE, LOGGED))
+        BatchQuery("select * wah", Prepared)), ONE, None, LOGGED, None))
 
       prime should equal(None)
     }
@@ -108,7 +110,7 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
 
       val prime = underTest.apply(BatchExecution(Seq(
         BatchQuery("select * blah", Simple),
-        BatchQuery("select * wah", Prepared)), TWO, LOGGED))
+        BatchQuery("select * wah", Prepared)), TWO, None, LOGGED, None))
 
       prime should equal(Some(batchRequest.prime))
     }
@@ -120,7 +122,7 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
         BatchWhen(List(BatchQueryPrime("select * blah", Simple)), batchType = Some(COUNTER)),
         Then(result = Some(Success))))
 
-      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, LOGGED))
+      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, None, LOGGED, None))
 
       prime should equal(None)
     }
@@ -134,7 +136,7 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
 
       underTest.record(batchRequest)
 
-      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, COUNTER))
+      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, None, COUNTER, None))
 
       prime should equal(Some(batchRequest.prime))
     }
@@ -150,7 +152,7 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
         BatchWhen(List(BatchQueryPrime("select * blah", Simple))),
         Then(result = Some(WriteTimeout))))
 
-      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, LOGGED))
+      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, None, LOGGED, None))
 
       prime should equal(Some(batchRequest.prime))
     }
@@ -165,7 +167,7 @@ class PrimeBatchStoreTest extends FunSpec with Matchers {
 
       underTest.record(batchRequest)
 
-      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, LOGGED))
+      val prime = underTest(BatchExecution(Seq(BatchQuery("select * blah", Simple)), ONE, None, LOGGED, None))
 
       prime should equal(Some(batchRequest.prime))
     }

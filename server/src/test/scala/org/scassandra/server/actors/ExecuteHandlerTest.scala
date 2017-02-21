@@ -129,7 +129,7 @@ class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers w
         columnSpec = ColumnSpecWithoutTable("0", DataType.Bigint) :: Nil))))))
 
     activityLog.retrievePreparedStatementExecutions().size should equal(1)
-    activityLog.retrievePreparedStatementExecutions().head should equal(PreparedStatementExecution(query, consistency, values, variableTypes))
+    activityLog.retrievePreparedStatementExecutions().head should equal(PreparedStatementExecution(query, consistency, None, values, variableTypes, None))
   }
 
   test("Should record execution in activity log without variables when variables don't match prime") {
@@ -144,7 +144,10 @@ class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers w
     // Execute statement with two BigInt variables.
     val variables = List(10, 20)
     val execute = Execute(preparedIdBytes, parameters = QueryParameters(consistency = consistency,
-      values = Some(variables.map(v => QueryValue(None, Bytes(DataType.Bigint.codec.encode(v).require.bytes))))))
+      serialConsistency = Some(Consistency.SERIAL),
+      values = Some(variables.map(v => QueryValue(None, Bytes(DataType.Bigint.codec.encode(v).require.bytes)))),
+      timestamp = Some(1000)
+    ))
 
     underTest ! protocolMessage(execute)
 
@@ -156,7 +159,8 @@ class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers w
 
     // The execution should still be recorded, but the variables not included.
     activityLog.retrievePreparedStatementExecutions().size should equal(1)
-    activityLog.retrievePreparedStatementExecutions().head should equal(PreparedStatementExecution(query, consistency, List(), List()))
+    activityLog.retrievePreparedStatementExecutions().head should equal(PreparedStatementExecution(query, consistency,
+      Some(Consistency.SERIAL), List(), List(), Some(1000)))
   }
 
   test("Should record execution in activity log event if not primed") {
@@ -175,7 +179,7 @@ class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers w
 
     // then - activity log should record an execution even though there was no prime.
     activityLog.retrievePreparedStatementExecutions().size should equal(1)
-    activityLog.retrievePreparedStatementExecutions().head should equal(PreparedStatementExecution(query, consistency, List(), List()))
+    activityLog.retrievePreparedStatementExecutions().head should equal(PreparedStatementExecution(query, consistency, None, List(), List(), None))
   }
 
   test("Should return unprepared response if not prepared statement not found") {
@@ -193,7 +197,7 @@ class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers w
     // then - recorded execution indicating no prepared statement was found and an Unprepared response emitted.
 
     activityLog.retrievePreparedStatementExecutions().size should equal(1)
-    activityLog.retrievePreparedStatementExecutions().head should equal(PreparedStatementExecution(errMsg, consistency, List(), List()))
+    activityLog.retrievePreparedStatementExecutions().head should equal(PreparedStatementExecution(errMsg, consistency, None, List(), List(), None))
 
     expectMsgPF() {
       case ProtocolResponse(_, Unprepared(`errMsg`, `preparedIdBytes`)) => true

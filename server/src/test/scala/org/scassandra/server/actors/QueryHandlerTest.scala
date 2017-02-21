@@ -102,7 +102,7 @@ class QueryHandlerTest extends FunSuite with ImplicitSender with ProtocolActorTe
     val recordedQueries = activityLog.retrieveQueries()
     recordedQueries.size should equal(1)
     val recordedQuery = recordedQueries.head
-    recordedQuery should equal(RQuery(queryText, consistency))
+    recordedQuery should equal(RQuery(queryText, consistency, None))
   }
 
   test("Should record query parameter values from request in QueryLog if Prime contains variable types") {
@@ -131,6 +131,6 @@ class QueryHandlerTest extends FunSuite with ImplicitSender with ProtocolActorTe
     val recordedQueries = activityLog.retrieveQueries()
     recordedQueries.size should equal(1)
     val recordedQuery = recordedQueries.head
-    recordedQuery should equal(RQuery(query.query, consistency, values, variableTypes))
+    recordedQuery should equal(RQuery(query.query, consistency, None, values, variableTypes))
   }
 }

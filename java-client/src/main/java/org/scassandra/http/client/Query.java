@@ -25,14 +25,18 @@ public final class Query {
 
     private final String query;
     private final String consistency;
+    private final String serialConsistency;
     private final List<Object> variables;
     private final List<CqlType> variableTypes;
+    private final Long timestamp;
 
-    private Query(String query, String consistency, List<Object> variables, List<CqlType> variableTypes) {
+    private Query(String query, String consistency, String serialConsistency, List<Object> variables, List<CqlType> variableTypes, Long timestamp) {
         this.query = query;
         this.consistency = consistency;
+        this.serialConsistency = serialConsistency;
         this.variables = variables;
         this.variableTypes = variableTypes;
+        this.timestamp = timestamp;
     }
 
     public String getQuery() {
@@ -41,6 +45,14 @@ public final class Query {
 
     public String getConsistency() {
         return consistency;
+    }
+
+    public String getSerialConsistency() {
+        return serialConsistency;
+    }
+
+    public Long getTimestamp() {
+        return timestamp;
     }
 
     public List<Object> getVariables() {
@@ -52,35 +64,14 @@ public final class Query {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Query query1 = (Query) o;
-
-        if (query != null ? !query.equals(query1.query) : query1.query != null) return false;
-        if (consistency != null ? !consistency.equals(query1.consistency) : query1.consistency != null) return false;
-        if (variables != null ? !variables.equals(query1.variables) : query1.variables != null) return false;
-        return !(variableTypes != null ? !variableTypes.equals(query1.variableTypes) : query1.variableTypes != null);
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = query != null ? query.hashCode() : 0;
-        result = 31 * result + (consistency != null ? consistency.hashCode() : 0);
-        result = 31 * result + (variables != null ? variables.hashCode() : 0);
-        result = 31 * result + (variableTypes != null ? variableTypes.hashCode() : 0);
-        return result;
-    }
-
-    @Override
     public String toString() {
         return "Query{" +
                 "query='" + query + '\'' +
                 ", consistency='" + consistency + '\'' +
+                ", serialConsistency='" + serialConsistency + '\'' +
                 ", variables=" + variables +
                 ", variableTypes=" + variableTypes +
+                ", timestamp=" + timestamp +
                 '}';
     }
 
@@ -92,11 +83,41 @@ public final class Query {
         return new QueryBuilder(Arrays.asList(variableTypes));
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Query query1 = (Query) o;
+
+        if (query != null ? !query.equals(query1.query) : query1.query != null) return false;
+        if (consistency != null ? !consistency.equals(query1.consistency) : query1.consistency != null) return false;
+        if (serialConsistency != null ? !serialConsistency.equals(query1.serialConsistency) : query1.serialConsistency != null)
+            return false;
+        if (variables != null ? !variables.equals(query1.variables) : query1.variables != null) return false;
+        if (variableTypes != null ? !variableTypes.equals(query1.variableTypes) : query1.variableTypes != null)
+            return false;
+        return timestamp != null ? timestamp.equals(query1.timestamp) : query1.timestamp == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = query != null ? query.hashCode() : 0;
+        result = 31 * result + (consistency != null ? consistency.hashCode() : 0);
+        result = 31 * result + (serialConsistency != null ? serialConsistency.hashCode() : 0);
+        result = 31 * result + (variables != null ? variables.hashCode() : 0);
+        result = 31 * result + (variableTypes != null ? variableTypes.hashCode() : 0);
+        result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
+        return result;
+    }
+
 
     public static class QueryBuilder {
 
         private String query;
         private String consistency = "ONE";
+        private String serialConsistency = null;
+        private Long timestamp = null;
         private List<Object> variables = Collections.emptyList();
         private List<CqlType> variableTypes = Collections.emptyList();
 
@@ -121,6 +142,21 @@ public final class Query {
             return this;
         }
 
+        /**
+         * Defaults to null if not set.
+         * @param consistency Serial query consistency
+         * @return this builder
+         */
+        public QueryBuilder withSerialConsistency(String consistency){
+            this.serialConsistency = consistency;
+            return this;
+        }
+
+        public QueryBuilder withTimestamp(Long timestamp) {
+            this.timestamp = timestamp;
+            return this;
+        }
+
         public QueryBuilder withVariables(List<Object> variables) {
             this.variables = variables;
             return this;
@@ -135,7 +171,7 @@ public final class Query {
             if (query == null) {
                 throw new IllegalStateException("Must set query");
             }
-            return new Query(query, consistency, variables, variableTypes);
+            return new Query(query, consistency, serialConsistency, variables, variableTypes, timestamp);
         }
     }
 }

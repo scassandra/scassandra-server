@@ -51,6 +51,7 @@ public class CassandraExecutor30 implements CassandraExecutorV3 {
                 .withPort(binaryPort)
                 .withQueryOptions(new QueryOptions().setConsistencyLevel(ConsistencyLevel.ONE))
                 .withNettyOptions(closeQuickly)
+                .withTimestampGenerator(ServerSideTimestampGenerator.INSTANCE)
                 .build();
         session = cluster.connect(Config.KEYSPACE);
     }

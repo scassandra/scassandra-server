@@ -70,7 +70,7 @@ object QueryParameters {
     ("skipMetadata"       | provide[Boolean](flags.skipMetadata))                                             ::
     ("pageSize"           | conditional(flags.pageSize, cint))                                                ::
     ("pagingState"        | conditional(flags.withPagingState, cbytes))                                       ::
-    ("serialConsistency " | conditional(flags.withSerialConsistency, consistency))                            ::
+    ("serialConsistency " | conditional(flags.withSerialConsistency, Consistency.codec))                      ::
     ("timestamp"          | conditional(flags.withDefaultTimestamp, clong))
   } { data =>
       // This is admittedly contrived, but allows us to forgo making QueryFlags part of QueryParameters as

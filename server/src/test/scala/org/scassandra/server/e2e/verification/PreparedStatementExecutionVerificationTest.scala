@@ -67,7 +67,9 @@ class PreparedStatementExecutionVerificationTest extends AbstractIntegrationTest
       println(result)
       val preparedStatementExecutions = JsonParser(result).convertTo[List[PreparedStatementExecution]]
       preparedStatementExecutions.size should equal(1)
-      preparedStatementExecutions.head should equal(PreparedStatementExecution(queryString, Consistency.ONE, List("Chris"), List(DataType.Varchar)))
+      preparedStatementExecutions.head should matchPattern {
+        case PreparedStatementExecution(`queryString`, Consistency.ONE, None, List("Chris"), List(DataType.Varchar), _) =>
+      }
     }
   }
 }

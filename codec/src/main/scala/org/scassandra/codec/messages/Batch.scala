@@ -50,10 +50,11 @@ private[codec] case class BatchFlags(
 
 private [codec] object BatchFlags {
   implicit val codec: Codec[BatchFlags] = {
-    ("reserved"          | ignore(5)) ::
+    ("reserved"          | ignore(1)) ::
     ("namesForValues"    | bool)      :: // Note that namesForValues is not currently used, see CASSANDRA-10246
     ("defaultTimestamp"  | bool)      ::
-    ("serialConsistency" | bool)
+    ("serialConsistency" | bool)      ::
+    ("reserved"          | ignore(4)) // the first 4 bits are unused.
   }.as[BatchFlags]
 }
 
