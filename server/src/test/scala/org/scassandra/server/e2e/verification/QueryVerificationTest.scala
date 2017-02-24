@@ -26,6 +26,7 @@ class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
 
   before {
     clearQueryPrimes()
+    clearRecordedQueries()
   }
 
   test("Test clearing of query results") {
@@ -44,6 +45,24 @@ class QueryVerificationTest extends AbstractIntegrationTest with ScalaFutures {
     session.execute(statement)
 
     val queryList = getRecordedQueries()
-    queryList should contain(Query(queryString, Consistency.TWO))
+    queryList.size shouldEqual 2 // 1 for use keyspace, another for actual query
+    queryList(1) should matchPattern {
+      case Query(`queryString`, Consistency.TWO, None, List(), List(), Some(_)) =>
+    }
+  }
+
+  test("Test verification of a single query - with serial CL") {
+    val queryString: String = "select * from people"
+    val statement = new SimpleStatement(queryString)
+    statement.setConsistencyLevel(ConsistencyLevel.TWO)
+    statement.setSerialConsistencyLevel(ConsistencyLevel.LOCAL_SERIAL)
+
+    session.execute(statement)
+
+    val queryList = getRecordedQueries()
+    queryList.size shouldEqual 2 // 1 for use keyspace, another for actual query
+    queryList(1) should matchPattern {
+      case Query(`queryString`, Consistency.TWO, Some(Consistency.LOCAL_SERIAL), List(), List(), Some(_)) =>
+    }
   }
 }

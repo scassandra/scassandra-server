@@ -68,6 +68,22 @@ public class ActivityClientTest {
         assertEquals(1, queries.size());
         assertEquals("select * from people", queries.get(0).getQuery());
         assertEquals("TWO", queries.get(0).getConsistency());
+        assertEquals(null, queries.get(0).getSerialConsistency());
+        assertEquals(null, queries.get(0).getTimestamp());
+    }
+
+    @Test
+    public void testRetrievalOfASingleQueryWithSerialCLAndTimestamp() {
+        //given
+        stubFor(get(urlEqualTo(queryUrl)).willReturn(aResponse().withBody("[{\"query\":\"select * from people\",\"consistency\":\"TWO\", \"serialConsistency\":\"LOCAL_SERIAL\", \"timestamp\": 8675309}]")));
+        //when
+        List<Query> queries = underTest.retrieveQueries();
+        //then
+        assertEquals(1, queries.size());
+        assertEquals("select * from people", queries.get(0).getQuery());
+        assertEquals("TWO", queries.get(0).getConsistency());
+        assertEquals("LOCAL_SERIAL", queries.get(0).getSerialConsistency());
+        assertEquals(new Long(8675309), queries.get(0).getTimestamp());
     }
 
     @Test(expected = ActivityRequestFailed.class)
@@ -183,6 +199,35 @@ public class ActivityClientTest {
         assertEquals("select * from people where name = ?", singleExecution.getPreparedStatementText());
         assertEquals(Arrays.asList("Chris"), singleExecution.getVariables());
         assertEquals(Arrays.asList(TEXT), singleExecution.getVariableTypes());
+        assertEquals(null, singleExecution.getSerialConsistency());
+        assertEquals(null, singleExecution.getTimestamp());
+    }
+
+    @Test
+    public void retrievingPreparedStatementExecutionsWithSerialCLAndTimestamp() throws Exception {
+        //given
+        stubFor(get(urlEqualTo(preparedStatementExecutionUrl))
+                .willReturn(aResponse().withStatus(200).withBody(
+                        "[{\n" +
+                                "  \"preparedStatementText\": \"select * from people where name = ?\",\n" +
+                                "  \"consistency\": \"ONE\",\n" +
+                                "  \"variables\": [\"Chris\"],\n" +
+                                "  \"variableTypes\": [\"text\"],\n" +
+                                "  \"serialConsistency\": \"SERIAL\",\n" +
+                                "  \"timestamp\": 1234567890\n" +
+                                "}]"
+                )));
+        //when
+        List<PreparedStatementExecution> executions = underTest.retrievePreparedStatementExecutions();
+        //then
+        assertEquals(1, executions.size());
+        PreparedStatementExecution singleExecution = executions.get(0);
+        assertEquals("ONE", singleExecution.getConsistency());
+        assertEquals("select * from people where name = ?", singleExecution.getPreparedStatementText());
+        assertEquals(Arrays.asList("Chris"), singleExecution.getVariables());
+        assertEquals(Arrays.asList(TEXT), singleExecution.getVariableTypes());
+        assertEquals("SERIAL", singleExecution.getSerialConsistency());
+        assertEquals(new Long(1234567890), singleExecution.getTimestamp());
     }
 
     @Test(expected = ActivityRequestFailed.class)
@@ -323,6 +368,27 @@ public class ActivityClientTest {
                         .withQuery("select * from people").build())
                 .withConsistency("TWO")
                 .withBatchType(BatchType.COUNTER)
+                .build();
+        assertEquals(expectedBatchExecution, batchExecution);
+    }
+
+    @Test
+    public void testRetrievalOfBatchExecutionsWithSerialCLAndTimestamp() {
+        //given
+        stubFor(get(urlEqualTo(batchUrl)).willReturn(aResponse()
+                .withBody("[{\"batchQueries\":[{\"query\":\"select * from people\", \"batchQueryKind\":\"query\", \"variables\": [], \"variableTypes\": []}],\"consistency\":\"TWO\", \"batchType\":\"COUNTER\", \"serialConsistency\":\"LOCAL_SERIAL\", \"timestamp\": 8675309}]")));
+        //when
+        List<BatchExecution> batchExecutions = underTest.retrieveBatches();
+        //then
+        assertEquals(1, batchExecutions.size());
+        final BatchExecution batchExecution = batchExecutions.get(0);
+        final BatchExecution expectedBatchExecution = BatchExecution.builder()
+                .withBatchQueries(BatchQuery.builder()
+                        .withQuery("select * from people").build())
+                .withConsistency("TWO")
+                .withSerialConsistency("LOCAL_SERIAL")
+                .withBatchType(BatchType.COUNTER)
+                .withTimestamp(8675309L)
                 .build();
         assertEquals(expectedBatchExecution, batchExecution);
     }

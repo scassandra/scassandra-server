@@ -51,6 +51,7 @@ public class CassandraExecutor21 implements CassandraExecutorV3 {
         cluster = Cluster.builder().addContactPoint(Config.NATIVE_HOST)
                 .withPort(binaryPort)
                 .withNettyOptions(closeQuickly)
+                .withTimestampGenerator(ServerSideTimestampGenerator.INSTANCE)
                 .build();
         session = cluster.connect(KEYSPACE);
     }

@@ -36,9 +36,9 @@ class ActivityLog extends LazyLogging {
   }
 
   def retrieveQueries() : List[Query] = queries
-  
-  def recordQuery(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[DataType] = List()) = {
-    queries = queries ::: Query(query, consistency, variables, variableTypes) :: Nil
+
+  def recordQuery(query: String, consistency: Consistency, serialConsistency: Option[Consistency] = None, variables: List[Any] = List(), variableTypes: List[DataType] = List(), timestamp: Option[Long] = None) = {
+    queries = queries ::: Query(query, consistency, serialConsistency, variables, variableTypes, timestamp) :: Nil
   }
 
   /*  Connection activity logging */
@@ -71,8 +71,9 @@ class ActivityLog extends LazyLogging {
 
   /*  PreparedStatementExecution activity logging */
 
-  def recordPreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[DataType]): Unit = {
-    val execution: PreparedStatementExecution = PreparedStatementExecution(preparedStatementText, consistency, variables, variableTypes)
+  def recordPreparedStatementExecution(preparedStatementText: String, consistency: Consistency, serialConsistency: Option[Consistency], variables: List[Any], variableTypes: List[DataType], timestamp: Option[Long]): Unit = {
+    val execution: PreparedStatementExecution = PreparedStatementExecution(preparedStatementText, consistency,
+      serialConsistency, variables, variableTypes, timestamp)
     logger.info("Recording {}",execution)
     preparedStatementExecutions = preparedStatementExecutions ::: execution :: Nil
   }
@@ -107,9 +108,13 @@ class ActivityLog extends LazyLogging {
   }
 }
 
-case class Query(query: String, consistency: Consistency, variables: List[Any] = List(), variableTypes: List[DataType] = List())
+case class Query(query: String, consistency: Consistency, serialConsistency: Option[Consistency],
+                 variables: List[Any] = List(), variableTypes: List[DataType] = List(), timestamp: Option[Long] = None)
 case class Connection(result: String = "success")
-case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency, variables: List[Any], variableTypes: List[DataType])
+case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency,
+                                      serialConsistency: Option[Consistency], variables: List[Any],
+                                      variableTypes: List[DataType], timestamp: Option[Long])
 case class BatchQuery(query: String, batchQueryKind: BatchQueryKind, variables: List[Any] = List(), variableTypes: List[DataType] = List())
-case class BatchExecution(batchQueries: Seq[BatchQuery], consistency: Consistency, batchType: BatchType)
+case class BatchExecution(batchQueries: Seq[BatchQuery], consistency: Consistency,
+                          serialConsistency: Option[Consistency], batchType: BatchType, timestamp: Option[Long])
 case class PreparedStatementPreparation(preparedStatementText: String)

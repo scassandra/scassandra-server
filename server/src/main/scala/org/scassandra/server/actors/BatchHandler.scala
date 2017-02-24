@@ -84,7 +84,7 @@ class BatchHandler(activityLog: ActivityLog,
   }
 
   def processBatch(header: FrameHeader, batch: Batch, batchQueries: Seq[BatchQuery], recipient: ActorRef) = {
-    val execution = BatchExecution(batchQueries, batch.consistency, batch.batchType)
+    val execution = BatchExecution(batchQueries, batch.consistency, batch.serialConsistency, batch.batchType, batch.timestamp)
     activityLog.recordBatchExecution(execution)
     val prime = batchPrimeStore(execution)
     prime.foreach(p => log.info("Found prime {} for batch execution {}", p, execution))

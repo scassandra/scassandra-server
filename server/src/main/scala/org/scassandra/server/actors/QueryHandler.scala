@@ -38,9 +38,11 @@ class QueryHandler(primeQueryStore: PrimeQueryStore, activityLog: ActivityLog) e
 
       typesAndValues match {
         case Some((variableTypes, values)) =>
-          activityLog.recordQuery(query.query, query.parameters.consistency, values, variableTypes)
+          activityLog.recordQuery(query.query, query.parameters.consistency, query.parameters.serialConsistency, values,
+            variableTypes, query.parameters.timestamp)
         case None =>
-          activityLog.recordQuery(query.query, query.parameters.consistency)
+          activityLog.recordQuery(query.query, query.parameters.consistency, query.parameters.serialConsistency,
+            timestamp = query.parameters.timestamp)
       }
 
       writePrime(query, prime, header, alternative = noRows, consistency = Some(query.parameters.consistency))

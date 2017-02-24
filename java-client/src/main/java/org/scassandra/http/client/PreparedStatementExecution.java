@@ -26,14 +26,19 @@ import java.util.List;
 public final class PreparedStatementExecution {
     private final String preparedStatementText;
     private final String consistency;
+    private final String serialConsistency;
     private final List<Object> variables;
     private final List<CqlType> variableTypes;
+    private final Long timestamp;
 
-    private PreparedStatementExecution(String preparedStatementText, String consistency, List<Object> variables, List<CqlType> variableTypes) {
+    private PreparedStatementExecution(String preparedStatementText, String consistency, String serialConsistency,
+                                       List<Object> variables, List<CqlType> variableTypes, Long timestamp) {
         this.preparedStatementText = preparedStatementText;
         this.consistency = consistency;
+        this.serialConsistency = serialConsistency;
         this.variables = variables;
         this.variableTypes = variableTypes;
+        this.timestamp = timestamp;
     }
 
     public String getPreparedStatementText() {
@@ -44,17 +49,16 @@ public final class PreparedStatementExecution {
         return consistency;
     }
 
-    public List<Object> getVariables() {
-        return Collections.unmodifiableList(variables);
+    public String getSerialConsistency() {
+        return serialConsistency;
     }
 
-    @Override
-    public String toString() {
-        return "PreparedStatementExecution{" +
-                "preparedStatementText='" + preparedStatementText + '\'' +
-                ", consistency='" + consistency + '\'' +
-                ", variables=" + variables +
-                '}';
+    public Long getTimestamp() {
+        return timestamp;
+    }
+
+    public List<Object> getVariables() {
+        return Collections.unmodifiableList(variables);
     }
 
     @Override
@@ -64,20 +68,36 @@ public final class PreparedStatementExecution {
 
         PreparedStatementExecution that = (PreparedStatementExecution) o;
 
-        if (consistency != null ? !consistency.equals(that.consistency) : that.consistency != null) return false;
         if (preparedStatementText != null ? !preparedStatementText.equals(that.preparedStatementText) : that.preparedStatementText != null)
             return false;
+        if (consistency != null ? !consistency.equals(that.consistency) : that.consistency != null) return false;
+        if (serialConsistency != null ? !serialConsistency.equals(that.serialConsistency) : that.serialConsistency != null)
+            return false;
         if (variables != null ? !variables.equals(that.variables) : that.variables != null) return false;
-
-        return true;
+        if (variableTypes != null ? !variableTypes.equals(that.variableTypes) : that.variableTypes != null)
+            return false;
+        return timestamp != null ? timestamp.equals(that.timestamp) : that.timestamp == null;
     }
 
     @Override
     public int hashCode() {
         int result = preparedStatementText != null ? preparedStatementText.hashCode() : 0;
         result = 31 * result + (consistency != null ? consistency.hashCode() : 0);
+        result = 31 * result + (serialConsistency != null ? serialConsistency.hashCode() : 0);
         result = 31 * result + (variables != null ? variables.hashCode() : 0);
+        result = 31 * result + (variableTypes != null ? variableTypes.hashCode() : 0);
+        result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
         return result;
+    }
+
+    public String toString() {
+        return "PreparedStatementExecution{" +
+                "preparedStatementText='" + preparedStatementText + '\'' +
+                ", consistency='" + consistency + '\'' +
+                ", serialConsistency='" + serialConsistency + "\'" +
+                ", variables=" + variables +
+                ", timestamp=" + timestamp +
+                '}';
     }
 
     public static PreparedStatementExecutionBuilder builder() {
@@ -113,7 +133,9 @@ public final class PreparedStatementExecution {
         private List<CqlType> variableTypes = Collections.emptyList();
         private String preparedStatementText;
         private String consistency = "ONE";
+        private String serialConsistency;
         private List<Object> variables = Collections.emptyList();
+        private Long timestamp;
 
         private PreparedStatementExecutionBuilder() {
         }
@@ -146,6 +168,11 @@ public final class PreparedStatementExecution {
             return this;
         }
 
+        public PreparedStatementExecutionBuilder withSerialConsistency(String serialConsistency) {
+            this.serialConsistency = serialConsistency;
+            return this;
+        }
+
         public PreparedStatementExecutionBuilder withPreparedStatementText(String preparedStatementText) {
             this.preparedStatementText = preparedStatementText;
             return this;
@@ -161,11 +188,17 @@ public final class PreparedStatementExecution {
             return this;
         }
 
+        public PreparedStatementExecutionBuilder withTimestamp(Long timestamp) {
+            this.timestamp = timestamp;
+            return this;
+        }
+
         public PreparedStatementExecution build() {
             if (preparedStatementText == null) {
                 throw new IllegalStateException("Must set preparedStatementText in PreparedStatementExecutionBuilder");
             }
-            return new PreparedStatementExecution(this.preparedStatementText, this.consistency, this.variables, this.variableTypes);
+            return new PreparedStatementExecution(this.preparedStatementText, this.consistency, this.serialConsistency,
+                    this.variables, this.variableTypes, this.timestamp);
         }
     }
 }

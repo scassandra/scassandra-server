@@ -145,7 +145,7 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
     it("Should return prepared statement executions from ActivityLog - single") {
       activityLog.clearPreparedStatementExecutions()
       val preparedStatementText: String = ""
-      activityLog.recordPreparedStatementExecution(preparedStatementText, ONE, List(), List())
+      activityLog.recordPreparedStatementExecution(preparedStatementText, ONE, None, List(), List(), None)
 
       Get("/prepared-statement-execution") ~> activityVerificationRoute ~> check {
         val response = responseAs[List[PreparedStatementExecution]]
@@ -156,7 +156,7 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
     }
 
     it("Should clear prepared statement executions for a delete") {
-      activityLog.recordPreparedStatementExecution("", ONE, List(), List())
+      activityLog.recordPreparedStatementExecution("", ONE, None, List(), List(), None)
 
       Delete("/prepared-statement-execution") ~> activityVerificationRoute ~> check {
         activityLog.retrievePreparedStatementExecutions().size should equal(0)
@@ -167,7 +167,7 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
   describe("Batch execution") {
     it("Should return executions from ActivityLog") {
       activityLog.clearBatchExecutions()
-      activityLog.recordBatchExecution(BatchExecution(List(BatchQuery("Query", Simple)), ONE, LOGGED))
+      activityLog.recordBatchExecution(BatchExecution(List(BatchQuery("Query", Simple)), ONE, None, LOGGED, None))
 
       Get("/batch-execution") ~> activityVerificationRoute ~> check {
         val response = responseAs[List[BatchExecution]]
@@ -180,7 +180,7 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
     }
 
     it("Should clear batch executions for a delete") {
-      activityLog.recordBatchExecution(BatchExecution(List(), ONE, UNLOGGED))
+      activityLog.recordBatchExecution(BatchExecution(List(), ONE, None, UNLOGGED, None))
 
       Delete("/batch-execution") ~> activityVerificationRoute ~> check {
         activityLog.retrieveBatchExecutions().size should equal(0)
