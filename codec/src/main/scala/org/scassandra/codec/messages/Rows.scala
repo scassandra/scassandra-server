@@ -25,6 +25,7 @@ import scodec.{Attempt, Codec, DecodeResult, SizeBound}
 import shapeless.{::, HNil}
 
 import scala.collection.immutable
+import scala.collection.immutable.ListMap
 import scala.util.control.Breaks._
 
 /**
@@ -168,7 +169,7 @@ object Row {
     * @param colPairs (Name, Value) pairs of [[Row]] columns.
     * @return The created [[Row]].
     */
-  def apply(colPairs: (String, Any)*): Row = Row(colPairs.toMap)
+  def apply(colPairs: (String, Any)*): Row = Row(ListMap[String, Any](colPairs.toSeq : _*))
 }
 
 /**
