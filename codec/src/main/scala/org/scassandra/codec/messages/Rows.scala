@@ -153,7 +153,7 @@ object ColumnSpec {
   * Defines an individual row in a [[Rows]] result.  A row effectively a map of column names to column values.
   * @param columns Map of column names to values.  The values are regular objects that have not been encoded in any way.
   */
-case class Row(columns: Map[String, Any])
+case class Row(columns: ListMap[String, Any])
 
 object Row {
   /**
