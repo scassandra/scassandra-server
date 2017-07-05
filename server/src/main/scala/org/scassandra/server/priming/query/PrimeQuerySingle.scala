@@ -50,7 +50,7 @@ case class When(query: Option[String] = None,
 }
 
 trait ThenProvider {
-  val rows: Option[List[Map[String, Any]]]
+  val rows: Option[List[ListMap[String, Any]]]
   val result: Option[ResultJsonRepresentation]
   val column_types: Option[Map[String, DataType]]
   val fixedDelay: Option[Long]
