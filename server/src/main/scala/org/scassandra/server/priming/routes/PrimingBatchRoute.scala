@@ -15,21 +15,22 @@
  */
 package org.scassandra.server.priming.routes
 
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server._
+import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.priming.batch.{BatchPrimeSingle, PrimeBatchStore}
-import org.scassandra.server.priming.cors.CorsSupport
 import org.scassandra.server.priming.json.PrimingJsonImplicits
-import spray.http.StatusCodes
-import spray.routing.{HttpService, Route}
 
-trait PrimingBatchRoute extends HttpService with LazyLogging with CorsSupport {
+trait PrimingBatchRoute extends LazyLogging {
 
   import PrimingJsonImplicits._
 
   implicit val primeBatchStore: PrimeBatchStore
 
   val batchRoute: Route = {
-    cors {
+    cors() {
       path("prime-batch-sequence") {
         post {
           complete {

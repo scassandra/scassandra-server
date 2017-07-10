@@ -13,32 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.server.priming.routes
+package org.scassandra.server.priming
 
 import akka.http.scaladsl.server.Directives._
-import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
+import akka.http.scaladsl.server.Route
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.priming.json.PrimingJsonImplicits
+import org.scassandra.server.priming.routes._
 
-trait VersionRoute extends LazyLogging {
+import scala.language.postfixOps
 
-  import PrimingJsonImplicits._
+trait AllRoutes extends PrimingPreparedRoute with
+PrimingQueryRoute with ActivityVerificationRoute with VersionRoute with
+PrimingBatchRoute with CurrentRoute with LazyLogging {
 
-  val versionRoute =
-    cors() {
-      path("version") {
-        get {
-          complete {
-            val version = if (getClass.getPackage.getImplementationVersion == null) {
-              "unknown"
-            } else {
-              getClass.getPackage.getImplementationVersion
-            }
-            Version(version)
-          }
-        }
-      }
-    }
+  val allRoutes: Route = routeForPreparedPriming ~
+    queryRoute ~ activityVerificationRoute ~
+    versionRoute ~ batchRoute ~ currentRoute
+
 }
 
-case class Version(version: String)

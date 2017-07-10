@@ -15,6 +15,7 @@
  */
 package org.scassandra.server.priming.routes
 
+import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 import org.scassandra.codec.Consistency.ONE
 import org.scassandra.codec.messages.BatchQueryKind.Simple
@@ -22,7 +23,6 @@ import org.scassandra.codec.messages.BatchType._
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json.PrimingJsonImplicits
 import spray.json.JsonParser
-import spray.testkit.ScalatestRouteTest
 
 class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with ActivityVerificationRoute {
 

@@ -32,6 +32,8 @@ package org.scassandra.server.priming.routes
 
 import java.util.concurrent.TimeUnit
 
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -41,8 +43,6 @@ import org.scassandra.codec.datatype.DataType
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.prepared._
-import spray.http.StatusCodes
-import spray.testkit.ScalatestRouteTest
 
 import scala.concurrent.duration.FiniteDuration
 

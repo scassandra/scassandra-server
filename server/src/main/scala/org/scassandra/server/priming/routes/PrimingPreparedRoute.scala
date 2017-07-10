@@ -15,15 +15,16 @@
  */
 package org.scassandra.server.priming.routes
 
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
+import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.priming._
-import org.scassandra.server.priming.cors.CorsSupport
-import org.scassandra.server.priming.json._
+import org.scassandra.server.priming.json.PrimingJsonImplicits
 import org.scassandra.server.priming.prepared._
-import spray.http.StatusCodes
-import spray.routing.HttpService
 
-trait PrimingPreparedRoute extends HttpService with LazyLogging with CorsSupport {
+trait PrimingPreparedRoute extends LazyLogging {
 
   import PrimingJsonImplicits._
 
@@ -31,8 +32,8 @@ trait PrimingPreparedRoute extends HttpService with LazyLogging with CorsSupport
   implicit val primePreparedPatternStore: PrimePreparedPatternStore
   implicit val primePreparedMultiStore: PrimePreparedMultiStore
 
-  val routeForPreparedPriming =
-    cors {
+  val routeForPreparedPriming: Route =
+    cors() {
       path("prime-prepared-multi") {
         post {
           entity(as[PrimePreparedMulti]) { prime: PrimePreparedMulti =>

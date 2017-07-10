@@ -9,3 +9,4 @@ build
 docs/site
 classes
 **/src/main/generated
+out
