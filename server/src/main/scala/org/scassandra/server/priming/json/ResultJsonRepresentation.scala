@@ -18,7 +18,7 @@ package org.scassandra.server.priming.json
 /**
  * Used to parse the JSON representing the result of the prime.
  */
-abstract class ResultJsonRepresentation(val string: String)
+sealed abstract class ResultJsonRepresentation(val string: String)
 
 case object Success extends ResultJsonRepresentation("success")
 

@@ -19,6 +19,7 @@ import java.math.BigInteger
 import java.net.InetAddress
 import java.util.UUID
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec.Consistency
 import org.scassandra.codec.Consistency.Consistency
@@ -34,7 +35,6 @@ import org.scassandra.server.priming.prepared._
 import org.scassandra.server.priming.query.{PrimeCriteria, PrimeQuerySingle, Then, When}
 import org.scassandra.server.priming.routes.Version
 import scodec.bits.ByteVector
-import spray.httpx.SprayJsonSupport
 import spray.json._
 
 import scala.collection.Set

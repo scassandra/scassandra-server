@@ -24,7 +24,7 @@ import org.scassandra.http.client.PrimingRequest;
 
 import static org.junit.Assert.assertEquals;
 
-public class ScassandraServerRuleTest {
+public class ScassandraNativeServerRuleTest {
 
     private static int binaryPort = 7042;
     private static int adminPort = 7043;

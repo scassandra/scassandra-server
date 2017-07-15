@@ -15,19 +15,19 @@
  */
 package org.scassandra.server.priming.routes
 
-import akka.actor.{ActorContext, ActorRef}
+import akka.actor.ActorRef
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server._
 import akka.pattern.ask
 import akka.util.Timeout
+import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.actors._
-import spray.routing.HttpService
-
 import org.scassandra.server.priming.json._
-import org.scassandra.server.priming.cors.CorsSupport
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
-trait CurrentRoute extends HttpService with LazyLogging with CorsSupport {
+trait CurrentRoute extends LazyLogging {
 
   val tcpServer: ActorRef
 
@@ -36,36 +36,36 @@ trait CurrentRoute extends HttpService with LazyLogging with CorsSupport {
 
   import PrimingJsonImplicits._
 
-  val currentRoute = pathPrefix("current") {
-    cors {
+  val currentRoute: Route = pathPrefix("current") {
+    cors() {
       path("connections" ~ Slash.? ~ Segment.? ~ Slash.? ~ IntNumber.?) { (host: Option[String], port: Option[Int]) =>
         get {
           complete {
             (tcpServer ? GetClientConnections(host, port)).mapTo[ClientConnections]
           }
         } ~
-        delete {
-          parameters('type.as[String] ? "close") { closeType =>
-            val request = closeType match {
-              case "reset" => ResetClientConnections.apply _
-              case "halfclose" => ConfirmedCloseClientConnections.apply _
-              case _ => CloseClientConnections.apply _
-            }
+          delete {
+            parameters('type.as[String] ? "close") { closeType =>
+              val request = closeType match {
+                case "reset" => ResetClientConnections.apply _
+                case "halfclose" => ConfirmedCloseClientConnections.apply _
+                case _ => CloseClientConnections.apply _
+              }
 
-            complete((tcpServer ? request(host, port)).mapTo[ClosedConnections])
+              complete((tcpServer ? request(host, port)).mapTo[ClosedConnections])
+            }
           }
-        }
       } ~
-      path("listener") {
-        put {
-          complete((tcpServer ? AcceptNewConnections).mapTo[AcceptNewConnectionsEnabled])
-        } ~
-        delete {
-          parameters('after.as[Int] ? 0) { after =>
-            complete((tcpServer ? RejectNewConnections(after)).mapTo[RejectNewConnectionsEnabled])
-          }
+        path("listener") {
+          put {
+            complete((tcpServer ? AcceptNewConnections).mapTo[AcceptNewConnectionsEnabled])
+          } ~
+            delete {
+              parameters('after.as[Int] ? 0) { after =>
+                complete((tcpServer ? RejectNewConnections(after)).mapTo[RejectNewConnectionsEnabled])
+              }
+            }
         }
-      }
     }
   }
 

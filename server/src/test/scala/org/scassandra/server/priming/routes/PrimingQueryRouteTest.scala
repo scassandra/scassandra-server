@@ -16,6 +16,10 @@
 
 package org.scassandra.server.priming.routes
 
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.StatusCodes.OK
+import akka.http.scaladsl.model.StatusCodes.BadRequest
+import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest._
 import org.scassandra.codec.Consistency._
 import org.scassandra.codec.datatype.DataType
@@ -25,8 +29,6 @@ import org.scassandra.codec.{Rows, Query => CQuery}
 import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.query.{PrimeQuerySingle, Then, When, _}
 import org.scassandra.server.priming.{ConflictingPrimes, TypeMismatch, TypeMismatches}
-import spray.http.StatusCodes.{BadRequest, OK}
-import spray.testkit.ScalatestRouteTest
 
 
 class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with PrimingQueryRoute {
@@ -133,7 +135,6 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val columnTypes = Some(Map[String, DataType]("mapValue" -> DataType.Map(DataType.Varchar, DataType.Varchar)))
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), column_types = columnTypes))) ~> queryRoute ~> check {
-        println(body)
         status should equal(OK)
       }
     }

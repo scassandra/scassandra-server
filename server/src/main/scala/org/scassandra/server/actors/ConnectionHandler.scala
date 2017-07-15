@@ -15,7 +15,7 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorRefFactory, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorRefFactory, ActorSystem, Props}
 import akka.io.Tcp
 import akka.io.Tcp.{ConnectionClosed, Received, ResumeReading, Write}
 import akka.pattern.{ask, pipe}
@@ -41,14 +41,14 @@ class ConnectionHandler(tcpConnection: ActorRef,
 
   implicit val timeout: Timeout = 1 seconds
 
-  val system = context.system
+  val system: ActorSystem = context.system
   import system.dispatcher
 
   // Used to prevent repeated attempts at sending same error message.
   var errorMessage: Option[Message] = None
 
   // Extracted to handle full messages
-  val cqlMessageHandler = context.actorOf(Props(classOf[NativeProtocolMessageHandler],
+  val cqlMessageHandler: ActorRef = context.actorOf(Props(classOf[NativeProtocolMessageHandler],
     queryHandlerFactory,
     batchHandlerFactory,
     registerHandlerFactory,

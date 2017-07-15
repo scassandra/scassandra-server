@@ -16,6 +16,7 @@
 package org.scassandra.server.priming.routes
 
 import akka.actor.ActorRef
+import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestActor.{AutoPilot, KeepRunning}
 import akka.testkit.TestProbe
 import akka.util.Timeout
@@ -23,14 +24,13 @@ import com.typesafe.scalalogging.LazyLogging
 import org.scalatest.{FunSpec, Matchers}
 import org.scassandra.server.actors._
 import org.scassandra.server.priming.json.PrimingJsonImplicits
-import spray.testkit.ScalatestRouteTest
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class CurrentRouteTest extends FunSpec with ScalatestRouteTest with CurrentRoute with Matchers with LazyLogging {
-  override implicit def actorRefFactory = system
+  implicit def actorRefFactory = system
 
   import PrimingJsonImplicits._
 

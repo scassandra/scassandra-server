@@ -15,21 +15,27 @@
  */
 package org.scassandra.server
 
-import akka.actor.{PoisonPill, Props, Actor, ActorRef}
+import akka.actor.{Actor, ActorRef, PoisonPill, Props}
+import akka.http.scaladsl.Http
 import akka.pattern.{ask, pipe}
+import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.actors.TcpServer
-import org.scassandra.server.priming.{PrimingServer, ActivityLog}
+import org.scassandra.server.priming.{ActivityLog, AllRoutes}
 import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.{CompositePreparedPrimeStore, PrimePreparedMultiStore, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.priming.query.PrimeQueryStore
-
-import scala.concurrent.Future
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+import scala.language.postfixOps
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
+import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Used to wait on startup of listening http and tcp interfaces.
+  *
   * @param timeout Up to how long to wait for startup before timing out.
   */
 case class AwaitStartup(timeout: Timeout)
@@ -37,6 +43,7 @@ case class AwaitStartup(timeout: Timeout)
 /**
   * Used to shutdown the server by first unbinding the priming and tcp server listeners
   * and then sending a {@link PoisonPill} to itself.
+  *
   * @param timeout Up to how long to wait for shutdown before timing out.
   */
 case class ShutdownServer(timeout: Timeout)
@@ -47,7 +54,11 @@ case class ShutdownServer(timeout: Timeout)
   */
 case object Shutdown
 
-class ScassandraServer(val primedResults: PrimeQueryStore, val binaryListenAddress: String, val binaryPortNumber: Int, val adminListenAddress: String, val adminPortNumber: Int) extends Actor with LazyLogging {
+class ScassandraServer(val primeQueryStore: PrimeQueryStore,
+                       val binaryListenAddress: String,
+                       val binaryPortNumber: Int,
+                       val adminListenAddress: String,
+                       val adminPortNumber: Int) extends Actor with LazyLogging with AllRoutes {
 
   val primePreparedStore = new PrimePreparedStore
   val primePreparedPatternStore = new PrimePreparedPatternStore
@@ -55,11 +66,14 @@ class ScassandraServer(val primedResults: PrimeQueryStore, val binaryListenAddre
   val primeBatchStore = new PrimeBatchStore
   val activityLog = new ActivityLog
   val preparedLookup = new CompositePreparedPrimeStore(primePreparedStore, primePreparedPatternStore, primePreparedMultiStore)
-  val primingReadyListener = context.actorOf(Props(classOf[ServerReadyListener]), "PrimingReadyListener")
-  val tcpReadyListener = context.actorOf(Props(classOf[ServerReadyListener]), "TcpReadyListener")
-  val tcpServer = context.actorOf(Props(classOf[TcpServer], binaryListenAddress, binaryPortNumber, primedResults, preparedLookup, primeBatchStore, tcpReadyListener, activityLog), "BinaryTcpListener")
-  val primingServer = context.actorOf(Props(classOf[PrimingServer], adminListenAddress, adminPortNumber, primedResults, primePreparedStore,
-    primePreparedPatternStore, primePreparedMultiStore, primeBatchStore, primingReadyListener, activityLog, tcpServer), "PrimingServer")
+  val primingReadyListener: ActorRef = context.actorOf(Props(classOf[ServerReadyListener]), "PrimingReadyListener")
+  val tcpReadyListener: ActorRef = context.actorOf(Props(classOf[ServerReadyListener]), "TcpReadyListener")
+  val tcpServer: ActorRef = context.actorOf(Props(classOf[TcpServer], binaryListenAddress, binaryPortNumber, primeQueryStore, preparedLookup, primeBatchStore, tcpReadyListener, activityLog), "BinaryTcpListener")
+  implicit val dispatcher: ExecutionContext = context.dispatcher
+  val timeout = Timeout(5.seconds)
+  implicit val materialiser = ActorMaterializer()
+  implicit val system = context.system
+  val bindingFuture: Future[Http.ServerBinding] = Http().bindAndHandle(allRoutes, adminListenAddress, adminPortNumber)
 
   override def receive: Receive = {
     case AwaitStartup(timeout) => {
@@ -68,9 +82,9 @@ class ScassandraServer(val primedResults: PrimeQueryStore, val binaryListenAddre
 
       // Create a future that completes when both listeners ready.
       val f = Future.sequence(
-        primingReadyListener ? OnServerReady ::
         tcpReadyListener ? OnServerReady ::
-        Nil
+          bindingFuture ::
+          Nil
       )
 
       f pipeTo sender
@@ -81,12 +95,13 @@ class ScassandraServer(val primedResults: PrimeQueryStore, val binaryListenAddre
 
       // Send shutdown message to each sender and on complete send a PoisonPill to self.
       val f = Future.sequence(
-        primingServer ? Shutdown ::
         tcpServer ? Shutdown ::
-        Nil
+          bindingFuture.flatMap(_.unbind()) ::
+          Nil
       ).map { _ => self ? PoisonPill }
 
       f pipeTo sender
     }
   }
+
 }

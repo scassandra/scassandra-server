@@ -83,7 +83,7 @@ class TcpServerTest extends TestKit(ActorSystem("TcpServerTest")) with Matchers 
   }
 
   override def afterAll() {
-    system.shutdown()
+    system.terminate()
   }
 
   def assertResponse(request: Any, expectedAddresses: Set[InetSocketAddress]): Unit = {
