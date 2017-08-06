@@ -39,7 +39,7 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 import org.scassandra.codec.Consistency._
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype._
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.prepared._
@@ -67,7 +67,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
   describe("Priming multiple responses") {
     it("Should record it with the multi prime store") {
       val when: WhenPrepared = WhenPrepared(Some("select * from people where name = ?"))
-      val thenDo = ThenPreparedMulti(Some(List(DataType.Text)), List(Outcome(Criteria(List(ExactMatch(Some("Chris")))), Action(None))))
+      val thenDo = ThenPreparedMulti(Some(List(Text)), List(Outcome(Criteria(List(ExactMatch(Some("Chris")))), Action(None))))
       val prime = PrimePreparedMulti(when, thenDo)
       Post(primePreparedMultiPath, prime) ~> routeForPreparedPriming ~> check {
         status should equal(StatusCodes.OK)
@@ -135,7 +135,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     }
 
     it("should convert variable types in original Json Format") {
-      val variableTypes = List(DataType.Varchar, DataType.Int)
+      val variableTypes = List(Varchar, CqlInt)
       val existingPrimes : List[PrimePreparedSingle] = List(PrimePreparedSingle(WhenPrepared(), ThenPreparedSingle(None, variable_types = Some(variableTypes))))
       when(primePreparedStore.retrievePrimes()).thenReturn(existingPrimes)
 
@@ -171,7 +171,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     }
 
     it("should convert column types to the original Json Format") {
-      val columnTypes = Map("name" -> DataType.Varchar)
+      val columnTypes = Map("name" -> Varchar)
       val existingPrimes : List[PrimePreparedSingle] = List(PrimePreparedSingle(WhenPrepared(), ThenPreparedSingle(None, column_types = Some(columnTypes))))
       when(primePreparedStore.retrievePrimes()).thenReturn(existingPrimes)
 
@@ -277,7 +277,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     }
 
     it("should convert variable types in original Json Format") {
-      val variableTypes = List(DataType.Varchar, DataType.Int)
+      val variableTypes = List(Varchar, CqlInt)
       val existingPrimes: List[PrimePreparedMulti] = List(PrimePreparedMulti(WhenPrepared(), ThenPreparedMulti(Some(variableTypes), Nil)))
       when(primePreparedMultiStore.retrievePrimes()).thenReturn(existingPrimes)
 
@@ -328,7 +328,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     }
 
     it("should convert outcome action columns to the original Json Format") {
-      val columnTypes = Map("name" -> DataType.Varchar)
+      val columnTypes = Map("name" -> Varchar)
       val outcomes: List[Outcome] = List(Outcome(Criteria(Nil), Action(None, column_types=Some(columnTypes))))
       val existingPrimes: List[PrimePreparedMulti] = List(PrimePreparedMulti(WhenPrepared(None), ThenPreparedMulti(None, outcomes)))
       when(primePreparedMultiStore.retrievePrimes()).thenReturn(existingPrimes)

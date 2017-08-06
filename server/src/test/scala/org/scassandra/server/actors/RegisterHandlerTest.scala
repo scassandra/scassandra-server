@@ -15,13 +15,13 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.ActorSystem
-import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
-import org.scalatest.{FunSuiteLike, Matchers}
+import akka.testkit.{ImplicitSender, TestActorRef}
+import org.scalatest.{FunSuite, Matchers}
 import org.scassandra.codec.{Ready, Register}
 import org.scassandra.server.RegisterHandler
 
-class RegisterHandlerTest extends TestKit(ActorSystem("TestSystem")) with ProtocolActorTest with ImplicitSender with FunSuiteLike with Matchers {
+class RegisterHandlerTest extends FunSuite with TestKitWithShutdown with ProtocolActorTest with ImplicitSender
+  with Matchers {
   test("Should send Ready message on any Register message") {
     val underTest = TestActorRef(new RegisterHandler)
 

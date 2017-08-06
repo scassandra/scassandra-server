@@ -17,7 +17,7 @@ package org.scassandra.server.priming
 
 import org.scassandra.codec.Consistency
 import org.scassandra.codec.Consistency.Consistency
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype.{DataType, Varchar}
 
 object Defaulter {
 
@@ -29,7 +29,7 @@ object Defaulter {
       if (deficit <= 0) {
         dataTypes
       } else {
-        val defaults = (0 until deficit).map(_ => DataType.Varchar).toList
+        val defaults = (0 until deficit).map(_ => Varchar).toList
         Some(dTypes ++ defaults)
       }
     case None => dataTypes
@@ -39,7 +39,7 @@ object Defaulter {
     case Some(_) => columnTypes
     case None =>
       val names = rows.getOrElse(Nil).flatMap(row => row.keys).distinct
-      Some(names.map(n => (n, DataType.Varchar)).toMap)
+      Some(names.map(n => (n, Varchar)).toMap)
   }
 
   def defaultConsistency(consistency: Option[List[Consistency]]) = consistency match {

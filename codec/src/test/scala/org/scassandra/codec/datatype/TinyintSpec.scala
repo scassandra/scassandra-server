@@ -18,7 +18,7 @@ package org.scassandra.codec.datatype
 import scodec.bits.ByteVector
 
 class TinyintSpec extends IntSpec {
-  override val codec = DataType.Tinyint.codec
+  override val codec = Tinyint.codec
   override val example: Number = BigDecimal("123")
   override val exampleBytes = ByteVector(123)
   override val naturalType: Number = 123.toByte

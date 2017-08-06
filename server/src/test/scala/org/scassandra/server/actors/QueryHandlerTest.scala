@@ -36,7 +36,7 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.codec._
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.{QueryParameters, Row}
 import org.scassandra.server.priming.query.{PrimeQueryStore, Reply}
 import org.scassandra.server.priming.{ActivityLog, Query => RQuery}
@@ -45,8 +45,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class QueryHandlerTest extends FunSuite with ImplicitSender with ProtocolActorTest with Matchers with BeforeAndAfter
-  with TestKitBase with MockitoSugar {
-  implicit lazy val system = ActorSystem()
+  with TestKitWithShutdown with MockitoSugar {
   implicit val protocolVersion = ProtocolVersion.latest
 
   var underTest: ActorRef = null
@@ -109,7 +108,7 @@ class QueryHandlerTest extends FunSuite with ImplicitSender with ProtocolActorTe
     // given
     val consistency = Consistency.THREE
 
-    val variableTypes: List[DataType] = DataType.Varchar :: DataType.Int :: Nil
+    val variableTypes: List[DataType] = Varchar :: CqlInt :: Nil
     val values: List[Any] = "Hello" :: 42 :: Nil
     val rawValues: List[QueryValue] = values.zip(variableTypes).map {
       case (v, dataType) =>

@@ -16,7 +16,7 @@
 package org.scassandra.server.priming
 
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype.{DataType, Varchar}
 import org.scassandra.codec.{ProtocolVersion, Rows}
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, Reply}
 import scodec.Attempt
@@ -58,7 +58,7 @@ class PrimeValidator extends LazyLogging {
           for {
             row <- rows
             (column, value) <- row.columns
-            columnType = columnSpec.getOrElse(column, DataType.Varchar)
+            columnType = columnSpec.getOrElse(column, Varchar)
             if isTypeMismatch(value, columnType)
           } yield TypeMismatch(value, column, columnType.stringRep)
         case _ => Nil

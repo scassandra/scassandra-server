@@ -22,7 +22,7 @@ import akka.io.Tcp._
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfter, FunSuiteLike, Matchers}
+import org.scalatest._
 import org.scassandra.server.ServerReadyListener
 import org.scassandra.server.priming.ActivityLog
 import org.scassandra.server.priming.batch.PrimeBatchStore
@@ -33,7 +33,8 @@ import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, _}
 import scala.language.postfixOps
 
-class TcpServerTest extends TestKit(ActorSystem("TcpServerTest")) with Matchers with ImplicitSender with FunSuiteLike with BeforeAndAfter with BeforeAndAfterAll {
+class TcpServerTest extends FunSuite with TestKitWithShutdown
+  with Matchers with ImplicitSender  with BeforeAndAfter with BeforeAndAfterAll {
 
   implicit val atMost: Duration = 1 seconds
   implicit val timeout: Timeout = 1 seconds
@@ -80,10 +81,6 @@ class TcpServerTest extends TestKit(ActorSystem("TcpServerTest")) with Matchers 
 
   after {
     underTest.stop()
-  }
-
-  override def afterAll() {
-    system.terminate()
   }
 
   def assertResponse(request: Any, expectedAddresses: Set[InetSocketAddress]): Unit = {

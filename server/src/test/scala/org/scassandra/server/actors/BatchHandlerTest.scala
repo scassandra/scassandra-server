@@ -15,26 +15,23 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.{ActorRef, ActorSystem, Props}
-import akka.testkit.{ImplicitSender, TestKitBase, TestProbe}
+import akka.actor.{ActorRef, Props}
+import akka.testkit.{ImplicitSender, TestProbe}
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.codec._
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages._
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.priming._
+import org.scassandra.server.priming.{BatchQuery, _}
 import org.scassandra.server.priming.batch.PrimeBatchStore
-import org.scassandra.server.priming.BatchQuery
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import scodec.bits.ByteVector
 
-class BatchHandlerTest extends FunSuite with ProtocolActorTest with TestKitBase with ImplicitSender with MockitoSugar
+class BatchHandlerTest extends FunSuite with ProtocolActorTest with TestKitWithShutdown with ImplicitSender with MockitoSugar
   with Matchers with BeforeAndAfter {
-
-  implicit lazy val system = ActorSystem()
 
   var underTest: ActorRef = _
   var prepareHandlerProbe: TestProbe = _
@@ -88,7 +85,7 @@ class BatchHandlerTest extends FunSuite with ProtocolActorTest with TestKitBase 
     implicit val protocolVersion = ProtocolVersion.latest
 
     val batch = Batch(BatchType.LOGGED, List(
-      PreparedBatchQuery(idBytes, List(QueryValue(1, DataType.Int).value))
+      PreparedBatchQuery(idBytes, List(QueryValue(1, CqlInt).value))
     ))
 
     underTest ! protocolMessage(batch)
@@ -97,7 +94,7 @@ class BatchHandlerTest extends FunSuite with ProtocolActorTest with TestKitBase 
 
     val prepared = Prepared(
       idBytes,
-      PreparedMetadata(Nil, Some("keyspace"), Some("table"), List(ColumnSpecWithoutTable("0", DataType.Int))))
+      PreparedMetadata(Nil, Some("keyspace"), Some("table"), List(ColumnSpecWithoutTable("0", CqlInt))))
 
     prepareHandlerProbe.reply(PreparedStatementResponse(Map(id -> ("insert into something", prepared))))
 
@@ -107,7 +104,7 @@ class BatchHandlerTest extends FunSuite with ProtocolActorTest with TestKitBase 
 
     activityLog.retrieveBatchExecutions() should equal(List(
       BatchExecution(List(
-        BatchQuery("insert into something", BatchQueryKind.Prepared, List(1), List(DataType.Int))
+        BatchQuery("insert into something", BatchQueryKind.Prepared, List(1), List(CqlInt))
       ), Consistency.ONE, None, BatchType.LOGGED, None))
     )
   }

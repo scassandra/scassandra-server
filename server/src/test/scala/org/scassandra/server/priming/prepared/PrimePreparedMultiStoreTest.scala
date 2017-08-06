@@ -17,7 +17,7 @@ package org.scassandra.server.priming.prepared
 
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.codec.Consistency.{all => ALL, _}
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype.{Text}
 import org.scassandra.codec.messages.ColumnSpec._
 import org.scassandra.codec.messages.{PreparedMetadata, QueryParameters, RowMetadata}
 import org.scassandra.codec.{QueryValue => v, Consistency => _, _}
@@ -38,20 +38,20 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
   }
 
   test("Match on variable type - success") {
-    val variableTypes = List(DataType.Text)
+    val variableTypes = List(Text)
     val action = Action(Some(List()))
     val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(variableTypes), List(
       Outcome(Criteria(List(ExactMatch(Some("Chris")))), action)))
     val queryText = "Some query"
     underTest.record(PrimePreparedMulti(WhenPrepared(Some(queryText)), thenDo))
 
-    val preparedPrime = underTest(queryText, Execute(id, QueryParameters(consistency=ONE, values=Some(List(v("Chris", DataType.Text))))))
+    val preparedPrime = underTest(queryText, Execute(id, QueryParameters(consistency=ONE, values=Some(List(v("Chris", Text))))))
 
     preparedPrime.get should equal (action.prime)
   }
 
   test("Match on variable type - multiple options") {
-    val variableTypes = List(DataType.Text)
+    val variableTypes = List(Text)
     val danielAction = Action(Some(List()), result = Some(WriteTimeout))
     val chrisAction = Action(Some(List()), result = Some(ReadTimeout))
     val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(variableTypes), List(
@@ -61,15 +61,15 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
     val queryText = "Some query"
     underTest.record(PrimePreparedMulti(WhenPrepared(Some(queryText)), thenDo))
 
-    val chrisPrime = underTest(queryText, Execute(id, QueryParameters(consistency=ONE, values=Some(List(v("Chris", DataType.Text))))))
+    val chrisPrime = underTest(queryText, Execute(id, QueryParameters(consistency=ONE, values=Some(List(v("Chris", Text))))))
     chrisPrime.get should equal (chrisAction.prime)
 
-    val danielPrime = underTest(queryText, Execute(id, QueryParameters(consistency=ONE, values=Some(List(v("Daniel", DataType.Text))))))
+    val danielPrime = underTest(queryText, Execute(id, QueryParameters(consistency=ONE, values=Some(List(v("Daniel", Text))))))
     danielPrime.get should equal (danielAction.prime)
   }
 
   test("Match on consistency") {
-    val variableTypes = List(DataType.Text)
+    val variableTypes = List(Text)
     val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(variableTypes), List(
       Outcome(Criteria(List(ExactMatch(Some("Daniel")))), Action(Some(List()), result = Some(WriteTimeout)))
     ))
@@ -77,13 +77,13 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
     val when: WhenPrepared = WhenPrepared(Some(queryText), consistency = Some(List(TWO)))
     underTest.record(PrimePreparedMulti(when, thenDo))
 
-    val preparedPrime = underTest(queryText, Execute(id, QueryParameters(consistency=ONE, values=Some(List(v("Daniel", DataType.Text))))))
+    val preparedPrime = underTest(queryText, Execute(id, QueryParameters(consistency=ONE, values=Some(List(v("Daniel", Text))))))
 
     preparedPrime should equal(None)
   }
 
   test("Returns all the primes") {
-    val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(List(DataType.Text)), List())
+    val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(List(Text)), List())
     val when: WhenPrepared = WhenPrepared(Some("Some query"), None, Some(ALL))
     val prime: PrimePreparedMulti = PrimePreparedMulti(when, thenDo)
     underTest.record(prime)
@@ -96,7 +96,7 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
 
   test("Clearing all the primes") {
     //given
-    val variableTypes = List(DataType.Text)
+    val variableTypes = List(Text)
     val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(variableTypes), List(
       Outcome(Criteria(List(ExactMatch(Some("Chris")))), Action(Some(List()), result = Some(Success)))))
     val queryText = "Some query"
@@ -130,7 +130,7 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
   }
 
   test("Prepared prime - with parameters") {
-    val columnSpec = List(column("0", DataType.Text))
+    val columnSpec = List(column("0", Text))
     val danielAction = Action(Some(List()), result = Some(WriteTimeout))
     val chrisAction = Action(Some(List()), result = Some(ReadTimeout))
     val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(columnSpec.map(_.dataType)), List(

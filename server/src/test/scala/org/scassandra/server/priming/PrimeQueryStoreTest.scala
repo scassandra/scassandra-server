@@ -34,13 +34,14 @@ import java.util.UUID
 
 import org.scalatest.{FunSpec, Matchers}
 import org.scassandra.codec.Consistency.Consistency
-import org.scassandra.codec.datatype.DataType
 import org.scassandra.codec.messages.ColumnSpec.column
 import org.scassandra.codec.messages._
 import org.scassandra.codec.{Consistency, Rows, SetKeyspace, Query => CQuery}
 import org.scassandra.server.priming.json.Success
 import org.scassandra.server.priming.query._
 import org.scassandra.server.priming.routes.PrimingJsonHelper
+import org.scassandra.codec.datatype._
+import org.scassandra.cql.CqlTimestamp
 
 class PrimeQueryStoreTest extends FunSpec with Matchers {
 
@@ -52,7 +53,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
       Map("name" -> "Mario", "age" -> 12)
     )),
     result = Some(Success),
-    column_types = Some(Map("name" -> DataType.Varchar, "age" -> DataType.Int))
+    column_types = Some(Map("name" -> Varchar, "age" -> CqlInt))
   )
   val somePrime = PrimeQuerySingle(
     When(
@@ -68,7 +69,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
 
   // What we expect the Prime message to be.
   val someRows = Rows(
-    RowMetadata(keyspace = Some(""), table = Some(""), columnSpec = Some(List(column("name", DataType.Varchar), column("age", DataType.Int)))),
+    RowMetadata(keyspace = Some(""), table = Some(""), columnSpec = Some(List(column("name", Varchar), column("age", CqlInt)))),
     List(Row("name" -> "Mickey", "age" -> 99), Row("name" -> "Mario", "age" -> 12))
   )
 
@@ -269,13 +270,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT AN INTEGER!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Int))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlInt))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT AN INTEGER!", "hasInvalidValue", DataType.Int.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT AN INTEGER!", "hasInvalidValue", CqlInt.stringRep))))
     }
 
     it("when column value Int as BigDecimal") {
@@ -289,7 +290,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("hasLongAsInt" -> BigDecimal("5"))
           )),
           result = Some(Success),
-          column_types = Some(Map("hasLongAsInt" -> DataType.Int))
+          column_types = Some(Map("hasLongAsInt" -> CqlInt))
         )
       )
 
@@ -310,13 +311,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT A BOOLEAN!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Boolean))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlBoolean))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A BOOLEAN!", "hasInvalidValue", DataType.Boolean.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A BOOLEAN!", "hasInvalidValue", CqlBoolean.stringRep))))
     }
 
     it("when column value not Bigint") {
@@ -331,13 +332,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT A BIGINT!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Bigint))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Bigint))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A BIGINT!", "hasInvalidValue", DataType.Bigint.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A BIGINT!", "hasInvalidValue", Bigint.stringRep))))
     }
 
     it("when column value not Counter") {
@@ -352,13 +353,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT A COUNTER!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Counter))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Counter))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A COUNTER!", "hasInvalidValue", DataType.Counter.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A COUNTER!", "hasInvalidValue", Counter.stringRep))))
     }
 
     it("when column value not Blob") {
@@ -373,13 +374,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> false)
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Blob))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Blob))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", DataType.Blob.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", Blob.stringRep))))
     }
 
     it("when column value not Decimal") {
@@ -394,13 +395,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> false)
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Decimal))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlDecimal))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", DataType.Decimal.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlDecimal.stringRep))))
     }
 
     it("when column value not Double") {
@@ -415,13 +416,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> false)
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Double))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlDouble))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", DataType.Double.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlDouble.stringRep))))
     }
 
     it("when column value not Float") {
@@ -436,13 +437,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> false)
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Float))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlFloat))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", DataType.Float.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlFloat.stringRep))))
     }
 
     it("when column value not Timestamp") {
@@ -457,13 +458,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TIMESTAMP!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Timestamp))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Timestamp))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TIMESTAMP!", "hasInvalidValue", DataType.Timestamp.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TIMESTAMP!", "hasInvalidValue", Timestamp.stringRep))))
     }
 
     it("when column value not Uuid") {
@@ -479,13 +480,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> false)
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Uuid))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Uuid))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", DataType.Uuid.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", Uuid.stringRep))))
     }
 
     it("when column value not Inet") {
@@ -501,13 +502,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT AN INET!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Inet))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlInet))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT AN INET!", "hasInvalidValue", DataType.Inet.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT AN INET!", "hasInvalidValue", CqlInet.stringRep))))
     }
 
     it("when column value not Varint") {
@@ -522,13 +523,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT A VARINT!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Varint))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Varint))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A VARINT!", "hasInvalidValue", DataType.Varint.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A VARINT!", "hasInvalidValue", Varint.stringRep))))
     }
 
     it("when column value not Timeuuid") {
@@ -543,13 +544,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TIME UUID!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Timeuuid))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlTimeuuid))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TIME UUID!", "hasInvalidValue", DataType.Timeuuid.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TIME UUID!", "hasInvalidValue", CqlTimeuuid.stringRep))))
     }
 
     it("when column value not List<Int>") {
@@ -564,13 +565,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT A LIST!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.List(DataType.Int)))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlList(CqlInt)))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A LIST!", "hasInvalidValue", DataType.List(DataType.Int).stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A LIST!", "hasInvalidValue", CqlList(CqlInt).stringRep))))
     }
 
     it("when column value not Set<Varchar>") {
@@ -586,19 +587,19 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT A SET!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Set(DataType.Varchar)))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlSet(Varchar)))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A SET!", "hasInvalidValue", DataType.Set(DataType.Varchar).stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A SET!", "hasInvalidValue", CqlSet(Varchar).stringRep))))
     }
 
     it("when column value not Map<Uuid, List<Int>>") {
       // given
       val uuid = UUID.randomUUID().toString
-      val mapType = DataType.Map(DataType.Uuid, DataType.List(DataType.Int))
+      val mapType = CqlMap(Uuid, CqlList(CqlInt))
 
       // given
       val prime = PrimeQuerySingle(
@@ -611,7 +612,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT A MAP!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> mapType))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> mapType))
         )
       )
 
@@ -623,7 +624,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
     it("when column value not tuple (uuid, List<Int>)") {
       // given
       val uuid = UUID.randomUUID().toString
-      val tupleType = DataType.Tuple(DataType.Uuid, DataType.List(DataType.Int))
+      val tupleType = Tuple(Uuid, CqlList(CqlInt))
 
       // given
       val prime = PrimeQuerySingle(
@@ -636,7 +637,7 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TUPLE!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> tupleType))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> tupleType))
         )
       )
 
@@ -657,13 +658,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TIME!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Time))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlTime))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TIME!", "hasInvalidValue", DataType.Time.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TIME!", "hasInvalidValue", CqlTime.stringRep))))
     }
 
     it("when column value not date") {
@@ -678,13 +679,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT A DATE!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Date))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlDate))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A DATE!", "hasInvalidValue", DataType.Date.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A DATE!", "hasInvalidValue", CqlDate.stringRep))))
     }
 
     it("when column value not smallint") {
@@ -699,13 +700,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT A SMALLINT!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Smallint))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Smallint))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A SMALLINT!", "hasInvalidValue", DataType.Smallint.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A SMALLINT!", "hasInvalidValue", Smallint.stringRep))))
     }
 
     it("when column value not tinyint") {
@@ -720,13 +721,13 @@ class PrimeQueryStoreTest extends FunSpec with Matchers {
             Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TINYINT!")
           )),
           result = Some(Success),
-          column_types = Some(Map("name" -> DataType.Varchar, "hasInvalidValue" -> DataType.Tinyint))
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Tinyint))
         )
       )
 
       // when and then
       val validationResult = new PrimeQueryStore().add(prime)
-      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TINYINT!", "hasInvalidValue", DataType.Tinyint.stringRep))))
+      validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TINYINT!", "hasInvalidValue", Tinyint.stringRep))))
     }
   }
 }

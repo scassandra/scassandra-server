@@ -18,7 +18,7 @@ package org.scassandra.server.priming.prepared
 
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.codec.Consistency._
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.ColumnSpec._
 import org.scassandra.codec.messages.{PreparedMetadata, QueryParameters, RowMetadata}
 import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
@@ -140,7 +140,7 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
 
   test("Prepared prime - with parameters") {
     val pattern = "select .* from people.*"
-    val columnSpec = List(column("0", DataType.Varchar), column("1", DataType.Bigint))
+    val columnSpec = List(column("0", Varchar), column("1", Bigint))
     val query: String = "select * from people where first=? and last=?"
     val when = WhenPrepared(None, Some(pattern))
     val thenDo = ThenPreparedSingle(Some(List()), Some(columnSpec.map(_.dataType)))

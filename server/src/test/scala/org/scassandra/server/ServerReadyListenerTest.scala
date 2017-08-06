@@ -15,11 +15,11 @@
  */
 package org.scassandra.server
 
-import akka.actor.ActorSystem
-import akka.testkit.{EventFilter, TestActorRef, TestProbe, TestKit}
-import org.scalatest.{FunSpecLike, Matchers}
+import akka.testkit.{EventFilter, TestActorRef, TestProbe}
+import org.scalatest.{FunSpec, FunSpecLike, Matchers}
+import org.scassandra.server.actors.TestKitWithShutdown
 
-class ServerReadyListenerTest extends TestKit(ActorSystem("TestSystem")) with FunSpecLike with Matchers {
+class ServerReadyListenerTest extends FunSpec with TestKitWithShutdown with Matchers {
 
   describe("ServerReady") {
     it("should be proxied to the actor that registers using OnServerReady") {

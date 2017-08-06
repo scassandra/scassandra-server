@@ -15,12 +15,11 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.ActorSystem
-import akka.testkit.{ImplicitSender, TestActorRef, TestKit}
-import org.scalatest.{FunSuiteLike, Matchers}
+import akka.testkit.{ImplicitSender, TestActorRef}
+import org.scalatest.{FunSuite, Matchers}
 import org.scassandra.codec._
 
-class OptionsHandlerTest extends TestKit(ActorSystem("TestSystem")) with ProtocolActorTest with FunSuiteLike
+class OptionsHandlerTest extends FunSuite with TestKitWithShutdown with ProtocolActorTest
   with ImplicitSender with Matchers {
 
   test("Should send supported message on any Options message") {

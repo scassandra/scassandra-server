@@ -26,8 +26,8 @@ class ListSpec extends DataTypeSpec with TableDrivenPropertyChecks  {
 
   forAll(protocolVersions) { (protocolVersion: ProtocolVersion) =>
     implicit val protocol: ProtocolVersion = protocolVersion
-    val codec = DataType.List(DataType.Varchar).codec
-    val nestedCodec = DataType.List(DataType.List(DataType.Varchar)).codec
+    val codec = CqlList(Varchar).codec
+    val nestedCodec = CqlList(CqlList(Varchar)).codec
 
     val expectedBytes = if(protocol.version < 3) {
       ByteVector(
@@ -108,7 +108,7 @@ class ListSpec extends DataTypeSpec with TableDrivenPropertyChecks  {
       encodeAndDecode(nestedCodec, List(List("one", "two", "three"), List("four", "five", "six")))
       encodeAndDecode(nestedCodec, List(List("one", "two", "three"), Set("four", "five", "six")), List(List("one", "two", "three"), List("four", "five", "six")))
 
-      val nestedTupleCodec = DataType.List(DataType.Tuple(DataType.Int, DataType.Text)).codec
+      val nestedTupleCodec = CqlList(Tuple(CqlInt, Text)).codec
       encodeAndDecode(nestedTupleCodec, Map(1 -> "one", 2 -> "two"), List(List(1, "one"), List(2, "two")))
     }
   }

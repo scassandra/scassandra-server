@@ -32,7 +32,7 @@ package org.scassandra.server.priming.prepared
 
 import org.scalatest.{FunSuite, Matchers}
 import org.scassandra.codec.Consistency._
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.ColumnSpec.column
 import org.scassandra.codec.messages._
 import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
@@ -41,7 +41,7 @@ import org.scassandra.server.priming.query.Reply
 import scodec.bits.ByteVector
 
 class PrimePreparedStoreTest extends FunSuite with Matchers {
-  implicit val protocolVersion = ProtocolVersion.latest
+  implicit val protocolVersion: ProtocolVersion = ProtocolVersion.latest
 
   val id = ByteVector(1)
 
@@ -152,7 +152,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
   test("Prepared prime - with parameters") {
     val underTest = new PrimePreparedStore
     val query: String = "select * from people where first=? and last=?"
-    val columnSpec = List(column("0", DataType.Varchar), column("1", DataType.Bigint))
+    val columnSpec = List(column("0", Varchar), column("1", Bigint))
     val when = WhenPrepared(Some(query), None)
     val thenDo = ThenPreparedSingle(Some(List()), Some(columnSpec.map(_.dataType)))
     val prime = PrimePreparedSingle(when, thenDo)

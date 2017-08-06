@@ -19,7 +19,7 @@ import scodec.Attempt.Failure
 import scodec.bits.ByteVector
 
 class BigintSpec extends DataTypeSpec {
-  val codec = DataType.Bigint.codec
+  val codec = Bigint.codec
   val exampleNumber: Number = BigDecimal("123000000000")
   val exampleNumberBytes = ByteVector(0, 0, 0, 28, -93, 95, 14, 0)
 

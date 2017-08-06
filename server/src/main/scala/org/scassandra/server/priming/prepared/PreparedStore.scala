@@ -15,7 +15,7 @@
  */
 package org.scassandra.server.priming.prepared
 
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype.{DataType, Varchar}
 import org.scassandra.codec.messages._
 import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
 import org.scassandra.server.priming.query.{Prime, PrimeCriteria, Reply}
@@ -30,7 +30,7 @@ object PreparedStoreLookup {
   def defaultPrepared(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared): Prime = {
     val numberOfParameters = prepare.query.toCharArray.count(_ == '?')
     val variableTypes = (0 until numberOfParameters)
-      .map(num => ColumnSpecWithoutTable(num.toString, DataType.Varchar).asInstanceOf[ColumnSpec]).toList
+      .map(num => ColumnSpecWithoutTable(num.toString, Varchar).asInstanceOf[ColumnSpec]).toList
 
     val metadata = PreparedMetadata(
       keyspace = Some("keyspace"),

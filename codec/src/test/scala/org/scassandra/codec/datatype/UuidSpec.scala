@@ -22,7 +22,7 @@ import scodec.bits.ByteVector
 
 class UuidSpec extends DataTypeSpec {
 
-  val codec = DataType.Uuid.codec
+  val codec = Uuid.codec
   val uuidStr = "59ad61d0-c540-11e2-881e-b9e6057626c4"
   val uuid = UUID.fromString(uuidStr)
   val uuidBytes = ByteVector(89, -83, 97, -48, -59, 64, 17, -30, -120, 30, -71, -26, 5, 118, 38, -60)

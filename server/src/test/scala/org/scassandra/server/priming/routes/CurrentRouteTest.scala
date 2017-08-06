@@ -29,8 +29,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class CurrentRouteTest extends FunSpec with ScalatestRouteTest with CurrentRoute with Matchers with LazyLogging {
-  implicit def actorRefFactory = system
+class CurrentRouteTest extends FunSpec with CurrentRoute with Matchers with LazyLogging with ScalatestRouteTest {
+  def actorRefFactory = system
 
   import PrimingJsonImplicits._
 
@@ -63,7 +63,7 @@ class CurrentRouteTest extends FunSpec with ScalatestRouteTest with CurrentRoute
 
   override implicit val tcpServer: ActorRef = serverActor.ref
   override implicit val timeout = Timeout(5 seconds)
-  override implicit val dispatcher = ExecutionContext.Implicits.global
+  override implicit val dispatcher = system.dispatcher
 
   it("Should get all client connections") {
     Get("/current/connections") ~> currentRoute ~> check {

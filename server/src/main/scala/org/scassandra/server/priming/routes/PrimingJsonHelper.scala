@@ -18,7 +18,7 @@ package org.scassandra.server.priming.routes
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype.{DataType, Varchar}
 import org.scassandra.codec.messages.{ColumnSpecWithoutTable, Row, RowMetadata}
 import org.scassandra.codec.{Consistency, Rows}
 import org.scassandra.server.priming._
@@ -144,7 +144,7 @@ object PrimingJsonHelper extends LazyLogging {
       .map(_._1) // extract column names from columnName/dataType pairing.
       .filter(name => !colTypes.contains(name)) // remove all elements not in columnTypes.
       .toSet // remove duplicates.
-      .map((name: String) => (name, DataType.Varchar)) // create the default Varchar mapping.
+      .map((name: String) => (name, Varchar)) // create the default Varchar mapping.
       .toMap
 
     // combine the column types from the prime and the default column types and map to a ColumnSpec.

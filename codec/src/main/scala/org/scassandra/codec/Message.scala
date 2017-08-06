@@ -67,7 +67,7 @@ object Message {
     case Startup.opcode => Codec[Startup].upcast[Message]
     case Ready.opcode => Codec[Ready.type].upcast[Message]
     case Options.opcode => Codec[Options.type].upcast[Message]
-    // TODO: Authenticate
+//     TODO: Authenticate
     case Supported.opcode => Codec[Supported].upcast[Message]
     case Query.opcode => Codec[Query].upcast[Message]
     case Result.opcode => Codec[Result].upcast[Message]
@@ -87,7 +87,7 @@ object Message {
     * @param opcode Opcode of the message to resolve codec for.
     * @return The appropriate [[Codec]] based on the opcode.
     */
-  def codec(opcode: Int)(implicit protocolVersion: ProtocolVersion) = protocolVersion.messageCodec(opcode)
+  def codec(opcode: Int)(implicit protocolVersion: ProtocolVersion): Codec[Message] = protocolVersion.messageCodec(opcode)
 }
 
 /**
@@ -95,7 +95,7 @@ object Message {
   * @param message message describing the error, every error type has this.
   */
 sealed abstract class ErrorMessage(message: String) extends Message {
-  override val opcode = ErrorMessage.opcode
+  override val opcode: Int = ErrorMessage.opcode
 }
 
 /**
@@ -351,7 +351,7 @@ object Query {
     */
   implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Query] = protocolVersion.queryCodec
 
-  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion): Codec[Query] = {
     ("query"      | longString) ::
     ("parameters" | Codec[QueryParameters])
   }.as[Query]
@@ -373,7 +373,7 @@ object Result {
     */
   implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Result] = protocolVersion.resultCodec
 
-  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = discriminated[Result].by(cint)
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion): DiscriminatorCodec[Result, Int] = discriminated[Result].by(cint)
     .typecase(0x1, Codec[VoidResult.type])
     .typecase(0x2, Codec[Rows])
     .typecase(0x3, Codec[SetKeyspace])
@@ -404,7 +404,7 @@ object Rows {
   implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[Rows] =
     protocolVersion.rowsCodec
 
-  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion): Codec[Rows] = {
     // read RowMetadata, and use flat prepend to use that metadata to
     // pass the column specification into a Row codec parser.
     Codec[RowMetadata].flatPrepend{ metadata =>
@@ -500,7 +500,7 @@ object Execute {
 case class Register(events: List[String] = Nil) extends Message {
   override val opcode: Int = Register.opcode
 }
-
+//
 object Register {
   val opcode = 0xB
 
@@ -541,7 +541,7 @@ object Batch {
     ("batchType"         | Codec[BatchType]) ::
     ("queries"           | listOfN(cshort, Codec[BatchQuery])) ::
     ("consistency"       | Consistency.codec) ::
-    // only parse flags for protocol version 2+ since that's when they were added.
+//     only parse flags for protocol version 2+ since that's when they were added.
     ("flags"             | withDefaultValue(conditional(protocolVersion.version > 2, Codec[BatchFlags]), DefaultBatchFlags)).consume { flags =>
     ("serialConsistency" | conditional(flags.withSerialConsistency, Consistency.codec)) ::
     ("timestamp"         | conditional(flags.withDefaultTimestamp, clong))

@@ -28,6 +28,7 @@ package just20;/*
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import cassandra.CassandraExecutor20;
 import com.datastax.driver.core.Cluster;
 import com.google.common.collect.ImmutableMap;
@@ -52,15 +53,15 @@ public class MetaDataPriming20 extends AbstractScassandraTest {
     @Test
     public void testPrimingOfClusterName() {
         //then
-        Map<String, ColumnTypes> columnTypes = ImmutableMap.of("tokens",ColumnTypes.VarcharSet);
+        Map<String, ColumnTypes> columnTypes = ImmutableMap.of("tokens", ColumnTypes.VarcharSet);
         String query = "SELECT * FROM system.local WHERE key='local'";
         Map<String, Object> row = new HashMap<>();
         row.put("cluster_name", CUSTOM_CLUSTER_NAME);
-        row.put("partitioner","org.apache.cassandra.dht.Murmur3Partitioner");
-        row.put("data_center","dc1");
+        row.put("partitioner", "org.apache.cassandra.dht.Murmur3Partitioner");
+        row.put("data_center", "dc1");
         row.put("tokens", Sets.newHashSet("1743244960790844724"));
-        row.put("rack","rc1");
-        row.put("release_version","3.0");
+        row.put("rack", "rc1");
+        row.put("release_version", "3.0");
         PrimingRequest prime = PrimingRequest.queryBuilder()
                 .withQuery(query)
                 .withColumnTypes(columnTypes)
@@ -68,12 +69,18 @@ public class MetaDataPriming20 extends AbstractScassandraTest {
                 .build();
         primingClient.primeQuery(prime);
 
-        //when
-        Cluster cluster = Cluster.builder().addContactPoint("localhost")
-                .withPort(scassandra.getBinaryPort()).build();
-        cluster.connect();
+        Cluster cluster = null;
+        try {
 
-        //then
-        assertEquals(CUSTOM_CLUSTER_NAME, cluster.getMetadata().getClusterName());
+            //when
+            cluster = Cluster.builder().addContactPoint("localhost")
+                    .withPort(scassandra.getBinaryPort()).build();
+            cluster.connect();
+
+            //then
+            assertEquals(CUSTOM_CLUSTER_NAME, cluster.getMetadata().getClusterName());
+        } finally {
+           if (cluster != null) cluster.close();
+        }
     }
 }

@@ -18,7 +18,7 @@ package org.scassandra.server.actors
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import org.scalatest.prop.TableDrivenPropertyChecks
-import org.scalatest.{BeforeAndAfter, FunSpecLike, Matchers}
+import org.scalatest.{BeforeAndAfter, FunSpec, FunSpecLike, Matchers}
 import org.scassandra.codec._
 import org.scassandra.codec.messages.{BatchType, SimpleBatchQuery}
 import scodec.bits.ByteVector
@@ -26,7 +26,7 @@ import scodec.bits.ByteVector
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class NativeProtocolMessageHandlerTest extends TestKit(ActorSystem("NativeProtocolMessageHandlerTest"))
+class NativeProtocolMessageHandlerTest extends FunSpec with TestKitWithShutdown
   with ProtocolActorTest with Matchers with ImplicitSender with FunSpecLike with BeforeAndAfter with TableDrivenPropertyChecks {
 
   var testActorRef: TestActorRef[NativeProtocolMessageHandler] = null

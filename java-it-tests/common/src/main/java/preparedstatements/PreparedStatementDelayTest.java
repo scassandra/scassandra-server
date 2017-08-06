@@ -49,7 +49,7 @@ abstract public class PreparedStatementDelayTest extends AbstractScassandraTest 
 
         //then
         assertEquals(success, results.status().getResult());
-        assertTrue("Expected delay of " + primedDelay + " got " + duration, duration > primedDelay && duration < (primedDelay + 200));
+        assertTrue("Expected delay of " + primedDelay + " got " + duration, duration > primedDelay && duration < (primedDelay + DELAY_TOLERANCE));
     }
 
     @Test
@@ -68,6 +68,6 @@ abstract public class PreparedStatementDelayTest extends AbstractScassandraTest 
 
         //then
         assertEquals(success, results.status().getResult());
-        assertTrue("Expected delay of " + primedDelay + " got " + duration, duration > primedDelay && duration < (primedDelay + 200));
+        assertTrue("Expected delay of " + primedDelay + " got " + duration, duration > primedDelay && duration < (primedDelay + DELAY_TOLERANCE));
     }
 }

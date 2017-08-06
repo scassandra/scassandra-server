@@ -17,7 +17,7 @@ package org.scassandra.codec
 
 import com.google.common.cache.{CacheBuilder, CacheLoader}
 import org.scassandra.codec.Notations.{short => cshort, string => cstring}
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages._
 import scodec.Attempt.Successful
 import scodec.Codec
@@ -36,7 +36,7 @@ sealed trait ProtocolVersion {
   val version: Int
   /**
     * The length, in bytes, of the frame header for this protocol version.  This is generally between 8 and 9 bytes, to
-    * accompany the stream id length change between prtocol 3 and 4 from 1 to 2 bytes.
+    * accompany the stream id length change between protocol 3 and 4 from 1 to 2 bytes.
     */
   lazy val headerLength: Long = 7 + (streamIdCodec.sizeBound.exact.get / 8)
 
@@ -214,38 +214,38 @@ object ProtocolVersion {
   // (tuples, lists, etc.) that need a forward reference to the codec to encode/decode elements.
   private[this] def baseDataTypeCodec(base: DiscriminatorCodec[DataType, Int]) = {
     lazy val codec: DiscriminatorCodec[DataType, Int] = base
-      .typecase(0x00, cstring.as[DataType.Custom])
-      .typecase(0x01, provide(DataType.Ascii))
-      .typecase(0x02, provide(DataType.Bigint))
-      .typecase(0x03, provide(DataType.Blob))
-      .typecase(0x04, provide(DataType.Boolean))
-      .typecase(0x05, provide(DataType.Counter))
-      .typecase(0x06, provide(DataType.Decimal))
-      .typecase(0x07, provide(DataType.Double))
-      .typecase(0x08, provide(DataType.Float))
-      .typecase(0x09, provide(DataType.Int))
-      .typecase(0x0B, provide(DataType.Timestamp))
-      .typecase(0x0C, provide(DataType.Uuid))
-      .typecase(0x0D, provide(DataType.Varchar))
-      .typecase(0x0E, provide(DataType.Varint))
-      .typecase(0x0F, provide(DataType.Timeuuid))
-      .typecase(0x10, provide(DataType.Inet))
-      .typecase(0x20, lazily(codec.as[DataType.List]))
-      .typecase(0x21, lazily((codec :: codec).as[DataType.Map]))
-      .typecase(0x22, lazily(codec.as[DataType.Set]))
+      .typecase(0x00, cstring.as[Custom])
+      .typecase(0x01, provide(Ascii))
+      .typecase(0x02, provide(Bigint))
+      .typecase(0x03, provide(Blob))
+      .typecase(0x04, provide(CqlBoolean))
+      .typecase(0x05, provide(Counter))
+      .typecase(0x06, provide(CqlDecimal))
+      .typecase(0x07, provide(CqlDouble))
+      .typecase(0x08, provide(CqlFloat))
+      .typecase(0x09, provide(CqlInt))
+      .typecase(0x0B, provide(Timestamp))
+      .typecase(0x0C, provide(Uuid))
+      .typecase(0x0D, provide(Varchar))
+      .typecase(0x0E, provide(Varint))
+      .typecase(0x0F, provide(CqlTimeuuid))
+      .typecase(0x10, provide(CqlInet))
+      .typecase(0x20, lazily(codec.as[CqlList]))
+      .typecase(0x21, lazily((codec :: codec).as[CqlMap]))
+      .typecase(0x22, lazily(codec.as[CqlSet]))
     codec
   }
 
   // v1/v2 includes a Text type at opcode 0xA/10.  This was removed in protocol v3.
   private[codec] def v1v2DataTypeCodec: DiscriminatorCodec[DataType, Int] =
-    baseDataTypeCodec(baseDesc.typecase(0x0A, provide(DataType.Text)))
+    baseDataTypeCodec(baseDesc.typecase(0x0A, provide(Text)))
 
   // v3 introduces tuples and removes the text type.
   private[codec] def v3DataTypeCodec(base: Option[DiscriminatorCodec[DataType, Int]] = None) = {
     lazy val codec: DiscriminatorCodec[DataType, Int] = baseDataTypeCodec(
       base.getOrElse(baseDesc)
-        .typecase(0x0D, provide(DataType.Text)) // As Text type has been removed, alias it to varchars opcode.
-        .typecase(0x31, lazily(cshort.consume(count => listOfN(provide(count), codec))(_.size).as[DataType.Tuple]))
+        .typecase(0x0D, provide(Text)) // As Text type has been removed, alias it to varchars opcode.
+        .typecase(0x31, lazily(cshort.consume(count => listOfN(provide(count), codec))(_.size).as[Tuple]))
     )
     codec
   }
@@ -253,10 +253,10 @@ object ProtocolVersion {
   // v4 introduces date, time, smallint and tinyint types.
   private[codec] def v4DataTypeCodec(base: Option[DiscriminatorCodec[DataType, Int]] = None) = v3DataTypeCodec(
     Some(base.getOrElse(baseDesc)
-      .typecase(0x11, provide(DataType.Date))
-      .typecase(0x12, provide(DataType.Time))
-      .typecase(0x13, provide(DataType.Smallint))
-      .typecase(0x14, provide(DataType.Tinyint)))
+      .typecase(0x11, provide(CqlDate))
+      .typecase(0x12, provide(CqlTime))
+      .typecase(0x13, provide(Smallint))
+      .typecase(0x14, provide(Tinyint)))
   )
 
 }

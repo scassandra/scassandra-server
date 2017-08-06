@@ -35,7 +35,7 @@ The whole project is built and tested with gradle. Imports into IntelliJ (Scala 
 To run all tests:
 
 ```
-./gradlew clean check
+sbt test
 ```
 
 It is made up of:
@@ -50,6 +50,11 @@ For any features you add please make them available in the Java client. All comm
 
 Beware that there are deprecation warnings in the integration tests. Don't fix these as I still want to test
 deprecated APIs.
+
+We're in the process or moving back to SBT for cross compilation. Things that need finished:
+* Releasing
+* Pushing to maven central
+* License headers
 
 ### PR guidelines
 

@@ -60,7 +60,7 @@ object RowMetadata {
     */
   implicit def codec(implicit protocolVersion: ProtocolVersion): Codec[RowMetadata] = protocolVersion.rowMetadataCodec
 
-  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion) = {
+  private[codec] def codecForVersion(implicit protocolVersion: ProtocolVersion): Codec[RowMetadata] = {
     // parse the flags and pass it for the fields to determine presence.
     ("flags"       | Codec[RowMetadataFlags]).consume { flags =>
     ("columnCount" | cint).consume { count =>
@@ -138,7 +138,7 @@ object ColumnSpec {
     * @param dataType The [[DataType]] of the column.
     * @return [[ColumnSpec]] with given name and data type.
     */
-  def column(name: String, dataType: DataType) = ColumnSpecWithoutTable(name, dataType)
+  def column(name: String, dataType: DataType): ColumnSpec = ColumnSpecWithoutTable(name, dataType)
 
   private[codec] def codecForVersion(withTable: Boolean)(implicit protocolVersion: ProtocolVersion): Codec[ColumnSpec] = {
     if(withTable) {

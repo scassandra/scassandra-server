@@ -23,7 +23,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec.Consistency
 import org.scassandra.codec.Consistency.Consistency
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype.{CqlList, CqlMap, CqlSet, DataType, Tuple}
 import org.scassandra.codec.messages.BatchQueryKind.BatchQueryKind
 import org.scassandra.codec.messages.BatchType.BatchType
 import org.scassandra.codec.messages.{BatchQueryKind, BatchType}
@@ -158,10 +158,10 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
     def convertJavaToScalaType(javaType: CqlType): DataType = javaType match {
         // TODO: Update for UDTs when supported.
         case primitive: PrimitiveType => DataType.primitiveTypeMap(primitive.serialise())
-        case map: MapType => DataType.Map(convertJavaToScalaType(map.getKeyType), convertJavaToScalaType(map.getValueType))
-        case set: SetType => DataType.Set(convertJavaToScalaType(set.getType))
-        case list: ListType => DataType.List(convertJavaToScalaType(list.getType))
-        case tuple: TupleType => DataType.Tuple(tuple.getTypes.map(convertJavaToScalaType):_*)
+        case map: MapType => CqlMap(convertJavaToScalaType(map.getKeyType), convertJavaToScalaType(map.getValueType))
+        case set: SetType => CqlSet(convertJavaToScalaType(set.getType))
+        case list: ListType => CqlList(convertJavaToScalaType(list.getType))
+        case tuple: TupleType => Tuple(tuple.getTypes.map(convertJavaToScalaType):_*)
     }
 
     def fromString(typeString: String): Try[DataType] = {
