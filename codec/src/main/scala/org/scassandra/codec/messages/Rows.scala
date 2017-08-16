@@ -25,6 +25,7 @@ import scodec.{Attempt, Codec, DecodeResult, SizeBound}
 import shapeless.{::, HNil}
 
 import scala.collection.immutable
+import scala.collection.immutable.ListMap
 import scala.util.control.Breaks._
 
 /**
@@ -153,7 +154,7 @@ object ColumnSpec {
   * Defines an individual row in a [[Rows]] result.  A row effectively a map of column names to column values.
   * @param columns Map of column names to values.  The values are regular objects that have not been encoded in any way.
   */
-case class Row(columns: Map[String, Any])
+case class Row(columns: ListMap[String, Any])
 
 object Row {
   /**
@@ -168,7 +169,7 @@ object Row {
     * @param colPairs (Name, Value) pairs of [[Row]] columns.
     * @return The created [[Row]].
     */
-  def apply(colPairs: (String, Any)*): Row = Row(colPairs.toMap)
+  def apply(colPairs: (String, Any)*): Row = Row(ListMap[String, Any](colPairs.toSeq : _*))
 }
 
 /**

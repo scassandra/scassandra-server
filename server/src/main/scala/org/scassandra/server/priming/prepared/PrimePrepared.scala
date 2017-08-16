@@ -61,7 +61,7 @@ case class WhenPrepared(query: Option[String] = None,
   def withDefaults: WhenPrepared = copy(consistency = defaultConsistency(consistency))
 }
 
-case class ThenPreparedSingle(rows: Option[List[Map[String, Any]]],
+case class ThenPreparedSingle(rows: Option[List[ListMap[String, Any]]],
                               variable_types: Option[List[DataType]] = None,
                               column_types: Option[Map[String, DataType]] = None,
                               result : Option[ResultJsonRepresentation] = Some(Success),
@@ -87,7 +87,7 @@ case class Outcome(criteria: Criteria, action: Action) {
 
 case class Criteria(variable_matcher: List[VariableMatch])
 
-case class Action(rows: Option[List[Map[String, Any]]],
+case class Action(rows: Option[List[ListMap[String, Any]]],
                   column_types: Option[Map[String, DataType]] = None,
                   result : Option[ResultJsonRepresentation] = Some(Success),
                   fixedDelay : Option[Long] = None,

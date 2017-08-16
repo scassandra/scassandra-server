@@ -35,7 +35,7 @@ object Defaulter {
     case None => dataTypes
   }
 
-  def defaultColumnTypesToVarChar(columnTypes: Option[Map[String, DataType]], rows: Option[List[Map[String, Any]]]) = columnTypes match {
+  def defaultColumnTypesToVarChar(columnTypes: Option[Map[String, DataType]], rows: Option[List[ListMap[String, Any]]]) = columnTypes match {
     case Some(_) => columnTypes
     case None =>
       val names = rows.getOrElse(Nil).flatMap(row => row.keys).distinct
