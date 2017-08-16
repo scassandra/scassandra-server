@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
 
 import org.scalatest.{FunSuite, Matchers}
 import org.scassandra.codec
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype._
 import org.scassandra.codec.{Consistency, Rows}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
@@ -305,11 +305,11 @@ class PrimingJsonHelperTest extends FunSuite with Matchers {
 
   test("Should extract variableTypes for prime") {
     val when = When()
-    val thenDo = Then(None, None, None, variable_types = Some(List(DataType.Text)))
+    val thenDo = Then(None, None, None, variable_types = Some(List(Text)))
     val primeRequest: PrimeQuerySingle = PrimeQuerySingle(when, thenDo)
 
     val primeResult: Prime = PrimingJsonHelper.extractPrime(primeRequest.thenDo)
 
-    primeResult.variableTypes should equal(Some(List(DataType.Text)))
+    primeResult.variableTypes should equal(Some(List(Text)))
   }
 }

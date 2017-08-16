@@ -69,12 +69,17 @@ public class MetaDataPriming30 extends AbstractScassandraTest {
                 .build();
         primingClient.primeQuery(prime);
 
-        //when
-        Cluster cluster = Cluster.builder().addContactPoint("localhost")
-                .withPort(scassandra.getBinaryPort()).build();
-        cluster.connect();
+        Cluster cluster = null;
+        try {
+            //when
+            cluster = Cluster.builder().addContactPoint("localhost")
+                    .withPort(scassandra.getBinaryPort()).build();
+            cluster.connect();
 
-        //then
-        assertEquals(CUSTOM_CLUSTER_NAME, cluster.getMetadata().getClusterName());
+            //then
+            assertEquals(CUSTOM_CLUSTER_NAME, cluster.getMetadata().getClusterName());
+        } finally {
+           if (cluster != null) cluster.close();
+        }
     }
 }

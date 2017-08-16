@@ -160,7 +160,7 @@ abstract public class BatchPrimingTest extends AbstractScassandraTest {
                 ), BatchType.LOGGED);
         long duration = System.currentTimeMillis() - before;
 
-        assertTrue("Expected delay of " + primedDelay + " got " + duration, duration > primedDelay && duration < (primedDelay + 200));
+        assertTrue("Expected delay of " + primedDelay + " got " + duration, duration > primedDelay && duration < (primedDelay + DELAY_TOLERANCE));
 
     }
 

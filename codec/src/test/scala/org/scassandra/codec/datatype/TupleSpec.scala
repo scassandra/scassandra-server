@@ -23,7 +23,7 @@ import scodec.bits.ByteVector
 class TupleSpec extends DataTypeSpec {
 
   "codec" must "encode tuple<int,text> from a List" in {
-    val tupleType = DataType.Tuple(DataType.Int, DataType.Text)
+    val tupleType = Tuple(CqlInt, Text)
 
     tupleType.codec.encode(List(55, "Hello World")).require shouldEqual ByteVector(
       0, 0, 0, 4,     // int length
@@ -34,7 +34,7 @@ class TupleSpec extends DataTypeSpec {
   }
 
   it must "encode null values in a List" in {
-    val tupleType = DataType.Tuple(DataType.Int, DataType.Int, DataType.Text)
+    val tupleType = Tuple(CqlInt, CqlInt, Text)
 
     tupleType.codec.encode(List(55, null, "Hello World")).require shouldEqual ByteVector(
       0, 0, 0, 4,             // int length
@@ -46,13 +46,13 @@ class TupleSpec extends DataTypeSpec {
   }
 
   it must "fail to encode when List length does not match tuple length" in {
-    val tupleType = DataType.Tuple(DataType.Int, DataType.Text, DataType.Int)
+    val tupleType = Tuple(CqlInt, Text, CqlInt)
 
-    tupleType.codec.encode(List(55, "Hello")) should matchPattern { case Failure(General("List of size 2 does not match number of expected codec elements for Tuple(List(Int, Text, Int))", Nil)) => }
+    tupleType.codec.encode(List(55, "Hello")) should matchPattern { case Failure(General("List of size 2 does not match number of expected codec elements for Tuple(List(CqlInt, Text, CqlInt))", Nil)) => }
   }
 
   it must "encode scala Tuples" in {
-    val tupleType = DataType.Tuple(DataType.Int, DataType.Tinyint)
+    val tupleType = Tuple(CqlInt, Tinyint)
 
     tupleType.codec.encode((5, 3)).require shouldEqual ByteVector(
       0, 0, 0, 4, // int length
@@ -63,7 +63,7 @@ class TupleSpec extends DataTypeSpec {
   }
 
   it must "fail decode if invalid value identifier" in {
-    val tupleType = DataType.Tuple(DataType.Int)
+    val tupleType = Tuple(CqlInt)
 
     // -3, only -1 (null) and >= 0 should be allowed.
     val invalidBytes = ByteVector(0xFF, 0xFF, 0xFF, 0xFD).bits
@@ -72,7 +72,7 @@ class TupleSpec extends DataTypeSpec {
   }
 
   it must "fail decode if value is unset" in {
-    val tupleType = DataType.Tuple(DataType.Int)
+    val tupleType = Tuple(CqlInt)
 
     // -2, only -1 (null) and >= 0 should be allowed.
     val invalidBytes = ByteVector(0xFF, 0xFF, 0xFF, 0xFE).bits
@@ -81,7 +81,7 @@ class TupleSpec extends DataTypeSpec {
   }
 
   it must "fail to decode if a value cannot be decoded with the given type" in {
-    val tupleType = DataType.Tuple(DataType.Int, DataType.Int)
+    val tupleType = Tuple(CqlInt, CqlInt)
 
     // invalid because it expects <Int, Int> but we provide <Int, Smallint>
     val invalidBytes = ByteVector(
@@ -104,17 +104,17 @@ class TupleSpec extends DataTypeSpec {
       SizeBound.bounded(elementCount * 4 * 8, (elementCount * 4 * 8) + elementCount * (Int.MaxValue.toLong*8))
     }
 
-    DataType.Tuple(DataType.Int).codec.sizeBound shouldEqual forCount(1)
-    DataType.Tuple(DataType.Int, DataType.Text).codec.sizeBound shouldEqual forCount(2)
-    DataType.Tuple(DataType.Int, DataType.Float, DataType.Bigint).codec.sizeBound shouldEqual forCount(3)
+    Tuple(CqlInt).codec.sizeBound shouldEqual forCount(1)
+    Tuple(CqlInt, Text).codec.sizeBound shouldEqual forCount(2)
+    Tuple(CqlInt, CqlFloat, Bigint).codec.sizeBound shouldEqual forCount(3)
   }
 
   it must "encode and decode back to input" in {
-    encodeAndDecode(DataType.Tuple(DataType.Int).codec, List(4844))
-    encodeAndDecode(DataType.Tuple(DataType.Int, DataType.Text).codec, List(55, "Hello"))
-    encodeAndDecode(DataType.Tuple(DataType.Int, DataType.Text, DataType.List(DataType.Float)).codec, List(55, "Hello", List(1.2f, 2.3f, 3.4f)))
-    encodeAndDecode(DataType.Tuple(DataType.Int, DataType.Text, DataType.Tuple(DataType.Float, DataType.Int)).codec, List(55, "Hello", List(1.2f, 5)))
+    encodeAndDecode(Tuple(CqlInt).codec, List(4844))
+    encodeAndDecode(Tuple(CqlInt, Text).codec, List(55, "Hello"))
+    encodeAndDecode(Tuple(CqlInt, Text, CqlList(CqlFloat)).codec, List(55, "Hello", List(1.2f, 2.3f, 3.4f)))
+    encodeAndDecode(Tuple(CqlInt, Text, Tuple(CqlFloat, CqlInt)).codec, List(55, "Hello", List(1.2f, 5)))
     // Technically not valid CQL, but the protocol doesn't say you can't have empty tuples.
-    encodeAndDecode(DataType.Tuple().codec, Nil)
+    encodeAndDecode(Tuple().codec, Nil)
   }
 }

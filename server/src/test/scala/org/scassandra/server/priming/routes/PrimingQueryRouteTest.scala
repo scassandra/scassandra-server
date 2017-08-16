@@ -22,7 +22,7 @@ import akka.http.scaladsl.model.StatusCodes.BadRequest
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest._
 import org.scassandra.codec.Consistency._
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.ColumnSpec.column
 import org.scassandra.codec.messages.{QueryParameters, RowMetadata}
 import org.scassandra.codec.{Rows, Query => CQuery}
@@ -132,7 +132,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
         List(
           Map("mapValue" -> Map())
         )
-      val columnTypes = Some(Map[String, DataType]("mapValue" -> DataType.Map(DataType.Varchar, DataType.Varchar)))
+      val columnTypes = Some(Map[String, DataType]("mapValue" -> CqlMap(Varchar, Varchar)))
 
       Post(primeQuerySinglePath, PrimeQuerySingle(whenQuery, Then(Some(thenResults), column_types = columnTypes))) ~> queryRoute ~> check {
         status should equal(OK)
@@ -202,7 +202,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
             "age" -> "12"
           )
         )
-      val thenColumnTypes = Map("age" -> DataType.Boolean)
+      val thenColumnTypes = Map("age" -> CqlBoolean)
 
       val thenDo = Then(Some(thenResults), Some(Success), Some(thenColumnTypes))
 
@@ -296,8 +296,8 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
             "age" -> "12"
           )
         )
-      val expectedColumnTypes = column("age", DataType.Int) :: Nil
-      val thenColumnTypes = Map("age" -> DataType.Int)
+      val expectedColumnTypes = column("age", CqlInt) :: Nil
+      val thenColumnTypes = Map("age" -> CqlInt)
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
@@ -321,8 +321,8 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
             "age" -> "12"
           )
         )
-      val expectedColumnTypes = column("age", DataType.Int) :: column("abigD", DataType.Bigint) :: Nil
-      val thenColumnTypes = Map("age" -> DataType.Int, "abigD" -> DataType.Bigint)
+      val expectedColumnTypes = column("age", CqlInt) :: column("abigD", Bigint) :: Nil
+      val thenColumnTypes = Map("age" -> CqlInt, "abigD" -> Bigint)
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
@@ -338,8 +338,8 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val query = "select * from users"
       val whenQuery = When(query = Some(query))
       val thenRows = List(Map("age" -> "7.7"))
-      val expectedColumnTypes = column("age", DataType.Double) :: Nil
-      val thenColumnTypes = Map("age" -> DataType.Double)
+      val expectedColumnTypes = column("age", CqlDouble) :: Nil
+      val thenColumnTypes = Map("age" -> CqlDouble)
       val primePayload = PrimeQuerySingle(whenQuery, Then(Some(thenRows), column_types = Some(thenColumnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute ~> check {
@@ -358,7 +358,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val whenQuery = When(query = Some(query))
       val thenRows = Some(List(Map("field" -> "2c530380-b9f9-11e3-850e-338bb2a2e74f",
         "set_field" -> List("one", "two"))))
-      val thenColumnTypes = Some(Map("field" -> DataType.Timeuuid, "set_field" -> DataType.Set(DataType.Varchar)))
+      val thenColumnTypes = Some(Map("field" -> CqlTimeuuid, "set_field" -> CqlSet(Varchar)))
       val primePayload = PrimeQuerySingle(whenQuery, Then(thenRows, column_types = thenColumnTypes))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute
@@ -389,7 +389,7 @@ class PrimingQueryRouteTest extends FunSpec with BeforeAndAfter with Matchers wi
       val query = Some("select * from users")
       val whenQuery = When(query, keyspace = Some("myKeyspace"))
       val thenRows = Some(List(Map("one" -> "two")))
-      val columnTypes = Map("one" -> DataType.Varchar)
+      val columnTypes = Map("one" -> Varchar)
       val primePayload = PrimeQuerySingle(whenQuery, Then(thenRows, column_types = Some(columnTypes)))
 
       Post(primeQuerySinglePath, primePayload) ~> queryRoute

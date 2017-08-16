@@ -20,7 +20,7 @@ import scodec.bits.ByteVector
 
 class TimestampSpec extends DataTypeSpec {
 
-  val codec = DataType.Timestamp.codec
+  val codec = Timestamp.codec
 
   "codec" must "encode number as timestamp format" in {
     codec.encode(1436466253234L).require.bytes shouldEqual ByteVector(0, 0, 1, 78, 116, 15, -115, -78)

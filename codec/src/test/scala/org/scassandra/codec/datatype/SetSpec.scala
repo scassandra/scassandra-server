@@ -25,8 +25,8 @@ class SetSpec extends DataTypeSpec with TableDrivenPropertyChecks {
 
   forAll(protocolVersions) { (protocolVersion: ProtocolVersion) =>
     implicit val protocol: ProtocolVersion = protocolVersion
-    val codec = DataType.Set(DataType.Varchar).codec
-    val nestedCodec = DataType.Set(DataType.Set(DataType.Varchar)).codec
+    val codec = CqlSet(Varchar).codec
+    val nestedCodec = CqlSet(CqlSet(Varchar)).codec
 
     val expectedBytes = if(protocol.version < 3) {
       ByteVector(
@@ -107,7 +107,7 @@ class SetSpec extends DataTypeSpec with TableDrivenPropertyChecks {
       encodeAndDecode(nestedCodec, Set(Set("one", "two", "three"), Set("four", "five", "six")))
       encodeAndDecode(nestedCodec, Set(Set("one", "two", "three"), List("four", "five", "six")), Set(Set("one", "two", "three"), Set("four", "five", "six")))
 
-      val nestedTupleCodec = DataType.Set(DataType.Tuple(DataType.Int, DataType.Text)).codec
+      val nestedTupleCodec = CqlSet(Tuple(CqlInt, Text)).codec
       encodeAndDecode(nestedTupleCodec, Map(1 -> "one", 2 -> "two"), Set(List(1, "one"), List(2, "two")))
     }
   }

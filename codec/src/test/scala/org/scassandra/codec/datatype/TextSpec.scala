@@ -21,7 +21,7 @@ import scodec.bits.ByteVector
 
 class TextSpec extends DataTypeSpec {
 
-  val codec = DataType.Text.codec
+  val codec = Text.codec
 
   "codec" must "encode a string as UTF-8" in {
     codec.encode("hello").require.bytes shouldEqual ByteVector(104, 101, 108, 108, 111)

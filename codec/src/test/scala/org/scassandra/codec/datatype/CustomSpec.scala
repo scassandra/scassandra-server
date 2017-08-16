@@ -15,7 +15,6 @@
  */
 package org.scassandra.codec.datatype
 
-import org.scassandra.codec.datatype.DataType.Custom
 import scodec.Attempt.Failure
 import scodec.Err.General
 import scodec.bits.ByteVector

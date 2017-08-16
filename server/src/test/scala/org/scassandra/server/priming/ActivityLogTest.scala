@@ -18,7 +18,7 @@ package org.scassandra.server.priming
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.codec.Consistency
 import org.scassandra.codec.Consistency._
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.BatchQueryKind.Simple
 import org.scassandra.codec.messages.BatchType.LOGGED
 
@@ -52,7 +52,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Store query and retrieve connection") {
-    val query: String = "select * from people"
+    val query = "select * from people"
     underTest.recordQuery(query, ONE, None)
     underTest.retrieveQueries().size should equal(1)
     underTest.retrieveQueries().head.query should equal(query)
@@ -64,7 +64,7 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
     val preparedStatementText = "select * from people where name = ?"
     val variables = List("Chris")
     val consistency = ONE
-    val variableTypes = List(DataType.Ascii, DataType.Bigint)
+    val variableTypes = List(Ascii, Bigint)
 
     underTest.recordPreparedStatementExecution(preparedStatementText, consistency, Some(Consistency.LOCAL_SERIAL), variables, variableTypes, Some(1))
     val preparedStatementRecord = underTest.retrievePreparedStatementExecutions()
@@ -98,9 +98,9 @@ class ActivityLogTest extends FunSuite with Matchers with BeforeAndAfter {
   }
   
   test("Records query parameters") {
-    underTest.recordQuery("query", ONE, None, List("Hello"), List(DataType.Text))
+    underTest.recordQuery("query", ONE, None, List("Hello"), List(Text))
 
-    underTest.retrieveQueries() should equal(List(Query("query", ONE, None, List("Hello"), List(DataType.Text))))
+    underTest.retrieveQueries() should equal(List(Query("query", ONE, None, List("Hello"), List(Text))))
   }
 
   test("Record batch execution") {

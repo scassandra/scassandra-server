@@ -16,5 +16,5 @@
 package org.scassandra.codec.datatype
 
 class VarcharSpec extends TextSpec {
-  override val codec = DataType.Varchar.codec
+  override val codec = Varchar.codec
 }

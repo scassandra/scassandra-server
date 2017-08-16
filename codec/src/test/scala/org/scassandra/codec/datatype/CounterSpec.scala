@@ -15,7 +15,6 @@
  */
 package org.scassandra.codec.datatype
 
-import org.scassandra.codec.datatype.DataType.Counter
 
 class CounterSpec extends BigintSpec {
   override val codec = Counter.codec

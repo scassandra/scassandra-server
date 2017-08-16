@@ -2,14 +2,15 @@ language: scala
 jdk:
   - oraclejdk8
 scala:
-  - 2.11.7
+  - 2.12.3
+
 sudo: false
 
-install: ./gradlew assemble -x signArchives
-
-script:
-  - ./gradlew check -x signArchives
-
+before_cache:
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -print -delete
+  - find $HOME/.sbt        -name "*.lock"               -print -delete
+  
 cache:
   directories:
-  - "$HOME/.gradle/caches"
+  - $HOME/.ivy2/cache
+  - $HOME/.sbt

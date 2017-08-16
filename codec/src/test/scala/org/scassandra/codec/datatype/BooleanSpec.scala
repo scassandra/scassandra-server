@@ -20,7 +20,7 @@ import scodec.bits.ByteVector
 
 class BooleanSpec extends DataTypeSpec {
 
-  val codec = DataType.Boolean.codec
+  val codec = CqlBoolean.codec
 
   "codec" must "encode Boolean values" in {
     codec.encode(true).require.bytes shouldEqual ByteVector(1)

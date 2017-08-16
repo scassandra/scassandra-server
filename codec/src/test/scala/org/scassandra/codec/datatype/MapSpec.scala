@@ -25,8 +25,8 @@ class MapSpec extends DataTypeSpec with TableDrivenPropertyChecks {
 
   forAll(protocolVersions) { (protocolVersion: ProtocolVersion) =>
     implicit val protocol: ProtocolVersion = protocolVersion
-    val codec = DataType.Map(DataType.Varchar, DataType.Varchar).codec
-    val nestedCodec = DataType.Map(DataType.Varchar, DataType.Set(DataType.Varchar)).codec
+    val codec = CqlMap(Varchar, Varchar).codec
+    val nestedCodec = CqlMap(Varchar, CqlSet(Varchar)).codec
 
     val expectedBytes = if(protocol.version < 3) {
       ByteVector(

@@ -33,6 +33,8 @@ import java.util.Map;
 import static common.PortLocator.findFreePort;
 
 abstract public class AbstractScassandraTest<C extends CassandraExecutor> {
+    protected final static int DELAY_TOLERANCE = 1500;
+
     protected static Scassandra scassandra;
     protected static PrimingClient primingClient;
     protected static ActivityClient activityClient;

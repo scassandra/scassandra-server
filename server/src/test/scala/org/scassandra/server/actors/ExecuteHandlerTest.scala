@@ -25,7 +25,7 @@ import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.codec._
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.{ColumnSpecWithoutTable, PreparedMetadata, QueryParameters, Row}
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
 import org.scassandra.server.priming._
@@ -36,9 +36,8 @@ import scodec.bits.ByteVector
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers with TestKitBase with ImplicitSender
+class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers with TestKitWithShutdown with ImplicitSender
   with BeforeAndAfter with MockitoSugar {
-  implicit lazy val system = ActorSystem()
   implicit val protocolVersion = ProtocolVersion.latest
 
   var underTest: ActorRef = null
@@ -118,15 +117,15 @@ class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers w
     when(primePreparedStore.apply(any[String], any[Execute])(any[ProtocolVersion])).thenReturn(primeMatch)
 
     val values = List(10)
-    val variableTypes = List(DataType.Bigint)
+    val variableTypes = List(Bigint)
     val execute = Execute(preparedIdBytes, parameters = QueryParameters(consistency = consistency,
-      values = Some(values.map(v => QueryValue(None, Bytes(DataType.Bigint.codec.encode(v).require.bytes))))))
+      values = Some(values.map(v => QueryValue(None, Bytes(Bigint.codec.encode(v).require.bytes))))))
     underTest ! protocolMessage(execute)
 
     prepareHandlerTestProbe.expectMsg(PreparedStatementQuery(List(preparedId)))
     prepareHandlerTestProbe.reply(PreparedStatementResponse(Map(preparedId -> (query, Prepared(preparedIdBytes,
       preparedMetadata = PreparedMetadata(keyspace = Some("keyspace"), table = Some("table"),
-        columnSpec = ColumnSpecWithoutTable("0", DataType.Bigint) :: Nil))))))
+        columnSpec = ColumnSpecWithoutTable("0", Bigint) :: Nil))))))
 
     activityLog.retrievePreparedStatementExecutions().size should equal(1)
     activityLog.retrievePreparedStatementExecutions().head should equal(PreparedStatementExecution(query, consistency, None, values, variableTypes, None))
@@ -145,7 +144,7 @@ class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers w
     val variables = List(10, 20)
     val execute = Execute(preparedIdBytes, parameters = QueryParameters(consistency = consistency,
       serialConsistency = Some(Consistency.SERIAL),
-      values = Some(variables.map(v => QueryValue(None, Bytes(DataType.Bigint.codec.encode(v).require.bytes)))),
+      values = Some(variables.map(v => QueryValue(None, Bytes(Bigint.codec.encode(v).require.bytes)))),
       timestamp = Some(1000)
     ))
 
@@ -155,7 +154,7 @@ class ExecuteHandlerTest extends FunSuite with ProtocolActorTest with Matchers w
     prepareHandlerTestProbe.expectMsg(PreparedStatementQuery(List(preparedId)))
     prepareHandlerTestProbe.reply(PreparedStatementResponse(Map(preparedId -> (query, Prepared(preparedIdBytes,
       preparedMetadata = PreparedMetadata(keyspace = Some("keyspace"), table = Some("table"),
-        columnSpec = ColumnSpecWithoutTable("0", DataType.Varchar) :: Nil))))))
+        columnSpec = ColumnSpecWithoutTable("0", Varchar) :: Nil))))))
 
     // The execution should still be recorded, but the variables not included.
     activityLog.retrievePreparedStatementExecutions().size should equal(1)

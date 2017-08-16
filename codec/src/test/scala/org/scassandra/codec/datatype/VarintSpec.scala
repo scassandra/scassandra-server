@@ -20,7 +20,7 @@ import scodec.bits.ByteVector
 
 class VarintSpec extends DataTypeSpec {
 
-  val codec = DataType.Varint.codec
+  val codec = Varint.codec
 
   "codec" must "encode BigInt as varint format" in {
     codec.encode(BigInt("123000000000")).require.bytes shouldEqual ByteVector(28, -93, 95, 14, 0)

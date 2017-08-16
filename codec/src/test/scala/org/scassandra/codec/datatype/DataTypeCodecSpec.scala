@@ -35,24 +35,24 @@ class DataTypeCodecSpec extends CodecSpec {
       // convenience, we simply alias the opcode of 'Text' to 'Varchar'.
       if (protocolVersion.version < 3) {
         "return Text with Text opcode" in {
-          val data = codec.encode(DataType.Text).require.bytes
+          val data = codec.encode(Text).require.bytes
           data shouldEqual bytesText
         }
       } else {
         "alias Text and return with Varchar opcode" in {
-          val data = codec.encode(DataType.Text).require.bytes
+          val data = codec.encode(Text).require.bytes
           data shouldEqual bytesVarchar
         }
       }
 
       if (protocolVersion.version >= 4) {
         "support Date type" in {
-          val data = codec.encode(DataType.Date).require.bytes
+          val data = codec.encode(CqlDate).require.bytes
           data shouldEqual bytesDate
         }
       } else {
         "not support type added later in the spec" in {
-          codec.encode(DataType.Date) should matchPattern {
+          codec.encode(CqlDate) should matchPattern {
             case Failure(_) =>
           }
         }

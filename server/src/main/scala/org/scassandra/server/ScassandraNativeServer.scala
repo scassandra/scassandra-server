@@ -22,16 +22,14 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.actors.TcpServer
-import org.scassandra.server.priming.{ActivityLog, AllRoutes}
 import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.{CompositePreparedPrimeStore, PrimePreparedMultiStore, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.priming.query.PrimeQueryStore
-import scala.concurrent.ExecutionContext
+import org.scassandra.server.priming.{ActivityLog, AllRoutes}
+
 import scala.concurrent.duration._
-import scala.language.postfixOps
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.language.postfixOps
 
 /**
   * Used to wait on startup of listening http and tcp interfaces.
@@ -65,21 +63,23 @@ class ScassandraServer(val primeQueryStore: PrimeQueryStore,
   val primePreparedMultiStore = new PrimePreparedMultiStore
   val primeBatchStore = new PrimeBatchStore
   val activityLog = new ActivityLog
+
   val preparedLookup = new CompositePreparedPrimeStore(primePreparedStore, primePreparedPatternStore, primePreparedMultiStore)
   val primingReadyListener: ActorRef = context.actorOf(Props(classOf[ServerReadyListener]), "PrimingReadyListener")
   val tcpReadyListener: ActorRef = context.actorOf(Props(classOf[ServerReadyListener]), "TcpReadyListener")
   val tcpServer: ActorRef = context.actorOf(Props(classOf[TcpServer], binaryListenAddress, binaryPortNumber, primeQueryStore, preparedLookup, primeBatchStore, tcpReadyListener, activityLog), "BinaryTcpListener")
+
   implicit val dispatcher: ExecutionContext = context.dispatcher
   val timeout = Timeout(5.seconds)
+
   implicit val materialiser = ActorMaterializer()
   implicit val system = context.system
+
   val bindingFuture: Future[Http.ServerBinding] = Http().bindAndHandle(allRoutes, adminListenAddress, adminPortNumber)
 
   override def receive: Receive = {
     case AwaitStartup(timeout) => {
       implicit val t: Timeout = timeout
-      import context.dispatcher
-
       // Create a future that completes when both listeners ready.
       val f = Future.sequence(
         tcpReadyListener ? OnServerReady ::
@@ -91,7 +91,6 @@ class ScassandraServer(val primeQueryStore: PrimeQueryStore,
     }
     case ShutdownServer(timeout) => {
       implicit val t: Timeout = timeout
-      import context.dispatcher
 
       // Send shutdown message to each sender and on complete send a PoisonPill to self.
       val f = Future.sequence(

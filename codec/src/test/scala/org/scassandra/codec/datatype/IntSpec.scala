@@ -20,7 +20,7 @@ import scodec.bits.ByteVector
 
 class IntSpec extends DataTypeSpec {
 
-  val codec = DataType.Int.codec
+  val codec = CqlInt.codec
   val example: Number = BigDecimal("123")
   val exampleBytes = ByteVector(0, 0, 0, 123)
   val naturalType: Number = 123

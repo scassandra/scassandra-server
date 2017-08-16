@@ -20,14 +20,14 @@ import java.net.InetSocketAddress
 import akka.actor.ActorSystem
 import akka.io.Tcp.{Bind, Bound}
 import akka.testkit._
-import org.scalatest.{FunSpecLike, Matchers}
+import org.scalatest.{FunSpec, FunSpecLike, Matchers}
 import org.scassandra.server.ServerReady
 import org.scassandra.server.priming.ActivityLog
 import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.PrimePreparedStore
 import org.scassandra.server.priming.query.PrimeQueryStore
 
-class TcpServerReadyTest extends TestKit(ActorSystem("TestSystem")) with FunSpecLike with Matchers {
+class TcpServerReadyTest extends FunSpec with TestKitWithShutdown with Matchers {
 
   describe("ServerReady") {
     it("should be send to the actor that registers as a listener") {

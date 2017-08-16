@@ -16,7 +16,7 @@
 package org.scassandra.codec.messages
 
 import org.scassandra.codec._
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype.{DataType, Text}
 import scodec.Attempt.Successful
 import scodec.Codec
 import scodec.bits.ByteVector
@@ -54,11 +54,11 @@ class QuerySpec extends CodecSpec {
       } else {
         // Test each parameter individually as their presence is based on flag parsing code which could be buggy.
         "include query parameters with names" in {
-          encodeAndDecode(codec, QueryParameters(values = Some(QueryValue("a", "a", DataType.Text) :: Nil)))
+          encodeAndDecode(codec, QueryParameters(values = Some(QueryValue("a", "a", Text) :: Nil)))
         }
 
         "include query parameters without names" in {
-          encodeAndDecode(codec, QueryParameters(values = Some(QueryValue("a", DataType.Text) :: Nil)))
+          encodeAndDecode(codec, QueryParameters(values = Some(QueryValue("a", Text) :: Nil)))
         }
 
         "include skipMetadata" in {

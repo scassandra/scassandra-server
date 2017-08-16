@@ -39,7 +39,7 @@ import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
-import org.scassandra.codec.datatype.DataType
+import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.{ColumnSpecWithoutTable, NoRowMetadata, PreparedMetadata, RowMetadata}
 import org.scassandra.codec.{Prepare, Prepared}
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
@@ -53,9 +53,8 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
-class PrepareHandlerTest extends FunSuite with ProtocolActorTest with ImplicitSender with Matchers with TestKitBase
+class PrepareHandlerTest extends FunSuite with ProtocolActorTest with ImplicitSender with Matchers with TestKitWithShutdown
   with BeforeAndAfter with MockitoSugar {
-  implicit lazy val system = ActorSystem()
 
   var underTest: ActorRef = null
   val activityLog: ActivityLog = new ActivityLog
@@ -91,7 +90,7 @@ class PrepareHandlerTest extends FunSuite with ProtocolActorTest with ImplicitSe
 
     expectMsgPF() {
       case ProtocolResponse(_, Prepared(_, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
-        List(ColumnSpecWithoutTable("0", DataType.Varchar))), NoRowMetadata)) => true
+        List(ColumnSpecWithoutTable("0", Varchar))), NoRowMetadata)) => true
     }
   }
 
@@ -99,7 +98,7 @@ class PrepareHandlerTest extends FunSuite with ProtocolActorTest with ImplicitSe
     val query = "select * from something where name = ?"
     val prepare = Prepare("select * from something where name = ?")
     val prepared = Prepared(id, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
-      List(ColumnSpecWithoutTable("0", DataType.Int))))
+      List(ColumnSpecWithoutTable("0", CqlInt))))
 
     when(primePreparedStore.apply(any(classOf[Prepare]), any[Function2[PreparedMetadata, RowMetadata, Prepared]]))
       .thenReturn(Some(Reply(prepared)))
@@ -148,7 +147,7 @@ class PrepareHandlerTest extends FunSuite with ProtocolActorTest with ImplicitSe
   test("Should answer queries for prepared statement - exists") {
     val query = "select * from something where name = ?"
     val prepared = Prepared(id, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
-      List(ColumnSpecWithoutTable("0", DataType.Int))))
+      List(ColumnSpecWithoutTable("0", CqlInt))))
     when(primePreparedStore.apply(any(classOf[Prepare]), any[Function2[PreparedMetadata, RowMetadata, Prepared]]))
       .thenReturn(Some(Reply(prepared)))
 
