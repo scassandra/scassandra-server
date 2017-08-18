@@ -19,16 +19,17 @@ import akka.actor.ActorRef
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import org.scassandra.codec._
+import org.scassandra.server.actors.Activity.PreparedStatementExecution
+import org.scassandra.server.actors.ActivityLogActor.RecordExecution
 import org.scassandra.server.actors.ExecuteHandler.HandleExecute
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.priming._
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import org.scassandra.server.priming.query.Reply
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActivityLog, prepareHandler: ActorRef) extends ProtocolActor {
+class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActorRef, prepareHandler: ActorRef) extends ProtocolActor {
 
   import context.dispatcher
   implicit val timeout: Timeout = 1 second
@@ -60,19 +61,19 @@ class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
         val values = extractQueryVariables(queryText, execute.parameters.values.map(_.map(_.value)), dataTypes)
         values match {
           case Some(v) =>
-            activityLog.recordPreparedStatementExecution(queryText, execute.parameters.consistency,
-              execute.parameters.serialConsistency, v, dataTypes, execute.parameters.timestamp)
+           activityLog ! RecordExecution(PreparedStatementExecution(queryText, execute.parameters.consistency,
+              execute.parameters.serialConsistency, v, dataTypes, execute.parameters.timestamp))
           case None =>
-            activityLog.recordPreparedStatementExecution(queryText, execute.parameters.consistency,
-              execute.parameters.serialConsistency, Nil, Nil, execute.parameters.timestamp)
+            activityLog ! RecordExecution(PreparedStatementExecution(queryText, execute.parameters.consistency,
+              execute.parameters.serialConsistency, Nil, Nil, execute.parameters.timestamp))
         }
 
 
         writePrime(execute, prime, header, Some(connection), alternative=Some(Reply(VoidResult)), consistency = Some(execute.parameters.consistency))
       case None =>
         val errMsg = s"Could not find prepared statement with id: 0x${execute.id.toHex}"
-        activityLog.recordPreparedStatementExecution(errMsg, execute.parameters.consistency,
-          execute.parameters.serialConsistency, Nil, Nil, execute.parameters.timestamp)
+        activityLog ! RecordExecution(PreparedStatementExecution(errMsg, execute.parameters.consistency,
+          execute.parameters.serialConsistency, Nil, Nil, execute.parameters.timestamp))
         val unprepared = Unprepared(errMsg, execute.id)
         write(unprepared, header, Some(connection))
     }

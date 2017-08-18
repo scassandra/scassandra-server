@@ -30,20 +30,21 @@
 */
 package org.scassandra.server.actors
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorRef
 import akka.pattern.ask
-import akka.testkit.{ImplicitSender, TestActorRef, TestKitBase}
+import akka.testkit.{ImplicitSender, TestActorRef, TestProbe}
 import akka.util.Timeout
 import org.mockito.ArgumentCaptor
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
 import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.{ColumnSpecWithoutTable, NoRowMetadata, PreparedMetadata, RowMetadata}
 import org.scassandra.codec.{Prepare, Prepared}
+import org.scassandra.server.actors.Activity.PreparedStatementPreparation
+import org.scassandra.server.actors.ActivityLogActor.RecordPrepare
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.priming._
 import org.scassandra.server.priming.prepared.PrimePreparedStore
 import org.scassandra.server.priming.query.Reply
 import scodec.bits.ByteVector
@@ -53,11 +54,12 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 
-class PrepareHandlerTest extends FunSuite with ProtocolActorTest with ImplicitSender with Matchers with TestKitWithShutdown
+class PrepareHandlerTest extends WordSpec with ProtocolActorTest with ImplicitSender with Matchers with TestKitWithShutdown
   with BeforeAndAfter with MockitoSugar {
 
   var underTest: ActorRef = null
-  val activityLog: ActivityLog = new ActivityLog
+  val activityLogProbe = TestProbe()
+  val activityLog: ActorRef = activityLogProbe.ref
   val primePreparedStore = mock[PrimePreparedStore]
 
   def anyFunction() = any[Function2[PreparedMetadata, RowMetadata, Prepared]]
@@ -73,88 +75,85 @@ class PrepareHandlerTest extends FunSuite with ProtocolActorTest with ImplicitSe
     underTest = TestActorRef(new PrepareHandler(primePreparedStore, activityLog))
 
     receiveWhile(10 milliseconds) {
-      case msg @ _ =>
+      case _ =>
+    }
+    activityLogProbe.receiveWhile(10 milliseconds) {
+      case _ =>
     }
   }
 
-  test("Should return prepared message on prepare - no params") {
-    underTest ! protocolMessage(Prepare("select * from something"))
+  "a prepare hadler" must {
+    "return prepared message on prepare - no params" in  {
+      underTest ! protocolMessage(Prepare("select * from something"))
 
-    expectMsgPF() {
-      case ProtocolResponse(_, Prepared(_, PreparedMetadata(Nil, Some("keyspace"), Some("table"), Nil), NoRowMetadata)) => true
-    }
-  }
-
-  test("Should return prepared message on prepare - single param") {
-    underTest ! protocolMessage(Prepare("select * from something where name = ?"))
-
-    expectMsgPF() {
-      case ProtocolResponse(_, Prepared(_, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
-        List(ColumnSpecWithoutTable("0", Varchar))), NoRowMetadata)) => true
-    }
-  }
-
-  test("Priming variable types - Should use types from Prime") {
-    val query = "select * from something where name = ?"
-    val prepare = Prepare("select * from something where name = ?")
-    val prepared = Prepared(id, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
-      List(ColumnSpecWithoutTable("0", CqlInt))))
-
-    when(primePreparedStore.apply(any(classOf[Prepare]), any[Function2[PreparedMetadata, RowMetadata, Prepared]]))
-      .thenReturn(Some(Reply(prepared)))
-
-    underTest ! protocolMessage(Prepare("select * from something where name = ?"))
-
-    val prepareCaptor = ArgumentCaptor.forClass(classOf[Prepare])
-
-    verify(primePreparedStore).apply(prepareCaptor.capture(), anyFunction())
-
-    prepareCaptor.getValue() shouldEqual prepare
-  }
-
-  test("Should use incrementing ids") {
-    var lastId: Int = -1
-    for (i <- 1 to 10) {
-      val query = s"select * from something where name = ? and i = $i"
-
-      underTest ! protocolMessage(Prepare(query))
-
-      // The id returned should always be greater than the last id returned.
       expectMsgPF() {
-        case ProtocolResponse(_, Prepared(id, _, _)) if id.toInt() > lastId =>
-          lastId = id.toInt()
-          true
+        case ProtocolResponse(_, Prepared(_, PreparedMetadata(Nil, Some("keyspace"), Some("table"), Nil), NoRowMetadata)) => true
       }
     }
-  }
 
-  test("Should record preparation in activity log") {
-    activityLog.clearPreparedStatementPreparations()
-    val query = "select * from something where name = ?"
+    "return prepared message on prepare - single param" in {
+      underTest ! protocolMessage(Prepare("select * from something where name = ?"))
 
-    underTest ! protocolMessage(Prepare(query))
+      expectMsgPF() {
+        case ProtocolResponse(_, Prepared(_, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
+        List(ColumnSpecWithoutTable("0", Varchar))), NoRowMetadata)) => true
+      }
+    }
 
-    activityLog.retrievePreparedStatementPreparations().size should equal(1)
-    activityLog.retrievePreparedStatementPreparations().head should equal(PreparedStatementPreparation(query))
-  }
+    "use types from Prime" in {
+      val query = "select * from something where name = ?"
+      val prepare = Prepare("select * from something where name = ?")
+      val prepared = Prepared(id, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
+        List(ColumnSpecWithoutTable("0", CqlInt))))
 
-  test("Should answer queries for prepared statement - not exist") {
-    val response = (underTest ? PreparedStatementQuery(List(1))).mapTo[PreparedStatementResponse]
+      when(primePreparedStore.apply(any(classOf[Prepare]), any[Function2[PreparedMetadata, RowMetadata, Prepared]]))
+        .thenReturn(Some(Reply(prepared)))
 
-    Await.result(response, atMost) should equal(PreparedStatementResponse(Map()))
-  }
+      underTest ! protocolMessage(Prepare("select * from something where name = ?"))
 
-  test("Should answer queries for prepared statement - exists") {
-    val query = "select * from something where name = ?"
-    val prepared = Prepared(id, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
-      List(ColumnSpecWithoutTable("0", CqlInt))))
-    when(primePreparedStore.apply(any(classOf[Prepare]), any[Function2[PreparedMetadata, RowMetadata, Prepared]]))
-      .thenReturn(Some(Reply(prepared)))
+      val prepareCaptor = ArgumentCaptor.forClass(classOf[Prepare])
+      verify(primePreparedStore).apply(prepareCaptor.capture(), anyFunction())
+      prepareCaptor.getValue() shouldEqual prepare
+    }
 
-    underTest ! protocolMessage(Prepare(query))
+    "use incrementing ids" in {
+      var lastId: Int = -1
+      for (i <- 1 to 10) {
+        val query = s"select * from something where name = ? and i = $i"
 
-    val response = (underTest ? PreparedStatementQuery(List(id.toInt()))).mapTo[PreparedStatementResponse]
+        underTest ! protocolMessage(Prepare(query))
 
-    Await.result(response, atMost) should equal(PreparedStatementResponse(Map(id.toInt() -> (query, prepared))))
+        // The id returned should always be greater than the last id returned.
+        expectMsgPF() {
+          case ProtocolResponse(_, Prepared(id, _, _)) if id.toInt() > lastId =>
+            lastId = id.toInt()
+            true
+        }
+      }
+    }
+
+    "record preparation in activity log" in {
+      underTest ! protocolMessage(Prepare("select 1"))
+
+      activityLogProbe.expectMsg(RecordPrepare(PreparedStatementPreparation("select 1")))
+    }
+
+    "answer queries for prepared statement - not exist" in {
+      val response = (underTest ? PreparedStatementQuery(List(1))).mapTo[PreparedStatementResponse]
+
+      Await.result(response, atMost) should equal(PreparedStatementResponse(Map()))
+    }
+
+    "answer queries for prepared statement - exists" in {
+      val query = "select * from something where name = ?"
+      val prepared = Prepared(id, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
+        List(ColumnSpecWithoutTable("0", CqlInt))))
+      when(primePreparedStore.apply(any(classOf[Prepare]), any[Function2[PreparedMetadata, RowMetadata, Prepared]]))
+        .thenReturn(Some(Reply(prepared)))
+
+      underTest ! protocolMessage(Prepare(query))
+      val response = (underTest ? PreparedStatementQuery(List(id.toInt()))).mapTo[PreparedStatementResponse]
+      Await.result(response, atMost) should equal(PreparedStatementResponse(Map(id.toInt() -> (query, prepared))))
+    }
   }
 }

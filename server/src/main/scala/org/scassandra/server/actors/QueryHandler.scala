@@ -15,12 +15,13 @@
  */
 package org.scassandra.server.actors
 
+import akka.actor.ActorRef
 import org.scassandra.codec.datatype.DataType
 import org.scassandra.codec.{Frame, NoRows, Query}
-import org.scassandra.server.priming._
+import org.scassandra.server.actors.ActivityLogActor.RecordQuery
 import org.scassandra.server.priming.query.{PrimeQueryStore, Reply}
 
-class QueryHandler(primeQueryStore: PrimeQueryStore, activityLog: ActivityLog) extends ProtocolActor {
+class QueryHandler(primeQueryStore: PrimeQueryStore, activityLog: ActorRef) extends ProtocolActor {
 
   val noRows = Some(Reply(NoRows))
 
@@ -35,16 +36,14 @@ class QueryHandler(primeQueryStore: PrimeQueryStore, activityLog: ActivityLog) e
         .flatMap { variableTypes =>
           Some(variableTypes).zip(extractQueryVariables(query.query, query.parameters.values.map(_.map(_.value)), variableTypes)).headOption
         }
-
       typesAndValues match {
         case Some((variableTypes, values)) =>
-          activityLog.recordQuery(query.query, query.parameters.consistency, query.parameters.serialConsistency, values,
-            variableTypes, query.parameters.timestamp)
+          activityLog ! RecordQuery(Activity.Query(query.query, query.parameters.consistency, query.parameters.serialConsistency, values,
+            variableTypes, query.parameters.timestamp))
         case None =>
-          activityLog.recordQuery(query.query, query.parameters.consistency, query.parameters.serialConsistency,
-            timestamp = query.parameters.timestamp)
+          activityLog ! RecordQuery(Activity.Query(query.query, query.parameters.consistency, query.parameters.serialConsistency,
+            timestamp = query.parameters.timestamp))
       }
-
       writePrime(query, prime, header, alternative = noRows, consistency = Some(query.parameters.consistency))
       log.info(s"Incoming query: $query")
   }

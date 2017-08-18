@@ -15,18 +15,19 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorRef}
 import com.google.common.annotations.VisibleForTesting
 import org.scassandra.codec._
 import org.scassandra.codec.messages.{PreparedMetadata, RowMetadata}
+import org.scassandra.server.actors.Activity.PreparedStatementPreparation
+import org.scassandra.server.actors.ActivityLogActor.RecordPrepare
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.priming._
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import org.scassandra.server.priming.query.{Fatal, Reply}
 import scodec.bits.ByteVector
 
-
-class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActivityLog) extends ProtocolActor {
+// todo switch to using become
+class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActorRef) extends ProtocolActor {
 
   private var nextId: Int = 1
   private var idToStatement: Map[Int, (String, Prepared)] = Map()
@@ -40,7 +41,7 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
 
   def receive: Actor.Receive = {
     case ProtocolMessage(Frame(header, p: Prepare)) =>
-      activityLog.recordPreparedStatementPreparation(PreparedStatementPreparation(p.query))
+      activityLog ! RecordPrepare(PreparedStatementPreparation(p.query))
       handlePrepare(header, p)
     case PreparedStatementQuery(ids) =>
       sender() ! PreparedStatementResponse(ids.flatMap(id => idToStatement.get(id) match {

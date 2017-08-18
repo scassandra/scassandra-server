@@ -20,11 +20,11 @@ import java.net.InetSocketAddress
 import akka.actor._
 import akka.io.Tcp._
 import akka.pattern.ask
-import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
+import akka.testkit.{ImplicitSender, TestActorRef, TestProbe}
 import akka.util.Timeout
 import org.scalatest._
 import org.scassandra.server.ServerReadyListener
-import org.scassandra.server.priming.ActivityLog
+import org.scassandra.server.actors.ActivityLogActor.RecordConnection
 import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.PrimePreparedStore
 import org.scassandra.server.priming.query.PrimeQueryStore
@@ -33,7 +33,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, _}
 import scala.language.postfixOps
 
-class TcpServerTest extends FunSuite with TestKitWithShutdown
+class TcpServerTest extends WordSpec with TestKitWithShutdown
   with Matchers with ImplicitSender  with BeforeAndAfter with BeforeAndAfterAll {
 
   implicit val atMost: Duration = 1 seconds
@@ -47,7 +47,8 @@ class TcpServerTest extends FunSuite with TestKitWithShutdown
   var manager: TestProbe = _
   var tcpConnection: TestProbe = _
   var underTest: TestActorRef[TcpServer] = _
-  val activityLog = new ActivityLog
+  val activityLogProbe = TestProbe()
+  val activityLog = activityLogProbe.ref
   val remote = new InetSocketAddress("127.0.0.1", 8047)
 
   before {
@@ -71,8 +72,8 @@ class TcpServerTest extends FunSuite with TestKitWithShutdown
     var gotRegister = false
     var gotResumeReading = false
     tcpConnection.receiveN(2).foreach {
-      case x: Register if gotRegister => fail("Got multiple Register messages")
-      case x: Register => gotRegister = true
+      case _: Register if gotRegister => fail("Got multiple Register messages")
+      case _: Register => gotRegister = true
       case ResumeReading if gotResumeReading => fail("Got multiple ResumeReading messages")
       case ResumeReading => gotResumeReading = true
       case x => fail(s"Got unknown message $x")
@@ -101,82 +102,87 @@ class TcpServerTest extends FunSuite with TestKitWithShutdown
     Await.result(future, atMost).connections should contain theSameElementsAs expectedAddresses.map(a => ClientConnection(a.getAddress.getHostAddress, a.getPort))
   }
 
-  test("Should record connections with the ActivityLog") {
-    activityLog.retrieveConnections().size should equal(allAddresses.size)
-  }
 
-  test("Should retrieve all connections") {
-    assertResponse(GetClientConnections(), allAddresses)
-  }
+  "tcp server" must {
+    "record connections with the ActivityLog" in {
+      allAddresses.foreach { _ =>
+        activityLogProbe.expectMsg(RecordConnection())
+      }
+    }
 
-  test("Should close all connections") {
-    assertCommandResponse(CloseClientConnections(), allAddresses)
-  }
+    "retrieve all connections" in {
+      assertResponse(GetClientConnections(), allAddresses)
+    }
 
-  test("Should confirm close one connection") {
-    assertCommandResponse(ConfirmedCloseClientConnections(Some("127.0.0.1"), Some(60002)), _1addresses.filter(_.getPort == 60002))
-  }
+    "close all connections" in {
+      assertCommandResponse(CloseClientConnections(), allAddresses)
+    }
 
-  test("Should reset specific connections by address") {
-    assertCommandResponse(ResetClientConnections(Some("127.0.0.2")), _2addresses)
-  }
+    "confirm close one connection" in {
+      assertCommandResponse(ConfirmedCloseClientConnections(Some("127.0.0.1"), Some(60002)), _1addresses.filter(_.getPort == 60002))
+    }
 
-  test("Should retrieve all connections by address") {
-    assertResponse(GetClientConnections(Some("127.0.0.1")), _1addresses)
-  }
+    "reset specific connections by address" in {
+      assertCommandResponse(ResetClientConnections(Some("127.0.0.2")), _2addresses)
+    }
 
-  test("Should retrieve all connections by port") {
-    assertResponse(GetClientConnections(None, Some(60000)), allAddresses.filter(_.getPort == 60000))
-  }
+    "retrieve all connections by address" in {
+      assertResponse(GetClientConnections(Some("127.0.0.1")), _1addresses)
+    }
 
-  test("Should retrieve specific connection by address and port") {
-    assertResponse(GetClientConnections(Some("127.0.0.3"), Some(60000)), _3addresses.filter(_.getPort == 60000))
-  }
+    "retrieve all connections by port" in {
+      assertResponse(GetClientConnections(None, Some(60000)), allAddresses.filter(_.getPort == 60000))
+    }
 
-  test("Should retrieve empty connections if nothing matches") {
-    assertResponse(GetClientConnections(Some("127.0.0.7")), Set())
-    assertResponse(GetClientConnections(None, Some(1234)), Set())
-    assertResponse(GetClientConnections(Some("127.0.0.7"), Some(1234)), Set())
-  }
+    "retrieve specific connection by address and port" in {
+      assertResponse(GetClientConnections(Some("127.0.0.3"), Some(60000)), _3addresses.filter(_.getPort == 60000))
+    }
 
-  test("Should disable accepting new connections if enabled") {
-    val future = (underTest ? RejectNewConnections()).mapTo[RejectNewConnectionsEnabled]
+    "retrieve empty connections if nothing matches" in {
+      assertResponse(GetClientConnections(Some("127.0.0.7")), Set())
+      assertResponse(GetClientConnections(None, Some(1234)), Set())
+      assertResponse(GetClientConnections(Some("127.0.0.7"), Some(1234)), Set())
+    }
 
-    Await.result(future, atMost).changed should equal (true)
-    manager.expectMsg(ResumeAccepting(0))
+    "disable accepting new connections if enabled" in {
+      val future = (underTest ? RejectNewConnections()).mapTo[RejectNewConnectionsEnabled]
 
-    val future2 = (underTest ? RejectNewConnections()).mapTo[RejectNewConnectionsEnabled]
-    Await.result(future2, atMost).changed should equal (false)
-    manager.expectNoMsg()
-  }
+      Await.result(future, atMost).changed should equal(true)
+      manager.expectMsg(ResumeAccepting(0))
 
-  test("Should disable accepting new connections after count") {
-    val future = (underTest ? RejectNewConnections(2)).mapTo[RejectNewConnectionsEnabled]
+      val future2 = (underTest ? RejectNewConnections()).mapTo[RejectNewConnectionsEnabled]
+      Await.result(future2, atMost).changed should equal(false)
+      manager.expectNoMsg()
+    }
 
-    Await.result(future, atMost).changed should equal (true)
-    manager.expectMsg(ResumeAccepting(1))
+    "disable accepting new connections after count" in {
+      val future = (underTest ? RejectNewConnections(2)).mapTo[RejectNewConnectionsEnabled]
 
-    tcpConnection.send(underTest, Connected(new InetSocketAddress("127.0.0.4", 1000), remote))
-    expectRegister()
-    manager.expectMsg(ResumeAccepting(1))
-    tcpConnection.send(underTest, Connected(new InetSocketAddress("127.0.0.4", 1001), remote))
-    expectRegister()
-    // After two new connections should indicate to stop accepting new ones.
-    manager.expectMsg(ResumeAccepting(0))
-  }
+      Await.result(future, atMost).changed should equal(true)
+      manager.expectMsg(ResumeAccepting(1))
 
-  test("Should enable accepting new connections if disabled") {
-    val future = (underTest ? RejectNewConnections()).mapTo[RejectNewConnectionsEnabled]
+      tcpConnection.send(underTest, Connected(new InetSocketAddress("127.0.0.4", 1000), remote))
+      expectRegister()
+      manager.expectMsg(ResumeAccepting(1))
+      tcpConnection.send(underTest, Connected(new InetSocketAddress("127.0.0.4", 1001), remote))
+      expectRegister()
+      // After two new connections should indicate to stop accepting new ones.
+      manager.expectMsg(ResumeAccepting(0))
+    }
 
-    Await.result(future, atMost).changed should equal (true)
-    manager.expectMsg(ResumeAccepting(0))
+    "enable accepting new connections if disabled" in {
+      val future = (underTest ? RejectNewConnections()).mapTo[RejectNewConnectionsEnabled]
 
-    val future2 = (underTest ? AcceptNewConnections).mapTo[AcceptNewConnectionsEnabled]
-    Await.result(future2, atMost).changed should equal (true)
-    manager.expectMsg(ResumeAccepting(1))
+      Await.result(future, atMost).changed should equal(true)
+      manager.expectMsg(ResumeAccepting(0))
 
-    val future3 = (underTest ? AcceptNewConnections).mapTo[AcceptNewConnectionsEnabled]
-    Await.result(future3, atMost).changed should equal (false)
-    manager.expectNoMsg()
+      val future2 = (underTest ? AcceptNewConnections).mapTo[AcceptNewConnectionsEnabled]
+      Await.result(future2, atMost).changed should equal(true)
+      manager.expectMsg(ResumeAccepting(1))
+
+      val future3 = (underTest ? AcceptNewConnections).mapTo[AcceptNewConnectionsEnabled]
+      Await.result(future3, atMost).changed should equal(false)
+      manager.expectNoMsg()
+    }
   }
 }

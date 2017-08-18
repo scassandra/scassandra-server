@@ -28,6 +28,8 @@ import org.scassandra.codec.messages.BatchQueryKind.BatchQueryKind
 import org.scassandra.codec.messages.BatchType.BatchType
 import org.scassandra.codec.messages.{BatchQueryKind, BatchType}
 import org.scassandra.cql._
+import org.scassandra.server.actors.Activity._
+import org.scassandra.server.actors.ActivityLogActor._
 import org.scassandra.server.actors._
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.batch.{BatchPrimeSingle, BatchQueryPrime, BatchWhen}
