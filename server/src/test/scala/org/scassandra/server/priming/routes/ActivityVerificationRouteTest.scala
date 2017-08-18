@@ -15,54 +15,65 @@
  */
 package org.scassandra.server.priming.routes
 
+import akka.actor.ActorRef
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
+import akka.testkit.{TestActor, TestProbe}
+import org.scalatest._
 import org.scassandra.codec.Consistency.ONE
 import org.scassandra.codec.messages.BatchQueryKind.Simple
 import org.scassandra.codec.messages.BatchType._
+import org.scassandra.server.actors.ActivityLogActor._
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json.PrimingJsonImplicits
 import spray.json.JsonParser
+import akka.testkit.TestActor._
+import org.scassandra.server.actors.Activity._
 
-class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with ActivityVerificationRoute {
+class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfterEach with Matchers with ScalatestRouteTest with ActivityVerificationRoute {
 
   implicit def actorRefFactory = system
-  implicit val activityLog = new ActivityLog
+  val ec = scala.concurrent.ExecutionContext.global
+  val activityLogProbe = TestProbe()
+  implicit val activityLog = activityLogProbe.ref
 
   import PrimingJsonImplicits._
 
-  before {
-    activityLog.clearConnections()
-    activityLog.clearPreparedStatementPreparations()
-    activityLog.clearPreparedStatementExecutions()
-    activityLog.clearQueries()
+  def respondWith(m: Any): Unit = {
+    activityLogProbe.setAutoPilot(new AutoPilot {
+      override def run(sender: ActorRef, msg: Any): AutoPilot = {
+        msg match {
+          case _ =>
+            sender ! m
+            TestActor.NoAutoPilot
+        }
+      }
+    })
   }
 
   describe("Retrieving connection activity") {
     it("Should return connection count from ActivityLog for single connection") {
-      activityLog.recordConnection()
-
+      respondWith(Connections(List(Connection())))
       Get("/connection") ~> activityVerificationRoute ~> check {
         val response: String = responseAs[String]
         val connectionList = JsonParser(response).convertTo[List[Connection]]
         connectionList.size should equal(1)
+        activityLogProbe.expectMsg(GetAllConnections)
       }
     }
 
     it("Should return connection count from ActivityLog for no connections") {
-
+      respondWith(Connections(List()))
       Get("/connection") ~> activityVerificationRoute ~> check {
         val response: String = responseAs[String]
         val connectionList = JsonParser(response).convertTo[List[Connection]]
         connectionList.size should equal(0)
+        activityLogProbe.expectMsg(GetAllConnections)
       }
     }
 
     it("Should clear connections for a delete") {
-      //todo clear activity
-
       Delete("/connection") ~> activityVerificationRoute ~> check {
-        activityLog.retrieveConnections().size should equal(0)
+        activityLogProbe.expectMsg(ClearConnections)
       }
     }
   }
@@ -70,120 +81,86 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfter with Mat
   describe("Retrieving query activity") {
 
     it("Should return queries from ActivityLog - no queries") {
-
+      respondWith(Queries(List()))
       Get("/query") ~> activityVerificationRoute ~> check {
         val response: String = responseAs[String]
         val queryList = JsonParser(response).convertTo[List[Query]]
         queryList.size should equal(0)
+        activityLogProbe.expectMsg(GetAllQueries)
       }
     }
 
     it("Should return queries from ActivityLog - single query") {
-      val query: String = "select * from people"
-      activityLog.recordQuery(query, ONE)
 
+      val queries = List(Query("select 1", ONE, None))
+      respondWith(Queries(queries))
       Get("/query") ~> activityVerificationRoute ~> check {
         val response: String = responseAs[String]
         val queryList = JsonParser(response).convertTo[List[Query]]
-        queryList.size should equal(1)
-        queryList.head.query should equal(query)
+        queryList should equal(queries)
+        activityLogProbe.expectMsg(GetAllQueries)
       }
     }
 
     it("Should clear queries for a delete") {
-      activityLog.recordQuery("select * from people", ONE)
-
       Delete("/query") ~> activityVerificationRoute ~> check {
-        activityLog.retrieveQueries().size should equal(0)
+        activityLogProbe.expectMsg(ClearQueries)
       }
     }
   }
 
   describe("Primed statement preparations") {
-    it("Should return prepared statement preparations from ActivityLog - no activity") {
-      activityLog.clearPreparedStatementPreparations()
+    it("Should return prepared statement preparations from ActivityLog") {
+      val ps = PreparedStatementPreparation("cat")
+      respondWith(Prepares(List(ps)))
 
       Get("/prepared-statement-preparation") ~> activityVerificationRoute ~> check {
         val response = responseAs[List[PreparedStatementPreparation]]
-        response.size should equal(0)
-      }
-    }
-
-    it("Should return prepared statement preparations from ActivityLog - single") {
-      activityLog.clearPreparedStatementPreparations()
-      val preparedStatementText = "cat"
-      activityLog.recordPreparedStatementPreparation(PreparedStatementPreparation(preparedStatementText))
-
-      Get("/prepared-statement-preparation") ~> activityVerificationRoute ~> check {
-        val response = responseAs[List[PreparedStatementPreparation]]
-
-        response.size should equal(1)
-        response.head.preparedStatementText should equal(preparedStatementText)
+        response should equal(List(ps))
+        activityLogProbe.expectMsg(GetAllPrepares)
       }
     }
 
     it("Should clear prepared statement preparations for a delete") {
-      val preparedStatementText = "dog"
-      activityLog.recordPreparedStatementPreparation(PreparedStatementPreparation(preparedStatementText))
-
       Delete("/prepared-statement-preparation") ~> activityVerificationRoute ~> check {
-        activityLog.retrievePreparedStatementPreparations().size should equal(0)
+        activityLogProbe.expectMsg(ClearPrepares)
       }
     }
   }
 
-  describe("Primed statement execution") {
-    it("Should return prepared statement executions from ActivityLog - no activity") {
-      activityLog.clearPreparedStatementExecutions()
-
-      Get("/prepared-statement-execution") ~> activityVerificationRoute ~> check {
-        val response = responseAs[List[PreparedStatementExecution]]
-        response.size should equal(0)
-      }
-    }
-
+  describe("Prepared statement execution") {
     it("Should return prepared statement executions from ActivityLog - single") {
-      activityLog.clearPreparedStatementExecutions()
-      val preparedStatementText: String = ""
-      activityLog.recordPreparedStatementExecution(preparedStatementText, ONE, None, List(), List(), None)
-
+      val pse = PreparedStatementExecution("cat", ONE, None, List(), List(), None)
+      respondWith(Executions(List(pse)))
       Get("/prepared-statement-execution") ~> activityVerificationRoute ~> check {
         val response = responseAs[List[PreparedStatementExecution]]
-
-        response.size should equal(1)
-        response.head.preparedStatementText should equal(preparedStatementText)
+        response should equal(List(pse))
+        activityLogProbe.expectMsg(GetAllExecutions)
       }
     }
 
     it("Should clear prepared statement executions for a delete") {
-      activityLog.recordPreparedStatementExecution("", ONE, None, List(), List(), None)
-
       Delete("/prepared-statement-execution") ~> activityVerificationRoute ~> check {
-        activityLog.retrievePreparedStatementExecutions().size should equal(0)
+        activityLogProbe.expectMsg(ClearExecutions)
       }
     }
   }
 
   describe("Batch execution") {
     it("Should return executions from ActivityLog") {
-      activityLog.clearBatchExecutions()
-      activityLog.recordBatchExecution(BatchExecution(List(BatchQuery("Query", Simple)), ONE, None, LOGGED, None))
+      val execution = BatchExecution(List(BatchQuery("Query", Simple)), ONE, None, LOGGED, None)
+      respondWith(Batches(List(execution)))
 
       Get("/batch-execution") ~> activityVerificationRoute ~> check {
         val response = responseAs[List[BatchExecution]]
-
-        response.size should equal(1)
-        response.head.batchQueries should equal(List(BatchQuery("Query", Simple)))
-        response.head.consistency should equal(ONE)
-        response.head.batchType should equal(LOGGED)
+        response should equal(List(execution))
+        activityLogProbe.expectMsg(GetAllBatches)
       }
     }
 
     it("Should clear batch executions for a delete") {
-      activityLog.recordBatchExecution(BatchExecution(List(), ONE, None, UNLOGGED, None))
-
       Delete("/batch-execution") ~> activityVerificationRoute ~> check {
-        activityLog.retrieveBatchExecutions().size should equal(0)
+        activityLogProbe.expectMsg(ClearBatches)
       }
     }
   }

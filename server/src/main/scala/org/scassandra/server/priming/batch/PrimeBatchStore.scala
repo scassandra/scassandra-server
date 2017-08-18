@@ -18,7 +18,7 @@ package org.scassandra.server.priming.batch
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec.Consistency.Consistency
 import org.scassandra.codec.messages.BatchType.BatchType
-import org.scassandra.server.priming.BatchExecution
+import org.scassandra.server.actors.Activity.BatchExecution
 import org.scassandra.server.priming.query.Prime
 
 class PrimeBatchStore extends LazyLogging {

@@ -20,6 +20,7 @@ import org.scassandra.codec.Consistency
 import org.scassandra.codec.Consistency._
 import org.scassandra.codec.messages.BatchQueryKind._
 import org.scassandra.codec.messages.BatchType._
+import org.scassandra.server.actors.Activity._
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json.{Success, WriteTimeout}
 import org.scassandra.server.priming.query.Then

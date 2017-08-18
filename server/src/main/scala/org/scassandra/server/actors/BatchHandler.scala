@@ -20,9 +20,10 @@ import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import org.scassandra.codec._
 import org.scassandra.codec.messages.{BatchQueryKind, PreparedBatchQuery, SimpleBatchQuery}
+import org.scassandra.server.actors.Activity._
+import org.scassandra.server.actors.ActivityLogActor.RecordBatch
 import org.scassandra.server.actors.BatchHandler.BatchToFinish
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.priming._
 import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import org.scassandra.server.priming.query.Reply
@@ -30,7 +31,7 @@ import org.scassandra.server.priming.query.Reply
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class BatchHandler(activityLog: ActivityLog,
+class BatchHandler(activityLog: ActorRef,
                    prepareHandler: ActorRef,
                    batchPrimeStore: PrimeBatchStore,
                    preparedStore: PreparedStoreLookup) extends ProtocolActor {
@@ -85,7 +86,7 @@ class BatchHandler(activityLog: ActivityLog,
 
   def processBatch(header: FrameHeader, batch: Batch, batchQueries: Seq[BatchQuery], recipient: ActorRef) = {
     val execution = BatchExecution(batchQueries, batch.consistency, batch.serialConsistency, batch.batchType, batch.timestamp)
-    activityLog.recordBatchExecution(execution)
+    activityLog ! RecordBatch(execution)
     val prime = batchPrimeStore(execution)
     prime.foreach(p => log.info("Found prime {} for batch execution {}", p, execution))
     writePrime(batch, prime, header, recipient=Some(recipient), alternative = Some(Reply(VoidResult)), consistency = Some(batch.consistency))

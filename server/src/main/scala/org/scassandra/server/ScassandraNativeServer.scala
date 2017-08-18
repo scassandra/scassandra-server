@@ -21,11 +21,11 @@ import akka.pattern.{ask, pipe}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.actors.TcpServer
+import org.scassandra.server.actors.{ActivityLogActor, TcpServer}
+import org.scassandra.server.priming.AllRoutes
 import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.{CompositePreparedPrimeStore, PrimePreparedMultiStore, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.priming.query.PrimeQueryStore
-import org.scassandra.server.priming.{ActivityLog, AllRoutes}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -62,14 +62,14 @@ class ScassandraServer(val primeQueryStore: PrimeQueryStore,
   val primePreparedPatternStore = new PrimePreparedPatternStore
   val primePreparedMultiStore = new PrimePreparedMultiStore
   val primeBatchStore = new PrimeBatchStore
-  val activityLog = new ActivityLog
+  val activityLog: ActorRef = context.actorOf(Props[ActivityLogActor])
 
   val preparedLookup = new CompositePreparedPrimeStore(primePreparedStore, primePreparedPatternStore, primePreparedMultiStore)
   val primingReadyListener: ActorRef = context.actorOf(Props(classOf[ServerReadyListener]), "PrimingReadyListener")
   val tcpReadyListener: ActorRef = context.actorOf(Props(classOf[ServerReadyListener]), "TcpReadyListener")
   val tcpServer: ActorRef = context.actorOf(Props(classOf[TcpServer], binaryListenAddress, binaryPortNumber, primeQueryStore, preparedLookup, primeBatchStore, tcpReadyListener, activityLog), "BinaryTcpListener")
 
-  implicit val dispatcher: ExecutionContext = context.dispatcher
+  implicit val ec: ExecutionContext = context.dispatcher
   val timeout = Timeout(5.seconds)
 
   implicit val materialiser = ActorMaterializer()
