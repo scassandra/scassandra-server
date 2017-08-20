@@ -21,9 +21,8 @@ import akka.pattern.{ask, pipe}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.actors.{ActivityLogActor, TcpServer}
+import org.scassandra.server.actors.{ActivityLogActor, PrimeBatchStoreActor, TcpServer}
 import org.scassandra.server.priming.AllRoutes
-import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.{CompositePreparedPrimeStore, PrimePreparedMultiStore, PrimePreparedPatternStore, PrimePreparedStore}
 import org.scassandra.server.priming.query.PrimeQueryStore
 
@@ -61,7 +60,7 @@ class ScassandraServer(val primeQueryStore: PrimeQueryStore,
   val primePreparedStore = new PrimePreparedStore
   val primePreparedPatternStore = new PrimePreparedPatternStore
   val primePreparedMultiStore = new PrimePreparedMultiStore
-  val primeBatchStore = new PrimeBatchStore
+  val primeBatchStore: ActorRef =  context.actorOf(Props[PrimeBatchStoreActor])
   val activityLog: ActorRef = context.actorOf(Props[ActivityLogActor])
 
   val preparedLookup = new CompositePreparedPrimeStore(primePreparedStore, primePreparedPatternStore, primePreparedMultiStore)
@@ -78,7 +77,7 @@ class ScassandraServer(val primeQueryStore: PrimeQueryStore,
   val bindingFuture: Future[Http.ServerBinding] = Http().bindAndHandle(allRoutes, adminListenAddress, adminPortNumber)
 
   override def receive: Receive = {
-    case AwaitStartup(timeout) => {
+    case AwaitStartup(timeout) =>
       implicit val t: Timeout = timeout
       // Create a future that completes when both listeners ready.
       val f = Future.sequence(
@@ -86,21 +85,16 @@ class ScassandraServer(val primeQueryStore: PrimeQueryStore,
           bindingFuture ::
           Nil
       )
-
       f pipeTo sender
-    }
-    case ShutdownServer(timeout) => {
+    case ShutdownServer(timeout) =>
       implicit val t: Timeout = timeout
-
       // Send shutdown message to each sender and on complete send a PoisonPill to self.
       val f = Future.sequence(
         tcpServer ? Shutdown ::
           bindingFuture.flatMap(_.unbind()) ::
           Nil
       ).map { _ => self ? PoisonPill }
-
       f pipeTo sender
-    }
   }
 
 }

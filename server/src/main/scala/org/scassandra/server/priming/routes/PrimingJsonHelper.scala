@@ -45,7 +45,7 @@ object PrimingJsonHelper extends LazyLogging {
     }
   }
 
-  def extractPrime(thenDo: ThenProvider, keyspace: Option[String] = Some(""), table: Option[String] = Some("")) = {
+  def extractPrime(thenDo: ThenProvider, keyspace: Option[String] = Some(""), table: Option[String] = Some("")): Prime = {
     val fixedDelay = thenDo.fixedDelay.map(FiniteDuration(_, TimeUnit.MILLISECONDS))
     val config = thenDo.config.getOrElse(Map.empty)
 

@@ -15,19 +15,18 @@
  */
 package org.scassandra.server.priming.routes
 
+import akka.actor.ActorRef
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.priming.batch.{BatchPrimeSingle, PrimeBatchStore}
+import org.scassandra.server.actors.PrimeBatchStoreActor.{BatchPrimeSingle, ClearPrimes, RecordBatchPrime}
 import org.scassandra.server.priming.json.PrimingJsonImplicits
 
 trait PrimingBatchRoute extends LazyLogging {
-
   import PrimingJsonImplicits._
-
-  implicit val primeBatchStore: PrimeBatchStore
+  val primeBatchStore: ActorRef
 
   val batchRoute: Route = {
     cors() {
@@ -45,7 +44,7 @@ trait PrimingBatchRoute extends LazyLogging {
             primeRequest => {
               complete {
                 logger.info("Received batch prime {}", primeRequest)
-                primeBatchStore.record(primeRequest)
+                primeBatchStore ! RecordBatchPrime(primeRequest)
                 StatusCodes.OK
               }
             }
@@ -54,8 +53,7 @@ trait PrimingBatchRoute extends LazyLogging {
           delete {
             complete {
               logger.debug("Deleting all batch primes")
-              primeBatchStore.clear()
-              logger.debug("Return 200")
+              primeBatchStore ! ClearPrimes
               StatusCodes.OK
             }
           }

@@ -16,9 +16,9 @@
 package org.scassandra.server.actors
 
 import akka.actor.{ActorRef, Props}
+import akka.testkit.TestActor.{AutoPilot, KeepRunning, SetAutoPilot}
 import akka.testkit.{ImplicitSender, TestProbe}
-import org.mockito.Matchers._
-import org.mockito.Mockito._
+import com.typesafe.scalalogging.LazyLogging
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
 import org.scassandra.codec._
@@ -27,27 +27,35 @@ import org.scassandra.codec.messages._
 import org.scassandra.server.actors.Activity.BatchExecution
 import org.scassandra.server.actors.ActivityLogActor.RecordBatch
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.priming.batch.PrimeBatchStore
+import org.scassandra.server.actors.PrimeBatchStoreActor.MatchResult
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import scodec.bits.ByteVector
 
 import scala.concurrent.duration._
 
 class BatchHandlerTest extends WordSpec with ProtocolActorTest with TestKitWithShutdown with ImplicitSender with MockitoSugar
-  with Matchers with BeforeAndAfter {
+  with Matchers with BeforeAndAfter with LazyLogging {
 
   var underTest: ActorRef = _
   var prepareHandlerProbe: TestProbe = _
   val activityLogProbe = TestProbe()
   val activityLog = activityLogProbe.ref
-  val primeBatchStore = mock[PrimeBatchStore]
+  val primeBatchStoreProbe = TestProbe()
+  val primeBatchStore = primeBatchStoreProbe.ref
   val primePreparedStore = mock[PreparedStoreLookup]
+
+  primeBatchStoreProbe.setAutoPilot((sender: ActorRef, msg: Any) => {
+    logger.error("Got msg: " + msg)
+    msg match {
+      case _ => sender ! MatchResult(None)
+    }
+    KeepRunning
+  })
 
   before {
     prepareHandlerProbe = TestProbe()
     underTest = system.actorOf(Props(classOf[BatchHandler], activityLog, prepareHandlerProbe.ref, primeBatchStore,
       primePreparedStore))
-    when(primeBatchStore.apply(any(classOf[BatchExecution]))).thenReturn(None)
     activityLogProbe.receiveWhile(10 milliseconds) {
       case _ =>
     }

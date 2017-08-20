@@ -24,16 +24,17 @@ import org.scassandra.server.actors.Activity._
 import org.scassandra.server.actors.ActivityLogActor.RecordBatch
 import org.scassandra.server.actors.BatchHandler.BatchToFinish
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.priming.batch.PrimeBatchStore
+import org.scassandra.server.actors.PrimeBatchStoreActor.{MatchBatch, MatchResult}
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import org.scassandra.server.priming.query.Reply
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
 class BatchHandler(activityLog: ActorRef,
                    prepareHandler: ActorRef,
-                   batchPrimeStore: PrimeBatchStore,
+                   batchPrimeStore: ActorRef,
                    preparedStore: PreparedStoreLookup) extends ProtocolActor {
 
   import context.dispatcher
@@ -59,12 +60,12 @@ class BatchHandler(activityLog: ActorRef,
         val connection = sender()
         val toFinish = (prepareHandler ? PreparedStatementQuery(preparedIds)).mapTo[PreparedStatementResponse]
           .map(result => BatchToFinish(header, batch, result, connection))
-        log.debug("Piping batch to finish to self")
+        log.error("Piping batch to finish to self")
         toFinish pipeTo self
       }
 
     case BatchToFinish(header, batch, preparedResponse, connection) =>
-      log.debug("Received batch to finish")
+      log.error("Received batch to finish")
       val batchQueries = batch.queries.map {
         case SimpleBatchQuery(query, _) => BatchQuery(query, BatchQueryKind.Simple)
         case PreparedBatchQuery(i, byteValues) =>
@@ -87,12 +88,16 @@ class BatchHandler(activityLog: ActorRef,
   def processBatch(header: FrameHeader, batch: Batch, batchQueries: Seq[BatchQuery], recipient: ActorRef) = {
     val execution = BatchExecution(batchQueries, batch.consistency, batch.serialConsistency, batch.batchType, batch.timestamp)
     activityLog ! RecordBatch(execution)
-    val prime = batchPrimeStore(execution)
-    prime.foreach(p => log.info("Found prime {} for batch execution {}", p, execution))
-    writePrime(batch, prime, header, recipient=Some(recipient), alternative = Some(Reply(VoidResult)), consistency = Some(batch.consistency))
+    log.error("Getting prime for batch")
+    (batchPrimeStore ? MatchBatch(execution)).mapTo[MatchResult].onComplete {
+      case Failure(e) =>
+        log.error("Failed to get response from batch prime store", e)
+      case Success(MatchResult(prime)) =>
+        writePrime(batch, prime, header, Some(recipient), alternative = Some(Reply(VoidResult)), consistency = Some(batch.consistency))
+    }
   }
 }
 
 object BatchHandler {
-  case class BatchToFinish(header: FrameHeader, batch: Batch, prepared: PreparedStatementResponse, connection: ActorRef)
+  private case class BatchToFinish(header: FrameHeader, batch: Batch, prepared: PreparedStatementResponse, connection: ActorRef)
 }

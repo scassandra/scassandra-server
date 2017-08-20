@@ -23,16 +23,15 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec.Consistency
 import org.scassandra.codec.Consistency.Consistency
-import org.scassandra.codec.datatype.{CqlList, CqlMap, CqlSet, DataType, Tuple}
+import org.scassandra.codec.datatype.{PrimitiveType => _, _}
 import org.scassandra.codec.messages.BatchQueryKind.BatchQueryKind
 import org.scassandra.codec.messages.BatchType.BatchType
 import org.scassandra.codec.messages.{BatchQueryKind, BatchType}
 import org.scassandra.cql._
 import org.scassandra.server.actors.Activity._
-import org.scassandra.server.actors.ActivityLogActor._
+import org.scassandra.server.actors.PrimeBatchStoreActor.{BatchPrimeSingle, BatchQueryPrime, BatchWhen}
 import org.scassandra.server.actors._
 import org.scassandra.server.priming._
-import org.scassandra.server.priming.batch.{BatchPrimeSingle, BatchQueryPrime, BatchWhen}
 import org.scassandra.server.priming.prepared._
 import org.scassandra.server.priming.query.{PrimeCriteria, PrimeQuerySingle, Then, When}
 import org.scassandra.server.priming.routes.Version

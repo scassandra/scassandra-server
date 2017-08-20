@@ -22,7 +22,6 @@ import akka.io.{IO, Tcp}
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import org.scassandra.server.actors.ActivityLogActor.RecordConnection
-import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import org.scassandra.server.priming.query.PrimeQueryStore
 import org.scassandra.server.{RegisterHandler, ServerReady, Shutdown}
@@ -34,7 +33,7 @@ import scala.language.postfixOps
 class TcpServer(listenAddress: String, port: Int,
                 primedResults: PrimeQueryStore,
                 primePrepareStore: PreparedStoreLookup,
-                primeBatchStore: PrimeBatchStore,
+                primeBatchStore: ActorRef,
                 serverReadyListener: ActorRef,
                 activityLog: ActorRef,
                 manager: Option[ActorRef]) extends Actor with ActorLogging {
@@ -42,7 +41,7 @@ class TcpServer(listenAddress: String, port: Int,
   def this(listenAddress: String, port: Int,
            primedResults: PrimeQueryStore,
            primePrepareStore: PreparedStoreLookup,
-           primeBatchStore: PrimeBatchStore,
+           primeBatchStore: ActorRef,
            serverReadyListener: ActorRef,
            activityLog: ActorRef) {
     this(listenAddress, port, primedResults, primePrepareStore, primeBatchStore, serverReadyListener, activityLog, None)
@@ -102,13 +101,12 @@ class TcpServer(listenAddress: String, port: Int,
       disableCounter -= 1
       checkEnablement(listener)
 
-    case GetClientConnections(hostOption, portOption) => {
+    case GetClientConnections(hostOption, portOption) =>
       val matchingClients = findChildren(hostOption, portOption).map(actorToConnection)
       val response = ClientConnections(matchingClients)
       sender ! response
-    }
 
-    case c: SendCommandToClient => {
+    case c: SendCommandToClient =>
       val children = findChildren(c.host, c.port)
 
       // Close each found connection.
@@ -118,7 +116,6 @@ class TcpServer(listenAddress: String, port: Int,
 
       // Once all connections closed map to ClientConnections response
       Future.sequence(responses).map(actor => ClosedConnections(actor.map(actorToConnection), c.description)).pipeTo(sender())
-    }
 
     case AcceptNewConnections =>
       val response = AcceptNewConnectionsEnabled(!acceptConnections)
@@ -140,16 +137,15 @@ class TcpServer(listenAddress: String, port: Int,
     case Shutdown =>
       val requestor = sender
       context.become {
-        case u@Unbound => {
+        case u@Unbound =>
           requestor ! u
           // Kill self after unbound
           self ! PoisonPill
-        }
       }
       listener ! Unbind
   }
 
-  private def checkEnablement(listener: ActorRef) = {
+  private def checkEnablement(listener: ActorRef): Unit = {
     if (acceptConnections) {
       if (disableCounter == 0) {
         log.debug("toggling to disable new connections.")
