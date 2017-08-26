@@ -17,17 +17,17 @@ package org.scassandra.server.priming.prepared
 
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.codec.Consistency.{all => ALL, _}
-import org.scassandra.codec.datatype.{Text}
+import org.scassandra.codec.datatype.Text
 import org.scassandra.codec.messages.ColumnSpec._
 import org.scassandra.codec.messages.{PreparedMetadata, QueryParameters, RowMetadata}
 import org.scassandra.codec.{QueryValue => v, Consistency => _, _}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Reply
 import org.scassandra.server.priming.json.{ReadTimeout, Success, WriteTimeout}
-import org.scassandra.server.priming.query.Reply
 import scodec.bits.ByteVector
 
 // todo generalise all the prepared stores, very little difference
 class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndAfter {
-  implicit val protocolVersion = ProtocolVersion.latest
+  implicit val protocolVersion: ProtocolVersion = ProtocolVersion.latest
 
   val id = ByteVector(1)
 

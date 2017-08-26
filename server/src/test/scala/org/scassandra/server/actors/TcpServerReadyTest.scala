@@ -22,7 +22,6 @@ import akka.testkit._
 import org.scalatest.{Matchers, WordSpec}
 import org.scassandra.server.ServerReady
 import org.scassandra.server.priming.prepared.PrimePreparedStore
-import org.scassandra.server.priming.query.PrimeQueryStore
 
 class TcpServerReadyTest extends WordSpec with TestKitWithShutdown with Matchers {
 
@@ -33,8 +32,9 @@ class TcpServerReadyTest extends WordSpec with TestKitWithShutdown with Matchers
       val activityLog = TestProbe()
       val primeBatchStore = TestProbe()
       val remote = new InetSocketAddress("127.0.0.1", 8046)
+      val primeQueryStore = TestProbe()
 
-      val tcpServer = TestActorRef(new TcpServer("localhost", 8046, new PrimeQueryStore, new PrimePreparedStore, primeBatchStore.ref, tcpReadyListener.ref, activityLog.ref, Some(manager.ref)))
+      val tcpServer = TestActorRef(new TcpServer("localhost", 8046, primeQueryStore.ref, new PrimePreparedStore, primeBatchStore.ref, tcpReadyListener.ref, activityLog.ref, Some(manager.ref)))
       manager.expectMsgType[Bind]
       manager.send(tcpServer, Bound(remote))
 

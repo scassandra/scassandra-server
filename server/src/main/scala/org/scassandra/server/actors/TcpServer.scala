@@ -23,7 +23,6 @@ import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import org.scassandra.server.actors.ActivityLogActor.RecordConnection
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
-import org.scassandra.server.priming.query.PrimeQueryStore
 import org.scassandra.server.{RegisterHandler, ServerReady, Shutdown}
 
 import scala.concurrent.Future
@@ -31,7 +30,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class TcpServer(listenAddress: String, port: Int,
-                primedResults: PrimeQueryStore,
+                primedResults: ActorRef,
                 primePrepareStore: PreparedStoreLookup,
                 primeBatchStore: ActorRef,
                 serverReadyListener: ActorRef,
@@ -39,12 +38,12 @@ class TcpServer(listenAddress: String, port: Int,
                 manager: Option[ActorRef]) extends Actor with ActorLogging {
 
   def this(listenAddress: String, port: Int,
-           primedResults: PrimeQueryStore,
+           primeQueryStore: ActorRef,
            primePrepareStore: PreparedStoreLookup,
            primeBatchStore: ActorRef,
            serverReadyListener: ActorRef,
            activityLog: ActorRef) {
-    this(listenAddress, port, primedResults, primePrepareStore, primeBatchStore, serverReadyListener, activityLog, None)
+    this(listenAddress, port, primeQueryStore, primePrepareStore, primeBatchStore, serverReadyListener, activityLog, None)
   }
 
   import akka.io.Tcp._
@@ -66,7 +65,7 @@ class TcpServer(listenAddress: String, port: Int,
   }
 
   def receive = {
-    case b@Bound(localAddress) =>
+    case Bound(_) =>
       log.info(s"Port $port ready for Cassandra binary connections. ${sender()}")
       serverReadyListener ! ServerReady
       sender ! ResumeAccepting(batchSize = 1)
@@ -111,7 +110,7 @@ class TcpServer(listenAddress: String, port: Int,
 
       // Close each found connection.
       val responses = children.map { child =>
-        (child ? c.command).mapTo[Event].map { c => child }
+        (child ? c.command).mapTo[Event].map { _ => child }
       }
 
       // Once all connections closed map to ClientConnections response
@@ -135,10 +134,10 @@ class TcpServer(listenAddress: String, port: Int,
       }
       sender ! response
     case Shutdown =>
-      val requestor = sender
+      val requester = sender
       context.become {
         case u@Unbound =>
-          requestor ! u
+          requester ! u
           // Kill self after unbound
           self ! PoisonPill
       }

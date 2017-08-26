@@ -1,4 +1,4 @@
-package org.scassandra.server.actors
+package org.scassandra.server.actors.priming
 
 import akka.actor.Props
 import akka.testkit.ImplicitSender
@@ -9,9 +9,10 @@ import org.scassandra.codec.messages.BatchQueryKind._
 import org.scassandra.codec.messages.BatchType
 import org.scassandra.codec.messages.BatchType._
 import org.scassandra.server.actors.Activity.{BatchExecution, BatchQuery}
-import org.scassandra.server.actors.PrimeBatchStoreActor._
+import org.scassandra.server.actors.TestKitWithShutdown
+import org.scassandra.server.actors.priming.PrimeBatchStoreActor._
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Then
 import org.scassandra.server.priming.json.Success
-import org.scassandra.server.priming.query.Then
 
 class PrimeBatchStoreActorTest extends WordSpec with TestKitWithShutdown with ImplicitSender {
   val primeRequest = BatchPrimeSingle(BatchWhen(List(BatchQueryPrime("select * blah", Simple)), consistency = Some(List(ONE))), Then(result = Some(Success)))

@@ -30,8 +30,8 @@ import org.scassandra.codec.messages.{ColumnSpecWithoutTable, PreparedMetadata, 
 import org.scassandra.server.actors.Activity.PreparedStatementExecution
 import org.scassandra.server.actors.ActivityLogActor.RecordExecution
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Reply
 import org.scassandra.server.priming.prepared.PrimePreparedStore
-import org.scassandra.server.priming.query.Reply
 import scodec.bits.ByteVector
 
 import scala.concurrent.duration._

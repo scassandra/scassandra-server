@@ -19,9 +19,9 @@ import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec.Consistency.Consistency
 import org.scassandra.codec.datatype.DataType
 import org.scassandra.codec.{Execute, Prepare}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.ThenProvider
 import org.scassandra.server.priming.Defaulter._
 import org.scassandra.server.priming.json._
-import org.scassandra.server.priming.query.ThenProvider
 import org.scassandra.server.priming.routes.PrimingJsonHelper.extractPrime
 
 trait PreparedPrimeCriteria {
@@ -109,7 +109,7 @@ case class ExactMatch(matcher: Option[Any]) extends VariableMatch with LazyLoggi
     (variable, matcher) match {
       case (Some(v), Some(x)) if dataType.native.isDefinedAt(x) =>
         dataType.native(x).equals(v) // convert into data type's native value and then compare.
-      case (Some(v), Some(x)) =>
+      case (Some(_), Some(_)) =>
         logger.warn("Unsure how to convert matcher value of $x to data type $dataType, forgoing comparison")
         false
       case (None, None) => true

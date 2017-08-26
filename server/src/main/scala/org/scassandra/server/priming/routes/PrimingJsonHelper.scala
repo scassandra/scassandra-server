@@ -21,9 +21,9 @@ import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec.datatype.{DataType, Varchar}
 import org.scassandra.codec.messages.{ColumnSpecWithoutTable, Row, RowMetadata}
 import org.scassandra.codec.{Consistency, Rows}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
-import org.scassandra.server.priming.query._
 import org.scassandra.{codec => c}
 import scodec.bits.ByteVector
 
@@ -38,7 +38,7 @@ object PrimingJsonHelper extends LazyLogging {
     primeQueryRequest.when match {
       // Prime for a specific query
       case When(Some(query), None, _, _, _) =>
-        TSuccess(PrimeCriteria(query, primeConsistencies, patternMatch = false))
+        TSuccess(PrimeCriteria(query, primeConsistencies))
       // Prime for a query pattern
       case When(None, Some(queryPattern), _, _, _) => TSuccess(PrimeCriteria(queryPattern, primeConsistencies, patternMatch = true))
       case _ => Failure(new IllegalArgumentException("Can't specify query and queryPattern"))

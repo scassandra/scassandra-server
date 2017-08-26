@@ -45,8 +45,8 @@ import org.scassandra.codec.{Prepare, Prepared}
 import org.scassandra.server.actors.Activity.PreparedStatementPreparation
 import org.scassandra.server.actors.ActivityLogActor.RecordPrepare
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Reply
 import org.scassandra.server.priming.prepared.PrimePreparedStore
-import org.scassandra.server.priming.query.Reply
 import scodec.bits.ByteVector
 
 import scala.concurrent.Await

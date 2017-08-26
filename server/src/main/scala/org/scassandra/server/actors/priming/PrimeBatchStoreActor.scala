@@ -1,4 +1,4 @@
-package org.scassandra.server.actors
+package org.scassandra.server.actors.priming
 
 import akka.actor.Actor
 import org.scassandra.codec.Consistency.Consistency
@@ -6,9 +6,9 @@ import org.scassandra.codec.messages.BatchQueryKind.BatchQueryKind
 import org.scassandra.codec.messages.BatchType
 import org.scassandra.codec.messages.BatchType.BatchType
 import org.scassandra.server.actors.Activity.BatchExecution
-import org.scassandra.server.actors.PrimeBatchStoreActor._
+import org.scassandra.server.actors.priming.PrimeBatchStoreActor._
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Prime, Then}
 import org.scassandra.server.priming.Defaulter
-import org.scassandra.server.priming.query.{Prime, Then}
 import org.scassandra.server.priming.routes.PrimingJsonHelper.extractPrime
 
 class PrimeBatchStoreActor extends Actor {

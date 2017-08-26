@@ -22,11 +22,11 @@ import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.ColumnSpec._
 import org.scassandra.codec.messages.{PreparedMetadata, QueryParameters, RowMetadata}
 import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
-import org.scassandra.server.priming.query.Reply
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Reply
 import scodec.bits.ByteVector
 
 class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAndAfter {
-  implicit val protocolVersion = ProtocolVersion.latest
+  implicit val protocolVersion: ProtocolVersion = ProtocolVersion.latest
 
   val id = ByteVector(1)
 

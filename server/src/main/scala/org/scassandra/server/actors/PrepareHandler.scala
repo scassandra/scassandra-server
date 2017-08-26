@@ -22,8 +22,8 @@ import org.scassandra.codec.messages.{PreparedMetadata, RowMetadata}
 import org.scassandra.server.actors.Activity.PreparedStatementPreparation
 import org.scassandra.server.actors.ActivityLogActor.RecordPrepare
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Fatal, Reply}
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
-import org.scassandra.server.priming.query.{Fatal, Reply}
 import scodec.bits.ByteVector
 
 // todo switch to using become

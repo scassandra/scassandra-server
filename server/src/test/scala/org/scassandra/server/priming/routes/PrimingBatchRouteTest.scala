@@ -20,9 +20,9 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
 import org.scalatest.{Matchers, WordSpec}
-import org.scassandra.server.actors.PrimeBatchStoreActor.{BatchPrimeSingle, BatchWhen, ClearPrimes, RecordBatchPrime}
+import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{BatchPrimeSingle, BatchWhen, ClearPrimes, RecordBatchPrime}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Then
 import org.scassandra.server.priming.json.{PrimingJsonImplicits, Success}
-import org.scassandra.server.priming.query.Then
 
 class PrimingBatchRouteTest extends WordSpec with Matchers with ScalatestRouteTest with PrimingBatchRoute {
 

@@ -26,7 +26,6 @@ import org.scalatest._
 import org.scassandra.server.ServerReadyListener
 import org.scassandra.server.actors.ActivityLogActor.RecordConnection
 import org.scassandra.server.priming.prepared.PrimePreparedStore
-import org.scassandra.server.priming.query.PrimeQueryStore
 
 import scala.concurrent.Await
 import scala.concurrent.duration.{Duration, _}
@@ -51,11 +50,12 @@ class TcpServerTest extends WordSpec with TestKitWithShutdown
   val remote = new InetSocketAddress("127.0.0.1", 8047)
   val primeBatchStoreProbe = TestProbe()
   val primeBatchStore = primeBatchStoreProbe.ref
+  val primeQueryStore = TestProbe()
 
   before {
     manager = TestProbe()
     tcpConnection = TestProbe()
-    underTest = TestActorRef(new TcpServer("localhost", 8047, new PrimeQueryStore, new PrimePreparedStore, primeBatchStore, system.actorOf(Props(classOf[ServerReadyListener])), activityLog, Some(manager.ref)))
+    underTest = TestActorRef(new TcpServer("localhost", 8047, primeQueryStore.ref, new PrimePreparedStore, primeBatchStore, system.actorOf(Props(classOf[ServerReadyListener])), activityLog, Some(manager.ref)))
     val remote = new InetSocketAddress("127.0.0.1", 8047)
 
     manager.expectMsgType[Bind]

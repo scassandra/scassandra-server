@@ -17,7 +17,7 @@ package org.scassandra.server.priming.prepared
 
 import org.scassandra.codec.messages.{PreparedMetadata, RowMetadata}
 import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
-import org.scassandra.server.priming.query.Prime
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Prime
 
 
 class CompositePreparedPrimeStore(primeStores: PreparedStoreLookup*) extends PreparedStoreLookup {

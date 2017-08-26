@@ -21,7 +21,6 @@ import akka.pattern.{ask, gracefulStop}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.priming.query.PrimeQueryStore
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -66,9 +65,6 @@ class ServerStubRunner(val binaryListenAddress: String = "localhost",
 
   import ExecutionContext.Implicits.global
 
-
-  // TODO: This is only used by integration tests, move into Actor.
-  val primedResults = new PrimeQueryStore()
   implicit val actorSystem: ActorSystem = ServerStubRunner.actorSystem
   implicit val materialiser: ActorMaterializer = ActorMaterializer()
 
@@ -76,7 +72,7 @@ class ServerStubRunner(val binaryListenAddress: String = "localhost",
   var bindingFuture: Future[ServerBinding] = _
 
   def start() = this.synchronized {
-    scassandra = actorSystem.actorOf(Props(classOf[ScassandraServer], primedResults, binaryListenAddress,
+    scassandra = actorSystem.actorOf(Props(classOf[ScassandraServer],binaryListenAddress,
       binaryPortNumber, adminListenAddress, adminPortNumber))
   }
 

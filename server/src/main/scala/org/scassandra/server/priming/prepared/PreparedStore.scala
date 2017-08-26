@@ -15,11 +15,11 @@
  */
 package org.scassandra.server.priming.prepared
 
-import org.scassandra.codec.datatype.{DataType, Varchar}
+import org.scassandra.codec.datatype.Varchar
 import org.scassandra.codec.messages._
 import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
-import org.scassandra.server.priming.query.{Prime, PrimeCriteria, Reply}
-import org.scassandra.server.priming.{Defaulter, PrimeAddResult, PrimeAddSuccess}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
+import org.scassandra.server.priming.Defaulter
 
 trait PreparedStoreLookup {
   def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime]
@@ -54,7 +54,7 @@ trait PreparedStore[I <: PreparedPrimeIncoming] extends PreparedStoreLookup {
   }
 
   def retrievePrimes(): List[I] = primes.values.toList
-  def clear() = primes = Map()
+  def clear(): Unit = primes = Map()
 
   def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = {
     // Find prime by text.

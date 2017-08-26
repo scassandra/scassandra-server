@@ -17,17 +17,15 @@ package org.scassandra.server.priming.prepared
 
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec._
-import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
-import org.scassandra.server.priming.{PrimeAddResult, PrimeAddSuccess, PrimeValidator}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Prime, PrimeAddResult, PrimeAddSuccess, PrimeCriteria}
+import org.scassandra.server.priming.PrimeValidator
 
 class PrimePreparedStore extends PreparedStore[PrimePreparedSingle] with LazyLogging {
 
-  val validator: PrimeValidator = new PrimeValidator
-
   override def record(prime: PrimePreparedSingle) = {
     val p = prime.withDefaults
-    val criteria = primeCriteria(p)
-    validator.validate(criteria, p.thenDo.prime, primes.keys.toList) match {
+    val criteria: PrimeCriteria = primeCriteria(p)
+    PrimeValidator.validate(criteria, p.thenDo.prime, primes.keys.toList) match {
       case PrimeAddSuccess =>
         logger.info(s"Storing prime for prepared statement $p with prime criteria $criteria")
         primes += (criteria -> p)

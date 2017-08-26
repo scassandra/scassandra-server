@@ -21,10 +21,10 @@ import akka.pattern.{ask, pipe}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.actors.{ActivityLogActor, PrimeBatchStoreActor, TcpServer}
+import org.scassandra.server.actors.priming.{PrimeBatchStoreActor, PrimeQueryStoreActor}
+import org.scassandra.server.actors.{ActivityLogActor, TcpServer}
 import org.scassandra.server.priming.AllRoutes
 import org.scassandra.server.priming.prepared.{CompositePreparedPrimeStore, PrimePreparedMultiStore, PrimePreparedPatternStore, PrimePreparedStore}
-import org.scassandra.server.priming.query.PrimeQueryStore
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -51,8 +51,7 @@ case class ShutdownServer(timeout: Timeout)
   */
 case object Shutdown
 
-class ScassandraServer(val primeQueryStore: PrimeQueryStore,
-                       val binaryListenAddress: String,
+class ScassandraServer(val binaryListenAddress: String,
                        val binaryPortNumber: Int,
                        val adminListenAddress: String,
                        val adminPortNumber: Int) extends Actor with LazyLogging with AllRoutes {
@@ -60,8 +59,9 @@ class ScassandraServer(val primeQueryStore: PrimeQueryStore,
   val primePreparedStore = new PrimePreparedStore
   val primePreparedPatternStore = new PrimePreparedPatternStore
   val primePreparedMultiStore = new PrimePreparedMultiStore
-  val primeBatchStore: ActorRef =  context.actorOf(Props[PrimeBatchStoreActor])
+  val primeBatchStore: ActorRef = context.actorOf(Props[PrimeBatchStoreActor])
   val activityLog: ActorRef = context.actorOf(Props[ActivityLogActor])
+  val primeQueryStore: ActorRef = context.actorOf(Props[PrimeQueryStoreActor])
 
   val preparedLookup = new CompositePreparedPrimeStore(primePreparedStore, primePreparedPatternStore, primePreparedMultiStore)
   val primingReadyListener: ActorRef = context.actorOf(Props(classOf[ServerReadyListener]), "PrimingReadyListener")
@@ -96,5 +96,4 @@ class ScassandraServer(val primeQueryStore: PrimeQueryStore,
       ).map { _ => self ? PoisonPill }
       f pipeTo sender
   }
-
 }

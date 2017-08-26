@@ -24,9 +24,9 @@ import org.scassandra.server.actors.Activity._
 import org.scassandra.server.actors.ActivityLogActor.RecordBatch
 import org.scassandra.server.actors.BatchHandler.BatchToFinish
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.actors.PrimeBatchStoreActor.{MatchBatch, MatchResult}
+import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{MatchBatch, MatchResult}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Reply
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
-import org.scassandra.server.priming.query.Reply
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -70,7 +70,7 @@ class BatchHandler(activityLog: ActorRef,
         case SimpleBatchQuery(query, _) => BatchQuery(query, BatchQueryKind.Simple)
         case PreparedBatchQuery(i, byteValues) =>
           val id = i.toInt()
-          implicit val protocolVersion = header.version.version
+          implicit val protocolVersion: ProtocolVersion = header.version.version
           preparedResponse.prepared.get(id) match {
             case Some((queryText, prepared)) =>
               // Decode query parameters using the prepared statement metadata.
@@ -85,7 +85,7 @@ class BatchHandler(activityLog: ActorRef,
       processBatch(header, batch, batchQueries, connection)
   }
 
-  def processBatch(header: FrameHeader, batch: Batch, batchQueries: Seq[BatchQuery], recipient: ActorRef) = {
+  def processBatch(header: FrameHeader, batch: Batch, batchQueries: Seq[BatchQuery], recipient: ActorRef): Unit = {
     val execution = BatchExecution(batchQueries, batch.consistency, batch.serialConsistency, batch.batchType, batch.timestamp)
     activityLog ! RecordBatch(execution)
     log.error("Getting prime for batch")

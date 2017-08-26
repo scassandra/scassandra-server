@@ -18,12 +18,12 @@ package org.scassandra.server.priming
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec.datatype.{DataType, Varchar}
 import org.scassandra.codec.{ProtocolVersion, Rows}
-import org.scassandra.server.priming.query.{Prime, PrimeCriteria, Reply}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import scodec.Attempt
 import scodec.Attempt.{Failure, Successful}
 import scodec.bits.BitVector
 
-class PrimeValidator extends LazyLogging {
+object PrimeValidator extends LazyLogging {
   def validate(criteria: PrimeCriteria, prime: Prime, existingCriteria: List[PrimeCriteria]): PrimeAddResult = {
     // 1. Validate consistency
     validateConsistency(criteria, existingCriteria) match {
@@ -44,13 +44,13 @@ class PrimeValidator extends LazyLogging {
       // exactly one intersecting criteria: if the criteria is the newly passed one, this is just an override. Otherwise, conflict.
       case list @ head :: Nil if head != criteria => ConflictingPrimes(list)
       // two or more intersecting criteria: this means one or more conflicts
-      case list @ head :: second :: rest => ConflictingPrimes(list)
+      case list @ _ :: _ :: _ => ConflictingPrimes(list)
       // all other cases: carry on
       case _ => PrimeAddSuccess
     }
   }
 
-  private def validateColumnTypes(prime: Prime): PrimeAddResult = prime match {
+  def validateColumnTypes(prime: Prime): PrimeAddResult = prime match {
     case Reply(message, _, _) =>
       val typeMismatches = message match {
         case Rows(metadata, rows) =>
@@ -66,7 +66,7 @@ class PrimeValidator extends LazyLogging {
 
       typeMismatches match {
         case Nil => PrimeAddSuccess
-        case l: List[TypeMismatch] => TypeMismatches(typeMismatches)
+        case _: List[TypeMismatch] => TypeMismatches(typeMismatches)
       }
     case _ => PrimeAddSuccess
   }
@@ -87,14 +87,4 @@ class PrimeValidator extends LazyLogging {
   }
 }
 
-abstract class PrimeAddResult
 
-case class TypeMismatches(typeMismatches: List[TypeMismatch]) extends PrimeAddResult
-
-case object PrimeAddSuccess extends PrimeAddResult
-
-case class ConflictingPrimes(existingPrimes: List[PrimeCriteria]) extends PrimeAddResult
-
-case class TypeMismatch(value: Any, name: String, columnType: String)
-
-case class BadCriteria(message: String) extends PrimeAddResult

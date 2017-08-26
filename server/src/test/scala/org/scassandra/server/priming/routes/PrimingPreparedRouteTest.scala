@@ -40,6 +40,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSpec, Matchers}
 import org.scassandra.codec.Consistency._
 import org.scassandra.codec.datatype._
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ConflictingPrimes, TypeMismatches}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.prepared._
@@ -231,7 +232,7 @@ class PrimingPreparedRouteTest extends FunSpec with Matchers with ScalatestRoute
     }
 
     it("Should convert type mis match to Bad Request") {
-      when(primePreparedStore.record(any(classOf[PrimePreparedSingle]))).thenReturn(TypeMismatches  (List()))
+      when(primePreparedStore.record(any(classOf[PrimePreparedSingle]))).thenReturn(TypeMismatches(List()))
 
       val primeWhen: WhenPrepared = WhenPrepared(Some("select * from people where name = ?"))
       val thenDo: ThenPreparedSingle = ThenPreparedSingle(Some(List()))

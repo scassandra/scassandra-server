@@ -19,11 +19,11 @@ import akka.actor.{Actor, ActorLogging, ActorRef}
 import org.scassandra.codec.Consistency.Consistency
 import org.scassandra.codec._
 import org.scassandra.codec.datatype.DataType
-import org.scassandra.server.priming.query.{Fatal, Prime, Reply}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Fatal, Prime, Reply}
 
 trait ProtocolActor extends Actor with ActorLogging {
 
-  def write(message: Message, requestHeader: FrameHeader, recipient: Option[ActorRef] = None) = {
+  def write(message: Message, requestHeader: FrameHeader, recipient: Option[ActorRef] = None): Unit = {
     val target = recipient.getOrElse(sender)
     target ! ProtocolResponse(requestHeader, message)
   }

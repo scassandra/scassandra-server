@@ -20,6 +20,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import com.typesafe.scalalogging.LazyLogging
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ConflictingPrimes, TypeMismatches}
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json.PrimingJsonImplicits
 import org.scassandra.server.priming.prepared._

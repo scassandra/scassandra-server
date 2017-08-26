@@ -36,8 +36,7 @@ import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.ColumnSpec.column
 import org.scassandra.codec.messages._
 import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
-import org.scassandra.server.priming.ConflictingPrimes
-import org.scassandra.server.priming.query.Reply
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ConflictingPrimes, Reply}
 import scodec.bits.ByteVector
 
 class PrimePreparedStoreTest extends FunSuite with Matchers {

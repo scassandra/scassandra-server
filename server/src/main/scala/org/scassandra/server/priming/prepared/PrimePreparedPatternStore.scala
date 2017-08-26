@@ -18,7 +18,7 @@ package org.scassandra.server.priming.prepared
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec._
 import org.scassandra.codec.messages.{PreparedMetadata, RowMetadata}
-import org.scassandra.server.priming.query.{Prime, PrimeCriteria}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Prime, PrimeCriteria}
 
 class PrimePreparedPatternStore extends PreparedStore[PrimePreparedSingle] with LazyLogging {
 

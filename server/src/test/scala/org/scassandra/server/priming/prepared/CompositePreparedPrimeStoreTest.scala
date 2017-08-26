@@ -18,11 +18,11 @@ package org.scassandra.server.priming.prepared
 import org.scalatest.{FunSuite, Matchers}
 import org.scassandra.codec._
 import org.scassandra.codec.messages.{PreparedMetadata, RowMetadata}
-import org.scassandra.server.priming.query.{Prime, Reply}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Prime, Reply}
 import scodec.bits.ByteVector
 
 class CompositePreparedPrimeStoreTest extends FunSuite with Matchers {
-  implicit val protocolVersion = ProtocolVersion.latest
+  implicit val protocolVersion: ProtocolVersion = ProtocolVersion.latest
 
   val one: PreparedStoreLookup = new PreparedStoreLookup {
     def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = None
@@ -42,7 +42,7 @@ class CompositePreparedPrimeStoreTest extends FunSuite with Matchers {
 
   test("Delegates to all stores - apply for prepared") {
     val underTest = new CompositePreparedPrimeStore(one, two, three)
-    val factory = (preparedMetadata: PreparedMetadata, rowMetadata: RowMetadata) => Prepared(ByteVector(1))
+    val factory = (_: PreparedMetadata, _: RowMetadata) => Prepared(ByteVector(1))
     underTest.apply(Prepare("hello"), factory) shouldEqual result
   }
 

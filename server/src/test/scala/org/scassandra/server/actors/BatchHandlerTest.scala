@@ -27,7 +27,7 @@ import org.scassandra.codec.messages._
 import org.scassandra.server.actors.Activity.BatchExecution
 import org.scassandra.server.actors.ActivityLogActor.RecordBatch
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.actors.PrimeBatchStoreActor.MatchResult
+import org.scassandra.server.actors.priming.PrimeBatchStoreActor.MatchResult
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import scodec.bits.ByteVector
 

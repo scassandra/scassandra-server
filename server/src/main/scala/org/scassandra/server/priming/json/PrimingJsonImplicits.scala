@@ -29,11 +29,10 @@ import org.scassandra.codec.messages.BatchType.BatchType
 import org.scassandra.codec.messages.{BatchQueryKind, BatchType}
 import org.scassandra.cql._
 import org.scassandra.server.actors.Activity._
-import org.scassandra.server.actors.PrimeBatchStoreActor.{BatchPrimeSingle, BatchQueryPrime, BatchWhen}
 import org.scassandra.server.actors._
-import org.scassandra.server.priming._
+import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{BatchPrimeSingle, BatchQueryPrime, BatchWhen}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming.prepared._
-import org.scassandra.server.priming.query.{PrimeCriteria, PrimeQuerySingle, Then, When}
 import org.scassandra.server.priming.routes.Version
 import scodec.bits.ByteVector
 import spray.json._
@@ -203,6 +202,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
   implicit val impQuery = jsonFormat6(Query)
   implicit val impPrimeCriteria = jsonFormat3(PrimeCriteria)
   implicit val impConflictingPrimes = jsonFormat1(ConflictingPrimes)
+  implicit val impBadCriteria = jsonFormat1(BadCriteria)
   implicit val impTypeMismatch = jsonFormat3(TypeMismatch)
   implicit val impTypeMismatches = jsonFormat1(TypeMismatches)
   implicit val impWhenPreparedSingle = jsonFormat3(WhenPrepared)

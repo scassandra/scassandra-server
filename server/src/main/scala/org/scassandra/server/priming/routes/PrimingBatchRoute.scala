@@ -21,7 +21,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.actors.PrimeBatchStoreActor.{BatchPrimeSingle, ClearPrimes, RecordBatchPrime}
+import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{BatchPrimeSingle, ClearPrimes, RecordBatchPrime}
 import org.scassandra.server.priming.json.PrimingJsonImplicits
 
 trait PrimingBatchRoute extends LazyLogging {
