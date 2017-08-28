@@ -15,18 +15,27 @@
  */
 package org.scassandra.server.priming.routes
 
+import akka.Done
 import akka.actor.ActorRef
+import akka.pattern.ask
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
+import akka.util.Timeout
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{BatchPrimeSingle, ClearPrimes, RecordBatchPrime}
 import org.scassandra.server.priming.json.PrimingJsonImplicits
+import scala.concurrent.duration._
+
+import scala.util.Success
 
 trait PrimingBatchRoute extends LazyLogging {
+
   import PrimingJsonImplicits._
+
   val primeBatchStore: ActorRef
+  implicit private val timeout: Timeout = Timeout(1 second)
 
   val batchRoute: Route = {
     cors() {
@@ -38,26 +47,25 @@ trait PrimingBatchRoute extends LazyLogging {
           }
         }
       } ~
-      path("prime-batch-single") {
-        post {
-          entity(as[BatchPrimeSingle]) {
-            primeRequest => {
-              complete {
-                logger.info("Received batch prime {}", primeRequest)
-                primeBatchStore ! RecordBatchPrime(primeRequest)
-                StatusCodes.OK
+        path("prime-batch-single") {
+          post {
+            entity(as[BatchPrimeSingle]) {
+              primeRequest => {
+                complete {
+                  logger.info("Received batch prime {}", primeRequest)
+                  primeBatchStore ! RecordBatchPrime(primeRequest)
+                  StatusCodes.OK
+                }
               }
             }
-          }
-        } ~
-          delete {
-            complete {
+          } ~
+            delete {
               logger.debug("Deleting all batch primes")
-              primeBatchStore ! ClearPrimes
-              StatusCodes.OK
+              onComplete(primeBatchStore ? ClearPrimes) {
+                case Success(Done) => complete(StatusCodes.OK)
+              }
             }
-          }
-      }
+        }
     }
   }
 }

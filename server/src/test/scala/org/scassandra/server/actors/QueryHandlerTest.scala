@@ -112,14 +112,4 @@ class QueryHandlerTest extends WordSpec with ImplicitSender with ProtocolActorTe
       activityLogProbe.expectMsg(RecordQuery(Activity.Query(query.query, consistency, None, values, variableTypes)))
     }
   }
-
-  private def respondWith(probe: TestProbe, m: Any): Unit = {
-    probe.setAutoPilot((sender: ActorRef, msg: Any) => {
-      msg match {
-        case _ =>
-          sender ! m
-          TestActor.NoAutoPilot
-      }
-    })
-  }
 }

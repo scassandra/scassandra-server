@@ -22,7 +22,7 @@ import org.scassandra.server.priming.PrimeValidator
 
 class PrimePreparedStore extends PreparedStore[PrimePreparedSingle] with LazyLogging {
 
-  override def record(prime: PrimePreparedSingle) = {
+  override def record(prime: PrimePreparedSingle): PrimeAddResult = {
     val p = prime.withDefaults
     val criteria: PrimeCriteria = primeCriteria(p)
     PrimeValidator.validate(criteria, p.thenDo.prime, primes.keys.toList) match {

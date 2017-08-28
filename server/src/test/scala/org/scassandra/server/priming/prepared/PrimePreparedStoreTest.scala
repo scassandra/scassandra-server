@@ -121,13 +121,11 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     result.isInstanceOf[ConflictingPrimes] should equal(true)
   }
 
-  val factory = (p: PreparedMetadata, r: RowMetadata) => Prepared(id, p, r)
-
   test("Prepared prime - None when no match") {
     val underTest = new PrimePreparedStore
 
     // when
-    val prepared = underTest(Prepare("select * from people where a = ? and b = ? and c = ?"), factory)
+    val prepared = underTest(Prepare("select * from people where a = ? and b = ? and c = ?"), 1)
 
     // then
     prepared.isDefined should equal(false)
@@ -142,7 +140,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     underTest.record(prime)
 
     // when
-    val prepared = underTest(Prepare(query), factory)
+    val prepared = underTest(Prepare(query), 1)
 
     // then - should be a prepared with no column spec
     prepared should matchPattern { case Some(Reply(Prepared(`id`, PreparedMetadata(_, _, _, `Nil`), _), _, _)) => }
@@ -158,7 +156,7 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     underTest.record(prime)
 
     // when
-    val prepared = underTest(Prepare(query), factory)
+    val prepared = underTest(Prepare(query), 1)
 
     // then - should be a prepared with a column spec containing parameters.
     prepared should matchPattern { case Some(Reply(Prepared(`id`, PreparedMetadata(_, _, _, `columnSpec`), _), _, _)) => }

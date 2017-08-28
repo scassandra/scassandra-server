@@ -30,6 +30,7 @@ import org.scassandra.server.priming.json.PrimingJsonImplicits
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
+//todo make deletes return once actor has confirmed
 trait ActivityVerificationRoute extends LazyLogging with SprayJsonSupport {
 
   import PrimingJsonImplicits._

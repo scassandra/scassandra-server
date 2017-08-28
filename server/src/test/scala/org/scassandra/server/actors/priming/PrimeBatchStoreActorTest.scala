@@ -1,8 +1,10 @@
 package org.scassandra.server.actors.priming
 
+import akka.Done
 import akka.actor.Props
 import akka.testkit.ImplicitSender
-import org.scalatest.WordSpec
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.{Matchers, WordSpec}
 import org.scassandra.codec.Consistency
 import org.scassandra.codec.Consistency._
 import org.scassandra.codec.messages.BatchQueryKind._
@@ -14,7 +16,7 @@ import org.scassandra.server.actors.priming.PrimeBatchStoreActor._
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Then
 import org.scassandra.server.priming.json.Success
 
-class PrimeBatchStoreActorTest extends WordSpec with TestKitWithShutdown with ImplicitSender {
+class PrimeBatchStoreActorTest extends WordSpec with TestKitWithShutdown with ImplicitSender with ScalaFutures with Matchers {
   val primeRequest = BatchPrimeSingle(BatchWhen(List(BatchQueryPrime("select * blah", Simple)), consistency = Some(List(ONE))), Then(result = Some(Success)))
   private val matchingQueries = Seq(BatchQuery("select * blah", Simple))
   val matchingExecution = BatchExecution(matchingQueries, ONE, Some(Consistency.SERIAL), LOGGED, None)
@@ -46,6 +48,8 @@ class PrimeBatchStoreActorTest extends WordSpec with TestKitWithShutdown with Im
 
     "allow clearing" in {
       batchStore ! ClearPrimes
+      expectMsg(Done)
+
       batchStore ! MatchBatch(matchingExecution)
       expectMsg(MatchResult(None))
     }

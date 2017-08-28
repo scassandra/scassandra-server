@@ -17,18 +17,17 @@ package org.scassandra.server.priming.prepared
 
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec._
-import org.scassandra.codec.messages.{PreparedMetadata, RowMetadata}
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Prime, PrimeCriteria}
 
 class PrimePreparedPatternStore extends PreparedStore[PrimePreparedSingle] with LazyLogging {
 
-  override def apply(prepare: Prepare, preparedFactory: (PreparedMetadata, RowMetadata) => Prepared) : Option[Prime] = {
+  override def apply(prepare: Prepare, id: Int) : Option[Prime] = {
     // Find prime by pattern.
     val prime = primes.find(_._1.query.r.findFirstIn(prepare.query).isDefined).map(_._2)
-    prepared(prepare, prime, preparedFactory)
+    prepared(prepare, prime, id)
   }
 
-  def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion) : Option[Prime] = {
+  override def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion) : Option[Prime] = {
     // Find prime with query pattern matching queryText and execute's consistency.
     val prime = primes.find { case (criteria, _) =>
       // if no consistency specified in the prime, allow all

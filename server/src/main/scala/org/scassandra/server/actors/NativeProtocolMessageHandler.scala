@@ -40,11 +40,11 @@ class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory) => Act
           val queryHandler = queryHandlerFactory(context)
           val batchHandler = batchHandlerFactory(context, prepareHandler)
           val registerHandler = registerHandlerFactory(context)
-          write(Ready, frame.header)
+          write(Ready, frame.header, sender())
           context become initialized(queryHandler, batchHandler, registerHandler)
         case _ =>
           log.error(s"Received message $frame before Startup.  Sending error.")
-          write(ProtocolError("Query sent before Startup message"), frame.header)
+          write(ProtocolError("Query sent before Startup message"), frame.header, sender())
       }
   }
 

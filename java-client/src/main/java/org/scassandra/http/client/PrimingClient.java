@@ -195,6 +195,7 @@ public class PrimingClient {
     }
 
     private String httpGet(String url) {
+        LOGGER.debug("Sending get to: {}",url);
         HttpGet get = new HttpGet(url);
         try {
             CloseableHttpResponse httpResponse = httpClient.execute(get);
@@ -205,7 +206,7 @@ public class PrimingClient {
                 LOGGER.info(errorMessage);
                 throw new PrimeFailedException(errorMessage);
             }
-            LOGGER.debug("Received response from scassandra {}", responseAsString);
+            LOGGER.info("Received response from scassandra {}", responseAsString);
             return responseAsString;
         } catch (IOException e) {
             LOGGER.info("Retrieving failed", e);
@@ -214,7 +215,7 @@ public class PrimingClient {
     }
 
     private void httpDelete(String url) {
-
+        LOGGER.debug("Sending delete to: {}", url);
         HttpDelete delete = new HttpDelete(url);
         CloseableHttpResponse httpResponse = null;
         try {

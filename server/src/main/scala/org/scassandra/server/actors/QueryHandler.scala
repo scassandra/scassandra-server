@@ -21,6 +21,7 @@ import akka.util.Timeout
 import org.scassandra.codec.datatype.DataType
 import org.scassandra.codec.{Frame, NoRows, ProtocolVersion, Query}
 import org.scassandra.server.actors.ActivityLogActor.RecordQuery
+import org.scassandra.server.actors.ProtocolActor._
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{MatchPrime, MatchResult, Reply}
 
 import scala.concurrent.duration._
@@ -55,7 +56,7 @@ class QueryHandler(primeQueryStore: ActorRef, activityLog: ActorRef) extends Pro
             activityLog ! RecordQuery(Activity.Query(query.query, query.parameters.consistency, query.parameters.serialConsistency,
               timestamp = query.parameters.timestamp))
         }
-        writePrime(query, mr.prime, header, alternative = noRows, consistency = Some(query.parameters.consistency), recipient = Some(toReply))
+        writePrime(query, mr.prime, header, alternative = noRows, consistency = Some(query.parameters.consistency), target = toReply)(context.system)
       }
   }
 

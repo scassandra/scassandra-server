@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.scassandra.server
+package org.scassandra.server.actors
 
 import org.scassandra.codec.{Frame, Ready, Register}
-import org.scassandra.server.actors.{ProtocolActor, ProtocolMessage}
 
 class RegisterHandler extends ProtocolActor {
   def receive = {
     case ProtocolMessage(Frame(header, r: Register)) =>
       log.debug(s"Received register message $r")
-      write(Ready, header)
+      write(Ready, header, sender())
   }
 }

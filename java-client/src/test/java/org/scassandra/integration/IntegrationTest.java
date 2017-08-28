@@ -42,7 +42,6 @@ public class IntegrationTest {
     private static ActivityClient activityClient = rule.activityClient();
     private static PrimingClient primingClient = rule.primingClient();
 
-
     @Test
     public void clientsShouldBeAbleToConnect() {
         //given
@@ -76,7 +75,7 @@ public class IntegrationTest {
     }
 
     @Test
-    public void testQueryPrimeAndRetrieveOfPrime() {
+    public void testQueryPrimeAndRetrieveOfPrime() throws InterruptedException {
         //given
         Map<String, Object> row = new HashMap<String, Object>();
         row.put("name", "chris");

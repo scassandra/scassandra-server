@@ -1,5 +1,6 @@
 package org.scassandra.server.actors.priming
 
+import akka.Done
 import akka.actor.Actor
 import org.scassandra.codec.Consistency.Consistency
 import org.scassandra.codec.messages.BatchQueryKind.BatchQueryKind
@@ -34,6 +35,7 @@ class PrimeBatchStoreActor extends Actor {
       become(currentPrimes(primes + (criteria -> p)))
 
     case ClearPrimes =>
+      sender ! Done
       become(currentPrimes(Map()))
   }
 }

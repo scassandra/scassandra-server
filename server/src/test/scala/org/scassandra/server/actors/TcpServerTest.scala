@@ -51,11 +51,12 @@ class TcpServerTest extends WordSpec with TestKitWithShutdown
   val primeBatchStoreProbe = TestProbe()
   val primeBatchStore = primeBatchStoreProbe.ref
   val primeQueryStore = TestProbe()
+  val primePreparedStore = TestProbe()
 
   before {
     manager = TestProbe()
     tcpConnection = TestProbe()
-    underTest = TestActorRef(new TcpServer("localhost", 8047, primeQueryStore.ref, new PrimePreparedStore, primeBatchStore, system.actorOf(Props(classOf[ServerReadyListener])), activityLog, Some(manager.ref)))
+    underTest = TestActorRef(new TcpServer("localhost", 8047, primeQueryStore.ref, primePreparedStore.ref, primeBatchStore, system.actorOf(Props(classOf[ServerReadyListener])), activityLog, Some(manager.ref)))
     val remote = new InetSocketAddress("127.0.0.1", 8047)
 
     manager.expectMsgType[Bind]

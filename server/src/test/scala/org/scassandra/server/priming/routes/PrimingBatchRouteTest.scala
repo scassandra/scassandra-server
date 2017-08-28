@@ -15,7 +15,8 @@
  */
 package org.scassandra.server.priming.routes
 
-import akka.actor.ActorRef
+import akka.Done
+import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
@@ -23,12 +24,13 @@ import org.scalatest.{Matchers, WordSpec}
 import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{BatchPrimeSingle, BatchWhen, ClearPrimes, RecordBatchPrime}
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Then
 import org.scassandra.server.priming.json.{PrimingJsonImplicits, Success}
+import org.scassandra.server.actors._
 
 class PrimingBatchRouteTest extends WordSpec with Matchers with ScalatestRouteTest with PrimingBatchRoute {
 
   import PrimingJsonImplicits._
 
-  implicit def actorRefFactory = system
+  implicit def actorRefFactory: ActorSystem = system
 
   val testProbe = TestProbe()
   val primeBatchStore: ActorRef = testProbe.ref
@@ -47,6 +49,7 @@ class PrimingBatchRouteTest extends WordSpec with Matchers with ScalatestRouteTe
     }
 
     "allow primes to be deleted" in {
+      respondWith(testProbe, Done)
       Delete(primeBatchSinglePath) ~> batchRoute ~> check {
         status should equal(StatusCodes.OK)
         testProbe.expectMsg(ClearPrimes)

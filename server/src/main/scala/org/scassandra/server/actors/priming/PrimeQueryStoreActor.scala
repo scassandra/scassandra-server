@@ -2,6 +2,7 @@ package org.scassandra.server.actors.priming
 
 import java.util.regex.Pattern
 
+import akka.Done
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.io.Tcp
 import org.scassandra.codec.Consistency.Consistency
@@ -69,6 +70,7 @@ class PrimeQueryStoreActor extends Actor with ActorLogging {
       }
       sender() ! MatchResult(prime)
     case ClearQueryPrimes =>
+      sender() ! Done
       become(currentPrimes(Map(), Map()))
     case GetAllPrimes =>
       sender() ! AllPrimes(queryPrimes.values.toList)

@@ -1,5 +1,6 @@
 package org.scassandra.server.actors.priming
 
+import akka.Done
 import akka.actor.Props
 import akka.testkit.ImplicitSender
 import org.scalatest.{Matchers, WordSpec}
@@ -74,6 +75,7 @@ class PrimeQueryStoreActorTest extends WordSpec with TestKitWithShutdown with Im
 
     "clear on ClearPrimes" in {
       underTest ! ClearQueryPrimes
+      expectMsg(Done)
       underTest ! MatchPrime(matchingQuery)
       expectMsg(MatchResult(None))
     }

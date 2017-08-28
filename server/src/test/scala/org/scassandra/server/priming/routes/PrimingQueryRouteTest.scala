@@ -16,6 +16,7 @@
 
 package org.scassandra.server.priming.routes
 
+import akka.Done
 import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.StatusCodes.{BadRequest, OK}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
@@ -92,7 +93,8 @@ class PrimingQueryRouteTest extends WordSpec with BeforeAndAfter with Matchers w
       }
     }
 
-    "delete all primes for http delet" in {
+    "delete all primes for http delete" in {
+      respondWith(primeQueryStoreProbe, Done)
       Delete(primeQuerySinglePath) ~> queryRoute ~> check {
         primeQueryStoreProbe.expectMsg(ClearQueryPrimes)
         status should equal(OK)

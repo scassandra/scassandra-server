@@ -16,10 +16,9 @@
 package org.scassandra.server.actors
 
 import akka.actor.{ActorRef, Props}
-import akka.testkit.TestActor.{AutoPilot, KeepRunning, SetAutoPilot}
+import akka.testkit.TestActor.KeepRunning
 import akka.testkit.{ImplicitSender, TestProbe}
 import com.typesafe.scalalogging.LazyLogging
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
 import org.scassandra.codec._
 import org.scassandra.codec.datatype._
@@ -28,12 +27,12 @@ import org.scassandra.server.actors.Activity.BatchExecution
 import org.scassandra.server.actors.ActivityLogActor.RecordBatch
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
 import org.scassandra.server.actors.priming.PrimeBatchStoreActor.MatchResult
-import org.scassandra.server.priming.prepared.PreparedStoreLookup
 import scodec.bits.ByteVector
 
 import scala.concurrent.duration._
+import scala.language.postfixOps
 
-class BatchHandlerTest extends WordSpec with ProtocolActorTest with TestKitWithShutdown with ImplicitSender with MockitoSugar
+class BatchHandlerTest extends WordSpec with ProtocolActorTest with TestKitWithShutdown with ImplicitSender
   with Matchers with BeforeAndAfter with LazyLogging {
 
   var underTest: ActorRef = _
@@ -42,7 +41,6 @@ class BatchHandlerTest extends WordSpec with ProtocolActorTest with TestKitWithS
   val activityLog = activityLogProbe.ref
   val primeBatchStoreProbe = TestProbe()
   val primeBatchStore = primeBatchStoreProbe.ref
-  val primePreparedStore = mock[PreparedStoreLookup]
 
   primeBatchStoreProbe.setAutoPilot((sender: ActorRef, msg: Any) => {
     logger.error("Got msg: " + msg)
@@ -54,8 +52,7 @@ class BatchHandlerTest extends WordSpec with ProtocolActorTest with TestKitWithS
 
   before {
     prepareHandlerProbe = TestProbe()
-    underTest = system.actorOf(Props(classOf[BatchHandler], activityLog, prepareHandlerProbe.ref, primeBatchStore,
-      primePreparedStore))
+    underTest = system.actorOf(Props(classOf[BatchHandler], activityLog, prepareHandlerProbe.ref, primeBatchStore))
     activityLogProbe.receiveWhile(10 milliseconds) {
       case _ =>
     }
@@ -98,7 +95,7 @@ class BatchHandlerTest extends WordSpec with ProtocolActorTest with TestKitWithS
       val id = 1
       val idBytes = ByteVector(id)
 
-      implicit val protocolVersion = ProtocolVersion.latest
+      implicit val protocolVersion: ProtocolVersion = ProtocolVersion.latest
 
       val batch = Batch(BatchType.LOGGED, List(
         PreparedBatchQuery(idBytes, List(QueryValue(1, CqlInt).value))

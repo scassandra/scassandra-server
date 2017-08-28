@@ -60,7 +60,7 @@ class ServerStubRunner(val binaryListenAddress: String = "localhost",
                        val binaryPortNumber: Int = 8042,
                        val adminListenAddress: String = "localhost",
                        val adminPortNumber: Int = 8043,
-                       val startupTimeoutSeconds: Long = 10)
+                       val startupTimeoutSeconds: Long = 20)
   extends LazyLogging {
 
   import ExecutionContext.Implicits.global
@@ -72,7 +72,7 @@ class ServerStubRunner(val binaryListenAddress: String = "localhost",
   var bindingFuture: Future[ServerBinding] = _
 
   def start() = this.synchronized {
-    scassandra = actorSystem.actorOf(Props(classOf[ScassandraServer],binaryListenAddress,
+    scassandra = actorSystem.actorOf(Props(classOf[ScassandraServer], binaryListenAddress,
       binaryPortNumber, adminListenAddress, adminPortNumber))
   }
 
@@ -83,7 +83,7 @@ class ServerStubRunner(val binaryListenAddress: String = "localhost",
 
   def awaitStartup(): Any = this.synchronized {
     implicit val timeout: Timeout = startupTimeoutSeconds seconds
-    val startup = (scassandra ? AwaitStartup(timeout))
+    val startup = scassandra ? AwaitStartup(timeout)
     startup.onFailure { case t: Throwable =>
       logger.error("Failure or timeout starting server", t)
     }

@@ -15,14 +15,10 @@
  */
 package org.scassandra.server.actors
 
-import java.util.concurrent.TimeUnit
-
 import akka.actor.ActorRef
 import akka.testkit.{ImplicitSender, TestActorRef, TestProbe}
 import akka.util.Timeout
-import org.mockito.Matchers._
-import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
 import org.scassandra.codec._
 import org.scassandra.codec.datatype._
@@ -30,22 +26,24 @@ import org.scassandra.codec.messages.{ColumnSpecWithoutTable, PreparedMetadata, 
 import org.scassandra.server.actors.Activity.PreparedStatementExecution
 import org.scassandra.server.actors.ActivityLogActor.RecordExecution
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
+import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{LookupByExecute, PrimeMatch}
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Reply
-import org.scassandra.server.priming.prepared.PrimePreparedStore
 import scodec.bits.ByteVector
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class ExecuteHandlerTest extends WordSpec with ProtocolActorTest with Matchers with TestKitWithShutdown with ImplicitSender
-  with BeforeAndAfter with MockitoSugar {
+  with ScalaFutures with BeforeAndAfter {
   implicit val protocolVersion = ProtocolVersion.latest
 
   var underTest: ActorRef = _
   var prepareHandlerTestProbe: TestProbe = _
   val activityLogProbe = TestProbe()
   val activityLog: ActorRef = activityLogProbe.ref
-  val primePreparedStore = mock[PrimePreparedStore]
+
+  val primePreparedStoreProbe = TestProbe()
+  val primePreparedStore = primePreparedStoreProbe.ref
   val stream: Byte = 0x3
 
   implicit val atMost: Duration = 1 seconds
@@ -55,8 +53,6 @@ class ExecuteHandlerTest extends WordSpec with ProtocolActorTest with Matchers w
   val preparedIdBytes = ByteVector(preparedId)
 
   before {
-    reset(primePreparedStore)
-    when(primePreparedStore.apply(any(classOf[String]), any(classOf[Execute]))(any[ProtocolVersion])).thenReturn(None)
     prepareHandlerTestProbe = TestProbe()
     underTest = TestActorRef(new ExecuteHandler(primePreparedStore, activityLog, prepareHandlerTestProbe.ref))
     receiveWhile(10 milliseconds) {
@@ -68,14 +64,15 @@ class ExecuteHandlerTest extends WordSpec with ProtocolActorTest with Matchers w
   }
 
   "execute handler" must {
-    "return empty result message for execute - no params" in {
+    "return empty result message for execute if not primed - no params" in {
       val execute = Execute(preparedIdBytes)
+      respondWith(primePreparedStoreProbe, PrimeMatch(None))
 
       underTest ! protocolMessage(execute)
 
       prepareHandlerTestProbe.expectMsg(PreparedStatementQuery(List(preparedId)))
       prepareHandlerTestProbe.reply(PreparedStatementResponse(Map(preparedId -> ("Some query", Prepared(preparedIdBytes)))))
-
+      primePreparedStoreProbe.expectMsg(LookupByExecute("Some query", execute, protocolVersion))
       expectMsgPF() {
         case ProtocolResponse(_, VoidResult) => true
       }
@@ -86,12 +83,13 @@ class ExecuteHandlerTest extends WordSpec with ProtocolActorTest with Matchers w
       val query = "select * from something where name = ?"
       val prepared = Prepared(preparedIdBytes)
       val execute = Execute(preparedIdBytes, QueryParameters(consistency = consistency))
+      respondWith(primePreparedStoreProbe, PrimeMatch(None))
 
       underTest ! protocolMessage(execute)
 
       prepareHandlerTestProbe.expectMsg(PreparedStatementQuery(List(preparedId)))
       prepareHandlerTestProbe.reply(PreparedStatementResponse(Map(preparedId -> (query, prepared))))
-      verify(primePreparedStore).apply(query, execute)
+      primePreparedStoreProbe.expectMsg(LookupByExecute(query, execute, protocolVersion))
     }
 
     "create rows message if prime matches" in {
@@ -99,14 +97,14 @@ class ExecuteHandlerTest extends WordSpec with ProtocolActorTest with Matchers w
       val id = 1
       val rows = Rows(rows = Row("a" -> 1, "b" -> 2) :: Nil)
       val primeMatch = Some(Reply(rows))
-      when(primePreparedStore.apply(any[String], any[Execute])(any[ProtocolVersion])).thenReturn(primeMatch)
-
+      respondWith(primePreparedStoreProbe, PrimeMatch(primeMatch))
       val execute = Execute(preparedIdBytes)
+
       underTest ! protocolMessage(execute)
 
       prepareHandlerTestProbe.expectMsg(PreparedStatementQuery(List(preparedId)))
       prepareHandlerTestProbe.reply(PreparedStatementResponse(Map(preparedId -> (query, Prepared(preparedIdBytes)))))
-
+      primePreparedStoreProbe.expectMsg(LookupByExecute(query, execute, protocolVersion))
       expectMsgPF() {
         case ProtocolResponse(_, `rows`) => true
       }
@@ -118,19 +116,18 @@ class ExecuteHandlerTest extends WordSpec with ProtocolActorTest with Matchers w
       val rows = Rows(rows = Row("a" -> 1, "b" -> 2) :: Nil)
       val primeMatch = Some(Reply(rows))
       val consistency = Consistency.TWO
-      when(primePreparedStore.apply(any[String], any[Execute])(any[ProtocolVersion])).thenReturn(primeMatch)
-
+      respondWith(primePreparedStoreProbe, PrimeMatch(primeMatch))
       val values = List(10)
       val variableTypes = List(Bigint)
       val execute = Execute(preparedIdBytes, parameters = QueryParameters(consistency,
         values = Some(values.map(v => QueryValue(None, Bytes(Bigint.codec.encode(v).require.bytes))))))
+
       underTest ! protocolMessage(execute)
 
       prepareHandlerTestProbe.expectMsg(PreparedStatementQuery(List(preparedId)))
       prepareHandlerTestProbe.reply(PreparedStatementResponse(Map(preparedId -> (query, Prepared(preparedIdBytes,
         preparedMetadata = PreparedMetadata(keyspace = Some("keyspace"), table = Some("table"),
-          columnSpec = ColumnSpecWithoutTable("0", Bigint) :: Nil))))))
-
+          columnSpec = List(ColumnSpecWithoutTable("0", Bigint))))))))
       activityLogProbe.expectMsg(RecordExecution(PreparedStatementExecution(query, consistency, None, values, variableTypes, None)))
     }
 
@@ -138,8 +135,7 @@ class ExecuteHandlerTest extends WordSpec with ProtocolActorTest with Matchers w
       val query = "select * from something where name = ? and something = ?"
       val consistency = Consistency.TWO
       val primeMatch = Some(Reply(NoRows))
-      when(primePreparedStore.apply(any[String], any[Execute])(any[ProtocolVersion])).thenReturn(primeMatch)
-
+      respondWith(primePreparedStoreProbe, PrimeMatch(primeMatch))
 
       // Execute statement with two BigInt variables.
       val variables = List(10, 20)
@@ -163,47 +159,30 @@ class ExecuteHandlerTest extends WordSpec with ProtocolActorTest with Matchers w
     }
 
     "record execution in activity log event if not primed" in {
-      when(primePreparedStore.apply(any[String], any[Execute])(any[ProtocolVersion])).thenReturn(None)
       val query = "Some query"
       val consistency = Consistency.TWO
-
+      respondWith(primePreparedStoreProbe, PrimeMatch(None))
       val execute = Execute(preparedIdBytes, QueryParameters(consistency))
+
       underTest ! protocolMessage(execute)
+
       prepareHandlerTestProbe.expectMsg(PreparedStatementQuery(List(preparedId)))
       prepareHandlerTestProbe.reply(PreparedStatementResponse(Map(preparedId -> (query, Prepared(preparedIdBytes)))))
-
       activityLogProbe.expectMsg(RecordExecution(PreparedStatementExecution(query, consistency, None, List(), List(), None)))
     }
 
     "return unprepared response if not prepared statement not found" in {
       val errMsg = s"Could not find prepared statement with id: 0x${preparedIdBytes.toHex}"
       val consistency = Consistency.TWO
-
       val execute = Execute(preparedIdBytes, QueryParameters(consistency))
+
       underTest ! protocolMessage(execute)
 
       prepareHandlerTestProbe.expectMsg(PreparedStatementQuery(List(preparedId)))
       prepareHandlerTestProbe.reply(PreparedStatementResponse(Map()))
-
       activityLogProbe.expectMsg(RecordExecution(PreparedStatementExecution(errMsg, consistency, None, List(), List(), None)))
       expectMsgPF() {
         case ProtocolResponse(_, Unprepared(`errMsg`, `preparedIdBytes`)) => true
-      }
-    }
-
-    "delay message if fixedDelay primed" in {
-      val query = "select * from something where name = ?"
-      val prime = Reply(VoidResult, fixedDelay = Some(FiniteDuration(1500, TimeUnit.MILLISECONDS)))
-      when(primePreparedStore.apply(any[String], any[Execute])(any[ProtocolVersion])).thenReturn(Some(prime))
-
-      val execute = Execute(preparedIdBytes)
-      underTest ! protocolMessage(execute)
-
-      prepareHandlerTestProbe.expectMsg(PreparedStatementQuery(List(preparedId)))
-      prepareHandlerTestProbe.reply(PreparedStatementResponse(Map(preparedId -> (query, Prepared(preparedIdBytes)))))
-
-      expectMsgPF() {
-        case ProtocolResponse(_, VoidResult) => true
       }
     }
   }

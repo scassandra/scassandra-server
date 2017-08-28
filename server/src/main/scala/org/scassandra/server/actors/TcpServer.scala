@@ -22,8 +22,7 @@ import akka.io.{IO, Tcp}
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import org.scassandra.server.actors.ActivityLogActor.RecordConnection
-import org.scassandra.server.priming.prepared.PreparedStoreLookup
-import org.scassandra.server.{RegisterHandler, ServerReady, Shutdown}
+import org.scassandra.server.{ServerReady, Shutdown}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -31,7 +30,7 @@ import scala.language.postfixOps
 
 class TcpServer(listenAddress: String, port: Int,
                 primedResults: ActorRef,
-                primePrepareStore: PreparedStoreLookup,
+                primePrepareStore: ActorRef,
                 primeBatchStore: ActorRef,
                 serverReadyListener: ActorRef,
                 activityLog: ActorRef,
@@ -39,7 +38,7 @@ class TcpServer(listenAddress: String, port: Int,
 
   def this(listenAddress: String, port: Int,
            primeQueryStore: ActorRef,
-           primePrepareStore: PreparedStoreLookup,
+           primePrepareStore: ActorRef,
            primeBatchStore: ActorRef,
            serverReadyListener: ActorRef,
            activityLog: ActorRef) {
@@ -82,8 +81,7 @@ class TcpServer(listenAddress: String, port: Int,
       activityLog ! RecordConnection()
       val handler = context.actorOf(Props(classOf[ConnectionHandler], sender(),
         (af: ActorRefFactory) => af.actorOf(Props(classOf[QueryHandler], primedResults, activityLog)),
-        (af: ActorRefFactory, prepareHandler: ActorRef) => af.actorOf(Props(classOf[BatchHandler],
-          activityLog, prepareHandler, primeBatchStore, primePrepareStore)),
+        (af: ActorRefFactory, prepareHandler: ActorRef) => af.actorOf(Props(classOf[BatchHandler], activityLog, prepareHandler, primeBatchStore)),
         (af: ActorRefFactory) => af.actorOf(Props(classOf[RegisterHandler])),
         (af: ActorRefFactory) => af.actorOf(Props(classOf[OptionsHandler])),
         preparedHandler,

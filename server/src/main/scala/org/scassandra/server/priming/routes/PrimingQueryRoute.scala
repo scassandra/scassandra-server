@@ -15,6 +15,7 @@
  */
 package org.scassandra.server.priming.routes
 
+import akka.Done
 import akka.actor.ActorRef
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes
@@ -27,8 +28,8 @@ import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming.json.PrimingJsonImplicits
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 trait PrimingQueryRoute extends LazyLogging with SprayJsonSupport {
@@ -52,8 +53,12 @@ trait PrimingQueryRoute extends LazyLogging with SprayJsonSupport {
       } ~
         path("prime-query-single") {
           get {
-            complete {
-              (primeQueryStore ? GetAllPrimes).mapTo[AllPrimes].map(_.all)
+            logger.info("Requesting all primes")
+            val allPrimes: Future[List[PrimeQuerySingle]] = (primeQueryStore ? GetAllPrimes).mapTo[AllPrimes].map(_.all)
+            onComplete(allPrimes) {
+              case Success(primes) =>
+                logger.info("All primes: {}", primes)
+                complete(primes)
             }
           } ~
             post {
@@ -61,6 +66,7 @@ trait PrimingQueryRoute extends LazyLogging with SprayJsonSupport {
                 primeRequest => {
                   onComplete((primeQueryStore ? RecordQueryPrime(primeRequest)).mapTo[PrimeAddResult]) {
                     case Success(PrimeAddSuccess) =>
+                      logger.info("Prime added: {}", primeRequest)
                       complete(StatusCodes.OK)
                     case Success(cp: ConflictingPrimes) =>
                       logger.warn(s"Received invalid prime due to conflicting primes $cp")
@@ -77,10 +83,9 @@ trait PrimingQueryRoute extends LazyLogging with SprayJsonSupport {
               }
             } ~
             delete {
-              complete {
-                logger.debug("Deleting all recorded priming")
-                primeQueryStore ! ClearQueryPrimes
-                StatusCodes.OK
+              logger.info("Deleting all recorded priming")
+              onComplete(primeQueryStore ? ClearQueryPrimes) {
+                case Success(Done) => complete(StatusCodes.OK)
               }
             }
         }

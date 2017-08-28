@@ -24,9 +24,9 @@ import org.scassandra.server.actors.Activity._
 import org.scassandra.server.actors.ActivityLogActor.RecordBatch
 import org.scassandra.server.actors.BatchHandler.BatchToFinish
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
+import org.scassandra.server.actors.ProtocolActor._
 import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{MatchBatch, MatchResult}
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Reply
-import org.scassandra.server.priming.prepared.PreparedStoreLookup
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -34,8 +34,7 @@ import scala.util.{Failure, Success}
 
 class BatchHandler(activityLog: ActorRef,
                    prepareHandler: ActorRef,
-                   batchPrimeStore: ActorRef,
-                   preparedStore: PreparedStoreLookup) extends ProtocolActor {
+                   batchPrimeStore: ActorRef) extends ProtocolActor {
 
   import context.dispatcher
   private implicit val timeout: Timeout = 1 second
@@ -93,7 +92,7 @@ class BatchHandler(activityLog: ActorRef,
       case Failure(e) =>
         log.error("Failed to get response from batch prime store", e)
       case Success(MatchResult(prime)) =>
-        writePrime(batch, prime, header, Some(recipient), alternative = Some(Reply(VoidResult)), consistency = Some(batch.consistency))
+        writePrime(batch, prime, header, recipient, alternative = Some(Reply(VoidResult)), consistency = Some(batch.consistency))(context.system)
     }
   }
 }
