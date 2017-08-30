@@ -15,6 +15,8 @@ lazy val root = (project in file("."))
   )
   .disablePlugins(sbtassembly.AssemblyPlugin)
 
+concurrentRestrictions in Global += Tags.limit(Tags.Test, 1)
+
 val assemblySettings = Seq(assemblyMergeStrategy in assembly := {
   case PathList("javax", "servlet", xs@_*) => MergeStrategy.first
   case PathList(ps@_*) if ps.last endsWith ".html" => MergeStrategy.first
