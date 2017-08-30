@@ -36,7 +36,7 @@ public class ScassandraFactory {
      * @return An instance of Scassandra configured with the given ports.
      */
     public static Scassandra createServer(String binaryListenAddress, int binaryPort, String adminListenAddress, int adminPort) {
-        return createServer(binaryListenAddress, binaryPort, adminListenAddress, adminPort, 10);
+        return createServer(binaryListenAddress, binaryPort, adminListenAddress, adminPort, 20);
     }
 
     /**
