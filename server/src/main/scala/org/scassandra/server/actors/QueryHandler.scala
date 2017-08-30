@@ -35,7 +35,7 @@ class QueryHandler(primeQueryStore: ActorRef, activityLog: ActorRef) extends Pro
   def receive: Receive = {
     case ProtocolMessage(Frame(header, query: Query)) =>
       implicit val protocolVersion: ProtocolVersion = header.version.version
-      implicit val timeout: Timeout = Timeout(250 milliseconds)
+      implicit val timeout: Timeout = Timeout(1 second)
 
       log.info(s"Incoming query: $query")
       val toReply = sender()

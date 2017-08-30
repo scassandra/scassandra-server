@@ -20,17 +20,20 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
+import akka.util.Timeout
 import org.scalatest.{Matchers, WordSpec}
 import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{BatchPrimeSingle, BatchWhen, ClearPrimes, RecordBatchPrime}
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Then
 import org.scassandra.server.priming.json.{PrimingJsonImplicits, Success}
 import org.scassandra.server.actors._
+import scala.concurrent.duration._
 
 class PrimingBatchRouteTest extends WordSpec with Matchers with ScalatestRouteTest with PrimingBatchRoute {
 
   import PrimingJsonImplicits._
 
   implicit def actorRefFactory: ActorSystem = system
+  implicit val actorTimeout: Timeout = Timeout(2 seconds)
 
   val testProbe = TestProbe()
   val primeBatchStore: ActorRef = testProbe.ref

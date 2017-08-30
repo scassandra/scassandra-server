@@ -37,7 +37,7 @@ trait PrimingMultiRoute extends LazyLogging {
 
   implicit val primePreparedMultiStore: ActorRef
   implicit val ec: ExecutionContext
-  private implicit val timeout: Timeout = Timeout(250 milliseconds)
+  implicit val actorTimeout: Timeout
 
   val routeForMulti: Route =
     cors() {

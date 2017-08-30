@@ -28,7 +28,6 @@ import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming.json.PrimingJsonImplicits
 
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
@@ -38,8 +37,7 @@ trait PrimingQueryRoute extends LazyLogging with SprayJsonSupport {
 
   implicit val primeQueryStore: ActorRef
   implicit val ec: ExecutionContext
-
-  private implicit val timeout: Timeout = Timeout(250 milliseconds)
+  implicit val actorTimeout: Timeout
 
   val queryRoute: Route = {
     cors() {

@@ -21,6 +21,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.StatusCodes.{BadRequest, OK}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.{TestActor, TestProbe}
+import akka.util.Timeout
 import org.scalatest._
 import org.scassandra.codec.Consistency._
 import org.scassandra.codec.datatype._
@@ -28,12 +29,15 @@ import org.scassandra.codec.{Query => CQuery}
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming.json._
 
+import scala.concurrent.duration._
+
 class PrimingQueryRouteTest extends WordSpec with BeforeAndAfter with Matchers with ScalatestRouteTest with PrimingQueryRoute {
 
   import PrimingJsonImplicits._
 
   implicit def actorRefFactory: ActorSystem = system
   val ec = scala.concurrent.ExecutionContext.global
+  val actorTimeout: Timeout = Timeout(2 seconds)
 
   private val primeQueryStoreProbe = TestProbe()
   val primeQueryStore = primeQueryStoreProbe.ref

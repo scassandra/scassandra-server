@@ -39,8 +39,7 @@ trait PrimingPreparedRoute extends LazyLogging {
 
   val primePreparedStore: ActorRef
   val primePreparedPatternStore: ActorRef
-
-  private implicit val timeout: Timeout = Timeout(500 milliseconds)
+  implicit val actorTimeout: Timeout
   implicit val ec: ExecutionContext
 
   val routeForPreparedPriming: Route =

@@ -35,7 +35,7 @@ trait PrimingBatchRoute extends LazyLogging {
   import PrimingJsonImplicits._
 
   val primeBatchStore: ActorRef
-  implicit private val timeout: Timeout = Timeout(1 second)
+  implicit val actorTimeout: Timeout
 
   val batchRoute: Route = {
     cors() {

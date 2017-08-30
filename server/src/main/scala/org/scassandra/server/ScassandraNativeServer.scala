@@ -76,7 +76,7 @@ class ScassandraServer(val binaryListenAddress: String,
   val tcpServer: ActorRef = context.actorOf(Props(classOf[TcpServer], binaryListenAddress, binaryPortNumber, primeQueryStore, preparedLookup, primeBatchStore, tcpReadyListener, activityLog), "BinaryTcpListener")
 
   implicit val ec: ExecutionContext = context.dispatcher
-  val timeout = Timeout(10.seconds)
+  val actorTimeout: Timeout = Timeout(2 seconds)
 
   implicit val system: ActorSystem = context.system
   implicit val materialiser: ActorMaterializer = ActorMaterializer()
@@ -93,17 +93,17 @@ class ScassandraServer(val binaryListenAddress: String,
       implicit val t: Timeout = startupTimeout
       // Create a future that completes when both listeners ready.
       val f: Future[List[Any]] = Future.sequence(
-        List(tcpReadyListener ? OnServerReady, bindingFuture)
+        List(ask(tcpReadyListener, OnServerReady)(t), bindingFuture)
       )
       f pipeTo sender
     case ShutdownServer(shutdownTimeout) =>
       implicit val t: Timeout = shutdownTimeout
       // Send shutdown message to each sender and on complete send a PoisonPill to self.
       val f = Future.sequence(
-        tcpServer ? Shutdown ::
+        ask(tcpServer, Shutdown)(t) ::
           bindingFuture.flatMap(_.unbind()) ::
           Nil
-      ).map { _ => self ? PoisonPill }
+      ).map { _ => ask(self, PoisonPill)(t) }
       f pipeTo sender
   }
 }

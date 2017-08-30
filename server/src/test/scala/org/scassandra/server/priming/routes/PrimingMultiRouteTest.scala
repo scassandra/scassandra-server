@@ -35,11 +35,13 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.{TestActor, TestProbe}
+import akka.util.Timeout
 import org.scalatest.{Matchers, WordSpec}
 import org.scassandra.codec.datatype._
 import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{AllPSPrimes, ClearPSPrime, GetAllPSPrimes, RecordPSPrime}
 import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.prepared._
+import scala.concurrent.duration._
 
 class PrimingMultiRouteTest extends WordSpec with Matchers with ScalatestRouteTest with PrimingMultiRoute {
 
@@ -47,6 +49,7 @@ class PrimingMultiRouteTest extends WordSpec with Matchers with ScalatestRouteTe
 
   implicit val actorRefFactory: ActorSystem = system
   val ec = scala.concurrent.ExecutionContext.global
+  val actorTimeout: Timeout = Timeout(2 seconds)
   val multiStoreProbe = TestProbe()
   val primePreparedMultiStore: ActorRef = multiStoreProbe.ref
   val primePreparedMultiPath = "/prime-prepared-multi"
