@@ -109,8 +109,8 @@ case class ExactMatch(matcher: Option[Any]) extends VariableMatch with LazyLoggi
     (variable, matcher) match {
       case (Some(v), Some(x)) if dataType.native.isDefinedAt(x) =>
         dataType.native(x).equals(v) // convert into data type's native value and then compare.
-      case (Some(_), Some(_)) =>
-        logger.warn("Unsure how to convert matcher value of $x to data type $dataType, forgoing comparison")
+      case (Some(_), Some(x)) =>
+        logger.warn(s"Unsure how to convert matcher value of $x to data type $dataType, forgoing comparison")
         false
       case (None, None) => true
       case _ => false // one is none and another is not.

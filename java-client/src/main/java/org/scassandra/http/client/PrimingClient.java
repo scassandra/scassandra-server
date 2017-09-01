@@ -206,7 +206,7 @@ public class PrimingClient {
                 LOGGER.info(errorMessage);
                 throw new PrimeFailedException(errorMessage);
             }
-            LOGGER.info("Received response from scassandra {}", responseAsString);
+            LOGGER.debug("Received response from scassandra {}", responseAsString);
             return responseAsString;
         } catch (IOException e) {
             LOGGER.info("Retrieving failed", e);
@@ -240,7 +240,7 @@ public class PrimingClient {
     private void prime(Object primeRequest, String url) {
         HttpPost httpPost = new HttpPost(url);
         String jsonAsString = gson.toJson(primeRequest);
-        LOGGER.info("Sending {} to url {}", jsonAsString, url);
+        LOGGER.debug("Sending {} to url {}", jsonAsString, url);
         httpPost.setEntity(new StringEntity(jsonAsString, ContentType.APPLICATION_JSON));
         CloseableHttpResponse response = null;
         try {

@@ -59,23 +59,4 @@ class QueryHandler(primeQueryStore: ActorRef, activityLog: ActorRef) extends Pro
         writePrime(query, mr.prime, header, alternative = noRows, consistency = Some(query.parameters.consistency), target = toReply)(context.system)
       }
   }
-
-
-  //      val prime = primeQueryStore(query)
-
-  // Attempt to extract values if variable types are present in the prime.
-  //      val typesAndValues: Option[(List[DataType], List[Any])] = prime
-  //        .flatmap(_.variabletypes)
-  //        .flatmap { variabletypes =>
-  //          Some(variabletypes).zip(extractqueryvariables(query.query, query.parameters.values.map(_.map(_.value)), variabletypes)).headoption
-  //        }
-  //      typesandvalues match {
-  //        case some((variabletypes, values)) =>
-  //          activitylog ! recordquery(activity.query(query.query, query.parameters.consistency, query.parameters.serialconsistency, values,
-  //            variabletypes, query.parameters.timestamp))
-  //        case none =>
-  //          activitylog ! recordquery(activity.query(query.query, query.parameters.consistency, query.parameters.serialconsistency,
-  //            timestamp = query.parameters.timestamp))
-  //      }
-  //      writeprime(query, prime, header, alternative = norows, consistency = some(query.parameters.consistency))
 }
