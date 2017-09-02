@@ -18,17 +18,18 @@ package org.scassandra.server.priming
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import com.typesafe.scalalogging.LazyLogging
+import org.scassandra.server.priming.prepared.PrimePreparedMulti
 import org.scassandra.server.priming.routes._
 
 import scala.language.postfixOps
 
 trait AllRoutes extends PrimingPreparedRoute with
 PrimingQueryRoute with ActivityVerificationRoute with VersionRoute with
-PrimingBatchRoute with CurrentRoute with LazyLogging {
+PrimingBatchRoute with CurrentRoute with PrimingMultiRoute with LazyLogging {
 
   val allRoutes: Route = routeForPreparedPriming ~
     queryRoute ~ activityVerificationRoute ~
-    versionRoute ~ batchRoute ~ currentRoute
+    versionRoute ~ batchRoute ~ currentRoute ~ routeForMulti
 
 }
 

@@ -20,20 +20,21 @@ import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import org.scassandra.codec._
 import org.scassandra.codec.messages.{BatchQueryKind, PreparedBatchQuery, SimpleBatchQuery}
+import org.scassandra.server.actors.Activity._
+import org.scassandra.server.actors.ActivityLogActor.RecordBatch
 import org.scassandra.server.actors.BatchHandler.BatchToFinish
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.priming._
-import org.scassandra.server.priming.batch.PrimeBatchStore
-import org.scassandra.server.priming.prepared.PreparedStoreLookup
-import org.scassandra.server.priming.query.Reply
+import org.scassandra.server.actors.ProtocolActor._
+import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{MatchBatch, MatchResult}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Reply
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
-class BatchHandler(activityLog: ActivityLog,
+class BatchHandler(activityLog: ActorRef,
                    prepareHandler: ActorRef,
-                   batchPrimeStore: PrimeBatchStore,
-                   preparedStore: PreparedStoreLookup) extends ProtocolActor {
+                   batchPrimeStore: ActorRef) extends ProtocolActor {
 
   import context.dispatcher
   private implicit val timeout: Timeout = 1 second
@@ -58,17 +59,17 @@ class BatchHandler(activityLog: ActivityLog,
         val connection = sender()
         val toFinish = (prepareHandler ? PreparedStatementQuery(preparedIds)).mapTo[PreparedStatementResponse]
           .map(result => BatchToFinish(header, batch, result, connection))
-        log.debug("Piping batch to finish to self")
+        log.error("Piping batch to finish to self")
         toFinish pipeTo self
       }
 
     case BatchToFinish(header, batch, preparedResponse, connection) =>
-      log.debug("Received batch to finish")
+      log.error("Received batch to finish")
       val batchQueries = batch.queries.map {
         case SimpleBatchQuery(query, _) => BatchQuery(query, BatchQueryKind.Simple)
         case PreparedBatchQuery(i, byteValues) =>
           val id = i.toInt()
-          implicit val protocolVersion = header.version.version
+          implicit val protocolVersion: ProtocolVersion = header.version.version
           preparedResponse.prepared.get(id) match {
             case Some((queryText, prepared)) =>
               // Decode query parameters using the prepared statement metadata.
@@ -83,15 +84,19 @@ class BatchHandler(activityLog: ActivityLog,
       processBatch(header, batch, batchQueries, connection)
   }
 
-  def processBatch(header: FrameHeader, batch: Batch, batchQueries: Seq[BatchQuery], recipient: ActorRef) = {
+  def processBatch(header: FrameHeader, batch: Batch, batchQueries: Seq[BatchQuery], recipient: ActorRef): Unit = {
     val execution = BatchExecution(batchQueries, batch.consistency, batch.serialConsistency, batch.batchType, batch.timestamp)
-    activityLog.recordBatchExecution(execution)
-    val prime = batchPrimeStore(execution)
-    prime.foreach(p => log.info("Found prime {} for batch execution {}", p, execution))
-    writePrime(batch, prime, header, recipient=Some(recipient), alternative = Some(Reply(VoidResult)), consistency = Some(batch.consistency))
+    activityLog ! RecordBatch(execution)
+    log.error("Getting prime for batch")
+    (batchPrimeStore ? MatchBatch(execution)).mapTo[MatchResult].onComplete {
+      case Failure(e) =>
+        log.error("Failed to get response from batch prime store", e)
+      case Success(MatchResult(prime)) =>
+        writePrime(batch, prime, header, recipient, alternative = Some(Reply(VoidResult)), consistency = Some(batch.consistency))(context.system)
+    }
   }
 }
 
 object BatchHandler {
-  case class BatchToFinish(header: FrameHeader, batch: Batch, prepared: PreparedStatementResponse, connection: ActorRef)
+  private case class BatchToFinish(header: FrameHeader, batch: Batch, prepared: PreparedStatementResponse, connection: ActorRef)
 }

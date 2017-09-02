@@ -21,7 +21,6 @@ import akka.pattern.{ask, gracefulStop}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.priming.query.PrimeQueryStore
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -61,14 +60,11 @@ class ServerStubRunner(val binaryListenAddress: String = "localhost",
                        val binaryPortNumber: Int = 8042,
                        val adminListenAddress: String = "localhost",
                        val adminPortNumber: Int = 8043,
-                       val startupTimeoutSeconds: Long = 10)
+                       val startupTimeoutSeconds: Long = 20)
   extends LazyLogging {
 
   import ExecutionContext.Implicits.global
 
-
-  // TODO: This is only used by integration tests, move into Actor.
-  val primedResults = new PrimeQueryStore()
   implicit val actorSystem: ActorSystem = ServerStubRunner.actorSystem
   implicit val materialiser: ActorMaterializer = ActorMaterializer()
 
@@ -76,7 +72,7 @@ class ServerStubRunner(val binaryListenAddress: String = "localhost",
   var bindingFuture: Future[ServerBinding] = _
 
   def start() = this.synchronized {
-    scassandra = actorSystem.actorOf(Props(classOf[ScassandraServer], primedResults, binaryListenAddress,
+    scassandra = actorSystem.actorOf(Props(classOf[ScassandraServer], binaryListenAddress,
       binaryPortNumber, adminListenAddress, adminPortNumber))
   }
 
@@ -87,7 +83,7 @@ class ServerStubRunner(val binaryListenAddress: String = "localhost",
 
   def awaitStartup(): Any = this.synchronized {
     implicit val timeout: Timeout = startupTimeoutSeconds seconds
-    val startup = (scassandra ? AwaitStartup(timeout))
+    val startup = scassandra ? AwaitStartup(timeout)
     startup.onFailure { case t: Throwable =>
       logger.error("Failure or timeout starting server", t)
     }

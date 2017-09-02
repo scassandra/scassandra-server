@@ -62,8 +62,8 @@ class CurrentRouteTest extends FunSpec with CurrentRoute with Matchers with Lazy
   })
 
   override implicit val tcpServer: ActorRef = serverActor.ref
-  override implicit val timeout = Timeout(5 seconds)
-  override implicit val dispatcher = system.dispatcher
+  override implicit val actorTimeout = Timeout(5 seconds)
+  override implicit val ec = system.dispatcher
 
   it("Should get all client connections") {
     Get("/current/connections") ~> currentRoute ~> check {

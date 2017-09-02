@@ -13,123 +13,103 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
-* Copyright (C) 2014 Christopher Batey and Dogan Narinc
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-* http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
 package org.scassandra.server.actors
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorRef
 import akka.testkit._
-import org.mockito.Mockito._
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
 import org.scassandra.codec._
 import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.{QueryParameters, Row}
-import org.scassandra.server.priming.query.{PrimeQueryStore, Reply}
-import org.scassandra.server.priming.{ActivityLog, Query => RQuery}
+import org.scassandra.server.actors.ActivityLogActor.RecordQuery
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{MatchPrime, MatchResult, Reply}
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class QueryHandlerTest extends FunSuite with ImplicitSender with ProtocolActorTest with Matchers with BeforeAndAfter
-  with TestKitWithShutdown with MockitoSugar {
+class QueryHandlerTest extends WordSpec with ImplicitSender with ProtocolActorTest with Matchers with BeforeAndAfter
+  with TestKitWithShutdown {
   implicit val protocolVersion = ProtocolVersion.latest
 
   var underTest: ActorRef = null
-  var testProbeForTcpConnection: TestProbe = null
-  val mockPrimedResults = mock[PrimeQueryStore]
-  val someCqlStatement = Query("some cql statement", QueryParameters(consistency=Consistency.ONE))
-  val activityLog = new ActivityLog
+  var tcpConnectionTestProbe: TestProbe = null
+  val someCqlStatement = Query("some cql statement", QueryParameters(consistency = Consistency.ONE))
+  val activityLogProbe = TestProbe()
+  val activityLog = activityLogProbe.ref
+  val primeQueryStoreProbe = TestProbe()
+  val primeQueryStore = primeQueryStoreProbe.ref
 
   before {
-    activityLog.clearQueries()
-    underTest = TestActorRef(new QueryHandler(mockPrimedResults, activityLog))
-    reset(mockPrimedResults)
+    underTest = TestActorRef(new QueryHandler(primeQueryStore, activityLog))
 
     receiveWhile(10 milliseconds) {
-      case msg @ _ =>
+      case _ =>
+    }
+    activityLogProbe.receiveWhile(10 milliseconds) {
+      case _ =>
+    }
+    primeQueryStoreProbe.receiveWhile(10 milliseconds) {
+      case _ =>
     }
   }
 
-  test("Should return empty result when PrimeQueryStore returns None") {
-    when(mockPrimedResults.apply(someCqlStatement)).thenReturn(None)
+  "query handler" must {
 
-    underTest ! protocolMessage(someCqlStatement)
+    "return empty result when PrimeQueryStore returns None" in {
+      respondWith(primeQueryStoreProbe, MatchResult(None))
 
-    expectMsgPF() {
-      case ProtocolResponse(_, `NoRows`) => true
-    }
-  }
+      underTest ! protocolMessage(someCqlStatement)
 
-  test("Should return Prime message when PrimeQueryStore returns Prime") {
-    val rows = Rows(rows = Row("a" -> 1, "b" -> 2) :: Nil)
-    when(mockPrimedResults.apply(someCqlStatement)).thenReturn(Some(Reply(rows)))
-
-    underTest ! protocolMessage(someCqlStatement)
-
-    expectMsgPF() {
-      case ProtocolResponse(_, `rows`) => true
-    }
-  }
-
-  test("Should store query in the ActivityLog even if not primed") {
-    //given
-    activityLog.clearQueries()
-
-    val queryText = "select * from people"
-    val consistency = Consistency.TWO
-    val query = Query(queryText, QueryParameters(consistency=consistency))
-    when(mockPrimedResults.apply(query)).thenReturn(None)
-
-    //when
-    underTest ! protocolMessage(query)
-
-    //then
-    val recordedQueries = activityLog.retrieveQueries()
-    recordedQueries.size should equal(1)
-    val recordedQuery = recordedQueries.head
-    recordedQuery should equal(RQuery(queryText, consistency, None))
-  }
-
-  test("Should record query parameter values from request in QueryLog if Prime contains variable types") {
-    // given
-    val consistency = Consistency.THREE
-
-    val variableTypes: List[DataType] = Varchar :: CqlInt :: Nil
-    val values: List[Any] = "Hello" :: 42 :: Nil
-    val rawValues: List[QueryValue] = values.zip(variableTypes).map {
-      case (v, dataType) =>
-        QueryValue(None, Bytes(dataType.codec.encode(v).require.toByteVector))
-    }
-    val query = Query("select * from sometable where k = ?", QueryParameters(consistency=consistency, values = Some(rawValues)))
-
-    when(mockPrimedResults.apply(query)).thenReturn(Some(Reply(NoRows, variableTypes = Some(variableTypes))))
-
-    // when
-    underTest ! protocolMessage(query)
-
-    // then
-    expectMsgPF() {
-      case ProtocolResponse(_, `NoRows`) => true
+      primeQueryStoreProbe.expectMsg(MatchPrime(someCqlStatement))
+      expectMsgPF() {
+        case ProtocolResponse(_, `NoRows`) => true
+      }
     }
 
-    // check activityLog
-    val recordedQueries = activityLog.retrieveQueries()
-    recordedQueries.size should equal(1)
-    val recordedQuery = recordedQueries.head
-    recordedQuery should equal(RQuery(query.query, consistency, None, values, variableTypes))
+    "return Prime message when PrimeQueryStore returns Prime" in {
+      val rows = Rows(rows = Row("a" -> 1, "b" -> 2) :: Nil)
+      respondWith(primeQueryStoreProbe, MatchResult(Some(Reply(rows))))
+
+      underTest ! protocolMessage(someCqlStatement)
+
+      primeQueryStoreProbe.expectMsg(MatchPrime(someCqlStatement))
+      expectMsgPF() {
+        case ProtocolResponse(_, r) if r == rows =>
+      }
+    }
+
+    "store query in the ActivityLog even if not primed" in {
+      //given
+      val queryText = "select * from people"
+      val consistency = Consistency.TWO
+      val query = Query(queryText, QueryParameters(consistency = consistency))
+      respondWith(primeQueryStoreProbe, MatchResult(None))
+
+      //when
+      underTest ! protocolMessage(query)
+
+      //then
+      activityLogProbe.expectMsg(RecordQuery(Activity.Query(query.query, consistency, None, List(), List(), None)))
+    }
+
+    "record query parameter values from request in QueryLog if Prime contains variable types" in {
+      // given
+      val consistency = Consistency.THREE
+      val variableTypes: List[DataType] = List(Varchar, CqlInt)
+      val values: List[Any] = List("Hello", 42)
+      val rawValues: List[QueryValue] = values.zip(variableTypes).map {
+        case (v, dataType) =>
+          QueryValue(None, Bytes(dataType.codec.encode(v).require.toByteVector))
+      }
+      val query = Query("select * from someTable where k = ?", QueryParameters(consistency = consistency, values = Some(rawValues)))
+      respondWith(primeQueryStoreProbe, MatchResult(Some(Reply(NoRows, variableTypes = Some(variableTypes)))))
+
+      underTest ! protocolMessage(query)
+
+      expectMsgPF() {
+        case ProtocolResponse(_, NoRows) =>
+      }
+      activityLogProbe.expectMsg(RecordQuery(Activity.Query(query.query, consistency, None, values, variableTypes)))
+    }
   }
 }

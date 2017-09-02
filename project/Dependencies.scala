@@ -15,6 +15,9 @@ object Dependencies {
    val mockitoVersion = "1.9.5"
    val scodecVersion = "1.10.3"
    val slf4jVersion = "1.7.10"
+   val catsVersion = "1.0.0-MF"
+
+   val cats = "org.typelevel" %% "cats-core" % catsVersion
 
    val logback = "ch.qos.logback" % "logback-classic" % logbackVersion
    
@@ -52,7 +55,7 @@ object Dependencies {
    val jarjar = "com.googlecode.jarjar" % "jarjar" % "1.3"
    val junitInterface = "com.novocode" % "junit-interface" % "0.11"
 
-   val serverDeps = Seq(antlrRuntime, logback, akkaHttpCors, akkaHttp, akkaHttpSpray, akkaActor, akkaRemote, akkaSlf4j, typesafeLogging, guava)
+   val serverDeps = Seq(cats, antlrRuntime, logback, akkaHttpCors, akkaHttp, akkaHttpSpray, akkaActor, akkaRemote, akkaSlf4j, typesafeLogging, guava)
    val serverTestDeps = Seq(akkaTestkit, akkaHttpTestkit, scalaTest, mockito, cassandraDriver, pegdown).map(_ % "test")
 
    val codecDeps = Seq(scodec, guava)

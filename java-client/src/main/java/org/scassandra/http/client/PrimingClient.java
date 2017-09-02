@@ -195,6 +195,7 @@ public class PrimingClient {
     }
 
     private String httpGet(String url) {
+        LOGGER.debug("Sending get to: {}",url);
         HttpGet get = new HttpGet(url);
         try {
             CloseableHttpResponse httpResponse = httpClient.execute(get);
@@ -214,7 +215,7 @@ public class PrimingClient {
     }
 
     private void httpDelete(String url) {
-
+        LOGGER.debug("Sending delete to: {}", url);
         HttpDelete delete = new HttpDelete(url);
         CloseableHttpResponse httpResponse = null;
         try {
@@ -239,7 +240,7 @@ public class PrimingClient {
     private void prime(Object primeRequest, String url) {
         HttpPost httpPost = new HttpPost(url);
         String jsonAsString = gson.toJson(primeRequest);
-        LOGGER.info("Sending {} to url {}", jsonAsString, url);
+        LOGGER.debug("Sending {} to url {}", jsonAsString, url);
         httpPost.setEntity(new StringEntity(jsonAsString, ContentType.APPLICATION_JSON));
         CloseableHttpResponse response = null;
         try {

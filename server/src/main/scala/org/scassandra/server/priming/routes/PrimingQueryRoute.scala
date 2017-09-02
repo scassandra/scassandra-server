@@ -15,20 +15,29 @@
  */
 package org.scassandra.server.priming.routes
 
+import akka.Done
+import akka.actor.ActorRef
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import akka.pattern.ask
+import akka.util.Timeout
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.priming._
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming.json.PrimingJsonImplicits
-import org.scassandra.server.priming.query.{PrimeQuerySingle, _}
 
-trait PrimingQueryRoute extends LazyLogging {
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
+
+trait PrimingQueryRoute extends LazyLogging with SprayJsonSupport {
 
   import PrimingJsonImplicits._
 
-  implicit val primeQueryStore: PrimeQueryStore
+  implicit val primeQueryStore: ActorRef
+  implicit val ec: ExecutionContext
+  implicit val actorTimeout: Timeout
 
   val queryRoute: Route = {
     cors() {
@@ -42,37 +51,39 @@ trait PrimingQueryRoute extends LazyLogging {
       } ~
         path("prime-query-single") {
           get {
-            complete {
-              primeQueryStore.getAllPrimes
+            logger.info("Requesting all primes")
+            val allPrimes: Future[List[PrimeQuerySingle]] = (primeQueryStore ? GetAllPrimes).mapTo[AllPrimes].map(_.all)
+            onComplete(allPrimes) {
+              case Success(primes) =>
+                logger.info("All primes: {}", primes)
+                complete(primes)
             }
           } ~
             post {
               entity(as[PrimeQuerySingle]) {
                 primeRequest => {
-                  complete {
-                    logger.debug(s"Received prime request $primeRequest")
-                    primeQueryStore.add(primeRequest) match {
-                      case cp: ConflictingPrimes => {
-                        logger.warn(s"Received invalid prime due to conflicting primes $cp")
-                        StatusCodes.BadRequest -> cp
-                      }
-                      case tm: TypeMismatches => {
-                        logger.warn(s"Received invalid prime due to type mismatch $tm")
-                        StatusCodes.BadRequest -> tm
-                      }
-                      case b: BadCriteria => StatusCodes.BadRequest
-                      case _ => StatusCodes.OK
-                    }
+                  onComplete((primeQueryStore ? RecordQueryPrime(primeRequest)).mapTo[PrimeAddResult]) {
+                    case Success(PrimeAddSuccess) =>
+                      logger.info("Prime added: {}", primeRequest)
+                      complete(StatusCodes.OK)
+                    case Success(cp: ConflictingPrimes) =>
+                      logger.warn(s"Received invalid prime due to conflicting primes $cp")
+                      complete(StatusCodes.BadRequest, cp)
+                    case Success(tm: TypeMismatches) =>
+                      logger.warn(s"Received invalid prime due to type mismatch $tm")
+                      complete(StatusCodes.BadRequest, tm)
+                    case Success(b: BadCriteria) =>
+                      complete(StatusCodes.BadRequest, b)
+                    case Failure(t) =>
+                      complete(StatusCodes.InternalServerError, t.getMessage)
                   }
                 }
               }
             } ~
             delete {
-              complete {
-                logger.debug("Deleting all recorded priming")
-                primeQueryStore.clear()
-                logger.debug("Return 200")
-                StatusCodes.OK
+              logger.info("Deleting all recorded priming")
+              onComplete(primeQueryStore ? ClearQueryPrimes) {
+                case Success(Done) => complete(StatusCodes.OK)
               }
             }
         }

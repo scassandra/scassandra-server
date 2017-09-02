@@ -17,34 +17,29 @@ package org.scassandra.server.actors
 
 import java.net.InetSocketAddress
 
-import akka.actor.ActorSystem
 import akka.io.Tcp.{Bind, Bound}
 import akka.testkit._
-import org.scalatest.{FunSpec, FunSpecLike, Matchers}
+import org.scalatest.{Matchers, WordSpec}
 import org.scassandra.server.ServerReady
-import org.scassandra.server.priming.ActivityLog
-import org.scassandra.server.priming.batch.PrimeBatchStore
 import org.scassandra.server.priming.prepared.PrimePreparedStore
-import org.scassandra.server.priming.query.PrimeQueryStore
 
-class TcpServerReadyTest extends FunSpec with TestKitWithShutdown with Matchers {
+class TcpServerReadyTest extends WordSpec with TestKitWithShutdown with Matchers {
 
-  describe("ServerReady") {
-    it("should be send to the actor that registers as a listener") {
-      // given
-      // TODO [DN] Do test probes shut down their own actor systems?
+  "tcp server ready" must {
+    "send to the actor that registers as a listener" in {
       val tcpReadyListener = TestProbe()
       val manager = TestProbe()
+      val activityLog = TestProbe()
+      val primeBatchStore = TestProbe()
+      val preparedStore = TestProbe()
       val remote = new InetSocketAddress("127.0.0.1", 8046)
+      val primeQueryStore = TestProbe()
 
-      // when
-      val tcpServer = TestActorRef(new TcpServer("localhost", 8046, new PrimeQueryStore, new PrimePreparedStore, new PrimeBatchStore(), tcpReadyListener.ref, new ActivityLog, Some(manager.ref)))
+      val tcpServer = TestActorRef(new TcpServer("localhost", 8046, primeQueryStore.ref, preparedStore.ref, primeBatchStore.ref, tcpReadyListener.ref, activityLog.ref, Some(manager.ref)))
       manager.expectMsgType[Bind]
       manager.send(tcpServer, Bound(remote))
 
-      // then
       tcpReadyListener.expectMsg(ServerReady)
     }
-
   }
 }

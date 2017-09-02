@@ -20,13 +20,13 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.codec.Consistency._
 import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.ColumnSpec._
-import org.scassandra.codec.messages.{PreparedMetadata, QueryParameters, RowMetadata}
+import org.scassandra.codec.messages.{PreparedMetadata, QueryParameters}
 import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
-import org.scassandra.server.priming.query.Reply
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Reply
 import scodec.bits.ByteVector
 
 class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAndAfter {
-  implicit val protocolVersion = ProtocolVersion.latest
+  implicit val protocolVersion: ProtocolVersion = ProtocolVersion.latest
 
   val id = ByteVector(1)
 
@@ -113,11 +113,9 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     underTest.retrievePrimes().size should equal(0)
   }
 
-  val factory = (p: PreparedMetadata, r: RowMetadata) => Prepared(id, p, r)
-
   test("Prepared prime - None when no match") {
     // when
-    val prepared = underTest(Prepare("select * from people where a = ? and b = ? and c = ?"), factory)
+    val prepared = underTest(Prepare("select * from people where a = ? and b = ? and c = ?"), 1)
 
     // then
     prepared.isDefined should equal(false)
@@ -132,7 +130,7 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     underTest.record(prime)
 
     // when
-    val prepared = underTest(Prepare(query), factory)
+    val prepared = underTest(Prepare(query), 1)
 
     // then - should be a prepared with no column spec
     prepared should matchPattern { case Some(Reply(Prepared(`id`, PreparedMetadata(_, _, _, `Nil`), _), _, _)) => }
@@ -148,7 +146,7 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     underTest.record(prime)
 
     // when
-    val prepared = underTest(Prepare(query), factory)
+    val prepared = underTest(Prepare(query), 1)
 
     // then - should be a prepared with a column spec containing parameters.
     prepared should matchPattern { case Some(Reply(Prepared(`id`, PreparedMetadata(_, _, _, `columnSpec`), _), _, _)) => }

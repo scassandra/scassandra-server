@@ -22,6 +22,6 @@ class OptionsHandler extends ProtocolActor {
   override def receive: Receive = {
     case ProtocolMessage(Frame(header, Options)) =>
       log.debug(s"Received OPTIONS message")
-      write(Supported(Map[String, List[String]]("CQL_VERSION" -> ("3.0.0" :: Nil))), header)
+      write(Supported(Map[String, List[String]]("CQL_VERSION" -> ("3.0.0" :: Nil))), header, sender())
   }
 }

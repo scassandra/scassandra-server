@@ -15,97 +15,105 @@
  */
 package org.scassandra.server.priming.routes
 
-import org.scassandra.server.priming.ActivityLog
-import org.scassandra.server.priming.json.PrimingJsonImplicits
-
+import akka.actor.ActorRef
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
-
+import akka.pattern.ask
+import akka.util.Timeout
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import com.typesafe.scalalogging.LazyLogging
+import org.scassandra.server.actors.ActivityLogActor._
+import org.scassandra.server.priming.json.PrimingJsonImplicits
 
-trait ActivityVerificationRoute extends LazyLogging {
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
+
+//todo make deletes return once actor has confirmed
+trait ActivityVerificationRoute extends LazyLogging with SprayJsonSupport {
 
   import PrimingJsonImplicits._
 
-  implicit val activityLog: ActivityLog
+  implicit val activityLog: ActorRef
+  implicit val ec: ExecutionContext
+  private implicit val timoeut = Timeout(250 milliseconds)
 
   val activityVerificationRoute: Route =
     cors() {
       path("connection") {
         get {
           complete {
-            activityLog.retrieveConnections()
+            (activityLog ? GetAllConnections).mapTo[Connections].map(_.list)
           }
         } ~
-        delete {
-          complete {
-            logger.debug("Deleting all recorded connections")
-            activityLog.clearConnections()
-            StatusCodes.OK
+          delete {
+            complete {
+              logger.debug("Deleting all recorded connections")
+              activityLog ! ClearConnections
+              StatusCodes.OK
+            }
           }
-        }
       } ~
-      path("query") {
-        get {
-          complete {
-            logger.debug("Request for recorded queries")
-            activityLog.retrieveQueries()
-          }
+        path("query") {
+          get {
+            complete {
+              logger.debug("Request for recorded queries")
+              (activityLog ? GetAllQueries).mapTo[Queries].map(_.list)
+            }
+          } ~
+            delete {
+              complete {
+                logger.debug("Deleting all recorded queries")
+                activityLog ! ClearQueries
+                StatusCodes.OK
+              }
+            }
         } ~
-        delete {
-          complete {
-            logger.debug("Deleting all recorded queries")
-            activityLog.clearQueries()
-            StatusCodes.OK
-          }
-        }
-      } ~
-      path("prepared-statement-preparation") {
-        get {
-          complete {
-            logger.debug("Request for recorded prepared statement preparations")
-            activityLog.retrievePreparedStatementPreparations()
-          }
+        path("prepared-statement-preparation") {
+          get {
+            complete {
+              logger.debug("Request for recorded prepared statement preparations")
+              (activityLog ? GetAllPrepares).mapTo[Prepares].map(_.list)
+            }
+          } ~
+            delete {
+              complete {
+                logger.debug("Deleting all recorded prepared statement preparations")
+                activityLog ! ClearPrepares
+                StatusCodes.OK
+              }
+            }
         } ~
-        delete {
-          complete {
-            logger.debug("Deleting all recorded prepared statement preparations")
-            activityLog.clearPreparedStatementPreparations()
-            StatusCodes.OK
-          }
-        }
-      } ~
-      path("prepared-statement-execution") {
-        get {
-          complete {
-            logger.debug("Request for recorded prepared statement executions")
-            activityLog.retrievePreparedStatementExecutions()
-          }
+        path("prepared-statement-execution") {
+          get {
+            complete {
+              logger.debug("Request for recorded prepared statement executions")
+              (activityLog ? GetAllExecutions).mapTo[Executions].map(_.list)
+            }
+          } ~
+            delete {
+              complete {
+                logger.debug("Deleting all recorded prepared statement executions")
+                activityLog ! ClearExecutions
+                StatusCodes.OK
+              }
+            }
         } ~
-        delete {
-          complete {
-            logger.debug("Deleting all recorded prepared statement executions")
-            activityLog.clearPreparedStatementExecutions()
-            StatusCodes.OK
-          }
+        path("batch-execution") {
+          get {
+            complete {
+              logger.debug("Request for recorded batch executions")
+              (activityLog ? GetAllBatches).mapTo[Batches].map(_.list)
+            }
+          } ~
+            delete {
+              complete {
+                logger.debug("Deleting all recorded batch executions")
+                activityLog ! ClearBatches
+                StatusCodes.OK
+              }
+            }
         }
-      } ~
-      path("batch-execution") {
-        get {
-          complete {
-            logger.debug("Request for recorded batch executions")
-            activityLog.retrieveBatchExecutions()
-          }
-        } ~
-        delete {
-          complete {
-            logger.debug("Deleting all recorded batch executions")
-            activityLog.clearBatchExecutions()
-            StatusCodes.OK
-          }
-        }
-      }
     }
 }

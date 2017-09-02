@@ -21,9 +21,9 @@ import org.scalatest.{FunSuite, Matchers}
 import org.scassandra.codec
 import org.scassandra.codec.datatype._
 import org.scassandra.codec.{Consistency, Rows}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
-import org.scassandra.server.priming.query._
 import scodec.bits.ByteVector
 
 import scala.concurrent.duration.FiniteDuration
@@ -44,7 +44,7 @@ class PrimingJsonHelperTest extends FunSuite with Matchers {
 
     val criteria = PrimingJsonHelper.extractPrimeCriteria(primeRequest).get
 
-    criteria shouldEqual PrimeCriteria(queryString, List(Consistency.TWO, Consistency.THREE), patternMatch = false)
+    criteria shouldEqual PrimeCriteria(queryString, List(Consistency.TWO, Consistency.THREE))
   }
 
   test("Should extract PrimeCriteria from When queryPattern") {

@@ -19,62 +19,82 @@ import akka.actor.ActorRef
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import org.scassandra.codec._
+import org.scassandra.codec.datatype.DataType
+import org.scassandra.server.actors.Activity.PreparedStatementExecution
+import org.scassandra.server.actors.ActivityLogActor.RecordExecution
 import org.scassandra.server.actors.ExecuteHandler.HandleExecute
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.priming._
-import org.scassandra.server.priming.prepared.PreparedStoreLookup
-import org.scassandra.server.priming.query.Reply
+import org.scassandra.server.actors.ProtocolActor._
+import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{LookupByExecute, PrimeMatch}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Prime, Reply}
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
-class ExecuteHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActivityLog, prepareHandler: ActorRef) extends ProtocolActor {
+class ExecuteHandler(primePreparedStore: ActorRef, activityLog: ActorRef, prepareHandler: ActorRef) extends ProtocolActor {
 
   import context.dispatcher
+
   implicit val timeout: Timeout = 1 second
 
   def receive: Receive = {
     case ProtocolMessage(Frame(header, e: Execute)) =>
       val id = e.id.toInt()
       val recipient = sender
-      // Lookup the associated prepared statement for this execute and on completion
-      // send a message to self indicating to handle the request.
       val executeRequest = (prepareHandler ? PreparedStatementQuery(List(id)))
         .mapTo[PreparedStatementResponse]
         .map(res => HandleExecute(res.prepared.get(id), header, e, recipient))
+
       executeRequest.pipeTo(self)
+
     case HandleExecute(query, header, execute, connection) =>
       handleExecute(query, header, execute, connection)
   }
 
-  def handleExecute(preparedStatement: Option[(String, Prepared)], header: FrameHeader, execute: Execute, connection: ActorRef) = {
-    implicit val protocolVersion = header.version.version
+  def handleExecute(preparedStatement: Option[(String, Prepared)], header: FrameHeader, execute: Execute, connection: ActorRef): Unit = {
+    implicit val protocolVersion: ProtocolVersion = header.version.version
     preparedStatement match {
       case Some((queryText, prepared)) =>
-        val prime = primePreparedStore(queryText, execute)
-        prime.foreach(p => log.info("Found prime {}", p))
+        val prime2: Future[Option[Prime]] =
+          (primePreparedStore ? LookupByExecute(queryText, execute, protocolVersion)).mapTo[PrimeMatch]
+            .map(_.prime)
 
         // Decode query parameters using the prepared statement metadata.
-        val dataTypes = prepared.preparedMetadata.columnSpec.map(_.dataType)
+        val dataTypes: List[DataType] = prepared.preparedMetadata.columnSpec.map(_.dataType)
+        val values: Option[List[Any]] = extractQueryVariables(queryText, execute.parameters.values.map(_.map(_.value)), dataTypes)
 
-        val values = extractQueryVariables(queryText, execute.parameters.values.map(_.map(_.value)), dataTypes)
-        values match {
-          case Some(v) =>
-            activityLog.recordPreparedStatementExecution(queryText, execute.parameters.consistency,
-              execute.parameters.serialConsistency, v, dataTypes, execute.parameters.timestamp)
-          case None =>
-            activityLog.recordPreparedStatementExecution(queryText, execute.parameters.consistency,
-              execute.parameters.serialConsistency, Nil, Nil, execute.parameters.timestamp)
+        prime2.onComplete {
+          case Success(None) =>
+            recordExecution(queryText, execute, dataTypes, values)
+            writePrime(execute, None, header, connection, alternative = Some(Reply(VoidResult)), consistency = Some(execute.parameters.consistency))(context.system)
+
+          case Success(somePrime) =>
+            recordExecution(queryText, execute, dataTypes, values)
+            writePrime(execute, somePrime, header, connection, alternative = Some(Reply(VoidResult)), consistency = Some(execute.parameters.consistency))(context.system)
+
+          case Failure(e) =>
+            log.warning(s"Unable to get prime for statement $queryText. Your client will get a timeout as no response will be sent", e)
         }
 
-
-        writePrime(execute, prime, header, Some(connection), alternative=Some(Reply(VoidResult)), consistency = Some(execute.parameters.consistency))
       case None =>
         val errMsg = s"Could not find prepared statement with id: 0x${execute.id.toHex}"
-        activityLog.recordPreparedStatementExecution(errMsg, execute.parameters.consistency,
-          execute.parameters.serialConsistency, Nil, Nil, execute.parameters.timestamp)
+        activityLog ! RecordExecution(PreparedStatementExecution(errMsg, execute.parameters.consistency,
+          execute.parameters.serialConsistency, Nil, Nil, execute.parameters.timestamp))
         val unprepared = Unprepared(errMsg, execute.id)
-        write(unprepared, header, Some(connection))
+        write(unprepared, header, connection)
+    }
+  }
+
+  private def recordExecution(queryText: String, execute: Execute, dataTypes: List[DataType], values: Option[List[Any]]): Unit = {
+    values match {
+      case Some(v) =>
+        activityLog ! RecordExecution(PreparedStatementExecution(queryText, execute.parameters.consistency,
+          execute.parameters.serialConsistency, v, dataTypes, execute.parameters.timestamp))
+      case None =>
+        activityLog ! RecordExecution(PreparedStatementExecution(queryText, execute.parameters.consistency,
+          execute.parameters.serialConsistency, Nil, Nil, execute.parameters.timestamp))
     }
   }
 }

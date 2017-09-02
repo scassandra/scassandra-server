@@ -21,31 +21,28 @@ import akka.actor._
 import akka.io.{IO, Tcp}
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
-import org.scassandra.server.priming.ActivityLog
-import org.scassandra.server.priming.batch.PrimeBatchStore
-import org.scassandra.server.priming.prepared.PreparedStoreLookup
-import org.scassandra.server.priming.query.PrimeQueryStore
-import org.scassandra.server.{RegisterHandler, ServerReady, Shutdown}
+import org.scassandra.server.actors.ActivityLogActor.RecordConnection
+import org.scassandra.server.{ServerReady, Shutdown}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class TcpServer(listenAddress: String, port: Int,
-                primedResults: PrimeQueryStore,
-                primePrepareStore: PreparedStoreLookup,
-                primeBatchStore: PrimeBatchStore,
+                primedResults: ActorRef,
+                primePrepareStore: ActorRef,
+                primeBatchStore: ActorRef,
                 serverReadyListener: ActorRef,
-                activityLog: ActivityLog,
-                manager : Option[ActorRef]) extends Actor with ActorLogging {
+                activityLog: ActorRef,
+                manager: Option[ActorRef]) extends Actor with ActorLogging {
 
   def this(listenAddress: String, port: Int,
-           primedResults: PrimeQueryStore,
-           primePrepareStore: PreparedStoreLookup,
-           primeBatchStore: PrimeBatchStore,
+           primeQueryStore: ActorRef,
+           primePrepareStore: ActorRef,
+           primeBatchStore: ActorRef,
            serverReadyListener: ActorRef,
-           activityLog: ActivityLog) {
-    this(listenAddress, port, primedResults, primePrepareStore, primeBatchStore, serverReadyListener, activityLog, None)
+           activityLog: ActorRef) {
+    this(listenAddress, port, primeQueryStore, primePrepareStore, primeBatchStore, serverReadyListener, activityLog, None)
   }
 
   import akka.io.Tcp._
@@ -53,23 +50,21 @@ class TcpServer(listenAddress: String, port: Int,
 
   // whether or not to accept connections.
   var acceptConnections = true
-
   // In how many new connections to start disabling accepting new connections.  Don't disable if < 0
-  var disableCounter = -1
+  private var disableCounter = -1
 
   implicit val timeout: Timeout = 10 seconds
 
-  val AddressRE = "(.*):(\\d+)$".r
-
-  val preparedHandler = context.actorOf(Props(classOf[PrepareHandler], primePrepareStore, activityLog))
-  val executeHandler = context.actorOf(Props(classOf[ExecuteHandler], primePrepareStore, activityLog, preparedHandler))
+  private val AddressRE = "(.*):(\\d+)$".r
+  private val preparedHandler = context.actorOf(Props(classOf[PrepareHandler], primePrepareStore, activityLog))
+  private val executeHandler = context.actorOf(Props(classOf[ExecuteHandler], primePrepareStore, activityLog, preparedHandler))
 
   override def preStart(): Unit = {
-    manager.getOrElse(IO(Tcp)) ! Bind(self, new InetSocketAddress(listenAddress, port), pullMode=true)
+    manager.getOrElse(IO(Tcp)) ! Bind(self, new InetSocketAddress(listenAddress, port), pullMode = true)
   }
 
   def receive = {
-    case b @ Bound(localAddress) =>
+    case Bound(_) =>
       log.info(s"Port $port ready for Cassandra binary connections. ${sender()}")
       serverReadyListener ! ServerReady
       sender ! ResumeAccepting(batchSize = 1)
@@ -82,21 +77,20 @@ class TcpServer(listenAddress: String, port: Int,
   }
 
   def listening(listener: ActorRef): Receive = {
-    case c @ Connected(remote, local) =>
-      activityLog.recordConnection()
+    case c@Connected(remote, _) =>
+      activityLog ! RecordConnection()
       val handler = context.actorOf(Props(classOf[ConnectionHandler], sender(),
         (af: ActorRefFactory) => af.actorOf(Props(classOf[QueryHandler], primedResults, activityLog)),
-        (af: ActorRefFactory, prepareHandler: ActorRef) => af.actorOf(Props(classOf[BatchHandler],
-          activityLog, prepareHandler, primeBatchStore, primePrepareStore)),
+        (af: ActorRefFactory, prepareHandler: ActorRef) => af.actorOf(Props(classOf[BatchHandler], activityLog, prepareHandler, primeBatchStore)),
         (af: ActorRefFactory) => af.actorOf(Props(classOf[RegisterHandler])),
         (af: ActorRefFactory) => af.actorOf(Props(classOf[OptionsHandler])),
         preparedHandler,
         executeHandler),
-      name = s"${remote.getAddress.getHostAddress}:${remote.getPort}")
+        name = s"${remote.getAddress.getHostAddress}:${remote.getPort}")
       log.debug(s"Sending register with connection handler $handler")
       sender ! Register(handler)
 
-      if(!acceptConnections) {
+      if (!acceptConnections) {
         log.warning(s"Got $c but did not expect a new connection since accepting connections is disabled.")
       }
 
@@ -104,60 +98,53 @@ class TcpServer(listenAddress: String, port: Int,
       disableCounter -= 1
       checkEnablement(listener)
 
-    case GetClientConnections(hostOption, portOption) => {
+    case GetClientConnections(hostOption, portOption) =>
       val matchingClients = findChildren(hostOption, portOption).map(actorToConnection)
       val response = ClientConnections(matchingClients)
       sender ! response
-    }
 
-    case c: SendCommandToClient => {
+    case c: SendCommandToClient =>
       val children = findChildren(c.host, c.port)
 
       // Close each found connection.
       val responses = children.map { child =>
-        (child ? c.command).mapTo[Event].map { c => child }
+        (child ? c.command).mapTo[Event].map { _ => child }
       }
 
       // Once all connections closed map to ClientConnections response
       Future.sequence(responses).map(actor => ClosedConnections(actor.map(actorToConnection), c.description)).pipeTo(sender())
-    }
 
-    case AcceptNewConnections => {
+    case AcceptNewConnections =>
       val response = AcceptNewConnectionsEnabled(!acceptConnections)
       disableCounter = -1
-      if(!acceptConnections) {
+      if (!acceptConnections) {
         acceptConnections = true
         log.debug("toggling to enable new connections.")
         checkEnablement(listener)
       }
       sender ! response
-    }
 
-    case RejectNewConnections(after) => {
+    case RejectNewConnections(after) =>
       val response = RejectNewConnectionsEnabled(acceptConnections)
-      if(acceptConnections) {
+      if (acceptConnections) {
         disableCounter = after
         checkEnablement(listener)
       }
       sender ! response
-    }
-    case Shutdown => {
-      val requestor = sender
+    case Shutdown =>
+      val requester = sender
       context.become {
-        case u@Unbound => {
-          requestor ! u
+        case u@Unbound =>
+          requester ! u
           // Kill self after unbound
           self ! PoisonPill
-        }
       }
       listener ! Unbind
-    }
-
   }
 
-  private def checkEnablement(listener: ActorRef) = {
-    if(acceptConnections) {
-      if(disableCounter == 0) {
+  private def checkEnablement(listener: ActorRef): Unit = {
+    if (acceptConnections) {
+      if (disableCounter == 0) {
         log.debug("toggling to disable new connections.")
         listener ! ResumeAccepting(batchSize = 0)
         acceptConnections = false
@@ -168,9 +155,8 @@ class TcpServer(listenAddress: String, port: Int,
   }
 
   private def actorToConnection(actor: ActorRef): ClientConnection = actor.path.name match {
-    case AddressRE(address, addressPort) => {
+    case AddressRE(address, addressPort) =>
       ClientConnection(address, addressPort.toInt)
-    }
   }
 
   private def findChildren(hostOption: Option[String], portOption: Option[Int]): List[ActorRef] = {
@@ -180,16 +166,15 @@ class TcpServer(listenAddress: String, port: Int,
 
     def getAddress(actor: ActorRef): (String, Int) = {
       actor.path.name match {
-        case AddressRE(address, addressPort) => {
+        case AddressRE(address, addressPort) =>
           (address, addressPort.toInt)
-        }
       }
     }
 
     (hostOption, portOption) match {
-      case (Some(host), Some(exPort)) => validClients.find{c => val x = getAddress(c); x._1 == host && x._2 == exPort}.toList
-      case (Some(host), None) => validClients.filter{c => val x = getAddress(c); x._1 == host}
-      case (None, Some(exPort)) => validClients.filter{c => val x = getAddress(c); x._2 == exPort}
+      case (Some(host), Some(exPort)) => validClients.find { c => val x = getAddress(c); x._1 == host && x._2 == exPort }.toList
+      case (Some(host), None) => validClients.filter { c => val x = getAddress(c); x._1 == host }
+      case (None, Some(exPort)) => validClients.filter { c => val x = getAddress(c); x._2 == exPort }
       case (None, None) => validClients
     }
   }

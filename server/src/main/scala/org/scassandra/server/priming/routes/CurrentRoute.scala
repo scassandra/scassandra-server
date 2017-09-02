@@ -31,8 +31,8 @@ trait CurrentRoute extends LazyLogging {
 
   val tcpServer: ActorRef
 
-  implicit val dispatcher: ExecutionContext
-  implicit val timeout: Timeout
+  implicit val ec: ExecutionContext
+  implicit val actorTimeout: Timeout
 
   import PrimingJsonImplicits._
 

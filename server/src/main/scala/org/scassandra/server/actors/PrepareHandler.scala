@@ -15,32 +15,35 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.Actor
-import com.google.common.annotations.VisibleForTesting
+import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.pattern.ask
+import akka.util.Timeout
 import org.scassandra.codec._
-import org.scassandra.codec.messages.{PreparedMetadata, RowMetadata}
+import org.scassandra.server.actors.Activity.PreparedStatementPreparation
+import org.scassandra.server.actors.ActivityLogActor.RecordPrepare
 import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.priming._
+import org.scassandra.server.actors.ProtocolActor._
+import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{LookupByPrepare, PrimeMatch}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Fatal, Prime, Reply}
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
-import org.scassandra.server.priming.query.{Fatal, Reply}
-import scodec.bits.ByteVector
 
+import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
-class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: ActivityLog) extends ProtocolActor {
+// todo switch to using become
+class PrepareHandler(primePreparedStore: ActorRef, activityLog: ActorRef) extends ProtocolActor with ActorLogging {
+
+  import context.dispatcher
 
   private var nextId: Int = 1
   private var idToStatement: Map[Int, (String, Prepared)] = Map()
-
-  @VisibleForTesting
-  val generatePrepared = (p: PreparedMetadata, r: RowMetadata) => {
-    val prepared = Prepared(ByteVector(nextId), preparedMetadata = p, resultMetadata = r)
-    nextId += 1
-    prepared
-  }
+  implicit private val timeout: Timeout = Timeout(250 millis)
 
   def receive: Actor.Receive = {
     case ProtocolMessage(Frame(header, p: Prepare)) =>
-      activityLog.recordPreparedStatementPreparation(PreparedStatementPreparation(p.query))
+      activityLog ! RecordPrepare(PreparedStatementPreparation(p.query))
       handlePrepare(header, p)
     case PreparedStatementQuery(ids) =>
       sender() ! PreparedStatementResponse(ids.flatMap(id => idToStatement.get(id) match {
@@ -50,20 +53,37 @@ class PrepareHandler(primePreparedStore: PreparedStoreLookup, activityLog: Activ
   }
 
   private def handlePrepare(header: FrameHeader, prepare: Prepare) = {
-    val prime = primePreparedStore(prepare, generatePrepared)
-      .getOrElse(PreparedStoreLookup.defaultPrepared(prepare, generatePrepared))
+    val toReply = sender()
+    val nextId = genNext()
 
-    prime match {
-      case Reply(p: Prepared, _, _) =>
-        idToStatement += (p.id.toInt() -> (prepare.query, p))
-        log.info(s"Prepared Statement has been prepared: |$prepare.query|. Prepared result is: $p")
-      case Reply(m: Message, _, _) =>
-        log.info(s"Got non-prepared response for query: |$prepare.query|. Result was: $m")
-      case f: Fatal =>
-        log.info(s"Got non-prepared response for query: |$prepare.query|. Result was: $f")
+    val awaitingPrime: Future[Prime] =
+      (primePreparedStore ? LookupByPrepare(prepare, nextId))
+        .mapTo[PrimeMatch]
+        .map(_.prime.getOrElse(PreparedStoreLookup.defaultPrepared(prepare, nextId)))
+
+
+    awaitingPrime.onComplete {
+      case Success(prime: Prime) =>
+        prime match {
+          case Reply(p: Prepared, _, _) =>
+            idToStatement += (p.id.toInt() -> (prepare.query, p))
+            log.info(s"Prepared Statement has been prepared: |$prepare.query|. Prepared result is: $p")
+          case Reply(m: Message, _, _) =>
+            log.info(s"Got non-prepared response for query: |$prepare.query|. Result was: $m")
+          case f: Fatal =>
+            log.info(s"Got non-prepared response for query: |$prepare.query|. Result was: $f")
+        }
+        writePrime(prepare, Some(prime), header, toReply)(context.system)
+
+      case Failure(e) =>
+//        log.warning("Error getting prime for prepare msg", e)
     }
+  }
 
-    writePrime(prepare, Some(prime), header)
+  private def genNext(): Int = {
+    val next = nextId
+    nextId += 1
+    next
   }
 }
 

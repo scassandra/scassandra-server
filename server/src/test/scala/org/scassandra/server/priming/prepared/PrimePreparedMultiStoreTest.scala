@@ -17,17 +17,17 @@ package org.scassandra.server.priming.prepared
 
 import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import org.scassandra.codec.Consistency.{all => ALL, _}
-import org.scassandra.codec.datatype.{Text}
+import org.scassandra.codec.datatype.Text
 import org.scassandra.codec.messages.ColumnSpec._
-import org.scassandra.codec.messages.{PreparedMetadata, QueryParameters, RowMetadata}
+import org.scassandra.codec.messages.{PreparedMetadata, QueryParameters}
 import org.scassandra.codec.{QueryValue => v, Consistency => _, _}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Reply
 import org.scassandra.server.priming.json.{ReadTimeout, Success, WriteTimeout}
-import org.scassandra.server.priming.query.Reply
 import scodec.bits.ByteVector
 
 // todo generalise all the prepared stores, very little difference
 class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndAfter {
-  implicit val protocolVersion = ProtocolVersion.latest
+  implicit val protocolVersion: ProtocolVersion = ProtocolVersion.latest
 
   val id = ByteVector(1)
 
@@ -43,8 +43,8 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
     val thenDo: ThenPreparedMulti = ThenPreparedMulti(Some(variableTypes), List(
       Outcome(Criteria(List(ExactMatch(Some("Chris")))), action)))
     val queryText = "Some query"
-    underTest.record(PrimePreparedMulti(WhenPrepared(Some(queryText)), thenDo))
 
+    underTest.record(PrimePreparedMulti(WhenPrepared(Some(queryText)), thenDo))
     val preparedPrime = underTest(queryText, Execute(id, QueryParameters(consistency=ONE, values=Some(List(v("Chris", Text))))))
 
     preparedPrime.get should equal (action.prime)
@@ -107,11 +107,9 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
     underTest.retrievePrimes().size should equal(0)
   }
 
-  val factory = (p: PreparedMetadata, r: RowMetadata) => Prepared(id, p, r)
-
   test("Prepared prime - None when no match") {
     // when
-    val prepared = underTest(Prepare("select * from people where a = ? and b = ? and c = ?"), factory)
+    val prepared = underTest(Prepare("select * from people where a = ? and b = ? and c = ?"), 1)
 
     // then
     prepared.isDefined should equal(false)
@@ -123,7 +121,7 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
     underTest.record(PrimePreparedMulti(WhenPrepared(Some(queryText)), thenDo))
 
     // when
-    val prepared = underTest(Prepare(queryText), factory)
+    val prepared = underTest(Prepare(queryText), 1)
 
     // then - should be a prepared with no column spec
     prepared should matchPattern { case Some(Reply(Prepared(`id`, PreparedMetadata(_, _, _, `Nil`), _), _, _)) => }
@@ -141,7 +139,7 @@ class PrimePreparedMultiStoreTest extends FunSuite with Matchers with BeforeAndA
     underTest.record(PrimePreparedMulti(WhenPrepared(Some(queryText)), thenDo))
 
     // when
-    val prepared = underTest(Prepare(queryText), factory)
+    val prepared = underTest(Prepare(queryText), 1)
 
     // then - should be a prepared with a column spec containing parameters.
     prepared should matchPattern { case Some(Reply(Prepared(`id`, PreparedMetadata(_, _, _, `columnSpec`), _), _, _)) => }
