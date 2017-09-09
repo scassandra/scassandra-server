@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,9 @@ sealed trait Message {
 
   /**
    * Convenience function for wrapping a [[Message]] into a frame and
-   * @param stream stream id
-   * @param direction direction of the message
+   *
+   * @param stream          stream id
+   * @param direction       direction of the message
    * @param protocolVersion protocol version to use to encode/decode.
    * @return encoded bytes of the message with the frame header.
    */
@@ -83,6 +84,7 @@ object Message {
 
   /**
    * Resolves the appropriate [[Message]] codec based on the opcode.
+   *
    * @param opcode Opcode of the message to resolve codec for.
    * @return The appropriate [[Codec]] based on the opcode.
    */
@@ -91,6 +93,7 @@ object Message {
 
 /**
  * Indicates an error [[Message]] type as defined in section 4.2.1 of the spec.
+ *
  * @param message message describing the error, every error type has this.
  */
 sealed abstract class ErrorMessage(message: String) extends Message {
@@ -121,10 +124,10 @@ case class AuthenticationError(message: String) extends ErrorMessage(message)
 /**
  * Indicates that not enough replicas were available to complete the query.
  *
- * @param message message describing the error, every error type has this.
+ * @param message     message describing the error, every error type has this.
  * @param consistency the consistency level of the query that triggered the exception.
- * @param required the number of replicas that should be alive to respect the consistency level.
- * @param alive the number of replicas that were known to be alive when the request has been processed.
+ * @param required    the number of replicas that should be alive to respect the consistency level.
+ * @param alive       the number of replicas that were known to be alive when the request has been processed.
  */
 case class Unavailable(message: String = "Unavailable Exception", consistency: Consistency, required: Int, alive: Int) extends ErrorMessage(message)
 
@@ -152,40 +155,57 @@ case class TruncateError(message: String) extends ErrorMessage(message)
 /**
  * Timeout exception during a write request.
  *
- * @param message message describing the error, every error type has this.
+ * @param message     message describing the error, every error type has this.
  * @param consistency the consistency level of the query that triggered the exception.
- * @param received represents the number of replicas having acknowledged the request.
- * @param blockFor the number of replicas whose acknowledgement is required to achieve the consistency level.
- * @param writeType describes the type of write that timed out.
+ * @param received    represents the number of replicas having acknowledged the request.
+ * @param blockFor    the number of replicas whose acknowledgement is required to achieve the consistency level.
+ * @param writeType   describes the type of write that timed out.
  */
-case class WriteTimeout(message: String = "Write Request Timeout", consistency: Consistency, received: Int, blockFor: Int, writeType: String) extends ErrorMessage(message)
+case class WriteTimeout(
+  message: String = "Write Request Timeout",
+  consistency: Consistency,
+  received: Int,
+  blockFor: Int,
+  writeType: String) extends ErrorMessage(message)
 
 /**
  * Timeout exception during a read request.
- * @param message message describing the error, every error type has this.
+ *
+ * @param message     message describing the error, every error type has this.
  * @param consistency the consistency level of the query that triggered the exception.
- * @param received represents the number of replicas having acknowledged the request.
- * @param blockFor the number of replicas whose acknowledgement is required to achieve the consistency level.
+ * @param received    represents the number of replicas having acknowledged the request.
+ * @param blockFor    the number of replicas whose acknowledgement is required to achieve the consistency level.
  * @param dataPresent whether or not the replica that was asked for data responded.
  */
-case class ReadTimeout(message: String = "Read Request Timeout", consistency: Consistency, received: Int, blockFor: Int, dataPresent: Boolean) extends ErrorMessage(message)
+case class ReadTimeout(
+  message: String = "Read Request Timeout",
+  consistency: Consistency,
+  received: Int,
+  blockFor: Int,
+  dataPresent: Boolean) extends ErrorMessage(message)
 
 /**
  * A non-timeout exception during a read request.
  *
- * @param message message describing the error, every error type has this.
+ * @param message     message describing the error, every error type has this.
  * @param consistency the consistency level of the query that triggered the exception.
- * @param received represents the number of replicas having acknowledged the request.
- * @param blockFor the number of replicas whose acknowledgement is required to achieve the consistency level.
+ * @param received    represents the number of replicas having acknowledged the request.
+ * @param blockFor    the number of replicas whose acknowledgement is required to achieve the consistency level.
  * @param numFailures The number of replicas that experienced a failure while executing the request.
  * @param dataPresent whether or not the replica that was asked for data responded.
  */
-case class ReadFailure(message: String = "Read Failure", consistency: Consistency, received: Int, blockFor: Int, numFailures: Int, dataPresent: Boolean) extends ErrorMessage(message)
+case class ReadFailure(
+  message: String = "Read Failure",
+  consistency: Consistency,
+  received: Int,
+  blockFor: Int,
+  numFailures: Int,
+  dataPresent: Boolean) extends ErrorMessage(message)
 
 /**
  * A (user defined) function failed during execution.
  *
- * @param message message describing the error, every error type has this.
+ * @param message  message describing the error, every error type has this.
  * @param keyspace the keyspace of the failed function.
  * @param function the name of the failed function.
  * @param argTypes the argument types for the function.
@@ -194,14 +214,21 @@ case class FunctionFailure(message: String = "Function Failure", keyspace: Strin
 
 /**
  * A non-timeout exception during a write request.
- * @param message message describing the error, every error type has this.
+ *
+ * @param message     message describing the error, every error type has this.
  * @param consistency the consistency level of the query that triggered the exception.
- * @param received represents the number of replicas having acknowledged the request.
- * @param blockFor the number of replicas whose acknowledgement is required to achieve the consistency level.
+ * @param received    represents the number of replicas having acknowledged the request.
+ * @param blockFor    the number of replicas whose acknowledgement is required to achieve the consistency level.
  * @param numFailures The number of replicas that experienced a failure while executing the request.
- * @param writeType describes the type of write that failed.
+ * @param writeType   describes the type of write that failed.
  */
-case class WriteFailure(message: String = "Write Failure", consistency: Consistency, received: Int, blockFor: Int, numFailures: Int, writeType: String) extends ErrorMessage(message)
+case class WriteFailure(
+  message: String = "Write Failure",
+  consistency: Consistency,
+  received: Int,
+  blockFor: Int,
+  numFailures: Int,
+  writeType: String) extends ErrorMessage(message)
 
 /**
  * The submitted query has a syntax error.
@@ -234,9 +261,9 @@ case class ConfigError(message: String) extends ErrorMessage(message)
 /**
  * The query attempted to create a keyspace or a table that was already existing.
  *
- * @param message message describing the error, every error type has this.
+ * @param message  message describing the error, every error type has this.
  * @param keyspace The keyspace that already exists, or the keyspace in which the table already exists is.
- * @param table The table that already exists, or empty string if the keyspace was what already existed.
+ * @param table    The table that already exists, or empty string if the keyspace was what already existed.
  */
 case class AlreadyExists(message: String, keyspace: String, table: String) extends ErrorMessage(message)
 
@@ -245,7 +272,7 @@ case class AlreadyExists(message: String, keyspace: String, table: String) exten
  * by the host.
  *
  * @param message message describing the error, every error type has this.
- * @param id The id of the prepared statement.
+ * @param id      The id of the prepared statement.
  */
 case class Unprepared(message: String, id: ByteVector) extends ErrorMessage(message)
 
@@ -334,7 +361,8 @@ object Supported {
 
 /**
  * Message sent from client to perform a CQL query.  See section 4.1.4 of the spec.
- * @param query the cql query.
+ *
+ * @param query      the cql query.
  * @param parameters the query parameters.
  */
 case class Query(query: String, parameters: QueryParameters = DefaultQueryParameters) extends Message {
@@ -388,8 +416,9 @@ case object VoidResult extends Result {
 
 /**
  * A result from a select query, returning a set of rows.  See section 4.2.5.2 of the spec.
+ *
  * @param metadata Metadata for the rows.
- * @param rows The row data.
+ * @param rows     The row data.
  */
 case class Rows(metadata: RowMetadata = NoRowMetadata, rows: List[Row] = Nil) extends Result
 object NoRows extends Rows()
@@ -414,6 +443,7 @@ object Rows {
 
 /**
  * A result to a 'use' query.  See section 4.2.5.3 of the spec.
+ *
  * @param keyspace Keyspace that has been set on the connection.
  */
 case class SetKeyspace(keyspace: String) extends Result
@@ -427,9 +457,10 @@ case object SetKeyspace {
 
 /**
  * The result to a [[Prepare]] message.  See section 4.2.5.4 of the spec.
- * @param id The id of the prepared statement.
+ *
+ * @param id               The id of the prepared statement.
  * @param preparedMetadata The metadata for the prepared statement.
- * @param resultMetadata The metadata for a result of a prepared statement.
+ * @param resultMetadata   The metadata for a result of a prepared statement.
  */
 case class Prepared(id: ByteVector, preparedMetadata: PreparedMetadata = NoPreparedMetadata,
   resultMetadata: RowMetadata = NoRowMetadata) extends Result
@@ -453,6 +484,7 @@ case object Prepared {
 
 /**
  * Sent from client to prepare a query for later execution.  See section 4.1.5 of the protocol spec.
+ *
  * @param query the CQL query
  */
 case class Prepare(query: String) extends Message {
@@ -469,7 +501,8 @@ object Prepare {
 
 /**
  * Sent from client to execute a prepared query.  See section 4.1.6 of the spec.
- * @param id prepared statement id.
+ *
+ * @param id         prepared statement id.
  * @param parameters the parameters to use for the query.
  */
 case class Execute(id: ByteVector, parameters: QueryParameters = DefaultQueryParameters) extends Message {
@@ -494,6 +527,7 @@ object Execute {
 
 /**
  * Sent by client to register this connection to receive some types of events.  See section 4.1.8 of the spec.
+ *
  * @param events events to subscribe on.
  */
 case class Register(events: List[String] = Nil) extends Message {
@@ -511,11 +545,12 @@ object Register {
 
 /**
  * Sent by client to execute a list of queries.  See 4.1.7 of the spec.
- * @param batchType The type of batch (LOGGED, UNLOGGED, COUNTER).
- * @param queries The queries to make.
- * @param consistency The consistency to use for the queries.
+ *
+ * @param batchType         The type of batch (LOGGED, UNLOGGED, COUNTER).
+ * @param queries           The queries to make.
+ * @param consistency       The consistency to use for the queries.
  * @param serialConsistency The serial consistency to use for the queries.
- * @param timestamp The timestamp to be used for mutations.
+ * @param timestamp         The timestamp to be used for mutations.
  */
 case class Batch(
   batchType: BatchType,

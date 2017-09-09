@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,13 @@ import org.scassandra.server.priming.routes._
 
 import scala.language.postfixOps
 
-trait AllRoutes extends PrimingPreparedRoute with PrimingQueryRoute with ActivityVerificationRoute with VersionRoute with PrimingBatchRoute with CurrentRoute with PrimingMultiRoute with LazyLogging {
+trait AllRoutes extends PrimingPreparedRoute
+  with PrimingQueryRoute
+  with ActivityVerificationRoute
+  with VersionRoute
+  with PrimingBatchRoute
+  with CurrentRoute
+  with PrimingMultiRoute with LazyLogging {
 
   val allRoutes: Route = routeForPreparedPriming ~
     queryRoute ~ activityVerificationRoute ~

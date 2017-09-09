@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,14 +41,14 @@ case class AwaitStartup(timeout: Timeout)
 
 /**
  * Used to shutdown the server by first unbinding the priming and tcp server listeners
- * and then sending a {@link PoisonPill} to itself.
+ * and then sending a `PoisonPill` to itself.
  *
  * @param timeout Up to how long to wait for shutdown before timing out.
  */
 case class ShutdownServer(timeout: Timeout)
 
 /**
- * Sent to {@link PrimingServer} and {@link TcpServer} instances to indicate that they should
+ * Sent to `PrimingServer` and `TcpServer` instances to indicate that they should
  * unbind their listeners and then subsequently shutdown.
  */
 case object Shutdown
@@ -65,8 +65,10 @@ class ScassandraServer(
 
   val primePreparedMultiStore = context.actorOf(Props(classOf[PrimePreparedStoreActor[PrimePreparedMulti]], legacyMultiPSStore, typeTag[PrimePreparedMulti]))
   val primePreparedStore = context.actorOf(Props(classOf[PrimePreparedStoreActor[PrimePreparedSingle]], legacyPreparedStore, typeTag[PrimePreparedSingle]))
-  val primePreparedPatternStore = context.actorOf(Props(classOf[PrimePreparedStoreActor[PrimePreparedSingle]], legacyPatternStore, typeTag[PrimePreparedSingle]))
-  private val preparedLookup: ActorRef = context.actorOf(Props(classOf[PreparedPrimesActor], List(primePreparedStore, primePreparedPatternStore, primePreparedMultiStore)))
+  val primePreparedPatternStore =
+    context.actorOf(Props(classOf[PrimePreparedStoreActor[PrimePreparedSingle]], legacyPatternStore, typeTag[PrimePreparedSingle]))
+  private val preparedLookup: ActorRef =
+    context.actorOf(Props(classOf[PreparedPrimesActor], List(primePreparedStore, primePreparedPatternStore, primePreparedMultiStore)))
 
   val primeBatchStore: ActorRef = context.actorOf(Props[PrimeBatchStoreActor])
   val activityLog: ActorRef = context.actorOf(Props[ActivityLogActor])
@@ -74,7 +76,9 @@ class ScassandraServer(
 
   val primingReadyListener: ActorRef = context.actorOf(Props(classOf[ServerReadyListener]), "PrimingReadyListener")
   val tcpReadyListener: ActorRef = context.actorOf(Props(classOf[ServerReadyListener]), "TcpReadyListener")
-  val tcpServer: ActorRef = context.actorOf(Props(classOf[TcpServer], binaryListenAddress, binaryPortNumber, primeQueryStore, preparedLookup, primeBatchStore, tcpReadyListener, activityLog), "BinaryTcpListener")
+  val tcpServer: ActorRef =
+    context.actorOf(Props(classOf[TcpServer], binaryListenAddress, binaryPortNumber, primeQueryStore,
+      preparedLookup, primeBatchStore, tcpReadyListener, activityLog), "BinaryTcpListener")
 
   implicit val ec: ExecutionContext = context.dispatcher
   val actorTimeout: Timeout = Timeout(2 seconds)

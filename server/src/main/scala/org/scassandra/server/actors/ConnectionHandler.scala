@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ class ConnectionHandler(
     case ProtocolResponse(requestHeader, message) =>
       message.toBytes(requestHeader.stream)(requestHeader.version.version) match {
         case Success(bytes) => tcpConnection ! Write(bytes.toByteString)
-        case Failure(t) => {
+        case Failure(t) =>
           // In the failure case, send a protocol error back to the client, however
           // if the message we tried to serialize was the error itself, log an error
           // and abort.
@@ -91,7 +91,6 @@ class ConnectionHandler(
               log.error(t, "Failure getting message payload to write.")
               self ! ProtocolResponse(requestHeader, error)
           }
-        }
       }
 
     // Forward any TCP commands to the underlying connection.
@@ -109,7 +108,8 @@ class ConnectionHandler(
     case Failure(UnsupportedProtocolException(v)) =>
       // we can't really send the correct stream back as it hasn't been parsed because we don't know how to parse
       // this protocol, so instead we assume stream 0.
-      log.warning(s"Received protocol version $v, currently only versions 1,2,3 and 4 supported so sending an unsupported protocol error to get the driver to use an older version of the protocol.")
+      log.warning(s"Received protocol version $v, currently only versions 1,2,3 and 4 supported so sending an " +
+        s"unsupported protocol error to get the driver to use an older version of the protocol.")
       self ! ProtocolResponse(FrameHeader(ProtocolFlags(Request, ProtocolVersionV4)), ProtocolError(s"Invalid or unsupported protocol version"))
       // Reset the buffer as any remaining data we won't be able to appropriately parse.
       Buffer(ByteString(), Start)
@@ -188,10 +188,13 @@ case class UnsupportedProtocolException(version: Int) extends Exception(s"Unsupp
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the scodec team nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer
+ *    in the documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the scodec team nor the names of its contributors may be used to endorse or promote products derived from
+ *    this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 object AkkaScodecInterop {
 

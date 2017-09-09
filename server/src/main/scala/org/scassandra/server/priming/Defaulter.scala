@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,14 +35,17 @@ object Defaulter {
     case None => dataTypes
   }
 
-  def defaultColumnTypesToVarChar(columnTypes: Option[Map[String, DataType]], rows: Option[List[Map[String, Any]]]) = columnTypes match {
-    case Some(_) => columnTypes
-    case None =>
-      val names = rows.getOrElse(Nil).flatMap(row => row.keys).distinct
-      Some(names.map(n => (n, Varchar)).toMap)
-  }
+  def defaultColumnTypesToVarChar(
+    columnTypes: Option[Map[String, DataType]],
+    rows: Option[List[Map[String, Any]]]): Option[Map[String, DataType]] =
+    columnTypes match {
+      case Some(_) => columnTypes
+      case None =>
+        val names = rows.getOrElse(Nil).flatMap(row => row.keys).distinct
+        Some(names.map(n => (n, Varchar)).toMap)
+    }
 
-  def defaultConsistency(consistency: Option[List[Consistency]]) = consistency match {
+  def defaultConsistency(consistency: Option[List[Consistency]]): Option[List[Consistency]] = consistency match {
     case Some(_) => consistency
     case None => Some(Consistency.all)
   }

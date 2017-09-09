@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ class TcpServer(listenAddress: String, port: Int,
     manager.getOrElse(IO(Tcp)) ! Bind(self, new InetSocketAddress(listenAddress, port), pullMode = true)
   }
 
-  def receive = {
+  def receive: PartialFunction[Any, Unit] = {
     case Bound(_) =>
       log.info(s"Port $port ready for Cassandra binary connections. ${sender()}")
       serverReadyListener ! ServerReady
@@ -81,12 +81,12 @@ class TcpServer(listenAddress: String, port: Int,
       activityLog ! RecordConnection()
       val handler = context.actorOf(
         Props(classOf[ConnectionHandler], sender(),
-        (af: ActorRefFactory) => af.actorOf(Props(classOf[QueryHandler], primedResults, activityLog)),
-        (af: ActorRefFactory, prepareHandler: ActorRef) => af.actorOf(Props(classOf[BatchHandler], activityLog, prepareHandler, primeBatchStore)),
-        (af: ActorRefFactory) => af.actorOf(Props(classOf[RegisterHandler])),
-        (af: ActorRefFactory) => af.actorOf(Props(classOf[OptionsHandler])),
-        preparedHandler,
-        executeHandler),
+          (af: ActorRefFactory) => af.actorOf(Props(classOf[QueryHandler], primedResults, activityLog)),
+          (af: ActorRefFactory, prepareHandler: ActorRef) => af.actorOf(Props(classOf[BatchHandler], activityLog, prepareHandler, primeBatchStore)),
+          (af: ActorRefFactory) => af.actorOf(Props(classOf[RegisterHandler])),
+          (af: ActorRefFactory) => af.actorOf(Props(classOf[OptionsHandler])),
+          preparedHandler,
+          executeHandler),
         name = s"${remote.getAddress.getHostAddress}:${remote.getPort}")
       log.debug(s"Sending register with connection handler $handler")
       sender ! Register(handler)
@@ -132,6 +132,7 @@ class TcpServer(listenAddress: String, port: Int,
         checkEnablement(listener)
       }
       sender ! response
+
     case Shutdown =>
       val requester = sender
       context.become {
