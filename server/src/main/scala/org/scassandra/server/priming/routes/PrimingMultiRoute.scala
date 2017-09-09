@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,13 @@ import akka.pattern.ask
 import akka.util.Timeout
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{AllPSPrimes, ClearPSPrime, GetAllPSPrimes, RecordPSPrime}
+import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{ AllPSPrimes, ClearPSPrime, GetAllPSPrimes, RecordPSPrime }
 import org.scassandra.server.priming.json.PrimingJsonImplicits
 import org.scassandra.server.priming.prepared._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 trait PrimingMultiRoute extends LazyLogging {
 
@@ -52,12 +52,12 @@ trait PrimingMultiRoute extends LazyLogging {
           }
         } ~
           delete {
-              onComplete(primePreparedMultiStore ? ClearPSPrime) {
-                case Success(_) => complete(StatusCodes.OK)
-                case Failure(t) =>
-                  logger.warn("Failed to delete multi primes", t)
-                  complete(StatusCodes.InternalServerError, t.getMessage)
-              }
+            onComplete(primePreparedMultiStore ? ClearPSPrime) {
+              case Success(_) => complete(StatusCodes.OK)
+              case Failure(t) =>
+                logger.warn("Failed to delete multi primes", t)
+                complete(StatusCodes.InternalServerError, t.getMessage)
+            }
           } ~
           get {
             complete {

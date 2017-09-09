@@ -3,11 +3,11 @@ package org.scassandra.server.actors.priming
 import java.util.regex.Pattern
 
 import akka.Done
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.{ Actor, ActorLogging, ActorRef }
 import akka.io.Tcp
 import org.scassandra.codec.Consistency.Consistency
 import org.scassandra.codec.datatype.DataType
-import org.scassandra.codec.{Message, Query, SetKeyspace}
+import org.scassandra.codec.{ Message, Query, SetKeyspace }
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming.Defaulter._
 import org.scassandra.server.priming.PrimeValidator
@@ -16,7 +16,7 @@ import org.scassandra.server.priming.routes.PrimingJsonHelper
 import org.scassandra.server.priming.routes.PrimingJsonHelper.extractPrime
 
 import scala.concurrent.duration.FiniteDuration
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 class PrimeQueryStoreActor extends Actor with ActorLogging {
 
@@ -53,12 +53,13 @@ class PrimeQueryStoreActor extends Actor with ActorLogging {
             entry._1.consistency.contains(q.parameters.consistency)
       }
       def findPrimePattern: ((PrimeCriteria, PrimeQuerySingle)) => Boolean = {
-        entry => {
-          entry._1.query.r.findFirstIn(q.query) match {
-            case Some(_) => entry._1.consistency.contains(q.parameters.consistency)
-            case None => false
+        entry =>
+          {
+            entry._1.query.r.findFirstIn(q.query) match {
+              case Some(_) => entry._1.consistency.contains(q.parameters.consistency)
+              case None => false
+            }
           }
-        }
       }
 
       val keyspaceMatcher = useKeyspace.matcher(q.query)
@@ -103,25 +104,25 @@ object PrimeQueryStoreActor {
     val config: Option[Map[String, String]]
   }
 
-  case class Then(rows: Option[List[Map[String, Any]]] = None,
-                  result: Option[ResultJsonRepresentation] = None,
-                  column_types: Option[Map[String, DataType]] = None,
-                  fixedDelay: Option[Long] = None,
-                  config: Option[Map[String, String]] = None,
-                  variable_types: Option[List[DataType]] = None) extends ThenProvider {
+  case class Then(
+    rows: Option[List[Map[String, Any]]] = None,
+    result: Option[ResultJsonRepresentation] = None,
+    column_types: Option[Map[String, DataType]] = None,
+    fixedDelay: Option[Long] = None,
+    config: Option[Map[String, String]] = None,
+    variable_types: Option[List[DataType]] = None) extends ThenProvider {
 
     def withDefaults(query: Option[String]): Then =
       copy(
         variable_types = defaultVariableTypesToVarChar(query, variable_types),
-        column_types = defaultColumnTypesToVarChar(column_types, rows)
-      )
+        column_types = defaultColumnTypesToVarChar(column_types, rows))
   }
-  case class When(query: Option[String] = None,
-                  queryPattern: Option[String] = None,
-                  consistency: Option[List[Consistency]] = None,
-                  keyspace: Option[String] = None,
-                  table: Option[String] = None
-                 ) {
+  case class When(
+    query: Option[String] = None,
+    queryPattern: Option[String] = None,
+    consistency: Option[List[Consistency]] = None,
+    keyspace: Option[String] = None,
+    table: Option[String] = None) {
     def withDefaults: When = copy(consistency = defaultConsistency(consistency))
   }
 
@@ -133,10 +134,8 @@ object PrimeQueryStoreActor {
     def withDefaults: PrimeQuerySingle = {
       PrimeQuerySingle(
         when.withDefaults,
-        thenDo.withDefaults(when.query)
-      )
+        thenDo.withDefaults(when.query))
     }
-
 
   }
 
@@ -146,7 +145,6 @@ object PrimeQueryStoreActor {
     val fixedDelay: Option[FiniteDuration]
     val variableTypes: Option[List[DataType]]
   }
-
 
   case class Reply(message: Message, fixedDelay: Option[FiniteDuration] = None, variableTypes: Option[List[DataType]] = None) extends Prime
 

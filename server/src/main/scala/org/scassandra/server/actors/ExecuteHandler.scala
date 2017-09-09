@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,22 @@
 package org.scassandra.server.actors
 
 import akka.actor.ActorRef
-import akka.pattern.{ask, pipe}
+import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
 import org.scassandra.codec._
 import org.scassandra.codec.datatype.DataType
 import org.scassandra.server.actors.Activity.PreparedStatementExecution
 import org.scassandra.server.actors.ActivityLogActor.RecordExecution
 import org.scassandra.server.actors.ExecuteHandler.HandleExecute
-import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
+import org.scassandra.server.actors.PrepareHandler.{ PreparedStatementQuery, PreparedStatementResponse }
 import org.scassandra.server.actors.ProtocolActor._
-import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{LookupByExecute, PrimeMatch}
-import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Prime, Reply}
+import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{ LookupByExecute, PrimeMatch }
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ Prime, Reply }
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 class ExecuteHandler(primePreparedStore: ActorRef, activityLog: ActorRef, prepareHandler: ActorRef) extends ProtocolActor {
 

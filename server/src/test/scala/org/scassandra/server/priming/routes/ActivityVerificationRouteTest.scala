@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.scassandra.server.priming.routes
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.testkit.{TestActor, TestProbe}
+import akka.testkit.{ TestActor, TestProbe }
 import org.scalatest._
 import org.scassandra.codec.Consistency.ONE
 import org.scassandra.codec.messages.BatchQueryKind.Simple

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@ package org.scassandra.server.priming.routes
 
 import java.util.concurrent.TimeUnit
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.{ FunSuite, Matchers }
 import org.scassandra.codec
 import org.scassandra.codec.datatype._
-import org.scassandra.codec.{Consistency, Rows}
+import org.scassandra.codec.{ Consistency, Rows }
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
@@ -29,11 +29,11 @@ import scodec.bits.ByteVector
 import scala.concurrent.duration.FiniteDuration
 
 /**
-  * PrimeQueryResultExtractor was "extracted" and thus is primarily tested
-  * via the PrimeQueryRoute.
-  *
-  * Starting to add direct tests as the PrimingQueryRoute test is getting large
-  */
+ * PrimeQueryResultExtractor was "extracted" and thus is primarily tested
+ * via the PrimeQueryRoute.
+ *
+ * Starting to add direct tests as the PrimingQueryRoute test is getting large
+ */
 class PrimingJsonHelperTest extends FunSuite with Matchers {
 
   test("Should extract PrimeCriteria from When query") {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,17 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.{ ActorRef, Props }
 import akka.testkit.TestActor.KeepRunning
-import akka.testkit.{ImplicitSender, TestProbe}
+import akka.testkit.{ ImplicitSender, TestProbe }
 import com.typesafe.scalalogging.LazyLogging
-import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
+import org.scalatest.{ BeforeAndAfter, Matchers, WordSpec }
 import org.scassandra.codec._
 import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages._
 import org.scassandra.server.actors.Activity.BatchExecution
 import org.scassandra.server.actors.ActivityLogActor.RecordBatch
-import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
+import org.scassandra.server.actors.PrepareHandler.{ PreparedStatementQuery, PreparedStatementResponse }
 import org.scassandra.server.actors.priming.PrimeBatchStoreActor.MatchResult
 import scodec.bits.ByteVector
 
@@ -61,8 +61,7 @@ class BatchHandlerTest extends WordSpec with ProtocolActorTest with TestKitWithS
   "batch handler" must {
     "send back void response by default" in {
       val batch = Batch(BatchType.UNLOGGED, List(
-        SimpleBatchQuery("insert into something"), SimpleBatchQuery("insert into something else")
-      ))
+        SimpleBatchQuery("insert into something"), SimpleBatchQuery("insert into something else")))
 
       underTest ! protocolMessage(batch)
 
@@ -74,8 +73,7 @@ class BatchHandlerTest extends WordSpec with ProtocolActorTest with TestKitWithS
     "record batch statement with ActivityLog" in {
       val batch = Batch(BatchType.LOGGED, List(
         SimpleBatchQuery("insert into something"),
-        SimpleBatchQuery("insert into something else")
-      ), serialConsistency = Some(Consistency.LOCAL_SERIAL), timestamp = Some(8675309))
+        SimpleBatchQuery("insert into something else")), serialConsistency = Some(Consistency.LOCAL_SERIAL), timestamp = Some(8675309))
 
       underTest ! protocolMessage(batch)
 
@@ -86,9 +84,7 @@ class BatchHandlerTest extends WordSpec with ProtocolActorTest with TestKitWithS
       activityLogProbe.expectMsg(RecordBatch(
         Activity.BatchExecution(List(
           Activity.BatchQuery("insert into something", BatchQueryKind.Simple),
-          Activity.BatchQuery("insert into something else", BatchQueryKind.Simple)
-        ), Consistency.ONE, Some(Consistency.LOCAL_SERIAL), BatchType.LOGGED, Some(8675309)))
-      )
+          Activity.BatchQuery("insert into something else", BatchQueryKind.Simple)), Consistency.ONE, Some(Consistency.LOCAL_SERIAL), BatchType.LOGGED, Some(8675309))))
     }
 
     "record batch statement with ActivityLog - prepared statements" in {
@@ -98,8 +94,7 @@ class BatchHandlerTest extends WordSpec with ProtocolActorTest with TestKitWithS
       implicit val protocolVersion: ProtocolVersion = ProtocolVersion.latest
 
       val batch = Batch(BatchType.LOGGED, List(
-        PreparedBatchQuery(idBytes, List(QueryValue(1, CqlInt).value))
-      ))
+        PreparedBatchQuery(idBytes, List(QueryValue(1, CqlInt).value))))
 
       underTest ! protocolMessage(batch)
 
@@ -117,9 +112,7 @@ class BatchHandlerTest extends WordSpec with ProtocolActorTest with TestKitWithS
 
       activityLogProbe.expectMsg(RecordBatch(
         BatchExecution(List(
-          Activity.BatchQuery("insert into something", BatchQueryKind.Prepared, List(1), List(CqlInt))
-        ), Consistency.ONE, None, BatchType.LOGGED, None))
-      )
+          Activity.BatchQuery("insert into something", BatchQueryKind.Prepared, List(1), List(CqlInt))), Consistency.ONE, None, BatchType.LOGGED, None)))
     }
 
     "record batch statement with ActivityLog - prepared statement not exist" in {
@@ -127,8 +120,7 @@ class BatchHandlerTest extends WordSpec with ProtocolActorTest with TestKitWithS
       val idBytes = ByteVector(id)
 
       val batch = Batch(BatchType.LOGGED, List(
-        PreparedBatchQuery(idBytes)
-      ))
+        PreparedBatchQuery(idBytes)))
 
       underTest ! protocolMessage(batch)
 
@@ -141,9 +133,7 @@ class BatchHandlerTest extends WordSpec with ProtocolActorTest with TestKitWithS
 
       activityLogProbe.expectMsg(RecordBatch(
         BatchExecution(List(
-          Activity.BatchQuery("A prepared statement was in the batch but couldn't be found - did you prepare against a different  session?", BatchQueryKind.Prepared)
-        ), Consistency.ONE, None, BatchType.LOGGED, None))
-      )
+          Activity.BatchQuery("A prepared statement was in the batch but couldn't be found - did you prepare against a different  session?", BatchQueryKind.Prepared)), Consistency.ONE, None, BatchType.LOGGED, None)))
     }
   }
 }

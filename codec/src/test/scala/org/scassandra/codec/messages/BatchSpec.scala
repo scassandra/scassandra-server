@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,27 +30,22 @@ class BatchSpec extends CodecSpec {
         Batch(BatchType.UNLOGGED, List(
           SimpleBatchQuery("insert into ks.tbl (k, c, v) values (1, 2, 0)"),
           SimpleBatchQuery("insert into ks.tbl (k, c, v) values (1, 2, 1)"),
-          SimpleBatchQuery("insert into ks.tbl (k, c, v) values (1, 2, 2)")
-        ), Consistency.ALL)
-      )
+          SimpleBatchQuery("insert into ks.tbl (k, c, v) values (1, 2, 2)")), Consistency.ALL))
     }
 
     "with prepared statements, no timestamp or serial consistency" in {
       encodeAndDecode(
         Batch(BatchType.LOGGED, List(
           PreparedBatchQuery(ByteVector(8, 6, 7, 5), List[Value](Bytes(ByteVector(2)))),
-          SimpleBatchQuery("insert into ks.tbl (k, c, v) values (1, 2, 1)")
-        ), Consistency.ALL)
-      )
+          SimpleBatchQuery("insert into ks.tbl (k, c, v) values (1, 2, 1)")), Consistency.ALL))
     }
 
-    if(protocolVersion.version < 3) {
+    if (protocolVersion.version < 3) {
       "strip timestamp and serial consistency" in {
         val input = Batch(BatchType.UNLOGGED, List(
           SimpleBatchQuery("insert into ks.tbl (k, c, v) values (1, 2, 0)"),
           SimpleBatchQuery("insert into ks.tbl (k, c, v) values (1, 2, 1)"),
-          SimpleBatchQuery("insert into ks.tbl (k, c, v) values (1, 2, 2)")
-        ), Consistency.ALL, serialConsistency = Some(Consistency.SERIAL), timestamp = Some(8675))
+          SimpleBatchQuery("insert into ks.tbl (k, c, v) values (1, 2, 2)")), Consistency.ALL, serialConsistency = Some(Consistency.SERIAL), timestamp = Some(8675))
         val expected = input.copy(serialConsistency = None, timestamp = None)
         encodeAndDecode(input, expected)
       }
@@ -59,9 +54,7 @@ class BatchSpec extends CodecSpec {
         encodeAndDecode(
           Batch(BatchType.LOGGED, List(
             PreparedBatchQuery(ByteVector(8, 6, 7, 5), List[Value](Bytes(ByteVector(2)))),
-            SimpleBatchQuery("insert into ks.tbl (k, c, v) values (1, 2, 1)")
-          ), Consistency.ALL, Some(Consistency.LOCAL_SERIAL), timestamp = Some(309))
-        )
+            SimpleBatchQuery("insert into ks.tbl (k, c, v) values (1, 2, 1)")), Consistency.ALL, Some(Consistency.LOCAL_SERIAL), timestamp = Some(309)))
       }
     }
   }

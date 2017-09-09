@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ import org.scassandra.server.priming.json.PrimingJsonImplicits
 import org.scassandra.server.priming.prepared._
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.{ ExecutionContext, Future }
+import scala.util.{ Failure, Success }
 
 trait PrimingPreparedRoute extends LazyLogging {
 
@@ -75,7 +75,7 @@ trait PrimingPreparedRoute extends LazyLogging {
           }
         } ~
           delete {
-            val cleared  = List(primePreparedPatternStore ? ClearPSPrime, primePreparedStore ? ClearPSPrime).sequence[Future, Any]
+            val cleared = List(primePreparedPatternStore ? ClearPSPrime, primePreparedStore ? ClearPSPrime).sequence[Future, Any]
             onComplete(cleared) {
               case Success(_) => complete(StatusCodes.OK)
               case Failure(t) =>

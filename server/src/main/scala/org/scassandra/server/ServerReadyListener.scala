@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.scassandra.server
 
-import akka.actor.{ActorRef, Actor}
+import akka.actor.{ ActorRef, Actor }
 import com.typesafe.scalalogging.LazyLogging
 
 class ServerReadyListener extends Actor with LazyLogging {
@@ -23,21 +23,21 @@ class ServerReadyListener extends Actor with LazyLogging {
   var alreadyReady = false
 
   def receive = {
-        case OnServerReady =>
-          serverReadyReceiver = sender
-          if (alreadyReady) {
-            logger.info("OnServerReady - ServerReady message already received. Sending ServerReady.")
-            serverReadyReceiver ! ServerReady
-          }
-        case ServerReady =>
-          if (serverReadyReceiver != null) {
-            logger.info("ServerReady - Forwarding ServerReady to listener.")
-            serverReadyReceiver ! ServerReady
-          } else {
-            logger.info("ServerReady - No listener yet.")
-            alreadyReady = true
-          }
-        case msg @ _ => logger.info(s"Received unknown message $msg")
+    case OnServerReady =>
+      serverReadyReceiver = sender
+      if (alreadyReady) {
+        logger.info("OnServerReady - ServerReady message already received. Sending ServerReady.")
+        serverReadyReceiver ! ServerReady
+      }
+    case ServerReady =>
+      if (serverReadyReceiver != null) {
+        logger.info("ServerReady - Forwarding ServerReady to listener.")
+        serverReadyReceiver ! ServerReady
+      } else {
+        logger.info("ServerReady - No listener yet.")
+        alreadyReady = true
+      }
+    case msg @ _ => logger.info(s"Received unknown message $msg")
   }
 }
 

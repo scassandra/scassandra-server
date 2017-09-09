@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.scassandra.server.actors
 
 import akka.actor.Actor
@@ -12,7 +27,7 @@ class ActivityLogActor extends Actor {
 
   import context._
 
-  def receive = activity(ActivityLog())
+  def receive: Receive = activity(ActivityLog())
 
   def activity(ac: ActivityLog): Receive = {
     case GetAllQueries => sender ! Queries(ac.queries.reverse)
@@ -68,12 +83,12 @@ object ActivityLogActor {
   case class RecordExecution(prepare: PreparedStatementExecution)
   case class RecordBatch(batch: BatchExecution)
 
-  private case class ActivityLog(queries: List[Query] = List(),
-                      connections: List[Connection] = List(),
-                      prepares: List[PreparedStatementPreparation] = List(),
-                      executions: List[PreparedStatementExecution] = List(),
-                      batches: List[BatchExecution] = List()
-                     )
+  private case class ActivityLog(
+    queries: List[Query] = List(),
+    connections: List[Connection] = List(),
+    prepares: List[PreparedStatementPreparation] = List(),
+    executions: List[PreparedStatementExecution] = List(),
+    batches: List[BatchExecution] = List())
 
   case class Queries(list: List[Query])
   case class Connections(list: List[Connection])
@@ -81,18 +96,17 @@ object ActivityLogActor {
   case class Executions(list: List[PreparedStatementExecution])
   case class Batches(list: List[BatchExecution])
 
-
 }
 
 object Activity {
   case class Query(query: String, consistency: Consistency, serialConsistency: Option[Consistency],
-                   variables: List[Any] = List(), variableTypes: List[DataType] = List(), timestamp: Option[Long] = None)
+    variables: List[Any] = List(), variableTypes: List[DataType] = List(), timestamp: Option[Long] = None)
   case class Connection(result: String = "success")
   case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency,
-                                        serialConsistency: Option[Consistency], variables: List[Any],
-                                        variableTypes: List[DataType], timestamp: Option[Long])
+    serialConsistency: Option[Consistency], variables: List[Any],
+    variableTypes: List[DataType], timestamp: Option[Long])
   case class BatchQuery(query: String, batchQueryKind: BatchQueryKind, variables: List[Any] = List(), variableTypes: List[DataType] = List())
   case class BatchExecution(batchQueries: Seq[BatchQuery], consistency: Consistency,
-                            serialConsistency: Option[Consistency], batchType: BatchType, timestamp: Option[Long])
+    serialConsistency: Option[Consistency], batchType: BatchType, timestamp: Option[Long])
   case class PreparedStatementPreparation(preparedStatementText: String)
 }

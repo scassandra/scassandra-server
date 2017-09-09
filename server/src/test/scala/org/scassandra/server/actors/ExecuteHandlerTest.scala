@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 package org.scassandra.server.actors
 
 import akka.actor.ActorRef
-import akka.testkit.{ImplicitSender, TestActorRef, TestProbe}
+import akka.testkit.{ ImplicitSender, TestActorRef, TestProbe }
 import akka.util.Timeout
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
+import org.scalatest.{ BeforeAndAfter, Matchers, WordSpec }
 import org.scassandra.codec._
 import org.scassandra.codec.datatype._
-import org.scassandra.codec.messages.{ColumnSpecWithoutTable, PreparedMetadata, QueryParameters, Row}
+import org.scassandra.codec.messages.{ ColumnSpecWithoutTable, PreparedMetadata, QueryParameters, Row }
 import org.scassandra.server.actors.Activity.PreparedStatementExecution
 import org.scassandra.server.actors.ActivityLogActor.RecordExecution
-import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{LookupByExecute, PrimeMatch}
+import org.scassandra.server.actors.PrepareHandler.{ PreparedStatementQuery, PreparedStatementResponse }
+import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{ LookupByExecute, PrimeMatch }
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Reply
 import scodec.bits.ByteVector
 
@@ -119,13 +119,15 @@ class ExecuteHandlerTest extends WordSpec with ProtocolActorTest with Matchers w
       respondWith(primePreparedStoreProbe, PrimeMatch(primeMatch))
       val values = List(10)
       val variableTypes = List(Bigint)
-      val execute = Execute(preparedIdBytes, parameters = QueryParameters(consistency,
+      val execute = Execute(preparedIdBytes, parameters = QueryParameters(
+        consistency,
         values = Some(values.map(v => QueryValue(None, Bytes(Bigint.codec.encode(v).require.bytes))))))
 
       underTest ! protocolMessage(execute)
 
       prepareHandlerTestProbe.expectMsg(PreparedStatementQuery(List(preparedId)))
-      prepareHandlerTestProbe.reply(PreparedStatementResponse(Map(preparedId -> (query, Prepared(preparedIdBytes,
+      prepareHandlerTestProbe.reply(PreparedStatementResponse(Map(preparedId -> (query, Prepared(
+        preparedIdBytes,
         preparedMetadata = PreparedMetadata(keyspace = Some("keyspace"), table = Some("table"),
           columnSpec = List(ColumnSpecWithoutTable("0", Bigint))))))))
       activityLogProbe.expectMsg(RecordExecution(PreparedStatementExecution(query, consistency, None, values, variableTypes, None)))
@@ -139,17 +141,18 @@ class ExecuteHandlerTest extends WordSpec with ProtocolActorTest with Matchers w
 
       // Execute statement with two BigInt variables.
       val variables = List(10, 20)
-      val execute = Execute(preparedIdBytes, parameters = QueryParameters(consistency = consistency,
+      val execute = Execute(preparedIdBytes, parameters = QueryParameters(
+        consistency = consistency,
         serialConsistency = Some(Consistency.SERIAL),
         values = Some(variables.map(v => QueryValue(None, Bytes(Bigint.codec.encode(v).require.bytes)))),
-        timestamp = Some(1000)
-      ))
+        timestamp = Some(1000)))
 
       underTest ! protocolMessage(execute)
 
       // The Prepared Prime expects 1 column with Varchar.
       prepareHandlerTestProbe.expectMsg(PreparedStatementQuery(List(preparedId)))
-      prepareHandlerTestProbe.reply(PreparedStatementResponse(Map(preparedId -> (query, Prepared(preparedIdBytes,
+      prepareHandlerTestProbe.reply(PreparedStatementResponse(Map(preparedId -> (query, Prepared(
+        preparedIdBytes,
         preparedMetadata = PreparedMetadata(keyspace = Some("keyspace"), table = Some("table"),
           columnSpec = ColumnSpecWithoutTable("0", Varchar) :: Nil))))))
 

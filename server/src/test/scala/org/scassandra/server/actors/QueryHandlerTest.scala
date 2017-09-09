@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package org.scassandra.server.actors
 
 import akka.actor.ActorRef
 import akka.testkit._
-import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
+import org.scalatest.{ BeforeAndAfter, Matchers, WordSpec }
 import org.scassandra.codec._
 import org.scassandra.codec.datatype._
-import org.scassandra.codec.messages.{QueryParameters, Row}
+import org.scassandra.codec.messages.{ QueryParameters, Row }
 import org.scassandra.server.actors.ActivityLogActor.RecordQuery
-import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{MatchPrime, MatchResult, Reply}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ MatchPrime, MatchResult, Reply }
 
 import scala.concurrent.duration._
 import scala.language.postfixOps

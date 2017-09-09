@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package org.scassandra.server.actors
 
 import akka.actor.ActorSystem
-import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
+import akka.testkit.{ ImplicitSender, TestActorRef, TestKit, TestProbe }
 import org.scalatest.prop.TableDrivenPropertyChecks
-import org.scalatest.{BeforeAndAfter, FunSpec, FunSpecLike, Matchers}
+import org.scalatest.{ BeforeAndAfter, FunSpec, FunSpecLike, Matchers }
 import org.scassandra.codec._
-import org.scassandra.codec.messages.{BatchType, SimpleBatchQuery}
+import org.scassandra.codec.messages.{ BatchType, SimpleBatchQuery }
 import scodec.bits.ByteVector
 
 import scala.concurrent.duration._
@@ -46,18 +46,17 @@ class NativeProtocolMessageHandlerTest extends FunSpec with TestKitWithShutdown
     batchHandlerTestProbe = TestProbe()
     testActorRef = TestActorRef(new NativeProtocolMessageHandler(
       (_) => queryHandlerTestProbe.ref,
-      (_,_) => batchHandlerTestProbe.ref,
+      (_, _) => batchHandlerTestProbe.ref,
       (_) => registerHandlerTestProbe.ref,
       (_) => optionsHandlerTestProbe.ref,
       prepareHandlerTestProbe.ref,
-      executeHandlerTestProbe.ref
-    ))
+      executeHandlerTestProbe.ref))
   }
 
-  val protocolVersions = Table("Protocol Version", ProtocolVersion.versions:_*)
+  val protocolVersions = Table("Protocol Version", ProtocolVersion.versions: _*)
 
   describe("NativeProtocolMessageHandler") {
-    forAll (protocolVersions) { (protocolVersion: ProtocolVersion) =>
+    forAll(protocolVersions) { (protocolVersion: ProtocolVersion) =>
       implicit val protocol: ProtocolVersion = protocolVersion
 
       def sendStartup() = {
@@ -126,7 +125,6 @@ class NativeProtocolMessageHandlerTest extends FunSpec with TestKitWithShutdown
 
           optionsHandlerTestProbe.expectMsg(msg)
         }
-
 
         it("should forward Prepare to PrepareHandler") {
           sendStartup()

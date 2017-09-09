@@ -2,12 +2,11 @@ package org.scassandra.server.actors
 
 import akka.actor.Props
 import akka.testkit.ImplicitSender
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 import org.scassandra.codec.Consistency
 import org.scassandra.codec.messages.BatchType
 import org.scassandra.server.actors.Activity._
 import org.scassandra.server.actors.ActivityLogActor._
-import org.scassandra.server.priming._
 
 class ActivityLogActorTest extends WordSpec with TestKitWithShutdown with Matchers
   with ImplicitSender {

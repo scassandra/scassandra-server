@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,35 +18,35 @@ package org.scassandra.server.actors
 import java.net.InetSocketAddress
 
 import akka.actor._
-import akka.io.{IO, Tcp}
-import akka.pattern.{ask, pipe}
+import akka.io.{ IO, Tcp }
+import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
 import org.scassandra.server.actors.ActivityLogActor.RecordConnection
-import org.scassandra.server.{ServerReady, Shutdown}
+import org.scassandra.server.{ ServerReady, Shutdown }
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class TcpServer(listenAddress: String, port: Int,
-                primedResults: ActorRef,
-                primePrepareStore: ActorRef,
-                primeBatchStore: ActorRef,
-                serverReadyListener: ActorRef,
-                activityLog: ActorRef,
-                manager: Option[ActorRef]) extends Actor with ActorLogging {
+  primedResults: ActorRef,
+  primePrepareStore: ActorRef,
+  primeBatchStore: ActorRef,
+  serverReadyListener: ActorRef,
+  activityLog: ActorRef,
+  manager: Option[ActorRef]) extends Actor with ActorLogging {
 
   def this(listenAddress: String, port: Int,
-           primeQueryStore: ActorRef,
-           primePrepareStore: ActorRef,
-           primeBatchStore: ActorRef,
-           serverReadyListener: ActorRef,
-           activityLog: ActorRef) {
+    primeQueryStore: ActorRef,
+    primePrepareStore: ActorRef,
+    primeBatchStore: ActorRef,
+    serverReadyListener: ActorRef,
+    activityLog: ActorRef) {
     this(listenAddress, port, primeQueryStore, primePrepareStore, primeBatchStore, serverReadyListener, activityLog, None)
   }
 
   import akka.io.Tcp._
-  import context.{dispatcher, system}
+  import context.{ dispatcher, system }
 
   // whether or not to accept connections.
   var acceptConnections = true
@@ -63,7 +63,7 @@ class TcpServer(listenAddress: String, port: Int,
     manager.getOrElse(IO(Tcp)) ! Bind(self, new InetSocketAddress(listenAddress, port), pullMode = true)
   }
 
-  def receive = {
+  def receive: PartialFunction[Any, Unit] = {
     case Bound(_) =>
       log.info(s"Port $port ready for Cassandra binary connections. ${sender()}")
       serverReadyListener ! ServerReady
@@ -77,15 +77,16 @@ class TcpServer(listenAddress: String, port: Int,
   }
 
   def listening(listener: ActorRef): Receive = {
-    case c@Connected(remote, _) =>
+    case c @ Connected(remote, _) =>
       activityLog ! RecordConnection()
-      val handler = context.actorOf(Props(classOf[ConnectionHandler], sender(),
-        (af: ActorRefFactory) => af.actorOf(Props(classOf[QueryHandler], primedResults, activityLog)),
-        (af: ActorRefFactory, prepareHandler: ActorRef) => af.actorOf(Props(classOf[BatchHandler], activityLog, prepareHandler, primeBatchStore)),
-        (af: ActorRefFactory) => af.actorOf(Props(classOf[RegisterHandler])),
-        (af: ActorRefFactory) => af.actorOf(Props(classOf[OptionsHandler])),
-        preparedHandler,
-        executeHandler),
+      val handler = context.actorOf(
+        Props(classOf[ConnectionHandler], sender(),
+          (af: ActorRefFactory) => af.actorOf(Props(classOf[QueryHandler], primedResults, activityLog)),
+          (af: ActorRefFactory, prepareHandler: ActorRef) => af.actorOf(Props(classOf[BatchHandler], activityLog, prepareHandler, primeBatchStore)),
+          (af: ActorRefFactory) => af.actorOf(Props(classOf[RegisterHandler])),
+          (af: ActorRefFactory) => af.actorOf(Props(classOf[OptionsHandler])),
+          preparedHandler,
+          executeHandler),
         name = s"${remote.getAddress.getHostAddress}:${remote.getPort}")
       log.debug(s"Sending register with connection handler $handler")
       sender ! Register(handler)
@@ -131,10 +132,11 @@ class TcpServer(listenAddress: String, port: Int,
         checkEnablement(listener)
       }
       sender ! response
+
     case Shutdown =>
       val requester = sender
       context.become {
-        case u@Unbound =>
+        case u @ Unbound =>
           requester ! u
           // Kill self after unbound
           self ! PoisonPill

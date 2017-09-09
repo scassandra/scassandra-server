@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,24 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.{ActorRef, ActorRefFactory}
+import akka.actor.{ ActorRef, ActorRefFactory }
 import org.scassandra.codec._
 
 /*
  * Expects full native protocol messages.
  */
-class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory) => ActorRef,
-                        batchHandlerFactory: (ActorRefFactory, ActorRef) => ActorRef,
-                        registerHandlerFactory: (ActorRefFactory) => ActorRef,
-                        optionsHandlerFactory: (ActorRefFactory) => ActorRef,
-                        prepareHandler: ActorRef,
-                        executeHandler: ActorRef) extends ProtocolActor {
+class NativeProtocolMessageHandler(
+  queryHandlerFactory: (ActorRefFactory) => ActorRef,
+  batchHandlerFactory: (ActorRefFactory, ActorRef) => ActorRef,
+  registerHandlerFactory: (ActorRefFactory) => ActorRef,
+  optionsHandlerFactory: (ActorRefFactory) => ActorRef,
+  prepareHandler: ActorRef,
+  executeHandler: ActorRef) extends ProtocolActor {
 
   private val optionsHandler = optionsHandlerFactory(context)
 
   override def receive: Receive = {
-    case message@ProtocolMessage(frame) =>
+    case message @ ProtocolMessage(frame) =>
       frame.message match {
         case Options =>
           log.debug("Received options message. Sending to OptionsHandler")
@@ -49,7 +50,7 @@ class NativeProtocolMessageHandler(queryHandlerFactory: (ActorRefFactory) => Act
   }
 
   def initialized(queryHandler: ActorRef, batchHandler: ActorRef, registerHandler: ActorRef): Receive = {
-    case message@ProtocolMessage(frame) =>
+    case message @ ProtocolMessage(frame) =>
       frame.message match {
         case query: Query =>
           queryHandler forward message

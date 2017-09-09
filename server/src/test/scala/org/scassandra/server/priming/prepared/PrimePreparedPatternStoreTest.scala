@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package org.scassandra.server.priming.prepared
 
-
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scalatest.{ BeforeAndAfter, FunSuite, Matchers }
 import org.scassandra.codec.Consistency._
 import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.ColumnSpec._
-import org.scassandra.codec.messages.{PreparedMetadata, QueryParameters}
-import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
+import org.scassandra.codec.messages.{ PreparedMetadata, QueryParameters }
+import org.scassandra.codec.{ Execute, Prepare, Prepared, ProtocolVersion }
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Reply
 import scodec.bits.ByteVector
 
@@ -30,7 +29,7 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
 
   val id = ByteVector(1)
 
-  var underTest : PrimePreparedPatternStore= _
+  var underTest: PrimePreparedPatternStore = _
 
   before {
     underTest = new PrimePreparedPatternStore
@@ -63,7 +62,7 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     underTest.record(preparedPrime)
 
     //then
-    val result = underTest("select name from people where age = '6'", Execute(id, QueryParameters(consistency=ONE)))
+    val result = underTest("select name from people where age = '6'", Execute(id, QueryParameters(consistency = ONE)))
     result.isDefined should equal(true)
     result.get should equal(thenDo.prime)
   }
@@ -80,7 +79,7 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     underTest.record(preparedPrime)
 
     //then
-    val result = underTest("select name from people where age = '6'", Execute(id, QueryParameters(consistency=THREE)))
+    val result = underTest("select name from people where age = '6'", Execute(id, QueryParameters(consistency = THREE)))
     result.isDefined should equal(false)
   }
 
@@ -95,10 +94,10 @@ class PrimePreparedPatternStoreTest extends FunSuite with Matchers with BeforeAn
     underTest.record(preparedPrime)
 
     //then
-    underTest("select name from people where age = '6'", Execute(id, QueryParameters(consistency=ONE))).isDefined should equal(true)
-    underTest("select name from people where age = '6'", Execute(id, QueryParameters(consistency=TWO))).isDefined should equal(true)
-    underTest("select name from people where age = '6'", Execute(id, QueryParameters(consistency=THREE))).isDefined should equal(true)
-    underTest("select name from people where age = '6'", Execute(id, QueryParameters(consistency=QUORUM))).isDefined should equal(true)
+    underTest("select name from people where age = '6'", Execute(id, QueryParameters(consistency = ONE))).isDefined should equal(true)
+    underTest("select name from people where age = '6'", Execute(id, QueryParameters(consistency = TWO))).isDefined should equal(true)
+    underTest("select name from people where age = '6'", Execute(id, QueryParameters(consistency = THREE))).isDefined should equal(true)
+    underTest("select name from people where age = '6'", Execute(id, QueryParameters(consistency = QUORUM))).isDefined should equal(true)
   }
 
   test("Clearing all the primes") {

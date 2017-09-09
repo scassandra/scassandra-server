@@ -3,12 +3,12 @@ package org.scassandra.server.actors.priming
 import akka.Done
 import akka.actor.Props
 import akka.testkit.ImplicitSender
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 import org.scassandra.codec.Consistency.Consistency
 import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.ColumnSpec.column
-import org.scassandra.codec.messages.{QueryParameters, Row, RowMetadata}
-import org.scassandra.codec.{Consistency, Query, Rows, SetKeyspace}
+import org.scassandra.codec.messages.{ QueryParameters, Row, RowMetadata }
+import org.scassandra.codec.{ Consistency, Query, Rows, SetKeyspace }
 import org.scassandra.server.actors.TestKitWithShutdown
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming.json.Success
@@ -23,18 +23,14 @@ class PrimeQueryStoreActorTest extends WordSpec with TestKitWithShutdown with Im
   val someThen = Then(
     rows = Some(List(
       Map("name" -> "Mickey", "age" -> 99),
-      Map("name" -> "Mario", "age" -> 12)
-    )),
+      Map("name" -> "Mario", "age" -> 12))),
     result = Some(Success),
-    column_types = Some(Map("name" -> Varchar, "age" -> CqlInt))
-  )
+    column_types = Some(Map("name" -> Varchar, "age" -> CqlInt)))
   val somePrime = PrimeQuerySingle(
     When(
       Some(someQuery),
-      consistency = Some(List(Consistency.ONE))
-    ),
-    someThen
-  )
+      consistency = Some(List(Consistency.ONE))),
+    someThen)
 
   def withConsistency(consistency: Consistency*): PrimeQuerySingle = {
     somePrime.copy(when = somePrime.when.copy(consistency = Some(consistency.toList)))
@@ -43,8 +39,7 @@ class PrimeQueryStoreActorTest extends WordSpec with TestKitWithShutdown with Im
   // What we expect the Prime message to be.
   val someRows = Rows(
     RowMetadata(keyspace = Some(""), table = Some(""), columnSpec = Some(List(column("name", Varchar), column("age", CqlInt)))),
-    List(Row("name" -> "Mickey", "age" -> 99), Row("name" -> "Mario", "age" -> 12))
-  )
+    List(Row("name" -> "Mickey", "age" -> 99), Row("name" -> "Mario", "age" -> 12)))
 
   "prime query store" must {
     val underTest = system.actorOf(Props[PrimeQueryStoreActor])

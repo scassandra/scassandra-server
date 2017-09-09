@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,86 +15,86 @@
  */
 package org.scassandra.codec
 
-import java.net.{InetAddress, InetSocketAddress, UnknownHostException}
+import java.net.{ InetAddress, InetSocketAddress, UnknownHostException }
 
 import org.scassandra.codec.datatype.DataType
-import scodec.Attempt.{Failure, Successful}
-import scodec.bits.{BitVector, ByteVector}
+import scodec.Attempt.{ Failure, Successful }
+import scodec.bits.{ BitVector, ByteVector }
 import scodec.codecs._
-import scodec.{Attempt, Codec, DecodeResult, Err, SizeBound}
+import scodec.{ Attempt, Codec, DecodeResult, Err, SizeBound }
 
 /**
-  * Represents a column Value, which can either be Null (-1), Unset (-2) or have content (length + bytes)
-  */
+ * Represents a column Value, which can either be Null (-1), Unset (-2) or have content (length + bytes)
+ */
 sealed trait Value
 case object Null extends Value
 case object Unset extends Value
 case class Bytes(bytes: ByteVector) extends Value
 
 /**
-  * Represents a [[Value]] that is provided as part of a query can optionally have a named (protocol v2+)
-  * @param name The name/bindmarker for this value.
-  * @param value The actual value.
-  */
+ * Represents a [[Value]] that is provided as part of a query can optionally have a named (protocol v2+)
+ * @param name The name/bindmarker for this value.
+ * @param value The actual value.
+ */
 case class QueryValue(name: Option[String], value: Value)
 
 object QueryValue {
   /**
-    * Creates an unnamed [[QueryValue]] with a given value and [[DataType]] that is used to encode it.
-    * @param value The value
-    * @param dataType The [[DataType]] to use to encode the value
-    * @param protocolVersion [[ProtocolVersion]] to serialize with
-    * @return The value encoded and wrapped with [[QueryValue]]
-    */
+   * Creates an unnamed [[QueryValue]] with a given value and [[DataType]] that is used to encode it.
+   * @param value The value
+   * @param dataType The [[DataType]] to use to encode the value
+   * @param protocolVersion [[ProtocolVersion]] to serialize with
+   * @return The value encoded and wrapped with [[QueryValue]]
+   */
   def apply(value: Any, dataType: DataType)(implicit protocolVersion: ProtocolVersion): QueryValue =
     QueryValue(None, Bytes(dataType.codec.encode(value).require.bytes))
 
   /**
-    * Creates a named [[QueryValue]] with a given value and [[DataType]] that is use dto encode it.
-    * @param name The name of the [[QueryValue]]
-    * @param value The value
-    * @param dataType The [[DataType]] to use to encode the value
-    * @param protocolVersion [[ProtocolVersion]] to serialize with
-    * @return The value encoded and wrapped with [[QueryValue]]
-    */
+   * Creates a named [[QueryValue]] with a given value and [[DataType]] that is use dto encode it.
+   * @param name The name of the [[QueryValue]]
+   * @param value The value
+   * @param dataType The [[DataType]] to use to encode the value
+   * @param protocolVersion [[ProtocolVersion]] to serialize with
+   * @return The value encoded and wrapped with [[QueryValue]]
+   */
   def apply(name: String, value: Any, dataType: DataType)(implicit protocolVersion: ProtocolVersion): QueryValue =
     QueryValue(Some(name), Bytes(dataType.codec.encode(value).require.bytes))
 }
 
 /**
-  * The [[Codec]] for [[Value]].  Will encode [[Null]] as a 32-bit int with value of -1.  Will encode [[Unset]] as a
-  * 32-bit int with value of -2.  [[Bytes]] will be encoded with 32-bit length + the actual bytes.
-  */
+ * The [[Codec]] for [[Value]].  Will encode [[Null]] as a 32-bit int with value of -1.  Will encode [[Unset]] as a
+ * 32-bit int with value of -2.  [[Bytes]] will be encoded with 32-bit length + the actual bytes.
+ */
 object ValueCodec extends Codec[Value] {
   import Notations.int
 
   override def decode(bits: BitVector): Attempt[DecodeResult[Value]] = {
     int.decode(bits) match {
       case Successful(DecodeResult(count, remainder)) => count match {
-        case -1          => Successful(DecodeResult(Null, remainder))
-        case -2          => Successful(DecodeResult(Unset, remainder))
+        case -1 => Successful(DecodeResult(Null, remainder))
+        case -2 => Successful(DecodeResult(Unset, remainder))
         case i if i >= 0 => variableSizeBytes(provide(i), bytes).decode(remainder).map(_.map(Bytes))
-        case _           => Failure(Err(s"Invalid [value] identifier $count"))
+        case _ => Failure(Err(s"Invalid [value] identifier $count"))
       }
       case f: Failure => f
     }
   }
 
   override def encode(value: Value): Attempt[BitVector] = value match {
-    case Null     => int.encode(-1)
-    case Unset    => int.encode(-2)
+    case Null => int.encode(-1)
+    case Unset => int.encode(-2)
     case Bytes(b) => int.encode(b.length.toInt).map(_ ++ b.toBitVector)
   }
 
   // The smallest value is int length
   // the highest value is int length + max int.
-  override val sizeBound: SizeBound = SizeBound.bounded(int.sizeBound.lowerBound, int.sizeBound.lowerBound + Int.MaxValue.toLong*8)
+  override val sizeBound: SizeBound = SizeBound.bounded(int.sizeBound.lowerBound, int.sizeBound.lowerBound + Int.MaxValue.toLong * 8)
 }
 
 /**
-  * A [[Codec]] for serializing [[InetSocketAddress]] as defined by the native protocol spec.   See [inet] in the
-  * native protocol specification for more details.
-  */
+ * A [[Codec]] for serializing [[InetSocketAddress]] as defined by the native protocol spec.   See [inet] in the
+ * native protocol specification for more details.
+ */
 private[codec] object InetAddressCodec extends Codec[InetSocketAddress] {
   import Notations.int
 
@@ -133,8 +133,8 @@ private[codec] object InetAddressCodec extends Codec[InetSocketAddress] {
 }
 
 /**
-  * Represents consistency levels.
-  */
+ * Represents consistency levels.
+ */
 object Consistency extends Enumeration {
   type Consistency = Value
   val ANY, ONE, TWO, THREE, QUORUM, ALL, LOCAL_QUORUM, EACH_QUORUM, SERIAL, LOCAL_SERIAL, LOCAL_ONE = Value
@@ -145,93 +145,93 @@ object Consistency extends Enumeration {
 }
 
 /**
-  * Representations of the notations defined in section 3 of the native protocol specification.
-  */
+ * Representations of the notations defined in section 3 of the native protocol specification.
+ */
 object Notations {
   /**
-    * [byte]
-    */
+   * [byte]
+   */
   val byte = scodec.codecs.byte
   /**
-    * [int]
-    */
+   * [int]
+   */
   val int = int32
   /**
-    * [long]
-    */
+   * [long]
+   */
   val long = int64
   /**
-    * [short]
-    */
+   * [short]
+   */
   val short = uint16
   /**
-    * [string]
-    */
+   * [string]
+   */
   val string = variableSizeBytes(short, utf8)
   /**
-    * [long string]
-    */
+   * [long string]
+   */
   val longString = variableSizeBytes(int, utf8)
   /**
-    * [uuid]
-    */
+   * [uuid]
+   */
   val uuid = scodec.codecs.uuid
   /**
-    * [string list]
-    */
+   * [string list]
+   */
   val stringList = listOfN(short, string)
   /**
-    * [bytes]
-    */
+   * [bytes]
+   */
   val bytes = variableSizeBytes(int, scodec.codecs.bytes)
   /**
-    * [value]
-    */
+   * [value]
+   */
   val value: Codec[Value] = ValueCodec
   /**
-    * [short bytes]
-    */
+   * [short bytes]
+   */
   val shortBytes = variableSizeBytes(short, scodec.codecs.bytes)
   /**
-    * [inet]
-    */
+   * [inet]
+   */
   val inet: Codec[InetSocketAddress] = InetAddressCodec
   /**
-    * [consistency]
-    */
+   * [consistency]
+   */
   val consistency = Consistency.codec
   /**
-    * [string map]
+   * [string map]
    */
   val stringMap = map(short, string, string)
   /**
-    * [string multimap]
-    */
+   * [string multimap]
+   */
   val stringMultimap = map(short, string, stringList)
   /**
-    * [bytes map]
-    */
+   * [bytes map]
+   */
   val bytesMap = map(short, string, bytes)
 
-  private[this] val queryValueWithName = (conditional(included=true, cstring) :: value).as[QueryValue]
-  private[this] val queryValueWithoutName = (conditional(included=false, cstring) :: value).as[QueryValue]
+  private[this] val queryValueWithName = (conditional(included = true, cstring) :: value).as[QueryValue]
+  private[this] val queryValueWithoutName = (conditional(included = false, cstring) :: value).as[QueryValue]
 
   /**
-    * Used to parse a query value.
-    * @param includeName Whether or not the values should be named.
-    * @return the appropriate [[QueryValue]] [[Codec]].
-    */
-  def queryValue(includeName: Boolean) = if(includeName) queryValueWithName else queryValueWithoutName
+   * Used to parse a query value.
+   * @param includeName Whether or not the values should be named.
+   * @return the appropriate [[QueryValue]] [[Codec]].
+   */
+  def queryValue(includeName: Boolean) = if (includeName) queryValueWithName else queryValueWithoutName
 
   /**
-    * [map]
-    * @param countCodec How to measure the number of entries in the map.
-    * @param keyCodec Used for parsing the key values.
-    * @param valCodec Used for parsing the values.
-    * @tparam K Type of the keys
-    * @tparam V Type of the values
-    * @return [[Codec]] for the requested map.
-    */
-  def map[K,V](countCodec: Codec[Int], keyCodec: Codec[K], valCodec: Codec[V]): Codec[Map[K,V]] =
-    listOfN(countCodec, (keyCodec :: valCodec).as[(K, V)]).xmap[Map[K,V]](_.toMap, _.toList)
+   * [map]
+   * @param countCodec How to measure the number of entries in the map.
+   * @param keyCodec Used for parsing the key values.
+   * @param valCodec Used for parsing the values.
+   * @tparam K Type of the keys
+   * @tparam V Type of the values
+   * @return [[Codec]] for the requested map.
+   */
+  def map[K, V](countCodec: Codec[Int], keyCodec: Codec[K], valCodec: Codec[V]): Codec[Map[K, V]] =
+    listOfN(countCodec, (keyCodec :: valCodec).as[(K, V)]).xmap[Map[K, V]](_.toMap, _.toList)
 }

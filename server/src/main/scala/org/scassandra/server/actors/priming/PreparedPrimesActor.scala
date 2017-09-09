@@ -1,6 +1,6 @@
 package org.scassandra.server.actors.priming
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.{ Actor, ActorRef }
 import akka.pattern.ask
 import akka.pattern.pipe
 import akka.util.Timeout
@@ -11,10 +11,10 @@ import scala.concurrent.Future
 import scala.concurrent.duration._
 
 /**
-  * Wraps access to all priming for prepared statements
-  *
-  * @param primeStores Order of priority prime stores to forward to
-  */
+ * Wraps access to all priming for prepared statements
+ *
+ * @param primeStores Order of priority prime stores to forward to
+ */
 class PreparedPrimesActor(primeStores: List[ActorRef]) extends Actor {
 
   import context._
@@ -35,5 +35,4 @@ class PreparedPrimesActor(primeStores: List[ActorRef]) extends Actor {
       primeResponse pipeTo sender
   }
 }
-
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,17 @@ import java.util.concurrent.TimeUnit
 import com.typesafe.config.ConfigFactory
 
 object ScassandraConfig {
-  private val config =  ConfigFactory.load()
+  private val config = ConfigFactory.load()
 
-  val binaryPort           = config.getInt("scassandra.binary.port")
-  val binaryListenAddress  = config.getString("scassandra.binary.listen-address")
-  val adminPort            = config.getInt("scassandra.admin.port")
-  val adminListenAddress   = config.getString("scassandra.admin.listen-address")
+  val binaryPort = config.getInt("scassandra.binary.port")
+  val binaryListenAddress = config.getString("scassandra.binary.listen-address")
+  val adminPort = config.getInt("scassandra.admin.port")
+  val adminListenAddress = config.getString("scassandra.admin.listen-address")
 
-  val corsEnabled          = config.getBoolean("scassandra.cors.enabled")
-  val corsMaxAge           = config.getLong("scassandra.cors.max-age")
+  val corsEnabled = config.getBoolean("scassandra.cors.enabled")
+  val corsMaxAge = config.getLong("scassandra.cors.max-age")
   val corsAllowCredentials = config.getBoolean("scassandra.cors.allow-credentials")
-  val corsAllowHeaders     = config.getString("scassandra.cors.allow-headers")
+  val corsAllowHeaders = config.getString("scassandra.cors.allow-headers")
 
-  val startupTimeout       = config.getDuration("scassandra.startup-timeout-ms", TimeUnit.SECONDS)
+  val startupTimeout = config.getDuration("scassandra.startup-timeout-ms", TimeUnit.SECONDS)
 }

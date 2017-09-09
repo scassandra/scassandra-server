@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ class CqlInetSpec extends DataTypeSpec {
   val ipv4Local = InetAddress.getByAddress(ipv4LocalBytes)
   val ipv6LocalBytes = Array[Byte](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
   val ipv6Local = InetAddress.getByAddress(ipv6LocalBytes)
-
 
   "codec" must "encode Inet4Address as inet format" in {
     codec.encode(ipv4Local).require.bytes shouldEqual ByteVector(ipv4LocalBytes)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 package org.scassandra.server.priming
 
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.codec.datatype.{DataType, Varchar}
-import org.scassandra.codec.{ProtocolVersion, Rows}
+import org.scassandra.codec.datatype.{ DataType, Varchar }
+import org.scassandra.codec.{ ProtocolVersion, Rows }
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import scodec.Attempt
-import scodec.Attempt.{Failure, Successful}
+import scodec.Attempt.{ Failure, Successful }
 import scodec.bits.BitVector
 
 object PrimeValidator extends LazyLogging {
@@ -86,5 +86,4 @@ object PrimeValidator extends LazyLogging {
     columnType.codec(ProtocolVersion.latest).encode(value)
   }
 }
-
 

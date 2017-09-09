@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 package org.scassandra.codec
 
 import org.scalacheck.Gen
-import org.scalacheck.Prop.{BooleanOperators, forAll, all => allProps}
+import org.scalacheck.Prop.{ BooleanOperators, forAll, all => allProps }
 import org.scalatest.prop.Checkers
-import org.scalatest.{FlatSpec, Matchers}
-import scodec.bits.{BitVector, ByteVector}
+import org.scalatest.{ FlatSpec, Matchers }
+import scodec.bits.{ BitVector, ByteVector }
 import scodec.codecs._
-import scodec.{Attempt, DecodeResult}
+import scodec.{ Attempt, DecodeResult }
 
 class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
 
@@ -30,17 +30,17 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
 
     check {
       forAll(Gen.choose(1, 4)) {
-        version => {
-          codec.decode(BitVector(version).drop(1)) match {
-            case Attempt.Successful(DecodeResult(decoded, remainder)) =>
-              s"protocol = $decoded" |: allProps(
-                ("identical version" |: decoded.version == version) &&
-                (s"no remaining data(${remainder.size})" |: remainder.size == 0)
-              )
-            case Attempt.Failure(cause) =>
-              s"$cause" |: false
+        version =>
+          {
+            codec.decode(BitVector(version).drop(1)) match {
+              case Attempt.Successful(DecodeResult(decoded, remainder)) =>
+                s"protocol = $decoded" |: allProps(
+                  ("identical version" |: decoded.version == version) &&
+                    (s"no remaining data(${remainder.size})" |: remainder.size == 0))
+              case Attempt.Failure(cause) =>
+                s"$cause" |: false
+            }
           }
-        }
       }
     }
   }
@@ -50,18 +50,18 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
 
     check {
       forAll(Gen.chooseNum(5, 127, 0)) {
-        version => {
-          codec.decode(BitVector(version).drop(1)) match {
-            case Attempt.Successful(DecodeResult(decoded, remainder)) =>
-              s"protocol = $decoded" |: allProps(
-                ("invalid protocol version" |: decoded.isInstanceOf[UnsupportedProtocolVersion]) &&
-                ("identical version" |: decoded.version == version) &&
-                (s"no remaining data(${remainder.size})" |: remainder.size == 0)
-              )
-            case Attempt.Failure(cause) =>
-              s"$cause" |: false
+        version =>
+          {
+            codec.decode(BitVector(version).drop(1)) match {
+              case Attempt.Successful(DecodeResult(decoded, remainder)) =>
+                s"protocol = $decoded" |: allProps(
+                  ("invalid protocol version" |: decoded.isInstanceOf[UnsupportedProtocolVersion]) &&
+                    ("identical version" |: decoded.version == version) &&
+                    (s"no remaining data(${remainder.size})" |: remainder.size == 0))
+              case Attempt.Failure(cause) =>
+                s"$cause" |: false
+            }
           }
-        }
       }
     }
   }
@@ -70,7 +70,7 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
     val codec = ProtocolFlags.codec
 
     check {
-      forAll(Gen.oneOf(false, true), Gen.choose(1,4)) { (direction, version) =>
+      forAll(Gen.oneOf(false, true), Gen.choose(1, 4)) { (direction, version) =>
         val msgDirection = direction match {
           case true => Response
           case false => Request
@@ -79,9 +79,8 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
         codec.decode(byte) match {
           case Attempt.Successful(DecodeResult(decoded, remainder)) =>
             s"$byte = $decoded" |: allProps(
-              (s"$msgDirection = ${decoded.direction}"   |: msgDirection == decoded.direction) &&
-              (s"$version == ${decoded.version.version}" |: version == decoded.version.version)
-            )
+              (s"$msgDirection = ${decoded.direction}" |: msgDirection == decoded.direction) &&
+                (s"$version == ${decoded.version.version}" |: version == decoded.version.version))
           case Attempt.Failure(cause) =>
             s"$cause" |: false
         }
@@ -94,19 +93,18 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
 
     check {
       forAll { (warning: Boolean, customPayload: Boolean,
-                tracing: Boolean, compression: Boolean) =>
+        tracing: Boolean, compression: Boolean) =>
         val byte = BitVector.bits(
           false :: false :: false :: false ::
-          warning :: customPayload :: tracing :: compression :: Nil)
+            warning :: customPayload :: tracing :: compression :: Nil)
 
         val expected = HeaderFlags(warning, customPayload, tracing, compression)
 
         codec.decode(byte) match {
           case Attempt.Successful(DecodeResult(decoded, remainder)) =>
             s"$expected = $decoded" |: allProps(
-              (s"$expected = $decoded"                 |: expected == decoded) &&
-              (s"no remaining data(${remainder.size})" |: remainder.size == 0)
-            )
+              (s"$expected = $decoded" |: expected == decoded) &&
+                (s"no remaining data(${remainder.size})" |: remainder.size == 0))
           case Attempt.Failure(cause) =>
             s"$cause" |: false
         }
@@ -136,9 +134,8 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
       case Attempt.Successful(DecodeResult(decoded, remainder)) =>
         s"protocol = $decoded" |: allProps(
           (s"version ${decoded.version} != $version" |: decoded.version.version.version == version) &&
-          (s"stream ${decoded.stream} != $stream"    |: decoded.stream == stream) &&
-          (s"no remaining data(${remainder.size})"   |: remainder.size == 0)
-        )
+            (s"stream ${decoded.stream} != $stream" |: decoded.stream == stream) &&
+            (s"no remaining data(${remainder.size})" |: remainder.size == 0))
       case Attempt.Failure(cause) =>
         s"$cause" |: false
     }
@@ -152,9 +149,9 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
       opcode <- Gen.choose(0, 0x10)
       length <- Gen.choose(0, 256 * 0x100000) // 256 MB
     } yield (ByteVector(version, flags) ++
-        int8.encode(stream).require.toByteVector ++
-        ByteVector(opcode) ++
-        uint32.encode(length).require.toByteVector, version, stream)
+      int8.encode(stream).require.toByteVector ++
+      ByteVector(opcode) ++
+      uint32.encode(length).require.toByteVector, version, stream)
 
     check {
       forAll(headerV1or2Gen) {
@@ -171,9 +168,9 @@ class FrameHeaderSpec extends FlatSpec with Checkers with Matchers {
       opcode <- Gen.choose(0, 0x10)
       length <- Gen.choose(0, 256 * 0x100000) // 256 MB
     } yield (ByteVector(version, flags) ++
-        int16.encode(stream).require.toByteVector ++
-        ByteVector(opcode) ++
-        uint32.encode(length).require.toByteVector, version, stream)
+      int16.encode(stream).require.toByteVector ++
+      ByteVector(opcode) ++
+      uint32.encode(length).require.toByteVector, version, stream)
 
     check {
       forAll(headerV3PlusGen) {

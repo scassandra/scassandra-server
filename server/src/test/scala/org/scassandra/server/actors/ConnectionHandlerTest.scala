@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.scassandra.server.actors
 
-import akka.io.Tcp.{Received, ResumeReading, Write}
+import akka.io.Tcp.{ Received, ResumeReading, Write }
 import akka.testkit._
 import org.scalatest._
 import org.scassandra.codec._
@@ -29,15 +29,15 @@ import scala.language.postfixOps
 class ConnectionHandlerTest extends FunSuite with TestKitWithShutdown with ProtocolActorTest with Matchers
   with ImplicitSender with BeforeAndAfter {
 
-  var testActorRef : TestActorRef[ConnectionHandler] = null
+  var testActorRef: TestActorRef[ConnectionHandler] = null
 
-  var tcpConnectionTestProbe : TestProbe = null
-  var queryHandlerTestProbe : TestProbe = null
-  var batchHandlerTestProbe : TestProbe = null
-  var registerHandlerTestProbe : TestProbe = null
-  var optionsHandlerTestProbe : TestProbe = null
-  var prepareHandlerTestProbe : TestProbe = null
-  var executeHandlerTestProbe : TestProbe = null
+  var tcpConnectionTestProbe: TestProbe = null
+  var queryHandlerTestProbe: TestProbe = null
+  var batchHandlerTestProbe: TestProbe = null
+  var registerHandlerTestProbe: TestProbe = null
+  var optionsHandlerTestProbe: TestProbe = null
+  var prepareHandlerTestProbe: TestProbe = null
+  var executeHandlerTestProbe: TestProbe = null
 
   before {
     tcpConnectionTestProbe = TestProbe()
@@ -54,8 +54,7 @@ class ConnectionHandlerTest extends FunSuite with TestKitWithShutdown with Proto
       (_) => registerHandlerTestProbe.ref,
       (_) => optionsHandlerTestProbe.ref,
       prepareHandlerTestProbe.ref,
-      executeHandlerTestProbe.ref
-    ))
+      executeHandlerTestProbe.ref))
 
     // Ignore all 'ResumeReading' messages.
     ignoreMsg {
@@ -94,7 +93,7 @@ class ConnectionHandlerTest extends FunSuite with TestKitWithShutdown with Proto
 
     testActorRef ! Received(queryMessageFirstHalf)
     queryHandlerTestProbe.expectNoMsg()
-    
+
     testActorRef ! Received(queryMessageSecondHalf)
     queryHandlerTestProbe.expectMsgPF() {
       case ProtocolMessage(Frame(_, `query`)) => true

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ class ErrorMessageSpec extends CodecSpec {
         IsBootstrapping("is bootstrapping error"),
         TruncateError("truncate error"),
         WriteTimeout("write timeout", Consistency.ALL, 0, 1, "CAS"),
-        ReadTimeout("read timeout", Consistency.THREE, 2, 3, dataPresent=true),
-        ReadFailure("read failure", Consistency.ANY, 2, 3, 1, dataPresent=false),
+        ReadTimeout("read timeout", Consistency.THREE, 2, 3, dataPresent = true),
+        ReadFailure("read failure", Consistency.ANY, 2, 3, 1, dataPresent = false),
         FunctionFailure("function failure", "ks", "fun", "a" :: "b" :: Nil),
         WriteFailure("write failure", Consistency.EACH_QUORUM, 1, 1, 1, "BATCH"),
         SyntaxError("syntax error"),
@@ -44,8 +44,7 @@ class ErrorMessageSpec extends CodecSpec {
         Invalid("invalid"),
         ConfigError("config error"),
         AlreadyExists("already exists", "ks", "tbl"),
-        Unprepared("hello", ByteVector(1))
-      )
+        Unprepared("hello", ByteVector(1)))
 
       messages.foreach { msg =>
         "property identify codec for " + msg + " and encode and decode" in {

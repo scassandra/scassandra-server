@@ -4,13 +4,13 @@ import akka.Done
 import akka.actor.Props
 import akka.testkit.ImplicitSender
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 import org.scassandra.codec.Consistency
 import org.scassandra.codec.Consistency._
 import org.scassandra.codec.messages.BatchQueryKind._
 import org.scassandra.codec.messages.BatchType
 import org.scassandra.codec.messages.BatchType._
-import org.scassandra.server.actors.Activity.{BatchExecution, BatchQuery}
+import org.scassandra.server.actors.Activity.{ BatchExecution, BatchQuery }
 import org.scassandra.server.actors.TestKitWithShutdown
 import org.scassandra.server.actors.priming.PrimeBatchStoreActor._
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Then

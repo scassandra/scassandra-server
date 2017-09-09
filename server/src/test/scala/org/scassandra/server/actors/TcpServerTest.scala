@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.net.InetSocketAddress
 import akka.actor._
 import akka.io.Tcp._
 import akka.pattern.ask
-import akka.testkit.{ImplicitSender, TestActorRef, TestProbe}
+import akka.testkit.{ ImplicitSender, TestActorRef, TestProbe }
 import akka.util.Timeout
 import org.scalatest._
 import org.scassandra.server.ServerReadyListener
@@ -28,11 +28,11 @@ import org.scassandra.server.actors.ActivityLogActor.RecordConnection
 import org.scassandra.server.priming.prepared.PrimePreparedStore
 
 import scala.concurrent.Await
-import scala.concurrent.duration.{Duration, _}
+import scala.concurrent.duration.{ Duration, _ }
 import scala.language.postfixOps
 
 class TcpServerTest extends WordSpec with TestKitWithShutdown
-  with Matchers with ImplicitSender  with BeforeAndAfter with BeforeAndAfterAll {
+  with Matchers with ImplicitSender with BeforeAndAfter with BeforeAndAfterAll {
 
   implicit val atMost: Duration = 1 seconds
   implicit val timeout: Timeout = 1 seconds
@@ -103,7 +103,6 @@ class TcpServerTest extends WordSpec with TestKitWithShutdown
 
     Await.result(future, atMost).connections should contain theSameElementsAs expectedAddresses.map(a => ClientConnection(a.getAddress.getHostAddress, a.getPort))
   }
-
 
   "tcp server" must {
     "record connections with the ActivityLog" in {

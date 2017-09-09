@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,21 +17,22 @@ package org.scassandra.server.priming.prepared
 
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec._
-import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Prime, PrimeCriteria}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ Prime, PrimeCriteria }
 
 class PrimePreparedPatternStore extends PreparedStore[PrimePreparedSingle] with LazyLogging {
 
-  override def apply(prepare: Prepare, id: Int) : Option[Prime] = {
+  override def apply(prepare: Prepare, id: Int): Option[Prime] = {
     // Find prime by pattern.
     val prime = primes.find(_._1.query.r.findFirstIn(prepare.query).isDefined).map(_._2)
     prepared(prepare, prime, id)
   }
 
-  override def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion) : Option[Prime] = {
+  override def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion): Option[Prime] = {
     // Find prime with query pattern matching queryText and execute's consistency.
-    val prime = primes.find { case (criteria, _) =>
-      // if no consistency specified in the prime, allow all
-      criteria.query.r.findFirstIn(queryText).isDefined && criteria.consistency.contains(execute.parameters.consistency)
+    val prime = primes.find {
+      case (criteria, _) =>
+        // if no consistency specified in the prime, allow all
+        criteria.query.r.findFirstIn(queryText).isDefined && criteria.consistency.contains(execute.parameters.consistency)
     }.map(_._2)
 
     prime.map(_.thenDo.prime)

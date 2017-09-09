@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package org.scassandra.server.actors
 
 import java.net.InetSocketAddress
 
-import akka.io.Tcp.{Bind, Bound}
+import akka.io.Tcp.{ Bind, Bound }
 import akka.testkit._
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 import org.scassandra.server.ServerReady
 import org.scassandra.server.priming.prepared.PrimePreparedStore
 

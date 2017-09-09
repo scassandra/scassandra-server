@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,14 @@ import scodec.Attempt.Failure
 import scodec.bits.ByteVector
 
 class SetSpec extends DataTypeSpec with TableDrivenPropertyChecks {
-  val protocolVersions = Table("Protocol Version", ProtocolVersion.versions:_*)
+  val protocolVersions = Table("Protocol Version", ProtocolVersion.versions: _*)
 
   forAll(protocolVersions) { (protocolVersion: ProtocolVersion) =>
     implicit val protocol: ProtocolVersion = protocolVersion
     val codec = CqlSet(Varchar).codec
     val nestedCodec = CqlSet(CqlSet(Varchar)).codec
 
-    val expectedBytes = if(protocol.version < 3) {
+    val expectedBytes = if (protocol.version < 3) {
       ByteVector(
         0, 3, // number of elements
         0, 3, 111, 110, 101, // one
@@ -58,7 +58,7 @@ class SetSpec extends DataTypeSpec with TableDrivenPropertyChecks {
       codec.encode(Set()).require.bytes shouldEqual zeros
     }
 
-    val expectedNestedBytes = if(protocol.version < 3) {
+    val expectedNestedBytes = if (protocol.version < 3) {
       ByteVector(
         0, 2, // number of elements
         0, 19, // byte length of first list

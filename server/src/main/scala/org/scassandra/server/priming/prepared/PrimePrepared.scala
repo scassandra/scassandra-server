@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.scassandra.server.priming.prepared
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec.Consistency.Consistency
 import org.scassandra.codec.datatype.DataType
-import org.scassandra.codec.{Execute, Prepare}
+import org.scassandra.codec.{ Execute, Prepare }
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor.ThenProvider
 import org.scassandra.server.priming.Defaulter._
 import org.scassandra.server.priming.json._
@@ -55,18 +55,20 @@ case class PrimePreparedMulti(when: WhenPrepared, thenDo: ThenPreparedMulti) ext
   override def withDefaults: PrimePreparedMulti = copy(when.withDefaults, thenDo.withDefaults(when))
 }
 
-case class WhenPrepared(query: Option[String] = None,
-                        queryPattern: Option[String] = None,
-                        consistency: Option[List[Consistency]] = None) {
+case class WhenPrepared(
+  query: Option[String] = None,
+  queryPattern: Option[String] = None,
+  consistency: Option[List[Consistency]] = None) {
   def withDefaults: WhenPrepared = copy(consistency = defaultConsistency(consistency))
 }
 
-case class ThenPreparedSingle(rows: Option[List[Map[String, Any]]],
-                              variable_types: Option[List[DataType]] = None,
-                              column_types: Option[Map[String, DataType]] = None,
-                              result : Option[ResultJsonRepresentation] = Some(Success),
-                              fixedDelay : Option[Long] = None,
-                              config: Option[Map[String, String]] = None) extends ThenProvider with ThenPrepared {
+case class ThenPreparedSingle(
+  rows: Option[List[Map[String, Any]]],
+  variable_types: Option[List[DataType]] = None,
+  column_types: Option[Map[String, DataType]] = None,
+  result: Option[ResultJsonRepresentation] = Some(Success),
+  fixedDelay: Option[Long] = None,
+  config: Option[Map[String, String]] = None) extends ThenProvider with ThenPrepared {
   @transient lazy val prime = {
     extractPrime(this)
   }
@@ -74,9 +76,10 @@ case class ThenPreparedSingle(rows: Option[List[Map[String, Any]]],
   def withDefaults(when: WhenPrepared): ThenPreparedSingle = copy(variable_types = defaultVariableTypesToVarChar(when.query, variable_types), column_types = defaultColumnTypesToVarChar(column_types, rows))
 }
 
-case class ThenPreparedMulti(variable_types: Option[List[DataType]] = None,
-                            outcomes: List[Outcome]) extends ThenPrepared {
-  def withDefaults(when: WhenPrepared): ThenPreparedMulti =  {
+case class ThenPreparedMulti(
+  variable_types: Option[List[DataType]] = None,
+  outcomes: List[Outcome]) extends ThenPrepared {
+  def withDefaults(when: WhenPrepared): ThenPreparedMulti = {
     this.copy(variable_types = defaultVariableTypesToVarChar(when.query, variable_types), outcomes = outcomes.map(_.withDefaults))
   }
 }
@@ -87,11 +90,12 @@ case class Outcome(criteria: Criteria, action: Action) {
 
 case class Criteria(variable_matcher: List[VariableMatch])
 
-case class Action(rows: Option[List[Map[String, Any]]],
-                  column_types: Option[Map[String, DataType]] = None,
-                  result : Option[ResultJsonRepresentation] = Some(Success),
-                  fixedDelay : Option[Long] = None,
-                  config: Option[Map[String, String]] = None) extends ThenProvider {
+case class Action(
+  rows: Option[List[Map[String, Any]]],
+  column_types: Option[Map[String, DataType]] = None,
+  result: Option[ResultJsonRepresentation] = Some(Success),
+  fixedDelay: Option[Long] = None,
+  config: Option[Map[String, String]] = None) extends ThenProvider {
   @transient lazy val prime = {
     extractPrime(this)
   }

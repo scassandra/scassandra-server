@@ -2,18 +2,18 @@ package org.scassandra.server.actors.priming
 
 import akka.Done
 import akka.actor.Actor
-import org.scassandra.codec.{Execute, Prepare, ProtocolVersion}
+import org.scassandra.codec.{ Execute, Prepare, ProtocolVersion }
 import org.scassandra.server.actors.priming.PrimePreparedStoreActor._
-import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ClearQueryPrimes, Prime}
-import org.scassandra.server.priming.prepared.{PreparedPrimeIncoming, PreparedStore}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ ClearQueryPrimes, Prime }
+import org.scassandra.server.priming.prepared.{ PreparedPrimeIncoming, PreparedStore }
 
 import scala.reflect.runtime.universe._
 
 /**
-  * Thin wrapper around the legacy way we did prime stores
-  * todo: test
-  */
-class PrimePreparedStoreActor[T <: PreparedPrimeIncoming : TypeTag](store: PreparedStore[T]) extends Actor {
+ * Thin wrapper around the legacy way we did prime stores
+ * todo: test
+ */
+class PrimePreparedStoreActor[T <: PreparedPrimeIncoming: TypeTag](store: PreparedStore[T]) extends Actor {
   def receive: Receive = {
     case RecordPSPrime(prime: T) =>
       sender() ! store.record(prime)

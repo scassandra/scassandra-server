@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@ package org.scassandra.server.priming.routes
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.testkit.TestActor.{AutoPilot, KeepRunning}
+import akka.testkit.TestActor.{ AutoPilot, KeepRunning }
 import akka.testkit.TestProbe
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.{ FunSpec, Matchers }
 import org.scassandra.server.actors._
 import org.scassandra.server.priming.json.PrimingJsonImplicits
 
@@ -68,61 +68,61 @@ class CurrentRouteTest extends FunSpec with CurrentRoute with Matchers with Lazy
   it("Should get all client connections") {
     Get("/current/connections") ~> currentRoute ~> check {
       val response = responseAs[ClientConnections]
-      response.connections should equal (allConnections)
+      response.connections should equal(allConnections)
     }
   }
 
   it("Should get all client connections by ip") {
     Get("/current/connections/127.0.0.1") ~> currentRoute ~> check {
       val response = responseAs[ClientConnections]
-      response.connections should equal (_1connections)
+      response.connections should equal(_1connections)
     }
   }
 
   it("Should get connection by ip and port") {
     Get("/current/connections/127.0.0.1/9042") ~> currentRoute ~> check {
       val response = responseAs[ClientConnections]
-      response.connections should equal (_1connections.filter(_.port == 9042))
+      response.connections should equal(_1connections.filter(_.port == 9042))
     }
   }
 
   it("Should close all client connections") {
     Delete("/current/connections") ~> currentRoute ~> check {
       val response = responseAs[ClosedConnections]
-      response.connections should equal (allConnections)
-      response.operation should equal ("close")
+      response.connections should equal(allConnections)
+      response.operation should equal("close")
     }
   }
 
   it("Should halfclose all client connections") {
     Delete("/current/connections?type=halfclose") ~> currentRoute ~> check {
       val response = responseAs[ClosedConnections]
-      response.connections should equal (allConnections)
-      response.operation should equal ("halfclose")
+      response.connections should equal(allConnections)
+      response.operation should equal("halfclose")
     }
   }
 
   it("Should reset all client connections") {
     Delete("/current/connections?type=reset") ~> currentRoute ~> check {
       val response = responseAs[ClosedConnections]
-      response.connections should equal (allConnections)
-      response.operation should equal ("reset")
+      response.connections should equal(allConnections)
+      response.operation should equal("reset")
     }
   }
 
   it("Should close client connections by ip") {
     Delete("/current/connections/127.0.0.1") ~> currentRoute ~> check {
       val response = responseAs[ClosedConnections]
-      response.connections should equal (_1connections)
-      response.operation should equal ("close")
+      response.connections should equal(_1connections)
+      response.operation should equal("close")
     }
   }
 
   it("Should close client connection by ip and port") {
     Delete("/current/connections/127.0.0.1/9042") ~> currentRoute ~> check {
       val response = responseAs[ClosedConnections]
-      response.connections should equal (_1connections.filter(_.port == 9042))
-      response.operation should equal ("close")
+      response.connections should equal(_1connections.filter(_.port == 9042))
+      response.operation should equal("close")
     }
   }
 

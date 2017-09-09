@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import akka.http.scaladsl.server._
 import akka.util.Timeout
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{BatchPrimeSingle, ClearPrimes, RecordBatchPrime}
+import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{ BatchPrimeSingle, ClearPrimes, RecordBatchPrime }
 import org.scassandra.server.priming.json.PrimingJsonImplicits
 import scala.concurrent.duration._
 
@@ -50,13 +50,14 @@ trait PrimingBatchRoute extends LazyLogging {
         path("prime-batch-single") {
           post {
             entity(as[BatchPrimeSingle]) {
-              primeRequest => {
-                complete {
-                  logger.info("Received batch prime {}", primeRequest)
-                  primeBatchStore ! RecordBatchPrime(primeRequest)
-                  StatusCodes.OK
+              primeRequest =>
+                {
+                  complete {
+                    logger.info("Received batch prime {}", primeRequest)
+                    primeBatchStore ! RecordBatchPrime(primeRequest)
+                    StatusCodes.OK
+                  }
                 }
-              }
             }
           } ~
             delete {

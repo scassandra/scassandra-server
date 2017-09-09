@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Christopher Batey and Dogan Narinc
+ * Copyright (C) 2017 Christopher Batey and Dogan Narinc
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,25 +16,26 @@
 package org.scassandra.server.actors
 
 import akka.actor.ActorRef
-import akka.pattern.{ask, pipe}
+import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
 import org.scassandra.codec._
-import org.scassandra.codec.messages.{BatchQueryKind, PreparedBatchQuery, SimpleBatchQuery}
+import org.scassandra.codec.messages.{ BatchQueryKind, PreparedBatchQuery, SimpleBatchQuery }
 import org.scassandra.server.actors.Activity._
 import org.scassandra.server.actors.ActivityLogActor.RecordBatch
 import org.scassandra.server.actors.BatchHandler.BatchToFinish
-import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
+import org.scassandra.server.actors.PrepareHandler.{ PreparedStatementQuery, PreparedStatementResponse }
 import org.scassandra.server.actors.ProtocolActor._
-import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{MatchBatch, MatchResult}
+import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{ MatchBatch, MatchResult }
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Reply
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
-class BatchHandler(activityLog: ActorRef,
-                   prepareHandler: ActorRef,
-                   batchPrimeStore: ActorRef) extends ProtocolActor {
+class BatchHandler(
+  activityLog: ActorRef,
+  prepareHandler: ActorRef,
+  batchPrimeStore: ActorRef) extends ProtocolActor {
 
   import context.dispatcher
   private implicit val timeout: Timeout = 1 second
@@ -46,7 +47,7 @@ class BatchHandler(activityLog: ActorRef,
       }
       log.debug("Prepared statement ids {}", preparedIds)
 
-      if(preparedIds.isEmpty) {
+      if (preparedIds.isEmpty) {
         // No prepared statements, process batch as is.
         val simpleQueries = batch.queries.collect {
           // TODO: The values aren't actually read, but we don't know the type anyways so not much we can do there.
