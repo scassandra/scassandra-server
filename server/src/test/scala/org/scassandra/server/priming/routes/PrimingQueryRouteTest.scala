@@ -17,15 +17,15 @@
 package org.scassandra.server.priming.routes
 
 import akka.Done
-import akka.actor.{ActorRef, ActorSystem}
-import akka.http.scaladsl.model.StatusCodes.{BadRequest, OK}
+import akka.actor.{ ActorRef, ActorSystem }
+import akka.http.scaladsl.model.StatusCodes.{ BadRequest, OK }
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.testkit.{TestActor, TestProbe}
+import akka.testkit.{ TestActor, TestProbe }
 import akka.util.Timeout
 import org.scalatest._
 import org.scassandra.codec.Consistency._
 import org.scassandra.codec.datatype._
-import org.scassandra.codec.{Query => CQuery}
+import org.scassandra.codec.{ Query => CQuery }
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming.json._
 
@@ -47,8 +47,7 @@ class PrimingQueryRouteTest extends WordSpec with BeforeAndAfter with Matchers w
   private val exampleWhen = When(query = Some(exampleQuery))
   private val exampleThen =
     List(
-      Map( "name" -> "Mickey", "age" -> "99")
-    )
+      Map("name" -> "Mickey", "age" -> "99"))
   val examplePrime = PrimeQuerySingle(exampleWhen, Then(Some(exampleThen)))
 
   "prime query route" must {
@@ -67,13 +66,10 @@ class PrimingQueryRouteTest extends WordSpec with BeforeAndAfter with Matchers w
         List(
           Map(
             "name" -> "Mickey",
-            "age" -> "99"
-          ),
+            "age" -> "99"),
           Map(
             "name" -> "Mario",
-            "age" -> "12"
-          )
-        )
+            "age" -> "12"))
       val prime = PrimeQuerySingle(whenQuery, Then(Some(thenResults)))
       respondWith(primeQueryStoreProbe, PrimeAddSuccess)
 
@@ -110,8 +106,7 @@ class PrimingQueryRouteTest extends WordSpec with BeforeAndAfter with Matchers w
       val whenQuery = When(query = Some(query))
       val thenResults =
         List(
-          Map("mapValue" -> Map())
-        )
+          Map("mapValue" -> Map()))
       val columnTypes = Some(Map[String, DataType]("mapValue" -> CqlMap(Varchar, Varchar)))
       respondWith(primeQueryStoreProbe, PrimeAddSuccess)
       val prime = PrimeQuerySingle(whenQuery, Then(Some(thenResults), column_types = columnTypes))
@@ -129,8 +124,7 @@ class PrimingQueryRouteTest extends WordSpec with BeforeAndAfter with Matchers w
       val whenQuery = When(queryPattern = Some(query))
       val thenResults =
         List(
-          Map("name" -> "Mickey", "age" -> "99")
-        )
+          Map("name" -> "Mickey", "age" -> "99"))
       val prime = PrimeQuerySingle(whenQuery, Then(Some(thenResults)))
       respondWith(primeQueryStoreProbe, PrimeAddSuccess)
 

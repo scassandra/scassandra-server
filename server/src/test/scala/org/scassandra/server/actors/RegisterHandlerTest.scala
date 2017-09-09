@@ -15,9 +15,9 @@
  */
 package org.scassandra.server.actors
 
-import akka.testkit.{ImplicitSender, TestActorRef}
-import org.scalatest.{FunSuite, Matchers}
-import org.scassandra.codec.{Ready, Register}
+import akka.testkit.{ ImplicitSender, TestActorRef }
+import org.scalatest.{ FunSuite, Matchers }
+import org.scassandra.codec.{ Ready, Register }
 
 class RegisterHandlerTest extends FunSuite with TestKitWithShutdown with ProtocolActorTest with ImplicitSender
   with Matchers {

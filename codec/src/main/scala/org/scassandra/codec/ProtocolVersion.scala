@@ -15,8 +15,8 @@
  */
 package org.scassandra.codec
 
-import com.google.common.cache.{CacheBuilder, CacheLoader}
-import org.scassandra.codec.Notations.{short => cshort, string => cstring}
+import com.google.common.cache.{ CacheBuilder, CacheLoader }
+import org.scassandra.codec.Notations.{ short => cshort, string => cstring }
 import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages._
 import scodec.Attempt.Successful
@@ -24,41 +24,41 @@ import scodec.Codec
 import scodec.codecs._
 
 /**
-  * As the native protocol is versioned, we tie protocol-version specific behavior to this trait.
-  *
-  * As new protocol versions are added, one simply just needs to define new implementations of [[ProtocolVersion]] and
-  * register it as part of [[ProtocolVersion.codec]].
-  */
+ * As the native protocol is versioned, we tie protocol-version specific behavior to this trait.
+ *
+ * As new protocol versions are added, one simply just needs to define new implementations of [[ProtocolVersion]] and
+ * register it as part of [[ProtocolVersion.codec]].
+ */
 sealed trait ProtocolVersion {
   /**
-    * The version of this protocol.
-    */
+   * The version of this protocol.
+   */
   val version: Int
   /**
-    * The length, in bytes, of the frame header for this protocol version.  This is generally between 8 and 9 bytes, to
-    * accompany the stream id length change between protocol 3 and 4 from 1 to 2 bytes.
-    */
+   * The length, in bytes, of the frame header for this protocol version.  This is generally between 8 and 9 bytes, to
+   * accompany the stream id length change between protocol 3 and 4 from 1 to 2 bytes.
+   */
   lazy val headerLength: Long = 7 + (streamIdCodec.sizeBound.exact.get / 8)
 
   /**
-    * Used to cache [[Message]] codecs as they are created.  This prevents repeated creation of codecs.
-    */
+   * Used to cache [[Message]] codecs as they are created.  This prevents repeated creation of codecs.
+   */
   private[this] lazy val messageCodecCache = CacheBuilder.newBuilder
     .build(new CacheLoader[Integer, Codec[Message]]() {
       override def load(key: Integer): Codec[Message] = Message.codecForVersion(ProtocolVersion.this, key)
     })
 
   /**
-    * Used to cache [[DataType]] codecs as they are created.
-    */
+   * Used to cache [[DataType]] codecs as they are created.
+   */
   private[this] lazy val dataTypeCodecCache = CacheBuilder.newBuilder
-    .build(new CacheLoader[DataType,DataTypeCodecs]() {
+    .build(new CacheLoader[DataType, DataTypeCodecs]() {
       override def load(key: DataType): DataTypeCodecs = DataTypeCodecs(key)
     })
 
   /**
-    * Used to cache [[Row]] codecs as they are created.
-    */
+   * Used to cache [[Row]] codecs as they are created.
+   */
   private[this] lazy val rowCodecCache = CacheBuilder.newBuilder
     .maximumSize(1000)
     .build(new CacheLoader[List[ColumnSpec], Codec[Row]]() {
@@ -99,9 +99,9 @@ sealed trait ProtocolVersion {
   }
 
   /**
-    * Container that generates and maintains [[Codec]]s for a given [[DataType]]
-    * @param dataType The type to generate codecs for.
-    */
+   * Container that generates and maintains [[Codec]]s for a given [[DataType]]
+   * @param dataType The type to generate codecs for.
+   */
   private[this] case class DataTypeCodecs(dataType: DataType) {
     import DataType._
     val baseCodec = dataType.baseCodec(ProtocolVersion.this)
@@ -109,35 +109,34 @@ sealed trait ProtocolVersion {
   }
 }
 
-
 /**
-  * Provides a stream id codec of 1 byte in size.  This should only be used for [[ProtocolVersionV1]] and
-  * [[ProtocolVersionV2]].
-  */
+ * Provides a stream id codec of 1 byte in size.  This should only be used for [[ProtocolVersionV1]] and
+ * [[ProtocolVersionV2]].
+ */
 sealed trait Int8StreamId {
   val streamIdCodec = int8
 }
 
 /**
-  * Provides a stream id codec of 2 bytes in size.  It is expected that all [[ProtocolVersion]] implementations from
-  * [[ProtocolVersionV3]] on up use this.
-  */
+ * Provides a stream id codec of 2 bytes in size.  It is expected that all [[ProtocolVersion]] implementations from
+ * [[ProtocolVersionV3]] on up use this.
+ */
 sealed trait Int16StreamId {
   val streamIdCodec = int16
 }
 
 /**
-  * Provides a collection length codec of 16-bits in size.  This should only be used for [[ProtocolVersionV1]] and
-  * [[ProtocolVersionV2]].
-  */
+ * Provides a collection length codec of 16-bits in size.  This should only be used for [[ProtocolVersionV1]] and
+ * [[ProtocolVersionV2]].
+ */
 sealed trait Uint16CollectionLength {
   val collectionLengthCodec = int16
 }
 
 /**
-  * Provides a collection length codec of 2 bytes in size.  It is expected that all [[ProtocolVersion]] implementations
-  * from [[ProtocolVersionV3]] on up use this.
-  */
+ * Provides a collection length codec of 2 bytes in size.  It is expected that all [[ProtocolVersion]] implementations
+ * from [[ProtocolVersionV3]] on up use this.
+ */
 sealed trait Uint32CollectionLength {
   val collectionLengthCodec = int32
 }
@@ -171,9 +170,9 @@ case object ProtocolVersionV4 extends ProtocolVersion
 }
 
 /**
-  * Defines an arbitrary [[ProtocolVersion]] that is not currently supported by this library
-  * @param version Arbitrary version that is not supported.
-  */
+ * Defines an arbitrary [[ProtocolVersion]] that is not currently supported by this library
+ * @param version Arbitrary version that is not supported.
+ */
 case class UnsupportedProtocolVersion(version: Int) extends ProtocolVersion
   with Int16StreamId
   with Uint32CollectionLength {
@@ -184,9 +183,9 @@ case class UnsupportedProtocolVersion(version: Int) extends ProtocolVersion
 object ProtocolVersion {
 
   /**
-    * Decodes 7 bits as an integer into a [[ProtocolVersion]] instance.  If there is no [[ProtocolVersion]] for the
-    * given value, [[UnsupportedProtocolVersion]] is returned.
-    */
+   * Decodes 7 bits as an integer into a [[ProtocolVersion]] instance.  If there is no [[ProtocolVersion]] for the
+   * given value, [[UnsupportedProtocolVersion]] is returned.
+   */
   implicit val codec: Codec[ProtocolVersion] = uint(7).narrow({
     case 1 => Successful(ProtocolVersionV1)
     case 2 => Successful(ProtocolVersionV2)
@@ -196,14 +195,14 @@ object ProtocolVersion {
   }, _.version)
 
   /**
-    * All currently supported [[ProtocolVersion]]s.
-    */
+   * All currently supported [[ProtocolVersion]]s.
+   */
   val versions: List[ProtocolVersion] = ProtocolVersionV1 :: ProtocolVersionV2 :: ProtocolVersionV3 ::
     ProtocolVersionV4 :: Nil
 
   /**
-    * The newest [[ProtocolVersion]] supported.
-    */
+   * The newest [[ProtocolVersion]] supported.
+   */
   val latest: ProtocolVersion = ProtocolVersionV4
 
   // base descriminator for DataType.
@@ -245,8 +244,7 @@ object ProtocolVersion {
     lazy val codec: DiscriminatorCodec[DataType, Int] = baseDataTypeCodec(
       base.getOrElse(baseDesc)
         .typecase(0x0D, provide(Text)) // As Text type has been removed, alias it to varchars opcode.
-        .typecase(0x31, lazily(cshort.consume(count => listOfN(provide(count), codec))(_.size).as[Tuple]))
-    )
+        .typecase(0x31, lazily(cshort.consume(count => listOfN(provide(count), codec))(_.size).as[Tuple])))
     codec
   }
 
@@ -256,7 +254,6 @@ object ProtocolVersion {
       .typecase(0x11, provide(CqlDate))
       .typecase(0x12, provide(CqlTime))
       .typecase(0x13, provide(Smallint))
-      .typecase(0x14, provide(Tinyint)))
-  )
+      .typecase(0x14, provide(Tinyint))))
 
 }

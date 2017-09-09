@@ -1,7 +1,7 @@
 package org.scassandra.server
 
 import akka.actor.ActorRef
-import akka.testkit.{TestActor, TestProbe}
+import akka.testkit.{ TestActor, TestProbe }
 
 package object actors {
   def respondWith(probe: TestProbe, m: Any): Unit = {

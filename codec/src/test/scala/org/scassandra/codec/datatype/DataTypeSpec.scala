@@ -16,7 +16,7 @@
 package org.scassandra.codec.datatype
 
 import org.scalatest.prop.Checkers
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 import org.scassandra.codec.ProtocolVersion
 import scodec.Codec
 

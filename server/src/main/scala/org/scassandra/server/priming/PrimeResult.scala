@@ -55,9 +55,9 @@ case class UnavailableResult(requiredResponses: Int = 1, alive: Int = 0, consist
 case class ClosedConnectionResult(command: String) extends FatalResult {
 
   private lazy val closeCommand: Tcp.CloseCommand = command match {
-    case "reset"      => Tcp.Abort
-    case "halfclose"  => Tcp.ConfirmedClose
-    case "close" | _  => Tcp.Close
+    case "reset" => Tcp.Abort
+    case "halfclose" => Tcp.ConfirmedClose
+    case "close" | _ => Tcp.Close
   }
 
   override def produceFatalError(tcpConnection: ActorRef) = tcpConnection ! closeCommand

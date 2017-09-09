@@ -34,11 +34,11 @@ import akka.Done
 import akka.actor.ActorRef
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.testkit.{TestActor, TestProbe}
+import akka.testkit.{ TestActor, TestProbe }
 import akka.util.Timeout
-import org.scalatest.{Matchers, WordSpec}
-import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{AllPSPrimes, ClearPSPrime, GetAllPSPrimes, RecordPSPrime}
-import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ConflictingPrimes, PrimeAddSuccess, TypeMismatches}
+import org.scalatest.{ Matchers, WordSpec }
+import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{ AllPSPrimes, ClearPSPrime, GetAllPSPrimes, RecordPSPrime }
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ ConflictingPrimes, PrimeAddSuccess, TypeMismatches }
 import org.scassandra.server.priming.json._
 import org.scassandra.server.priming.prepared._
 

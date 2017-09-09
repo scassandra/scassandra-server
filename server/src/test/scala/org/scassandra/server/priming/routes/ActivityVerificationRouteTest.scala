@@ -17,7 +17,7 @@ package org.scassandra.server.priming.routes
 
 import akka.actor.ActorRef
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.testkit.{TestActor, TestProbe}
+import akka.testkit.{ TestActor, TestProbe }
 import org.scalatest._
 import org.scassandra.codec.Consistency.ONE
 import org.scassandra.codec.messages.BatchQueryKind.Simple

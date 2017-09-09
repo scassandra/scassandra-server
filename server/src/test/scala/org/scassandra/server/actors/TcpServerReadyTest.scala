@@ -17,9 +17,9 @@ package org.scassandra.server.actors
 
 import java.net.InetSocketAddress
 
-import akka.io.Tcp.{Bind, Bound}
+import akka.io.Tcp.{ Bind, Bound }
 import akka.testkit._
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 import org.scassandra.server.ServerReady
 import org.scassandra.server.priming.prepared.PrimePreparedStore
 

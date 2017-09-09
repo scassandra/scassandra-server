@@ -15,7 +15,7 @@
  */
 package org.scassandra.server.actors
 
-import org.scassandra.codec.{Frame, Ready, Register}
+import org.scassandra.codec.{ Frame, Ready, Register }
 
 class RegisterHandler extends ProtocolActor {
   def receive = {

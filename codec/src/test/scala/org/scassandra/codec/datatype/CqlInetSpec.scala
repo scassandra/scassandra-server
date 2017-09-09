@@ -29,7 +29,6 @@ class CqlInetSpec extends DataTypeSpec {
   val ipv6LocalBytes = Array[Byte](0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1)
   val ipv6Local = InetAddress.getByAddress(ipv6LocalBytes)
 
-
   "codec" must "encode Inet4Address as inet format" in {
     codec.encode(ipv4Local).require.bytes shouldEqual ByteVector(ipv4LocalBytes)
   }

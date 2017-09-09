@@ -87,7 +87,7 @@ trait ErrorHandlingBehaviors {
     val message = "Already Exists"
     val keyspace = "keyspace"
     val table = "table"
-    executeWithError(AlreadyExistsResult(message, keyspace, table),  (c) => AlreadyExists(message, keyspace, table))
+    executeWithError(AlreadyExistsResult(message, keyspace, table), (c) => AlreadyExists(message, keyspace, table))
   }
 
   test("Execute with unprepared") {

@@ -1,4 +1,6 @@
 import Dependencies._
+import com.typesafe.sbt.SbtScalariform.ScalariformKeys
+import scalariform.formatter.preferences._
 
 lazy val root = (project in file("."))
   .aggregate(server, codec, cqlAntlr, javaClient, itTestCommon, itTestCommonV3, itTestDriver3, itTestDriver20, itTestDriver21)
@@ -33,6 +35,14 @@ val assemblySettings = Seq(assemblyMergeStrategy in assembly := {
   }
 )
 
+val formatPreferences =
+  ScalariformKeys.preferences := ScalariformKeys.preferences.value
+    .setPreference(RewriteArrowSymbols, true)
+    .setPreference(AlignParameters, true)
+    .setPreference(AlignSingleLineCaseStatements, true)
+    .setPreference(DanglingCloseParenthesis, Preserve)
+    .setPreference(DoubleIndentConstructorArguments, false)
+
 lazy val server = (project in file("server"))
   .settings(
     name := "scassandra-server",
@@ -44,8 +54,10 @@ lazy val server = (project in file("server"))
     parallelExecution in Test := false
   )
   .settings(addArtifact(artifact in(Compile, assembly), assembly).settings: _*)
+  .settings(formatPreferences)
   .settings(assemblySettings)
   .dependsOn(codec, cqlAntlr)
+  .enablePlugins(SbtScalariform)
 
 lazy val javaClient = (project in file("java-client"))
   .settings(

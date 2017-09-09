@@ -15,27 +15,28 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorRefFactory, ActorSystem, Props}
+import akka.actor.{ Actor, ActorLogging, ActorRef, ActorRefFactory, ActorSystem, Props }
 import akka.io.Tcp
-import akka.io.Tcp.{ConnectionClosed, Received, ResumeReading, Write}
-import akka.pattern.{ask, pipe}
+import akka.io.Tcp.{ ConnectionClosed, Received, ResumeReading, Write }
+import akka.pattern.{ ask, pipe }
 import akka.util.ByteString.ByteString1C
-import akka.util.{ByteString, Timeout}
+import akka.util.{ ByteString, Timeout }
 import org.scassandra.codec._
 import scodec.bits.ByteVector
 
 import scala.annotation.tailrec
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
-class ConnectionHandler(tcpConnection: ActorRef,
-                        queryHandlerFactory: (ActorRefFactory) => ActorRef,
-                        batchHandlerFactory: (ActorRefFactory, ActorRef) => ActorRef,
-                        registerHandlerFactory: (ActorRefFactory) => ActorRef,
-                        optionsHandlerFactory: (ActorRefFactory) => ActorRef,
-                        prepareHandler: ActorRef,
-                        executeHandler: ActorRef) extends Actor with ActorLogging {
+class ConnectionHandler(
+  tcpConnection: ActorRef,
+  queryHandlerFactory: (ActorRefFactory) => ActorRef,
+  batchHandlerFactory: (ActorRefFactory, ActorRef) => ActorRef,
+  registerHandlerFactory: (ActorRefFactory) => ActorRef,
+  optionsHandlerFactory: (ActorRefFactory) => ActorRef,
+  prepareHandler: ActorRef,
+  executeHandler: ActorRef) extends Actor with ActorLogging {
 
   import AkkaScodecInterop._
 
@@ -48,14 +49,14 @@ class ConnectionHandler(tcpConnection: ActorRef,
   var errorMessage: Option[Message] = None
 
   // Extracted to handle full messages
-  val cqlMessageHandler: ActorRef = context.actorOf(Props(classOf[NativeProtocolMessageHandler],
+  val cqlMessageHandler: ActorRef = context.actorOf(Props(
+    classOf[NativeProtocolMessageHandler],
     queryHandlerFactory,
     batchHandlerFactory,
     registerHandlerFactory,
     optionsHandlerFactory,
     prepareHandler,
-    executeHandler
-  ))
+    executeHandler))
 
   override def preStart(): Unit = tcpConnection ! ResumeReading
 
@@ -137,7 +138,7 @@ class ConnectionHandler(tcpConnection: ActorRef,
       updateState(buffer, 1, inspectProtocolVersion, AwaitHeader)
     case AwaitHeader(flags) =>
       // Protocol version has been parsed, attempt to parse the header and move to the AwaitBody state.
-      updateState(buffer, flags.version.headerLength-1, next(flags.headerCodec, _), AwaitBody)
+      updateState(buffer, flags.version.headerLength - 1, next(flags.headerCodec, _), AwaitBody)
     case AwaitBody(header) =>
       // Header has been parsed, attempt to parse the message body and move back to the Start state.
       updateState(buffer, header.length, next(Message.codec(header.opcode)(header.version.version), _), (m: Message) => {
@@ -173,31 +174,31 @@ case class AwaitBody(frameHeader: FrameHeader) extends ParsingState
 case class UnsupportedProtocolException(version: Int) extends Exception(s"Unsupported Protocol Version $version")
 
 /**
-  * A modified version of akka-scodec.  This is used in place of akka-scodec because we need JDK6 support.  As
-  * akka-scodec uses Akka 2.4 and default methods, this was not an option.
-  *
-  * The primary modification is the usage of reflection in EnrichedByteVector.toByteString.  This is used instead of
-  * PrivacyHelper, which uses default interface methods.
-  *
-  * License from akka-scodec:
-  *
-  * Copyright (c) 2015, Michael Pilquist
-  * All rights reserved.
-  *
-  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-  *
-  * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-  * 3. Neither the name of the scodec team nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  */
+ * A modified version of akka-scodec.  This is used in place of akka-scodec because we need JDK6 support.  As
+ * akka-scodec uses Akka 2.4 and default methods, this was not an option.
+ *
+ * The primary modification is the usage of reflection in EnrichedByteVector.toByteString.  This is used instead of
+ * PrivacyHelper, which uses default interface methods.
+ *
+ * License from akka-scodec:
+ *
+ * Copyright (c) 2015, Michael Pilquist
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the scodec team nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 object AkkaScodecInterop {
 
   // ByteString1C's constructor is private, use reflection to resolve it and make it accessible, this can be a
   // problem depending on the JDK security.
   // TODO: Fallback to ByteString() if permission failure.
-  private [this] lazy val byte1Ctor = {
+  private[this] lazy val byte1Ctor = {
     val ctor = classOf[ByteString1C].getDeclaredConstructor(classOf[Array[Byte]])
     ctor.setAccessible(true)
     ctor

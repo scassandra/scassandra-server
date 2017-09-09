@@ -15,7 +15,7 @@
  */
 package org.scassandra.codec.messages
 
-import org.scassandra.codec.{CodecSpec, Execute, ProtocolVersion}
+import org.scassandra.codec.{ CodecSpec, Execute, ProtocolVersion }
 import scodec.Codec
 import scodec.bits.ByteVector
 
@@ -30,9 +30,9 @@ class ExecuteSpec extends CodecSpec {
         encodeAndDecode(Execute(ByteVector(2, 3)))
       }
 
-      if(protocolVersion.version > 1) {
+      if (protocolVersion.version > 1) {
         "encode and decode with query parameters" in {
-          encodeAndDecode(Execute(ByteVector(0), QueryParameters(pageSize=Some(5000))))
+          encodeAndDecode(Execute(ByteVector(0), QueryParameters(pageSize = Some(5000))))
         }
       }
     }

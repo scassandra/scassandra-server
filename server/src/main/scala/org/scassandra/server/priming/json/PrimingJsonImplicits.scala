@@ -23,14 +23,14 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec.Consistency
 import org.scassandra.codec.Consistency.Consistency
-import org.scassandra.codec.datatype.{PrimitiveType => _, _}
+import org.scassandra.codec.datatype.{ PrimitiveType => _, _ }
 import org.scassandra.codec.messages.BatchQueryKind.BatchQueryKind
 import org.scassandra.codec.messages.BatchType.BatchType
-import org.scassandra.codec.messages.{BatchQueryKind, BatchType}
+import org.scassandra.codec.messages.{ BatchQueryKind, BatchType }
 import org.scassandra.cql._
 import org.scassandra.server.actors.Activity._
 import org.scassandra.server.actors._
-import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{BatchPrimeSingle, BatchQueryPrime, BatchWhen}
+import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{ BatchPrimeSingle, BatchQueryPrime, BatchWhen }
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming.prepared._
 import org.scassandra.server.priming.routes.Version
@@ -38,7 +38,7 @@ import scodec.bits.ByteVector
 import spray.json._
 
 import scala.collection.Set
-import scala.util.{Failure, Try, Success => TSuccess}
+import scala.util.{ Failure, Try, Success => TSuccess }
 
 object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport with LazyLogging {
 
@@ -48,8 +48,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
         case ExactMatch(value) => {
           JsObject(Map(
             "type" -> JsString("exact"),
-            "matcher" -> AnyJsonFormat.write(value)
-          ))
+            "matcher" -> AnyJsonFormat.write(value)))
         }
         case AnyMatch => JsObject(Map("type" -> JsString("any")))
       }
@@ -79,7 +78,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
       case s: String => JsString(s)
       case seq: Seq[_] => seqFormat[Any].write(seq)
       case m: Map[_, _] =>
-        val keysAsString: Map[String, Any] = m.map({ case (k, v) => (k.toString, v)})
+        val keysAsString: Map[String, Any] = m.map({ case (k, v) => (k.toString, v) })
         mapFormat[String, Any].write(keysAsString)
       case set: Set[_] => setFormat[Any].write(set.map(s => s))
       case b: Boolean if b => JsTrue
@@ -103,7 +102,7 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
     }
 
     def read(value: JsValue) = value match {
-      case jsNumber : JsNumber => jsNumber.value
+      case jsNumber: JsNumber => jsNumber.value
       case JsString(s) => s
       case a: JsArray => listFormat[Any].read(value)
       case o: JsObject => mapFormat[String, Any].read(value)
@@ -150,18 +149,17 @@ object PrimingJsonImplicits extends DefaultJsonProtocol with SprayJsonSupport wi
     }
   }
 
-
   implicit object DataTypeJsonFormat extends RootJsonFormat[DataType] {
 
     lazy val cqlTypeFactory = new CqlTypeFactory
 
     def convertJavaToScalaType(javaType: CqlType): DataType = javaType match {
-        // TODO: Update for UDTs when supported.
-        case primitive: PrimitiveType => DataType.primitiveTypeMap(primitive.serialise())
-        case map: MapType => CqlMap(convertJavaToScalaType(map.getKeyType), convertJavaToScalaType(map.getValueType))
-        case set: SetType => CqlSet(convertJavaToScalaType(set.getType))
-        case list: ListType => CqlList(convertJavaToScalaType(list.getType))
-        case tuple: TupleType => Tuple(tuple.getTypes.map(convertJavaToScalaType):_*)
+      // TODO: Update for UDTs when supported.
+      case primitive: PrimitiveType => DataType.primitiveTypeMap(primitive.serialise())
+      case map: MapType => CqlMap(convertJavaToScalaType(map.getKeyType), convertJavaToScalaType(map.getValueType))
+      case set: SetType => CqlSet(convertJavaToScalaType(set.getType))
+      case list: ListType => CqlList(convertJavaToScalaType(list.getType))
+      case tuple: TupleType => Tuple(tuple.getTypes.map(convertJavaToScalaType): _*)
     }
 
     def fromString(typeString: String): Try[DataType] = {

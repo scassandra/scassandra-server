@@ -17,7 +17,7 @@ package org.scassandra.server.actors
 
 import akka.io.Tcp
 import org.scalatest.FunSuite
-import org.scassandra.server.priming.{ClosedConnectionResult, FatalResult}
+import org.scassandra.server.priming.{ ClosedConnectionResult, FatalResult }
 
 trait FatalHandlingBehaviors {
   this: FunSuite =>

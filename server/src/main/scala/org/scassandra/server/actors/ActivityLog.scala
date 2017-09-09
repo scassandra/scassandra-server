@@ -68,12 +68,12 @@ object ActivityLogActor {
   case class RecordExecution(prepare: PreparedStatementExecution)
   case class RecordBatch(batch: BatchExecution)
 
-  private case class ActivityLog(queries: List[Query] = List(),
-                      connections: List[Connection] = List(),
-                      prepares: List[PreparedStatementPreparation] = List(),
-                      executions: List[PreparedStatementExecution] = List(),
-                      batches: List[BatchExecution] = List()
-                     )
+  private case class ActivityLog(
+    queries: List[Query] = List(),
+    connections: List[Connection] = List(),
+    prepares: List[PreparedStatementPreparation] = List(),
+    executions: List[PreparedStatementExecution] = List(),
+    batches: List[BatchExecution] = List())
 
   case class Queries(list: List[Query])
   case class Connections(list: List[Connection])
@@ -81,18 +81,17 @@ object ActivityLogActor {
   case class Executions(list: List[PreparedStatementExecution])
   case class Batches(list: List[BatchExecution])
 
-
 }
 
 object Activity {
   case class Query(query: String, consistency: Consistency, serialConsistency: Option[Consistency],
-                   variables: List[Any] = List(), variableTypes: List[DataType] = List(), timestamp: Option[Long] = None)
+    variables: List[Any] = List(), variableTypes: List[DataType] = List(), timestamp: Option[Long] = None)
   case class Connection(result: String = "success")
   case class PreparedStatementExecution(preparedStatementText: String, consistency: Consistency,
-                                        serialConsistency: Option[Consistency], variables: List[Any],
-                                        variableTypes: List[DataType], timestamp: Option[Long])
+    serialConsistency: Option[Consistency], variables: List[Any],
+    variableTypes: List[DataType], timestamp: Option[Long])
   case class BatchQuery(query: String, batchQueryKind: BatchQueryKind, variables: List[Any] = List(), variableTypes: List[DataType] = List())
   case class BatchExecution(batchQueries: Seq[BatchQuery], consistency: Consistency,
-                            serialConsistency: Option[Consistency], batchType: BatchType, timestamp: Option[Long])
+    serialConsistency: Option[Consistency], batchType: BatchType, timestamp: Option[Long])
   case class PreparedStatementPreparation(preparedStatementText: String)
 }

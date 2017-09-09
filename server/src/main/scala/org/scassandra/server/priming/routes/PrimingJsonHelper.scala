@@ -18,17 +18,17 @@ package org.scassandra.server.priming.routes
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.codec.datatype.{DataType, Varchar}
-import org.scassandra.codec.messages.{ColumnSpecWithoutTable, Row, RowMetadata}
-import org.scassandra.codec.{Consistency, Rows}
+import org.scassandra.codec.datatype.{ DataType, Varchar }
+import org.scassandra.codec.messages.{ ColumnSpecWithoutTable, Row, RowMetadata }
+import org.scassandra.codec.{ Consistency, Rows }
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming._
 import org.scassandra.server.priming.json._
-import org.scassandra.{codec => c}
+import org.scassandra.{ codec => c }
 import scodec.bits.ByteVector
 
 import scala.concurrent.duration.FiniteDuration
-import scala.util.{Failure, Try, Success => TSuccess}
+import scala.util.{ Failure, Try, Success => TSuccess }
 
 object PrimingJsonHelper extends LazyLogging {
 
@@ -66,8 +66,7 @@ object PrimingJsonHelper extends LazyLogging {
             config.getOrElse(ErrorConstants.Message, "Unavailable Exception"),
             config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).orNull,
             config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
-            config.getOrElse(ErrorConstants.Alive, "0").toInt
-          )
+            config.getOrElse(ErrorConstants.Alive, "0").toInt)
           case Overloaded => c.Overloaded(config.getOrElse(ErrorConstants.Message, "Overloaded"))
           case IsBootstrapping => c.IsBootstrapping(config.getOrElse(ErrorConstants.Message, "Bootstrapping"))
           case TruncateError => c.TruncateError(config.getOrElse(ErrorConstants.Message, "Truncate Error"))
@@ -76,37 +75,32 @@ object PrimingJsonHelper extends LazyLogging {
             config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).orNull,
             config.getOrElse(ErrorConstants.ReceivedResponse, "0").toInt,
             config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
-            config.getOrElse(ErrorConstants.WriteType, "SIMPLE")
-          )
+            config.getOrElse(ErrorConstants.WriteType, "SIMPLE"))
           case ReadTimeout => c.ReadTimeout(
             config.getOrElse(ErrorConstants.Message, "Read Request Timeout"),
             config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).orNull,
             config.getOrElse(ErrorConstants.ReceivedResponse, "0").toInt,
             config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
-            config.getOrElse(ErrorConstants.DataPresent, "false").toBoolean
-          )
+            config.getOrElse(ErrorConstants.DataPresent, "false").toBoolean)
           case ReadFailure => c.ReadFailure(
             config.getOrElse(ErrorConstants.Message, "Read Failure"),
             config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).orNull,
             config.getOrElse(ErrorConstants.ReceivedResponse, "0").toInt,
             config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
             config.getOrElse(ErrorConstants.NumberOfFailures, "1").toInt,
-            config.getOrElse(ErrorConstants.DataPresent, "false").toBoolean
-          )
+            config.getOrElse(ErrorConstants.DataPresent, "false").toBoolean)
           case WriteFailure => c.WriteFailure(
             config.getOrElse(ErrorConstants.Message, "Write Failure"),
             config.get(ErrorConstants.ConsistencyLevel).map(Consistency.withName).orNull,
             config.getOrElse(ErrorConstants.ReceivedResponse, "0").toInt,
             config.getOrElse(ErrorConstants.RequiredResponse, "1").toInt,
             config.getOrElse(ErrorConstants.NumberOfFailures, "1").toInt,
-            config.getOrElse(ErrorConstants.WriteType, "SIMPLE")
-          )
+            config.getOrElse(ErrorConstants.WriteType, "SIMPLE"))
           case FunctionFailure => c.FunctionFailure(
             config.getOrElse(ErrorConstants.Message, "Function Failure"),
             config.getOrElse(ErrorConstants.Keyspace, "keyspace"),
             config.getOrElse(ErrorConstants.Function, "function"),
-            config.getOrElse(ErrorConstants.Argtypes, "argtypes").split(",").toList
-          )
+            config.getOrElse(ErrorConstants.Argtypes, "argtypes").split(",").toList)
           case SyntaxError => c.SyntaxError(config.getOrElse(ErrorConstants.Message, "Syntax Error"))
           case Unauthorized => c.Unauthorized(config.getOrElse(ErrorConstants.Message, "Unauthorized"))
           case Invalid => c.Invalid(config.getOrElse(ErrorConstants.Message, "Invalid"))
@@ -114,12 +108,10 @@ object PrimingJsonHelper extends LazyLogging {
           case AlreadyExists => c.AlreadyExists(
             config.getOrElse(ErrorConstants.Message, "Already Exists"),
             config.getOrElse(ErrorConstants.Keyspace, "keyspace"),
-            config.getOrElse(ErrorConstants.Table, "")
-          )
+            config.getOrElse(ErrorConstants.Table, ""))
           case Unprepared => c.Unprepared(
             config.getOrElse(ErrorConstants.Message, "Unprepared"),
-            ByteVector.fromValidHex(config.getOrElse(ErrorConstants.PrepareId, "0x").toLowerCase)
-          )
+            ByteVector.fromValidHex(config.getOrElse(ErrorConstants.PrepareId, "0x").toLowerCase))
         }
 
         // In the case of a Then implementation, provide the variable types.
@@ -155,8 +147,7 @@ object PrimingJsonHelper extends LazyLogging {
     val metadata = RowMetadata(
       keyspace = keyspace.orElse(Some("")),
       table = table.orElse(Some("")),
-      columnSpec = Some(columnSpec)
-    )
+      columnSpec = Some(columnSpec))
 
     Rows(metadata, cRows)
   }

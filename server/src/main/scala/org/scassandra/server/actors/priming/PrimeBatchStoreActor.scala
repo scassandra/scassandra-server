@@ -8,7 +8,7 @@ import org.scassandra.codec.messages.BatchType
 import org.scassandra.codec.messages.BatchType.BatchType
 import org.scassandra.server.actors.Activity.BatchExecution
 import org.scassandra.server.actors.priming.PrimeBatchStoreActor._
-import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Prime, Then}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ Prime, Then }
 import org.scassandra.server.priming.Defaulter
 import org.scassandra.server.priming.routes.PrimingJsonHelper.extractPrime
 
@@ -55,7 +55,7 @@ object PrimeBatchStoreActor {
     }
 
     def withDefaults: BatchPrimeSingle =
-    // join queries into 1 string so '?' can be counted.
+      // join queries into 1 string so '?' can be counted.
       copy(when.withDefaults, thenDo.withDefaults(Some(when.queries.map(_.text).mkString("\n"))))
   }
 

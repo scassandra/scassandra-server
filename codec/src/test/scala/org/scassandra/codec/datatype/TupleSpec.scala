@@ -16,7 +16,7 @@
 package org.scassandra.codec.datatype
 
 import scodec.Attempt.Failure
-import scodec.Err.{General, InsufficientBits}
+import scodec.Err.{ General, InsufficientBits }
 import scodec.SizeBound
 import scodec.bits.ByteVector
 
@@ -26,9 +26,9 @@ class TupleSpec extends DataTypeSpec {
     val tupleType = Tuple(CqlInt, Text)
 
     tupleType.codec.encode(List(55, "Hello World")).require shouldEqual ByteVector(
-      0, 0, 0, 4,     // int length
-      0, 0, 0, 0x37,  // 55
-      0, 0, 0, 0xb,   // length of 'Hello World'
+      0, 0, 0, 4, // int length
+      0, 0, 0, 0x37, // 55
+      0, 0, 0, 0xb, // length of 'Hello World'
       0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64 // Hello World
     ).bits
   }
@@ -37,10 +37,10 @@ class TupleSpec extends DataTypeSpec {
     val tupleType = Tuple(CqlInt, CqlInt, Text)
 
     tupleType.codec.encode(List(55, null, "Hello World")).require shouldEqual ByteVector(
-      0, 0, 0, 4,             // int length
-      0, 0, 0, 0x37,          // 55
+      0, 0, 0, 4, // int length
+      0, 0, 0, 0x37, // 55
       0xFF, 0xFF, 0xFF, 0xFF, // -1, null indicator
-      0, 0, 0, 0xb,           // length of 'Hello World'
+      0, 0, 0, 0xb, // length of 'Hello World'
       0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64 // Hello World
     ).bits
   }
@@ -58,7 +58,7 @@ class TupleSpec extends DataTypeSpec {
       0, 0, 0, 4, // int length
       0, 0, 0, 5, // 5
       0, 0, 0, 1, // tinyint length
-      3           // 3
+      3 // 3
     ).bits
   }
 
@@ -85,10 +85,10 @@ class TupleSpec extends DataTypeSpec {
 
     // invalid because it expects <Int, Int> but we provide <Int, Smallint>
     val invalidBytes = ByteVector(
-      0, 0, 0, 4,   // int length
-      8, 6, 7, 5,   // 8675
-      0, 0, 0, 2,   // smallint length
-      0, 0x37       // 55 as smallint
+      0, 0, 0, 4, // int length
+      8, 6, 7, 5, // 8675
+      0, 0, 0, 2, // smallint length
+      0, 0x37 // 55 as smallint
     ).bits
 
     // Should fail because the second tuple value is not wide enough (16 instead of 32)
@@ -101,7 +101,7 @@ class TupleSpec extends DataTypeSpec {
     // max = elements*int length(4)*8 + elements*Int.MaxValue*8
 
     def forCount(elementCount: Int) = {
-      SizeBound.bounded(elementCount * 4 * 8, (elementCount * 4 * 8) + elementCount * (Int.MaxValue.toLong*8))
+      SizeBound.bounded(elementCount * 4 * 8, (elementCount * 4 * 8) + elementCount * (Int.MaxValue.toLong * 8))
     }
 
     Tuple(CqlInt).codec.sizeBound shouldEqual forCount(1)

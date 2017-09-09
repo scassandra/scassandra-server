@@ -30,13 +30,13 @@
 */
 package org.scassandra.server.priming.prepared
 
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.{ FunSuite, Matchers }
 import org.scassandra.codec.Consistency._
 import org.scassandra.codec.datatype._
 import org.scassandra.codec.messages.ColumnSpec.column
 import org.scassandra.codec.messages._
-import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
-import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ConflictingPrimes, Reply}
+import org.scassandra.codec.{ Execute, Prepare, Prepared, ProtocolVersion }
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ ConflictingPrimes, Reply }
 import scodec.bits.ByteVector
 
 class PrimePreparedStoreTest extends FunSuite with Matchers {
@@ -80,9 +80,9 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     val prime = PrimePreparedSingle(when, thenDo)
     underTest.record(prime)
     //when
-    val primeForOne = underTest(query, Execute(id, QueryParameters(consistency=ONE)))
-    val primeForTwo = underTest(query, Execute(id, QueryParameters(consistency=TWO)))
-    val primeForAll = underTest(query, Execute(id, QueryParameters(consistency=ALL)))
+    val primeForOne = underTest(query, Execute(id, QueryParameters(consistency = ONE)))
+    val primeForTwo = underTest(query, Execute(id, QueryParameters(consistency = TWO)))
+    val primeForAll = underTest(query, Execute(id, QueryParameters(consistency = ALL)))
     //then
     primeForOne.isDefined should equal(true)
     primeForTwo.isDefined should equal(true)
@@ -97,10 +97,10 @@ class PrimePreparedStoreTest extends FunSuite with Matchers {
     val prime = PrimePreparedSingle(when, thenDo)
     underTest.record(prime)
     //when
-    val primeForOne = underTest(query, Execute(id, QueryParameters(consistency=ONE)))
-    val primeForTwo = underTest(query, Execute(id, QueryParameters(consistency=TWO)))
-    val primeForAll = underTest(query, Execute(id, QueryParameters(consistency=ALL)))
-    val primeForLocalOne = underTest(query, Execute(id, QueryParameters(consistency=LOCAL_ONE)))
+    val primeForOne = underTest(query, Execute(id, QueryParameters(consistency = ONE)))
+    val primeForTwo = underTest(query, Execute(id, QueryParameters(consistency = TWO)))
+    val primeForAll = underTest(query, Execute(id, QueryParameters(consistency = ALL)))
+    val primeForLocalOne = underTest(query, Execute(id, QueryParameters(consistency = LOCAL_ONE)))
     //then
     primeForOne.isDefined should equal(true)
     primeForTwo.isDefined should equal(true)

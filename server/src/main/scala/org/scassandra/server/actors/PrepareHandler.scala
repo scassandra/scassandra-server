@@ -15,22 +15,22 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.{ Actor, ActorLogging, ActorRef }
 import akka.pattern.ask
 import akka.util.Timeout
 import org.scassandra.codec._
 import org.scassandra.server.actors.Activity.PreparedStatementPreparation
 import org.scassandra.server.actors.ActivityLogActor.RecordPrepare
-import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
+import org.scassandra.server.actors.PrepareHandler.{ PreparedStatementQuery, PreparedStatementResponse }
 import org.scassandra.server.actors.ProtocolActor._
-import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{LookupByPrepare, PrimeMatch}
-import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Fatal, Prime, Reply}
+import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{ LookupByPrepare, PrimeMatch }
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ Fatal, Prime, Reply }
 import org.scassandra.server.priming.prepared.PreparedStoreLookup
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 // todo switch to using become
 class PrepareHandler(primePreparedStore: ActorRef, activityLog: ActorRef) extends ProtocolActor with ActorLogging {
@@ -61,7 +61,6 @@ class PrepareHandler(primePreparedStore: ActorRef, activityLog: ActorRef) extend
         .mapTo[PrimeMatch]
         .map(_.prime.getOrElse(PreparedStoreLookup.defaultPrepared(prepare, nextId)))
 
-
     awaitingPrime.onComplete {
       case Success(prime: Prime) =>
         prime match {
@@ -76,7 +75,7 @@ class PrepareHandler(primePreparedStore: ActorRef, activityLog: ActorRef) extend
         writePrime(prepare, Some(prime), header, toReply)(context.system)
 
       case Failure(e) =>
-//        log.warning("Error getting prime for prepare msg", e)
+      //        log.warning("Error getting prime for prepare msg", e)
     }
   }
 

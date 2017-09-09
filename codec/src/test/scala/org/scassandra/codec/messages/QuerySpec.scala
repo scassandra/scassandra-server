@@ -16,7 +16,7 @@
 package org.scassandra.codec.messages
 
 import org.scassandra.codec._
-import org.scassandra.codec.datatype.{DataType, Text}
+import org.scassandra.codec.datatype.{ DataType, Text }
 import scodec.Attempt.Successful
 import scodec.Codec
 import scodec.bits.ByteVector
@@ -40,8 +40,7 @@ class QuerySpec extends CodecSpec {
       implicit val p = protocolVersion
       val codec = Codec[QueryParameters]
 
-
-      if(protocolVersion.version == 1) {
+      if (protocolVersion.version == 1) {
         "skip flags even if set" in {
           // we expect flags and their associated values to be truncated for protocol V1.
           val parametersWithPaging = QueryParameters(Consistency.TWO, pageSize = Some(50))

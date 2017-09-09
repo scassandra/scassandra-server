@@ -17,7 +17,7 @@ package org.scassandra.server.priming.routes
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import org.scalatest.{FunSpec, Matchers}
+import org.scalatest.{ FunSpec, Matchers }
 
 class VersionRouteTest extends FunSpec with ScalatestRouteTest with VersionRoute with Matchers {
   implicit def actorRefFactory = system

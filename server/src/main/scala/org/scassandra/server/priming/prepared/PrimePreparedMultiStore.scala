@@ -18,16 +18,17 @@ package org.scassandra.server.priming.prepared
 import com.typesafe.scalalogging.LazyLogging
 import org.scassandra.codec._
 import org.scassandra.codec.datatype.DataType
-import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Prime, PrimeCriteria}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ Prime, PrimeCriteria }
 import org.scassandra.server.priming.Defaulter
 
 class PrimePreparedMultiStore extends PreparedStore[PrimePreparedMulti] with LazyLogging {
 
   def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion): Option[Prime] = {
     // Find prime matching queryText and execute's consistency.
-    val prime = primes.find { case (criteria, _) =>
-      // if no consistency specified in the prime, allow all
-      criteria.query.equals(queryText) && criteria.consistency.contains(execute.parameters.consistency)
+    val prime = primes.find {
+      case (criteria, _) =>
+        // if no consistency specified in the prime, allow all
+        criteria.query.equals(queryText) && criteria.consistency.contains(execute.parameters.consistency)
     }.map(_._2)
 
     // Find the outcome action matching the execute parameters.
@@ -36,12 +37,13 @@ class PrimePreparedMultiStore extends PreparedStore[PrimePreparedMulti] with Laz
       val dataTypes = Defaulter.defaultVariableTypesToVarChar(Some(queryText), p.thenDo.variable_types).getOrElse(Nil)
       val queryValues = execute.parameters.values.getOrElse(Nil)
       // TODO: handle named and unset values
-      val values: List[Option[Any]] = dataTypes.zip(queryValues).map { case (dataType: DataType, queryValue: QueryValue) =>
-        queryValue.value match {
-          case Null => Some(null)
-          case Unset => Some(null)
-          case Bytes(bytes) => dataType.codec.decode(bytes.toBitVector).toOption.map(_.value)
-        }
+      val values: List[Option[Any]] = dataTypes.zip(queryValues).map {
+        case (dataType: DataType, queryValue: QueryValue) =>
+          queryValue.value match {
+            case Null => Some(null)
+            case Unset => Some(null)
+            case Bytes(bytes) => dataType.codec.decode(bytes.toBitVector).toOption.map(_.value)
+          }
       }
 
       // Try to find an outcome whose criteria maps to the query parameters.

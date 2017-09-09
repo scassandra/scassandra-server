@@ -24,7 +24,7 @@ import akka.http.scaladsl.server._
 import akka.util.Timeout
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import com.typesafe.scalalogging.LazyLogging
-import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{BatchPrimeSingle, ClearPrimes, RecordBatchPrime}
+import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{ BatchPrimeSingle, ClearPrimes, RecordBatchPrime }
 import org.scassandra.server.priming.json.PrimingJsonImplicits
 import scala.concurrent.duration._
 
@@ -50,13 +50,14 @@ trait PrimingBatchRoute extends LazyLogging {
         path("prime-batch-single") {
           post {
             entity(as[BatchPrimeSingle]) {
-              primeRequest => {
-                complete {
-                  logger.info("Received batch prime {}", primeRequest)
-                  primeBatchStore ! RecordBatchPrime(primeRequest)
-                  StatusCodes.OK
+              primeRequest =>
+                {
+                  complete {
+                    logger.info("Received batch prime {}", primeRequest)
+                    primeBatchStore ! RecordBatchPrime(primeRequest)
+                    StatusCodes.OK
+                  }
                 }
-              }
             }
           } ~
             delete {

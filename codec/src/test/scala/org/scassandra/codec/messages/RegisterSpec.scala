@@ -15,7 +15,7 @@
  */
 package org.scassandra.codec.messages
 
-import org.scassandra.codec.{CodecSpec, ProtocolVersion, Register}
+import org.scassandra.codec.{ CodecSpec, ProtocolVersion, Register }
 import scodec.Codec
 
 class RegisterSpec extends CodecSpec {

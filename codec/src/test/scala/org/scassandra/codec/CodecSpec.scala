@@ -15,17 +15,17 @@
  */
 package org.scassandra.codec
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 import scodec.Codec
 
 trait CodecSpec extends WordSpec with Matchers with CodecTablePropertyChecks {
 
   /**
-    * Convenience wrapper that runs enclosing tests with all protocol versions.
-    *
-    * @param f      enclosing function to wrap.  Provides protocol version under test.
-    * @param filter filter to apply to specify explicit protocol versions to test.
-    */
+   * Convenience wrapper that runs enclosing tests with all protocol versions.
+   *
+   * @param f      enclosing function to wrap.  Provides protocol version under test.
+   * @param filter filter to apply to specify explicit protocol versions to test.
+   */
   def withProtocolVersions(f: ProtocolVersion => Unit, filter: ProtocolVersion => Boolean): Unit = {
     forAll(versions.filter(filter)) { (protocolVersion: ProtocolVersion) =>
       "using " + protocolVersion should {
@@ -35,10 +35,10 @@ trait CodecSpec extends WordSpec with Matchers with CodecTablePropertyChecks {
   }
 
   /**
-    * Convenience wrapper that runs enclosing tests with all protocol versions.
-    *
-    * @param f      enclosing function to wrap.  Provides protocol version under test.
-    */
+   * Convenience wrapper that runs enclosing tests with all protocol versions.
+   *
+   * @param f      enclosing function to wrap.  Provides protocol version under test.
+   */
   def withProtocolVersions(f: ProtocolVersion => Unit): Unit = withProtocolVersions(f, _ => true)
 
   def encodeAndDecode[T](data: T)(implicit codec: Codec[T]): Unit = {

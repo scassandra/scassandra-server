@@ -23,9 +23,7 @@ import org.scassandra.server.priming.routes._
 
 import scala.language.postfixOps
 
-trait AllRoutes extends PrimingPreparedRoute with
-PrimingQueryRoute with ActivityVerificationRoute with VersionRoute with
-PrimingBatchRoute with CurrentRoute with PrimingMultiRoute with LazyLogging {
+trait AllRoutes extends PrimingPreparedRoute with PrimingQueryRoute with ActivityVerificationRoute with VersionRoute with PrimingBatchRoute with CurrentRoute with PrimingMultiRoute with LazyLogging {
 
   val allRoutes: Route = routeForPreparedPriming ~
     queryRoute ~ activityVerificationRoute ~

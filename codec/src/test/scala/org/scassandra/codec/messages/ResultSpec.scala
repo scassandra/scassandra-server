@@ -30,8 +30,7 @@ class ResultSpec extends CodecSpec {
         VoidResult,
         SetKeyspace("mykeyspace"),
         Prepared(ByteVector(8, 6, 7, 5)),
-        Rows()
-      )
+        Rows())
 
       results.foreach { result =>
         "property identify codec for " + result + " and encode and decode" in {

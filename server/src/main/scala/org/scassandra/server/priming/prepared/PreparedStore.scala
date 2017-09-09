@@ -17,14 +17,14 @@ package org.scassandra.server.priming.prepared
 
 import org.scassandra.codec.datatype.Varchar
 import org.scassandra.codec.messages._
-import org.scassandra.codec.{Execute, Prepare, Prepared, ProtocolVersion}
+import org.scassandra.codec.{ Execute, Prepare, Prepared, ProtocolVersion }
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming.Defaulter
 import scodec.bits.ByteVector
 
 trait PreparedStoreLookup {
-  def apply(prepare: Prepare, id: Int) : Option[Prime]
-  def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion) : Option[Prime]
+  def apply(prepare: Prepare, id: Int): Option[Prime]
+  def apply(queryText: String, execute: Execute)(implicit protocolVersion: ProtocolVersion): Option[Prime]
 }
 
 object PreparedStoreLookup {
@@ -36,8 +36,7 @@ object PreparedStoreLookup {
     val metadata = PreparedMetadata(
       keyspace = Some("keyspace"),
       table = Some("table"),
-      columnSpec = variableTypes
-    )
+      columnSpec = variableTypes)
 
     Reply(Prepared(ByteVector(id), metadata, NoRowMetadata))
   }
@@ -57,16 +56,17 @@ trait PreparedStore[I <: PreparedPrimeIncoming] extends PreparedStoreLookup {
   def retrievePrimes(): List[I] = primes.values.toList
   def clear(): Unit = primes = Map()
 
-  def apply(prepare: Prepare, idToUse: Int) : Option[Prime] = {
+  def apply(prepare: Prepare, idToUse: Int): Option[Prime] = {
     // Find prime by text.
-    val prime = primes.find { case (criteria, _) =>
-      criteria.query.equals(prepare.query)
+    val prime = primes.find {
+      case (criteria, _) =>
+        criteria.query.equals(prepare.query)
     }.map(_._2)
 
     prepared(prepare, prime, idToUse)
   }
 
-  def prepared(prepare: Prepare, prime: Option[I], id: Int) : Option[Prime] = {
+  def prepared(prepare: Prepare, prime: Option[I], id: Int): Option[Prime] = {
     prime.map { p =>
       // Prefill variable types with the rows column spec data types + varchars for any extra variables in the query.
       val dataTypes = Defaulter.defaultVariableTypesToVarChar(Some(prepare.query), p.thenDo.variable_types).getOrElse(Nil)
@@ -79,8 +79,7 @@ trait PreparedStore[I <: PreparedPrimeIncoming] extends PreparedStoreLookup {
       val preparedMetadata = PreparedMetadata(
         keyspace = Some("keyspace"), // todo remove these
         table = Some("table"),
-        columnSpec = variableSpec
-      )
+        columnSpec = variableSpec)
       Reply(Prepared(ByteVector(id), preparedMetadata, NoRowMetadata))
     }
   }

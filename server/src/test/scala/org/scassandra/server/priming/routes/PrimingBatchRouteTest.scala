@@ -16,15 +16,15 @@
 package org.scassandra.server.priming.routes
 
 import akka.Done
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ ActorRef, ActorSystem }
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.testkit.TestProbe
 import akka.util.Timeout
-import org.scalatest.{Matchers, WordSpec}
-import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{BatchPrimeSingle, BatchWhen, ClearPrimes, RecordBatchPrime}
+import org.scalatest.{ Matchers, WordSpec }
+import org.scassandra.server.actors.priming.PrimeBatchStoreActor.{ BatchPrimeSingle, BatchWhen, ClearPrimes, RecordBatchPrime }
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Then
-import org.scassandra.server.priming.json.{PrimingJsonImplicits, Success}
+import org.scassandra.server.priming.json.{ PrimingJsonImplicits, Success }
 import org.scassandra.server.actors._
 import scala.concurrent.duration._
 

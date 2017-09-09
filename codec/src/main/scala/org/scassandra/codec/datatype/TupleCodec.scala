@@ -15,25 +15,25 @@
  */
 package org.scassandra.codec.datatype
 
-import org.scassandra.codec.Notations.{value, int => cint}
-import org.scassandra.codec.{Bytes, Null, ProtocolVersion, Unset, _}
-import scodec.Attempt.{Failure, Successful}
+import org.scassandra.codec.Notations.{ value, int => cint }
+import org.scassandra.codec.{ Bytes, Null, ProtocolVersion, Unset, _ }
+import scodec.Attempt.{ Failure, Successful }
 import scodec.bits.BitVector
 import scodec.codecs._
-import scodec.{Attempt, Codec, DecodeResult, Err, SizeBound}
+import scodec.{ Attempt, Codec, DecodeResult, Err, SizeBound }
 
 import scala.collection.immutable
 import scala.util.control.Breaks._
 
 /**
-  * Codec for parsing a given [[Tuple]] definition.
-  *
-  * This works similarly to [[org.scassandra.codec.messages.RowCodec]] in that it takes the ordering of the tuple's
-  * elements to decode and encode in order.
-  *
-  * @param tuple The tuple definition to provide [[Codec]] facilities for.
-  * @param protocolVersion protocol version to use to encode/decode.
-  */
+ * Codec for parsing a given [[Tuple]] definition.
+ *
+ * This works similarly to [[org.scassandra.codec.messages.RowCodec]] in that it takes the ordering of the tuple's
+ * elements to decode and encode in order.
+ *
+ * @param tuple The tuple definition to provide [[Codec]] facilities for.
+ * @param protocolVersion protocol version to use to encode/decode.
+ */
 case class TupleCodec(tuple: Tuple)(implicit protocolVersion: ProtocolVersion) extends Codec[List[_]] {
 
   lazy val codecsWithBytes = {
@@ -75,7 +75,7 @@ case class TupleCodec(tuple: Tuple)(implicit protocolVersion: ProtocolVersion) e
   }
 
   override def encode(data: List[_]): Attempt[BitVector] = {
-    if(data.length != tuple.elements.length) {
+    if (data.length != tuple.elements.length) {
       Failure(Err(s"List of size ${data.size} does not match number of expected codec elements for $tuple"))
     } else {
       // Encode each element with it's corresponding data type.

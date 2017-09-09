@@ -15,8 +15,8 @@
  */
 package org.scassandra.server
 
-import akka.testkit.{EventFilter, TestActorRef, TestProbe}
-import org.scalatest.{FunSpec, FunSpecLike, Matchers}
+import akka.testkit.{ EventFilter, TestActorRef, TestProbe }
+import org.scalatest.{ FunSpec, FunSpecLike, Matchers }
 import org.scassandra.server.actors.TestKitWithShutdown
 
 class ServerReadyListenerTest extends FunSpec with TestKitWithShutdown with Matchers {

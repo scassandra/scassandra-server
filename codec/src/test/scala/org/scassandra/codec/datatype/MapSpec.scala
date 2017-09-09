@@ -21,14 +21,14 @@ import scodec.Attempt.Failure
 import scodec.bits.ByteVector
 
 class MapSpec extends DataTypeSpec with TableDrivenPropertyChecks {
-  val protocolVersions = Table("Protocol Version", ProtocolVersion.versions:_*)
+  val protocolVersions = Table("Protocol Version", ProtocolVersion.versions: _*)
 
   forAll(protocolVersions) { (protocolVersion: ProtocolVersion) =>
     implicit val protocol: ProtocolVersion = protocolVersion
     val codec = CqlMap(Varchar, Varchar).codec
     val nestedCodec = CqlMap(Varchar, CqlSet(Varchar)).codec
 
-    val expectedBytes = if(protocol.version < 3) {
+    val expectedBytes = if (protocol.version < 3) {
       ByteVector(
         0, 2, // number of elements
         0, 3, 111, 110, 101, // one
@@ -60,14 +60,14 @@ class MapSpec extends DataTypeSpec with TableDrivenPropertyChecks {
       codec.encode(Map()).require.bytes shouldEqual zeros
     }
 
-    val expectedNestedBytes = if(protocol.version < 3) {
+    val expectedNestedBytes = if (protocol.version < 3) {
       ByteVector(
         0, 2, // number of elements
         0, 5, 102, 105, 114, 115, 116, // first
         0, 19, // byte length of first set
         0, 3, // elements in set
-        0, 3, 111, 110, 101,  // one
-        0, 3, 116, 119, 111,  // two
+        0, 3, 111, 110, 101, // one
+        0, 3, 116, 119, 111, // two
         0, 5, 116, 104, 114, 101, 101, // three
         0, 6, 115, 101, 99, 111, 110, 100, // second
         0, 19, // byte length of second set
@@ -82,8 +82,8 @@ class MapSpec extends DataTypeSpec with TableDrivenPropertyChecks {
         0, 0, 0, 5, 102, 105, 114, 115, 116, // first
         0, 0, 0, 27, // byte length of first set
         0, 0, 0, 3, // elements in set
-        0, 0, 0, 3, 111, 110, 101,  // one
-        0, 0, 0, 3, 116, 119, 111,  // two
+        0, 0, 0, 3, 111, 110, 101, // one
+        0, 0, 0, 3, 116, 119, 111, // two
         0, 0, 0, 5, 116, 104, 114, 101, 101, // three
         0, 0, 0, 6, 115, 101, 99, 111, 110, 100, // second
         0, 0, 0, 27, // byte length of second set

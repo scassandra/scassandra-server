@@ -15,13 +15,13 @@
  */
 package org.scassandra.codec
 
-import java.net.{InetAddress, InetSocketAddress}
+import java.net.{ InetAddress, InetSocketAddress }
 
-import org.scalacheck.Prop.{BooleanOperators, forAll}
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.Prop.{ BooleanOperators, forAll }
+import org.scalacheck.{ Arbitrary, Gen }
 import org.scalatest.prop.Checkers
-import org.scalatest.{FlatSpec, Matchers}
-import scodec.Attempt.{Failure, Successful}
+import org.scalatest.{ FlatSpec, Matchers }
+import scodec.Attempt.{ Failure, Successful }
 import scodec.DecodeResult
 import scodec.bits.ByteVector
 import scodec.codecs._

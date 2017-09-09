@@ -2,7 +2,7 @@ package org.scassandra.server.priming
 
 import java.util.UUID
 
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 import org.scassandra.codec.datatype._
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor._
 import org.scassandra.server.priming.json.Success
@@ -14,17 +14,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate ints" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> 123),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT AN INTEGER!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT AN INTEGER!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlInt))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlInt))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT AN INTEGER!", "hasInvalidValue", CqlInt.stringRep))))
@@ -33,16 +29,12 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "allow cql int to be a big decimal" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
-            Map("hasLongAsInt" -> BigDecimal("5"))
-          )),
+            Map("hasLongAsInt" -> BigDecimal("5")))),
           result = Some(Success),
-          column_types = Some(Map("hasLongAsInt" -> CqlInt))
-        )
-      )
+          column_types = Some(Map("hasLongAsInt" -> CqlInt))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(PrimeAddSuccess)
@@ -51,17 +43,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate booleans" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> "true"),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A BOOLEAN!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A BOOLEAN!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlBoolean))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlBoolean))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A BOOLEAN!", "hasInvalidValue", CqlBoolean.stringRep))))
@@ -70,17 +58,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate big ints" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> "12345"),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A BIGINT!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A BIGINT!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Bigint))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Bigint))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A BIGINT!", "hasInvalidValue", Bigint.stringRep))))
@@ -89,17 +73,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate counters" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> "1234"),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A COUNTER!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A COUNTER!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Counter))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Counter))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A COUNTER!", "hasInvalidValue", Counter.stringRep))))
@@ -108,17 +88,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate blobs" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> "0x48656c6c6f"),
-            Map("name" -> "catbus", "hasInvalidValue" -> false)
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> false))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Blob))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Blob))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", Blob.stringRep))))
@@ -127,17 +103,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate decimals" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> "5.5456"),
-            Map("name" -> "catbus", "hasInvalidValue" -> false)
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> false))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlDecimal))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlDecimal))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlDecimal.stringRep))))
@@ -146,17 +118,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate doubles" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> "5.5456"),
-            Map("name" -> "catbus", "hasInvalidValue" -> false)
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> false))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlDouble))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlDouble))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlDouble.stringRep))))
@@ -165,17 +133,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate floats" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> "5.5456"),
-            Map("name" -> "catbus", "hasInvalidValue" -> false)
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> false))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlFloat))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlFloat))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", CqlFloat.stringRep))))
@@ -184,17 +148,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate timestamps" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> "1368438171000"),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TIMESTAMP!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TIMESTAMP!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Timestamp))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Timestamp))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TIMESTAMP!", "hasInvalidValue", Timestamp.stringRep))))
@@ -204,17 +164,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
       val uuid = UUID.randomUUID().toString
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> uuid),
-            Map("name" -> "catbus", "hasInvalidValue" -> false)
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> false))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Uuid))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Uuid))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch(false, "hasInvalidValue", Uuid.stringRep))))
@@ -223,18 +179,14 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate inets" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> "127.0.0.1"),
             Map("name" -> "validIpv6", "hasInvalidValue" -> "::1"),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT AN INET!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT AN INET!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlInet))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlInet))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT AN INET!", "hasInvalidValue", CqlInet.stringRep))))
@@ -243,17 +195,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate varints" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> "1234"),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A VARINT!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A VARINT!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Varint))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Varint))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A VARINT!", "hasInvalidValue", Varint.stringRep))))
@@ -262,17 +210,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate timeuuids" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> "2c530380-b9f9-11e3-850e-338bb2a2e74f"),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TIME UUID!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TIME UUID!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlTimeuuid))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlTimeuuid))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TIME UUID!", "hasInvalidValue", CqlTimeuuid.stringRep))))
@@ -281,17 +225,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate lists" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> List(1, 2, 3, 4)),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A LIST!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A LIST!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlList(CqlInt)))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlList(CqlInt)))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A LIST!", "hasInvalidValue", CqlList(CqlInt).stringRep))))
@@ -300,18 +240,14 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate sets" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> Set("uno", "dos", "tres")),
             Map("name" -> "listShouldWorkAndTypesShouldBeCoercable", "hasInvalidValue" -> List(1, 2, 3, 4)),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A SET!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A SET!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlSet(Varchar)))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlSet(Varchar)))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A SET!", "hasInvalidValue", CqlSet(Varchar).stringRep))))
@@ -323,17 +259,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
 
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> Map(uuid -> List(1, 2, 3, 4))),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A MAP!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A MAP!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> mapType))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> mapType))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A MAP!", "hasInvalidValue", mapType.stringRep))))
@@ -344,17 +276,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
       val tupleType = Tuple(Uuid, CqlList(CqlInt))
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> (uuid, List(1, 2, 3, 4))),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TUPLE!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TUPLE!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> tupleType))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> tupleType))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TUPLE!", "hasInvalidValue", tupleType.stringRep))))
@@ -363,17 +291,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate times" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> 1368438171000L),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TIME!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TIME!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlTime))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlTime))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TIME!", "hasInvalidValue", CqlTime.stringRep))))
@@ -382,17 +306,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate dates" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> 2147484648L),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A DATE!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A DATE!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlDate))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> CqlDate))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A DATE!", "hasInvalidValue", CqlDate.stringRep))))
@@ -401,17 +321,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate small ints" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> 512),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A SMALLINT!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A SMALLINT!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Smallint))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Smallint))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A SMALLINT!", "hasInvalidValue", Smallint.stringRep))))
@@ -420,17 +336,13 @@ class PrimeValidatorTest extends WordSpec with Matchers {
     "validate tinyints" in {
       val prime = PrimeQuerySingle(
         When(
-          Some(someQuery)
-        ),
+          Some(someQuery)),
         Then(
           rows = Some(List(
             Map("name" -> "totoro", "hasInvalidValue" -> 127),
-            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TINYINT!")
-          )),
+            Map("name" -> "catbus", "hasInvalidValue" -> "NOT A TINYINT!"))),
           result = Some(Success),
-          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Tinyint))
-        )
-      )
+          column_types = Some(Map("name" -> Varchar, "hasInvalidValue" -> Tinyint))))
 
       val validationResult = PrimeValidator.validateColumnTypes(prime.prime)
       validationResult should equal(TypeMismatches(List(TypeMismatch("NOT A TINYINT!", "hasInvalidValue", Tinyint.stringRep))))

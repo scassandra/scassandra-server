@@ -19,10 +19,10 @@ import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
 import org.scassandra.codec.datatype.DataType
-import org.scassandra.codec.{Frame, NoRows, ProtocolVersion, Query}
+import org.scassandra.codec.{ Frame, NoRows, ProtocolVersion, Query }
 import org.scassandra.server.actors.ActivityLogActor.RecordQuery
 import org.scassandra.server.actors.ProtocolActor._
-import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{MatchPrime, MatchResult, Reply}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ MatchPrime, MatchResult, Reply }
 
 import scala.concurrent.duration._
 
@@ -43,20 +43,20 @@ class QueryHandler(primeQueryStore: ActorRef, activityLog: ActorRef) extends Pro
       (primeQueryStore ? MatchPrime(query))
         .mapTo[MatchResult].map { mr =>
 
-        val typesAndValues: Option[(List[DataType], List[Any])] = (for {
-          prime <- mr.prime
-          vt <- prime.variableTypes
-        } yield Some(vt).zip(extractQueryVariables(query.query, query.parameters.values.map(_.map(_.value)), vt)).headOption).flatten
+          val typesAndValues: Option[(List[DataType], List[Any])] = (for {
+            prime <- mr.prime
+            vt <- prime.variableTypes
+          } yield Some(vt).zip(extractQueryVariables(query.query, query.parameters.values.map(_.map(_.value)), vt)).headOption).flatten
 
-        typesAndValues match {
-          case Some((vts, values)) =>
-            activityLog ! RecordQuery(Activity.Query(query.query, query.parameters.consistency, query.parameters.serialConsistency, values,
-              vts, query.parameters.timestamp))
-          case None =>
-            activityLog ! RecordQuery(Activity.Query(query.query, query.parameters.consistency, query.parameters.serialConsistency,
-              timestamp = query.parameters.timestamp))
+          typesAndValues match {
+            case Some((vts, values)) =>
+              activityLog ! RecordQuery(Activity.Query(query.query, query.parameters.consistency, query.parameters.serialConsistency, values,
+                vts, query.parameters.timestamp))
+            case None =>
+              activityLog ! RecordQuery(Activity.Query(query.query, query.parameters.consistency, query.parameters.serialConsistency,
+                timestamp = query.parameters.timestamp))
+          }
+          writePrime(query, mr.prime, header, alternative = noRows, consistency = Some(query.parameters.consistency), target = toReply)(context.system)
         }
-        writePrime(query, mr.prime, header, alternative = noRows, consistency = Some(query.parameters.consistency), target = toReply)(context.system)
-      }
   }
 }

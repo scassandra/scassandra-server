@@ -15,7 +15,7 @@
  */
 package org.scassandra.server.actors
 
-import org.scassandra.codec.{Frame, Options, Supported}
+import org.scassandra.codec.{ Frame, Options, Supported }
 
 class OptionsHandler extends ProtocolActor {
 

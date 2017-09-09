@@ -17,11 +17,11 @@ package org.scassandra.server.priming
 
 import org.scassandra.codec.Consistency
 import org.scassandra.codec.Consistency.Consistency
-import org.scassandra.codec.datatype.{DataType, Varchar}
+import org.scassandra.codec.datatype.{ DataType, Varchar }
 
 object Defaulter {
 
-  def defaultVariableTypesToVarChar(query : Option[String], dataTypes : Option[List[DataType]]) : Option[List[DataType]] = query match {
+  def defaultVariableTypesToVarChar(query: Option[String], dataTypes: Option[List[DataType]]): Option[List[DataType]] = query match {
     case Some(queryText) =>
       val dTypes = dataTypes.getOrElse(Nil)
       val numberOfVariables = queryText.toCharArray.count(_ == '?')

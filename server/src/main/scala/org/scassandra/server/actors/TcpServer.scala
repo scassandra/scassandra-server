@@ -18,35 +18,35 @@ package org.scassandra.server.actors
 import java.net.InetSocketAddress
 
 import akka.actor._
-import akka.io.{IO, Tcp}
-import akka.pattern.{ask, pipe}
+import akka.io.{ IO, Tcp }
+import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
 import org.scassandra.server.actors.ActivityLogActor.RecordConnection
-import org.scassandra.server.{ServerReady, Shutdown}
+import org.scassandra.server.{ ServerReady, Shutdown }
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class TcpServer(listenAddress: String, port: Int,
-                primedResults: ActorRef,
-                primePrepareStore: ActorRef,
-                primeBatchStore: ActorRef,
-                serverReadyListener: ActorRef,
-                activityLog: ActorRef,
-                manager: Option[ActorRef]) extends Actor with ActorLogging {
+  primedResults: ActorRef,
+  primePrepareStore: ActorRef,
+  primeBatchStore: ActorRef,
+  serverReadyListener: ActorRef,
+  activityLog: ActorRef,
+  manager: Option[ActorRef]) extends Actor with ActorLogging {
 
   def this(listenAddress: String, port: Int,
-           primeQueryStore: ActorRef,
-           primePrepareStore: ActorRef,
-           primeBatchStore: ActorRef,
-           serverReadyListener: ActorRef,
-           activityLog: ActorRef) {
+    primeQueryStore: ActorRef,
+    primePrepareStore: ActorRef,
+    primeBatchStore: ActorRef,
+    serverReadyListener: ActorRef,
+    activityLog: ActorRef) {
     this(listenAddress, port, primeQueryStore, primePrepareStore, primeBatchStore, serverReadyListener, activityLog, None)
   }
 
   import akka.io.Tcp._
-  import context.{dispatcher, system}
+  import context.{ dispatcher, system }
 
   // whether or not to accept connections.
   var acceptConnections = true
@@ -77,9 +77,10 @@ class TcpServer(listenAddress: String, port: Int,
   }
 
   def listening(listener: ActorRef): Receive = {
-    case c@Connected(remote, _) =>
+    case c @ Connected(remote, _) =>
       activityLog ! RecordConnection()
-      val handler = context.actorOf(Props(classOf[ConnectionHandler], sender(),
+      val handler = context.actorOf(
+        Props(classOf[ConnectionHandler], sender(),
         (af: ActorRefFactory) => af.actorOf(Props(classOf[QueryHandler], primedResults, activityLog)),
         (af: ActorRefFactory, prepareHandler: ActorRef) => af.actorOf(Props(classOf[BatchHandler], activityLog, prepareHandler, primeBatchStore)),
         (af: ActorRefFactory) => af.actorOf(Props(classOf[RegisterHandler])),
@@ -134,7 +135,7 @@ class TcpServer(listenAddress: String, port: Int,
     case Shutdown =>
       val requester = sender
       context.become {
-        case u@Unbound =>
+        case u @ Unbound =>
           requester ! u
           // Kill self after unbound
           self ! PoisonPill

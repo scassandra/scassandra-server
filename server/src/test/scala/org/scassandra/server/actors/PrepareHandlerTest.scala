@@ -17,17 +17,17 @@ package org.scassandra.server.actors
 
 import akka.actor.ActorRef
 import akka.pattern.ask
-import akka.testkit.{ImplicitSender, TestActorRef, TestProbe}
+import akka.testkit.{ ImplicitSender, TestActorRef, TestProbe }
 import akka.util.Timeout
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{BeforeAndAfter, Matchers, WordSpec}
+import org.scalatest.{ BeforeAndAfter, Matchers, WordSpec }
 import org.scassandra.codec.datatype._
-import org.scassandra.codec.messages.{ColumnSpecWithoutTable, NoRowMetadata, PreparedMetadata}
-import org.scassandra.codec.{Prepare, Prepared}
+import org.scassandra.codec.messages.{ ColumnSpecWithoutTable, NoRowMetadata, PreparedMetadata }
+import org.scassandra.codec.{ Prepare, Prepared }
 import org.scassandra.server.actors.Activity.PreparedStatementPreparation
 import org.scassandra.server.actors.ActivityLogActor.RecordPrepare
-import org.scassandra.server.actors.PrepareHandler.{PreparedStatementQuery, PreparedStatementResponse}
-import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{LookupByPrepare, PrimeMatch}
+import org.scassandra.server.actors.PrepareHandler.{ PreparedStatementQuery, PreparedStatementResponse }
+import org.scassandra.server.actors.priming.PrimePreparedStoreActor.{ LookupByPrepare, PrimeMatch }
 import org.scassandra.server.actors.priming.PrimeQueryStoreActor.Reply
 import scodec.bits.ByteVector
 
@@ -79,7 +79,7 @@ class PrepareHandlerTest extends WordSpec with ProtocolActorTest with ImplicitSe
       primePreparedStoreProbe.expectMsg(LookupByPrepare(prepare, 1))
       expectMsgPF() {
         case ProtocolResponse(_, Prepared(_, PreparedMetadata(Nil, Some("keyspace"), Some("table"),
-        List(ColumnSpecWithoutTable("0", Varchar))), NoRowMetadata)) => true
+          List(ColumnSpecWithoutTable("0", Varchar))), NoRowMetadata)) => true
       }
     }
 

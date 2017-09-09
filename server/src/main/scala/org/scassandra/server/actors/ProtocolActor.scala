@@ -15,11 +15,11 @@
  */
 package org.scassandra.server.actors
 
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem}
+import akka.actor.{ Actor, ActorLogging, ActorRef, ActorSystem }
 import org.scassandra.codec.Consistency.Consistency
 import org.scassandra.codec._
 import org.scassandra.codec.datatype.DataType
-import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{Fatal, Prime, Reply}
+import org.scassandra.server.actors.priming.PrimeQueryStoreActor.{ Fatal, Prime, Reply }
 
 trait ProtocolActor extends Actor with ActorLogging {
 
@@ -27,9 +27,10 @@ trait ProtocolActor extends Actor with ActorLogging {
     target ! ProtocolResponse(requestHeader, message)
   }
 
-  def extractQueryVariables(queryText: String,
-                            queryValues: Option[List[Value]],
-                            variableTypes: List[DataType])(implicit protocolVersion: ProtocolVersion): Option[List[Any]] = {
+  def extractQueryVariables(
+    queryText: String,
+    queryValues: Option[List[Value]],
+    variableTypes: List[DataType])(implicit protocolVersion: ProtocolVersion): Option[List[Any]] = {
     queryValues.flatMap { (values: List[Value]) =>
       if (values.length == variableTypes.length) {
         Some(values.zip(variableTypes).map {
@@ -46,9 +47,9 @@ trait ProtocolActor extends Actor with ActorLogging {
 
 object ProtocolActor {
   def writePrime(input: Message, primeOption: Option[Prime],
-                 requestHeader: FrameHeader,
-                 target: ActorRef, alternative: Option[Prime] = None,
-                 consistency: Option[Consistency] = None)(implicit system: ActorSystem): Unit = {
+    requestHeader: FrameHeader,
+    target: ActorRef, alternative: Option[Prime] = None,
+    consistency: Option[Consistency] = None)(implicit system: ActorSystem): Unit = {
     primeOption match {
       case Some(prime) =>
         prime match {
@@ -72,19 +73,19 @@ object ProtocolActor {
   }
 
   /**
-    * Update the message with the given consistency if the message is an error containing consistency and the consistency
-    * wasn't provided by the prime.
-    *
-    * @param input       message to update.
-    * @param consistency consistency to update error message with.
-    * @return Updated message if applicable.
-    */
+   * Update the message with the given consistency if the message is an error containing consistency and the consistency
+   * wasn't provided by the prime.
+   *
+   * @param input       message to update.
+   * @param consistency consistency to update error message with.
+   * @return Updated message if applicable.
+   */
   private[this] def messageWithConsistency(input: Message, consistency: Consistency): Message = input match {
-    case u@Unavailable(_, null, _, _) => u.copy(consistency = consistency)
-    case w@WriteTimeout(_, null, _, _, _) => w.copy(consistency = consistency)
-    case r@ReadTimeout(_, null, _, _, _) => r.copy(consistency = consistency)
-    case r@ReadFailure(_, null, _, _, _, __) => r.copy(consistency = consistency)
-    case w@WriteFailure(_, null, _, _, _, __) => w.copy(consistency = consistency)
+    case u @ Unavailable(_, null, _, _) => u.copy(consistency = consistency)
+    case w @ WriteTimeout(_, null, _, _, _) => w.copy(consistency = consistency)
+    case r @ ReadTimeout(_, null, _, _, _) => r.copy(consistency = consistency)
+    case r @ ReadFailure(_, null, _, _, _, __) => r.copy(consistency = consistency)
+    case w @ WriteFailure(_, null, _, _, _, __) => w.copy(consistency = consistency)
     case _ => input
   }
 }
