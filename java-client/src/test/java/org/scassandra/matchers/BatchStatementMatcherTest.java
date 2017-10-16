@@ -39,6 +39,7 @@ import static org.scassandra.cql.ListType.list;
 import static org.scassandra.cql.MapType.map;
 import static org.scassandra.cql.PrimitiveType.*;
 import static org.scassandra.cql.SetType.set;
+import static org.scassandra.http.client.BatchQuery.BatchQueryBuilder;
 import static org.scassandra.http.client.BatchQueryKind.prepared_statement;
 import static org.scassandra.http.client.BatchQueryKind.query;
 import static org.scassandra.http.client.BatchType.LOGGED;
@@ -798,5 +799,30 @@ public class BatchStatementMatcherTest {
 
         //then
         assertTrue(matched);
+    }
+
+    @Test
+    public void mismatchingNoninitialQueries() {
+      BatchQueryBuilder buildQ = BatchQuery.builder()
+        .withQuery("insert into some values ?")
+        .withVariableTypes(INT)
+        .withType(prepared_statement);
+
+      BatchQuery q  = buildQ.withVariables(1).build();
+      BatchQuery q1 = buildQ.withQuery("insert into something values ?").withType(query).withVariables(2).build();
+      
+      BatchExecution actualExecution = BatchExecution.builder()
+        .withBatchQueries(newArrayList(q, q))
+        .build();
+
+      BatchExecution expectedExecution = BatchExecution.builder()
+        .withBatchQueries(newArrayList(q, q1))
+        .build();
+
+      BatchExecutionMatcher underTest = batchExecutionRecorded(expectedExecution);
+
+      boolean matched = underTest.matchesSafely(newArrayList(actualExecution, unmatchingBatchExecution));
+      
+      assertFalse(matched);
     }
 }

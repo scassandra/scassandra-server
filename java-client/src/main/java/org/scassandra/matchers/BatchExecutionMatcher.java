@@ -59,8 +59,8 @@ public class BatchExecutionMatcher extends ScassandraMatcher<List<BatchExecution
         List<BatchQuery> actualBatchQueries = actualBatchExecution.getBatchQueries();
 
         for (int i = 0; i < expectedBatchExecution.getBatchQueries().size(); i++) {
-            BatchQuery expectedBatchQuery = expectedBatchQueries.get(0);
-            BatchQuery actualBatchQuery = actualBatchQueries.get(0);
+            BatchQuery expectedBatchQuery = expectedBatchQueries.get(i);
+            BatchQuery actualBatchQuery = actualBatchQueries.get(i);
 
             if (!expectedBatchQuery.getQuery().equals(actualBatchQuery.getQuery())) {
                 return false;
