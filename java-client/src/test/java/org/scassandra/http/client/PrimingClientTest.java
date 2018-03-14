@@ -26,6 +26,7 @@ import java.util.*;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.scassandra.cql.PrimitiveType.*;
 import static org.scassandra.http.client.BatchQueryPrime.batchQueryPrime;
@@ -920,5 +921,22 @@ public class PrimingClientTest {
                         .withFault(Fault.RANDOM_DATA_THEN_CLOSE)));
         //when
         underTest.retrieveQueryPrimes();
+    }
+    
+    // bug fix https://github.com/scassandra/scassandra-server/issues/195
+    @Test
+    public void primeWithEmptyRowsDoesntThrowNullPointer() {
+        //given
+        stubFor(post(urlEqualTo(PRIME_PREPARED_PATH)).willReturn(aResponse().withStatus(200)));
+        PrimingRequest pr = PrimingRequest.preparedStatementBuilder()
+                .withQuery("select * from people")
+                .withThen(PrimingRequest.then().withVariableTypes(TEXT))
+                .build();
+        //when
+        underTest.prime(pr);
+
+        //then
+        List<Map<String, ?>> rows = pr.getThen().getRows();
+        assertTrue(rows.isEmpty());
     }
 }
