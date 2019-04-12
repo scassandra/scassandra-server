@@ -107,5 +107,5 @@ To see how to use Scassandra in your Java unit and integration tests see the fol
 
 And particularly the ExampleDaoTest:
 
-[Example JUnit test](https://github.com/chbatey/scassandra-example-java/blob/master/src/test/java/com/batey/examples/scassandra/PersonDaoTest.java)
+[Example JUnit test](https://github.com/chbatey/scassandra-example-java/blob/master/src/test/java/com/batey/examples/scassandra/PersonDaoCassandraTest.java)
 
