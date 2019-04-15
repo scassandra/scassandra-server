@@ -355,7 +355,7 @@ public final class PrimingRequest {
 
         public static class ThenBuilder {
             private List<CqlType> variable_types;
-            private List<Map<String, ? extends Object>> rows;
+            private List<Map<String, ? extends Object>> rows = new ArrayList<>();
             private Result result;
             private Long fixedDelay;
             private Map<String, Object> config = new HashMap<String, Object>();
