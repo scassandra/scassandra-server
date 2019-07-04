@@ -15,28 +15,61 @@
  */
 package org.scassandra.server.priming.routes
 
-import akka.actor.ActorRef
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.testkit.{ TestActor, TestProbe }
+import akka.NotUsed
+import akka.actor.{ActorRef, ActorSystem, Scheduler}
+import akka.http.scaladsl.testkit.{RouteTestTimeout, ScalatestRouteTest}
+import akka.testkit.TestActor._
+import akka.testkit.{TestActor, TestDuration, TestProbe}
+import akka.typed.scaladsl.{Actor => TActor}
+import akka.typed.testkit.{StubbedActorContext, TestKitSettings}
+import akka.typed.{Behavior, ActorRef => TActorRef, ActorSystem => TActorSystem}
+import akka.util.Timeout
+import com.typesafe.scalalogging.LazyLogging
 import org.scalatest._
 import org.scassandra.codec.Consistency.ONE
 import org.scassandra.codec.messages.BatchQueryKind.Simple
 import org.scassandra.codec.messages.BatchType._
-import org.scassandra.server.actors.ActivityLogActor._
-import org.scassandra.server.priming._
-import org.scassandra.server.priming.json.PrimingJsonImplicits
-import spray.json.JsonParser
-import akka.testkit.TestActor._
 import org.scassandra.server.actors.Activity._
+import org.scassandra.server.actors.ActivityLogActor._
+import org.scassandra.server.actors.ActivityLogTyped.{ActivityLogCommand, GetQueries, TQueries}
+import spray.json.JsonParser
 
-class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfterEach with Matchers with ScalatestRouteTest with ActivityVerificationRoute {
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import scala.language.postfixOps
 
-  implicit def actorRefFactory = system
+
+class ActivityVerificationRouteTest extends FunSpec with Matchers with ScalatestRouteTest with ActivityVerificationRoute with LazyLogging {
+
+  implicit val actorRefFactory: ActorSystem = system
+  implicit val actorSystemTyped: TActorSystem[_] = TActorSystem(Behavior.empty, "ActivityVerificationRouteTest")
+  implicit private val settings: TestKitSettings = TestKitSettings(actorSystemTyped)
+  val scheduler: Scheduler = actorRefFactory.scheduler
+  implicit val ctx: StubbedActorContext[NotUsed] = new StubbedActorContext[NotUsed]("Test", 10, actorSystemTyped)
+
   val ec = scala.concurrent.ExecutionContext.global
-  val activityLogProbe = TestProbe()
-  implicit val activityLog = activityLogProbe.ref
+  val activityLogProbe = TestProbe("ActivityLogProbe")
+  val activityLog = activityLogProbe.ref
 
-  import PrimingJsonImplicits._
+  implicit val timeout: RouteTestTimeout = RouteTestTimeout(5.seconds dilated)
+
+  class TypedStub[C](system: TActorSystem[_]) {
+    var currentBehaviour: C => Unit = (_: C) => ()
+    private val testBehaviour = TActor.immutable[C] { (_, msg) =>
+      currentBehaviour(msg)
+      TActor.same
+    }
+
+    val testActor: TActorRef[C] = {
+      implicit val timeout: Timeout = Timeout(1.seconds)
+      val futRef = system.systemActorOf(testBehaviour, s"TypedStub")
+      Await.result(futRef, timeout.duration + 1.second)
+    }
+  }
+
+  val activityLoggedTypedFake = new TypedStub[ActivityLogCommand](actorSystemTyped)
+
+  val activityLogTyped: TActorRef[ActivityLogCommand] = activityLoggedTypedFake.testActor
 
   def respondWith(m: Any): Unit = {
     activityLogProbe.setAutoPilot(new AutoPilot {
@@ -55,6 +88,7 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfterEach with
       respondWith(Connections(List(Connection())))
       Get("/connection") ~> activityVerificationRoute ~> check {
         val response: String = responseAs[String]
+        logger.error("Reply has happened")
         val connectionList = JsonParser(response).convertTo[List[Connection]]
         connectionList.size should equal(1)
         activityLogProbe.expectMsg(GetAllConnections)
@@ -79,26 +113,28 @@ class ActivityVerificationRouteTest extends FunSpec with BeforeAndAfterEach with
   }
 
   describe("Retrieving query activity") {
-
     it("Should return queries from ActivityLog - no queries") {
-      respondWith(Queries(List()))
+      activityLoggedTypedFake.currentBehaviour = {
+        case GetQueries(sender) => sender.tell(TQueries(List()))
+      }
+
       Get("/query") ~> activityVerificationRoute ~> check {
         val response: String = responseAs[String]
         val queryList = JsonParser(response).convertTo[List[Query]]
         queryList.size should equal(0)
-        activityLogProbe.expectMsg(GetAllQueries)
       }
     }
 
     it("Should return queries from ActivityLog - single query") {
-
       val queries = List(Query("select 1", ONE, None))
-      respondWith(Queries(queries))
+      activityLoggedTypedFake.currentBehaviour = {
+        case GetQueries(sender) => sender.tell(TQueries(queries))
+      }
+
       Get("/query") ~> activityVerificationRoute ~> check {
         val response: String = responseAs[String]
         val queryList = JsonParser(response).convertTo[List[Query]]
         queryList should equal(queries)
-        activityLogProbe.expectMsg(GetAllQueries)
       }
     }
 

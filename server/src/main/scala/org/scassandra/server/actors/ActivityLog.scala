@@ -83,7 +83,7 @@ object ActivityLogActor {
   case class RecordExecution(prepare: PreparedStatementExecution)
   case class RecordBatch(batch: BatchExecution)
 
-  private case class ActivityLog(
+  case class ActivityLog(
     queries: List[Query] = List(),
     connections: List[Connection] = List(),
     prepares: List[PreparedStatementPreparation] = List(),

@@ -15,19 +15,23 @@
  */
 package org.scassandra.server.priming.routes
 
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, Scheduler}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import akka.pattern.ask
+import akka.typed.{ActorRef => TActorRef}
+import akka.typed.scaladsl.AskPattern._
 import akka.util.Timeout
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
 import com.typesafe.scalalogging.LazyLogging
+import org.scassandra.server.actors.Activity
 import org.scassandra.server.actors.ActivityLogActor._
+import org.scassandra.server.actors.ActivityLogTyped.{ActivityLogCommand, GetQueries, TQueries}
 import org.scassandra.server.priming.json.PrimingJsonImplicits
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
 //todo make deletes return once actor has confirmed
@@ -35,9 +39,13 @@ trait ActivityVerificationRoute extends LazyLogging with SprayJsonSupport {
 
   import PrimingJsonImplicits._
 
-  implicit val activityLog: ActorRef
+  val activityLog: ActorRef
+  val activityLogTyped: TActorRef[ActivityLogCommand]
+
   implicit val ec: ExecutionContext
-  private implicit val timoeut = Timeout(250 milliseconds)
+
+  private implicit val timoeut = Timeout(10 seconds)
+  implicit val scheduler: Scheduler
 
   val activityVerificationRoute: Route =
     cors() {
@@ -59,7 +67,8 @@ trait ActivityVerificationRoute extends LazyLogging with SprayJsonSupport {
           get {
             complete {
               logger.debug("Request for recorded queries")
-              (activityLog ? GetAllQueries).mapTo[Queries].map(_.list)
+              //              (activityLog ? GetAllQueries).mapTo[Queries].map(_.list)
+              (activityLogTyped ? (GetQueries(_: TActorRef[TQueries]))).map(_.queries)
             }
           } ~
             delete {
@@ -88,7 +97,7 @@ trait ActivityVerificationRoute extends LazyLogging with SprayJsonSupport {
         path("prepared-statement-execution") {
           get {
             complete {
-              logger.debug("Request for recorded prepared statement executions")
+              logger.debug("Request for recorded prepared sment executions")
               (activityLog ? GetAllExecutions).mapTo[Executions].map(_.list)
             }
           } ~

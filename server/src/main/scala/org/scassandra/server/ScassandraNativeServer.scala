@@ -15,14 +15,17 @@
  */
 package org.scassandra.server
 
-import akka.actor.{ Actor, ActorRef, ActorSystem, PoisonPill, Props }
+import akka.actor.{ Actor, ActorRef, ActorSystem, PoisonPill, Props, Scheduler }
 import akka.http.scaladsl.Http
 import akka.pattern.{ ask, pipe }
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
+import akka.typed.scaladsl.adapter._
+import akka.typed.{ ActorRef => TActorRef }
 import com.typesafe.scalalogging.LazyLogging
+import org.scassandra.server.actors.ActivityLogTyped.ActivityLogCommand
 import org.scassandra.server.actors.priming.{ PreparedPrimesActor, PrimeBatchStoreActor, PrimePreparedStoreActor, PrimeQueryStoreActor }
-import org.scassandra.server.actors.{ ActivityLogActor, TcpServer }
+import org.scassandra.server.actors.{ ActivityLogActor, ActivityLogTyped, TcpServer }
 import org.scassandra.server.priming.AllRoutes
 import org.scassandra.server.priming.prepared._
 
@@ -70,10 +73,10 @@ class ScassandraServer(
   private val preparedLookup: ActorRef =
     context.actorOf(Props(classOf[PreparedPrimesActor], List(primePreparedStore, primePreparedPatternStore, primePreparedMultiStore)))
 
-  val primeBatchStore: ActorRef = context.actorOf(Props[PrimeBatchStoreActor])
+  val activityLogTyped: TActorRef[ActivityLogCommand] = context.spawn(ActivityLogTyped.activityLog, "TypedActivityLog")
   val activityLog: ActorRef = context.actorOf(Props[ActivityLogActor])
+  val primeBatchStore: ActorRef = context.actorOf(Props[PrimeBatchStoreActor])
   val primeQueryStore: ActorRef = context.actorOf(Props[PrimeQueryStoreActor])
-
   val primingReadyListener: ActorRef = context.actorOf(Props(classOf[ServerReadyListener]), "PrimingReadyListener")
   val tcpReadyListener: ActorRef = context.actorOf(Props(classOf[ServerReadyListener]), "TcpReadyListener")
   val tcpServer: ActorRef =
@@ -81,6 +84,7 @@ class ScassandraServer(
       preparedLookup, primeBatchStore, tcpReadyListener, activityLog), "BinaryTcpListener")
 
   implicit val ec: ExecutionContext = context.dispatcher
+  val scheduler: Scheduler = context.system.scheduler
   val actorTimeout: Timeout = Timeout(2 seconds)
 
   implicit val system: ActorSystem = context.system

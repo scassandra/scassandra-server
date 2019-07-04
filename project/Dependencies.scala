@@ -3,8 +3,8 @@ import sbt._
 object Dependencies {
 
   val antlrVersion = "4.5.3"
-  val akkaVersion = "2.5.3"
-  val akkaHttpVersion = "10.0.9"
+  val akkaVersion = "2.5.4"
+  val akkaHttpVersion = "10.0.10"
   val commonsCodecVersion = "1.10"
   val httpClientVersion = "4.3.3"
   val javaDriverVersion = "3.1.1"
@@ -40,6 +40,7 @@ object Dependencies {
   val gson = "com.google.code.gson" % "gson" % gsonVersion
 
   val akkaTestkit = "com.typesafe.akka" %% "akka-testkit" % akkaVersion
+  val akkaTypedTestkit = "com.typesafe.akka" %% "akka-typed-testkit" % akkaVersion
   val akkaHttpTestkit = "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion
   val akkaTypedTestKit = "com.typesafe.akka" %% "akka-typed-testkit" % akkaVersion
 
@@ -58,8 +59,8 @@ object Dependencies {
   val jarjar = "com.googlecode.jarjar" % "jarjar" % "1.3"
   val junitInterface = "com.novocode" % "junit-interface" % "0.11"
 
-  val serverDeps = Seq(cats, antlrRuntime, logback, akkaHttpCors, akkaHttp, akkaHttpSpray, akkaActor, akkaRemote, akkaSlf4j, akkaTyped, typesafeLogging, guava)
-  val serverTestDeps = Seq(akkaTestkit, akkaHttpTestkit, akkaTypedTestKit, scalaTest, mockito, cassandraDriver, pegdown).map(_ % "test")
+  val serverDeps = Seq(cats, antlrRuntime, logback, akkaHttpCors, akkaHttp, akkaHttpSpray, akkaActor, akkaTyped, akkaRemote, akkaSlf4j, akkaTyped, typesafeLogging, guava)
+  val serverTestDeps = Seq(akkaTestkit, akkaTypedTestkit, akkaHttpTestkit, akkaTypedTestKit, scalaTest, mockito, cassandraDriver, pegdown).map(_ % "test")
 
   val codecDeps = Seq(scodec, guava)
   val codecTestDeps = Seq(scalaTest, scalaCheck).map(_ % "test")
